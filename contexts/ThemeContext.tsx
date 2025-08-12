@@ -1,0 +1,275 @@
+// contexts/ThemeContext.tsx - Modern Theme System
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Appearance } from 'react-native';
+import { logger } from '../utils/logger';
+
+export type ThemeMode = 'light' | 'dark' | 'system';
+export type ColorScheme = 'light' | 'dark';
+
+// Color definitions
+export interface Colors {
+  // Background colors
+  background: string;
+  backgroundSecondary: string;
+  backgroundTertiary: string;
+  
+  // Card colors
+  cardBackground: string;
+  cardBorder: string;
+  
+  // Text colors
+  textPrimary: string;
+  textSecondary: string;
+  textMuted: string;
+  textHeader: string;
+  
+  // Brand colors
+  primary: string;
+  primaryDark: string;
+  secondary: string;
+  
+  // Status colors
+  success: string;
+  warning: string;
+  error: string;
+  info: string;
+  
+  // Interactive colors
+  live: string;
+  onBreak: string;
+  
+  // Filter colors
+  filterButton: string;
+  filterButtonActive: string;
+  filterText: string;
+  filterTextActive: string;
+  
+  // Misc colors
+  white: string;
+  black: string;
+  shadow: string;
+  skeleton: string;
+  
+  // Tab colors
+  tabBackground: string;
+  tabActive: string;
+  tabInactive: string;
+}
+
+// Light theme colors
+export const lightColors: Colors = {
+  // Background colors
+  background: '#FFFFFF',
+  backgroundSecondary: '#F8FAFC',
+  backgroundTertiary: '#F1F5F9',
+  
+  // Card colors
+  cardBackground: '#FFFFFF',
+  cardBorder: 'rgba(0, 0, 0, 0.08)',
+  
+  // Text colors
+  textPrimary: '#1E293B',
+  textSecondary: '#475569',
+  textMuted: '#64748B',
+  textHeader: '#FFA726',
+  
+  // Brand colors
+  primary: '#FFA726',
+  primaryDark: '#FF8F00',
+  secondary: '#FFCC80',
+  
+  // Status colors
+  success: '#4CAF50',
+  warning: '#FF9800',
+  error: '#F44336',
+  info: '#2196F3',
+  
+  // Interactive colors
+  live: '#4CAF50',
+  onBreak: '#FF9800',
+  
+  // Filter colors
+  filterButton: 'rgba(255, 167, 38, 0.1)',
+  filterButtonActive: '#FFA726',
+  filterText: '#475569',
+  filterTextActive: '#FFFFFF',
+  
+  // Misc colors
+  white: '#FFFFFF',
+  black: '#000000',
+  shadow: '#000000',
+  skeleton: '#E2E8F0',
+  
+  // Tab colors
+  tabBackground: 'rgba(255, 167, 38, 0.05)',
+  tabActive: '#FFA726',
+  tabInactive: '#64748B',
+};
+
+// Dark theme colors
+export const darkColors: Colors = {
+  // Background colors
+  background: '#0F172A',
+  backgroundSecondary: '#1E293B',
+  backgroundTertiary: '#334155',
+  
+  // Card colors
+  cardBackground: 'rgba(255, 255, 255, 0.12)',
+  cardBorder: 'rgba(255, 255, 255, 0.25)',
+  
+  // Text colors
+  textPrimary: '#FFFFFF',
+  textSecondary: '#94A3B8',
+  textMuted: '#64748B',
+  textHeader: '#FFA726',
+  
+  // Brand colors
+  primary: '#FFA726',
+  primaryDark: '#FF8F00',
+  secondary: '#FFCC80',
+  
+  // Status colors
+  success: '#4CAF50',
+  warning: '#FF9800',
+  error: '#F87171',
+  info: '#60A5FA',
+  
+  // Interactive colors
+  live: '#4CAF50',
+  onBreak: '#FF9800',
+  
+  // Filter colors
+  filterButton: 'rgba(255, 167, 38, 0.2)',
+  filterButtonActive: '#FFA726',
+  filterText: '#FFCC80',
+  filterTextActive: '#000000',
+  
+  // Misc colors
+  white: '#FFFFFF',
+  black: '#000000',
+  shadow: '#000000',
+  skeleton: '#334155',
+  
+  // Tab colors
+  tabBackground: 'rgba(255, 167, 38, 0.1)',
+  tabActive: '#FFA726',
+  tabInactive: '#64748B',
+};
+
+export interface Theme {
+  colors: Colors;
+  isDark: boolean;
+}
+
+export interface ThemeContextType {
+  theme: Theme;
+  themeMode: ThemeMode;
+  colorScheme: ColorScheme;
+  setThemeMode: (mode: ThemeMode) => void;
+  toggleTheme: () => void;
+}
+
+const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+
+const THEME_STORAGE_KEY = '@maxbreak_theme_mode';
+
+export const useTheme = (): ThemeContextType => {
+  const context = useContext(ThemeContext);
+  if (context === undefined) {
+    throw new Error('useTheme must be used within a ThemeProvider');
+  }
+  return context;
+};
+
+interface ThemeProviderProps {
+  children: ReactNode;
+}
+
+export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
+  const [themeMode, setThemeModeState] = useState<ThemeMode>('system');
+  const [systemColorScheme, setSystemColorScheme] = useState<ColorScheme>(
+    Appearance.getColorScheme() === 'dark' ? 'dark' : 'light'
+  );
+
+  // Determine the effective color scheme
+  const colorScheme: ColorScheme = 
+    themeMode === 'system' ? systemColorScheme : themeMode as ColorScheme;
+
+  // Create theme object
+  const theme: Theme = {
+    colors: colorScheme === 'dark' ? darkColors : lightColors,
+    isDark: colorScheme === 'dark',
+  };
+
+  // Load theme preference from storage
+  useEffect(() => {
+    const loadThemePreference = async () => {
+      try {
+        const savedTheme = await AsyncStorage.getItem(THEME_STORAGE_KEY);
+        if (savedTheme && ['light', 'dark', 'system'].includes(savedTheme)) {
+          setThemeModeState(savedTheme as ThemeMode);
+          logger.log(`[Theme] Loaded theme preference: ${savedTheme}`);
+        }
+      } catch (error) {
+        logger.error('[Theme] Error loading theme preference:', error);
+      }
+    };
+
+    loadThemePreference();
+  }, []);
+
+  // Listen to system theme changes
+  useEffect(() => {
+    const subscription = Appearance.addChangeListener(({ colorScheme }) => {
+      const newScheme = colorScheme === 'dark' ? 'dark' : 'light';
+      setSystemColorScheme(newScheme);
+      logger.log(`[Theme] System color scheme changed to: ${newScheme}`);
+    });
+
+    return () => subscription?.remove();
+  }, []);
+
+  // Save theme preference to storage
+  const setThemeMode = async (mode: ThemeMode) => {
+    try {
+      setThemeModeState(mode);
+      await AsyncStorage.setItem(THEME_STORAGE_KEY, mode);
+      logger.log(`[Theme] Theme mode set to: ${mode}`);
+    } catch (error) {
+      logger.error('[Theme] Error saving theme preference:', error);
+    }
+  };
+
+  // Toggle between light and dark (ignores system)
+  const toggleTheme = () => {
+    const newMode = colorScheme === 'dark' ? 'light' : 'dark';
+    setThemeMode(newMode);
+  };
+
+  const contextValue: ThemeContextType = {
+    theme,
+    themeMode,
+    colorScheme,
+    setThemeMode,
+    toggleTheme,
+  };
+
+  return (
+    <ThemeContext.Provider value={contextValue}>
+      {children}
+    </ThemeContext.Provider>
+  );
+};
+
+// Convenience hook for accessing colors
+export const useColors = (): Colors => {
+  const { theme } = useTheme();
+  return theme.colors;
+};
+
+// Convenience hook for checking dark mode
+export const useIsDark = (): boolean => {
+  const { theme } = useTheme();
+  return theme.isDark;
+};
