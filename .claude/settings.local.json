@@ -174,7 +174,11 @@
       "Bash(venv/Scripts/python.exe maxBreak/manage.py comprehensive_update:*)",
       "Bash(venv/Scripts/python.exe maxBreak/manage.py verify_data:*)",
       "Bash(venv/Scripts/python.exe maxBreak/manage.py update_tournaments:*)",
-      "Bash(railway up:*)"
+      "Bash(railway up:*)",
+      "Bash(npx eas:*)",
+      "Bash(powershell:*)",
+      "Bash(venv/Scripts/python.exe:*)",
+      "Bash(venv/Scripts/pip.exe install:*)"
     ],
     "deny": []
   }
