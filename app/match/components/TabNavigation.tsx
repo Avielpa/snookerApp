@@ -34,6 +34,9 @@ export function TabNavigation({ selectedTab, onTabChange, colors, styles }: TabN
         onTabChange(tab.id);
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       }}
+      activeOpacity={0.7}
+      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      delayPressIn={0}
     >
       <Ionicons 
         name={tab.icon} 

@@ -3,19 +3,16 @@ import axios, { AxiosInstance } from 'axios';
 import { logger } from '../utils/logger';
 
 // --- Configuration ---
-// PRODUCTION RAILWAY URL (LIVE)
-const API_BASE_URL: string = 'https://snookerapp.up.railway.app/oneFourSeven/';
-
-// BACKUP CONFIGURATIONS (commented for fast testing/upgrade)
-/*
-// Original automatic configuration
+// Dynamic API URL based on environment
 const API_BASE_URL: string = process.env.EXPO_PUBLIC_API_URL || 
   (process.env.NODE_ENV === 'production' 
-    ? 'https://YOUR_RAILWAY_APP_NAME.up.railway.app/oneFourSeven/'
+    ? 'https://snookerapp.up.railway.app/oneFourSeven/'
     : 'http://10.0.2.2:8000/oneFourSeven/');
 
-// Local development URL (for testing)
-const API_BASE_URL: string = 'http://10.0.2.2:8000/oneFourSeven/';
+// BACKUP URLs for debugging
+/*
+// Force production URL: 'https://snookerapp.up.railway.app/oneFourSeven/'
+// Force local URL: 'http://10.0.2.2:8000/oneFourSeven/'
 */
 
 logger.log(`[API Setup] Using API Base URL: ${API_BASE_URL}`);

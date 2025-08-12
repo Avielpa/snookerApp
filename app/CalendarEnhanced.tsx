@@ -273,9 +273,13 @@ export default function CalendarEnhanced() {
 
   // Handle tab selection
   const handleTabPress = (tabId: string) => {
+    logger.log(`[Calendar] Tab pressed: ${tabId}, current: ${selectedTab}`);
     if (tabId !== selectedTab) {
       setSelectedTab(tabId);
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      logger.log(`[Calendar] Tab changed to: ${tabId}`);
+    } else {
+      logger.log(`[Calendar] Tab already selected: ${tabId}`);
     }
   };
 
@@ -303,6 +307,8 @@ export default function CalendarEnhanced() {
         style={styles.filterButton}
         onPress={() => handleTabPress(option.id)}
         activeOpacity={0.8}
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        delayPressIn={0}
       >
         <LinearGradient
           colors={isSelected 
@@ -372,6 +378,8 @@ export default function CalendarEnhanced() {
         onPress={() => handleTournamentPress(item)}
         activeOpacity={0.8}
         style={styles.tournamentCard}
+        hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
+        delayPressIn={0}
       >
         <View style={styles.cardContent}>
 
@@ -628,12 +636,16 @@ const createCalendarStyles = (colors: any) => StyleSheet.create({
     marginRight: 12,
     borderRadius: 20,
     overflow: 'hidden',
+    minHeight: 44,
+    minWidth: 90,
   },
   filterGradient: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingVertical: 12,
+    minHeight: 44,
   },
   filterText: {
     marginLeft: 8,

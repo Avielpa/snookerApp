@@ -204,6 +204,8 @@ export default function RankingEnhanced() {
         style={[styles.filterButton, isSelected && styles.filterButtonActive]}
         onPress={() => handleFilterPress(option.id)}
         activeOpacity={0.8}
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        delayPressIn={0}
       >
         <LinearGradient
           colors={isSelected 

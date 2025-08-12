@@ -44,6 +44,8 @@ export interface FrameScore {
   isComplete: boolean;
   player1Break?: number; // Highest break by player 1 in this frame
   player2Break?: number; // Highest break by player 2 in this frame
+  winnerName?: string; // Winner name when no score data available
+  showWinnerOnly?: boolean; // Flag to show only winner name instead of scores
 }
 
 export interface MatchStats {

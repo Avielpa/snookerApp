@@ -4,6 +4,7 @@ import React from "react";
 import { TouchableOpacity, View, Text, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "../../contexts/ThemeContext";
+import { logger } from "../../utils/logger";
 
 
 
@@ -49,7 +50,13 @@ const BottomBar = () => {
                     <TouchableOpacity 
                         key={item.path}
                         style={[styles.bottomBarItem, isActive && styles.activeBottomBarItem]} 
-                        onPress={() => router.push(item.path as any)}
+                        onPress={() => {
+                            logger.log(`[BottomBar] Navigating from ${pathname} to ${item.path}`);
+                            router.push(item.path as any);
+                        }}
+                        activeOpacity={0.7}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                        delayPressIn={0}
                     >
                         <Ionicons 
                             name={isActive ? item.icon : item.iconOutline} 
@@ -79,10 +86,12 @@ const createBottomBarStyles = (colors: any) => StyleSheet.create({
     bottomBarItem: {
         flexDirection: 'column',
         alignItems: 'center',
-        paddingVertical: 8,
-        paddingHorizontal: 16,
+        paddingVertical: 12,
+        paddingHorizontal: 20,
         borderRadius: 12,
-        minWidth: 80,
+        minWidth: 90,
+        minHeight: 56,
+        justifyContent: 'center',
     },
     activeBottomBarItem: {
         backgroundColor: colors.filterButton,

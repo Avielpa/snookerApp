@@ -107,7 +107,7 @@ export const createMatchStyles = (colors: any) => StyleSheet.create({
     marginLeft: 6,
   },
   tabTextActive: {
-    color: colors.primary,
+    color: colors.textPrimary,
     fontFamily: 'PoppinsSemiBold',
   },
   contentContainer: {
@@ -229,6 +229,23 @@ export const createMatchStyles = (colors: any) => StyleSheet.create({
     color: '#9CA3AF',
     textAlign: 'center',
     fontStyle: 'italic',
+  },
+  frameWinnerContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 4,
+  },
+  frameWinnerLabel: {
+    fontSize: 10,
+    fontFamily: 'PoppinsRegular',
+    color: '#9CA3AF',
+    marginBottom: 2,
+  },
+  frameWinnerName: {
+    fontSize: 14,
+    fontFamily: 'PoppinsSemiBold',
+    color: '#4CAF50',
+    textAlign: 'center',
   },
   frameBreaks: {
     flexDirection: 'row',

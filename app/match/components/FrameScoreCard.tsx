@@ -25,15 +25,26 @@ export function FrameScoreCard({ frame, styles }: FrameScoreCardProps) {
       
       {frame.isComplete ? (
         <>
-          <View style={styles.frameScores}>
-            <Text style={[styles.frameScore, frame.winner === 1 && styles.winningScore]}>
-              {frame.player1Score}
-            </Text>
-            <Text style={styles.frameSeparator}>-</Text>
-            <Text style={[styles.frameScore, frame.winner === 2 && styles.winningScore]}>
-              {frame.player2Score}
-            </Text>
-          </View>
+          {frame.showWinnerOnly && frame.winnerName ? (
+            // Show winner name when no real score data is available
+            <View style={styles.frameWinnerContainer}>
+              <Text style={styles.frameWinnerLabel}>Winner:</Text>
+              <Text style={styles.frameWinnerName}>
+                {frame.winnerName}
+              </Text>
+            </View>
+          ) : (
+            // Show actual scores when available
+            <View style={styles.frameScores}>
+              <Text style={[styles.frameScore, frame.winner === 1 && styles.winningScore]}>
+                {frame.player1Score}
+              </Text>
+              <Text style={styles.frameSeparator}>-</Text>
+              <Text style={[styles.frameScore, frame.winner === 2 && styles.winningScore]}>
+                {frame.player2Score}
+              </Text>
+            </View>
+          )}
           
           {/* Display highest breaks if available */}
           {(frame.player1Break || frame.player2Break) && (

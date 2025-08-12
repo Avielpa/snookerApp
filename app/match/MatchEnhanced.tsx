@@ -220,12 +220,20 @@ export default function MatchEnhanced() {
           if (winner === 1) p1Wins++;
           if (winner === 2) p2Wins++;
           
+          const winnerName = winner === 1 
+            ? matchDetails.player1_name 
+            : winner === 2 
+              ? matchDetails.player2_name 
+              : null;
+
           parsedFrameScores.push({
             frameNumber: i,
-            player1Score: winner === 1 ? 70 : 45, // Simulated realistic scores
-            player2Score: winner === 2 ? 70 : 45,
+            player1Score: 0, // No real scores available
+            player2Score: 0,
             winner,
-            isComplete: true, // Mark as complete since we have winner data
+            isComplete: true,
+            winnerName: winnerName || 'Unknown',
+            showWinnerOnly: true, // Flag to show winner name instead of fake scores
           });
         }
       }
