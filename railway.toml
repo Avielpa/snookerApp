@@ -1,0 +1,32 @@
+[build]
+builder = "NIXPACKS"
+
+[deploy]
+healthcheckPath = "/admin/"
+healthcheckTimeout = 300
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3
+
+[[services]]
+name = "snooker-backend"
+source = "maxBreak"
+
+[services.variables]
+DJANGO_SETTINGS_MODULE = "maxBreak.production"
+PORT = { default = 8000 }
+RAILWAY_STATIC_URL = { default = "/static/" }
+
+[[services.cron]]
+# Live match updates - every 1 minute when tournaments are active
+schedule = "* * * * *"
+command = "python manage.py smart_live_update"
+
+[[services.cron]]  
+# Daily maintenance - comprehensive updates at 6 AM UTC
+schedule = "0 6 * * *"
+command = "python manage.py deploy_update --mode daily"
+
+[[services.cron]]
+# Weekly full data refresh - Sundays at 4 AM UTC 
+schedule = "0 4 * * 0"
+command = "python manage.py comprehensive_update --focus all --requests-per-batch 5"
