@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "MaxBreak Snooker",
-    "slug": "maxbreak-snooker",
+    "slug": "FrontMaxBreak",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -14,7 +14,13 @@
       "backgroundColor": "#0f172a"
     },
     "description": "The ultimate snooker app for live tournaments, player rankings, and match tracking",
-    "keywords": ["snooker", "billiards", "sports", "tournament", "ranking"],
+    "keywords": [
+      "snooker",
+      "billiards",
+      "sports",
+      "tournament",
+      "ranking"
+    ],
     "privacy": "public",
     "ios": {
       "supportsTablet": true,
@@ -34,6 +40,8 @@
       "package": "com.avielpahima.maxbreaksnooker",
       "versionCode": 1,
       "permissions": [
+        "INTERNET",
+        "ACCESS_NETWORK_STATE",
         "INTERNET",
         "ACCESS_NETWORK_STATE"
       ]
@@ -66,6 +74,12 @@
       "eas": {
         "projectId": "3a5fda2c-32ca-4319-a9be-09a82b25c20d"
       }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/3a5fda2c-32ca-4319-a9be-09a82b25c20d"
     }
   }
 }
