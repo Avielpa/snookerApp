@@ -60,6 +60,22 @@ function buildBetaAPK() {
     runCommand('npx eas init', 'EAS project initialization');
   }
 
+  // Generate keystore first if needed
+  console.log('\n🔑 Setting up Android credentials...');
+  try {
+    execSync('npx eas credentials --platform android --non-interactive', { stdio: 'pipe' });
+  } catch (error) {
+    console.log('🔑 Generating new keystore interactively...');
+    // Try to generate keystore with default settings
+    try {
+      execSync('echo "y\ny\ny\n" | npx eas credentials --platform android', { stdio: 'inherit' });
+    } catch (keystoreError) {
+      console.log('⚠️  Manual keystore setup required. Building without non-interactive mode...');
+      runCommand('npx eas build --profile beta --platform android', 'Beta APK build');
+      return;
+    }
+  }
+
   // Build the APK
   console.log('\n📱 Building Beta APK...');
   console.log('This may take 10-15 minutes for the first build...');

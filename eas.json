@@ -32,7 +32,8 @@
         "DEBUG_LOGGING": "false"
       },
       "android": {
-        "buildType": "apk"
+        "buildType": "apk",
+        "autoIncrement": true
       },
       "ios": {
         "buildConfiguration": "Release"
