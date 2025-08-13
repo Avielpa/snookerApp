@@ -19,7 +19,7 @@
       "channel": "preview",
       "env": {
         "NODE_ENV": "production",
-        "EXPO_PUBLIC_API_URL": "https://YOUR_RAILWAY_APP_NAME.up.railway.app/oneFourSeven/",
+        "EXPO_PUBLIC_API_URL": "https://snookerapp.up.railway.app/oneFourSeven/",
         "DEBUG_LOGGING": "false"
       }
     },
