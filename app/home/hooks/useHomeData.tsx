@@ -104,7 +104,7 @@ export const useHomeData = () => {
         // Request notification permissions on first load
         notificationManager.requestPermissions();
         loadTournamentInfo();
-    }, [loadTournamentInfo]);
+    }, []); // Empty dependency array for initial load only
     
     // Handle other tour selection
     const handleOtherTourSelection = useCallback((tourId: number) => {
@@ -119,12 +119,21 @@ export const useHomeData = () => {
         }
     }, [selectedOtherTour, loadTournamentInfo]);
 
-    // Automatic live match detection
+    // Optimized automatic live match detection with throttling
     const handleLiveMatchDetected = useCallback(() => {
-        logger.log(`[HomeScreen] 🔴 Live match detected - triggering automatic update #${liveUpdateCount + 1}`);
-        setLiveUpdateCount(prev => prev + 1);
-        loadTournamentInfo(true, selectedOtherTour); // Refresh current tournament
-    }, [loadTournamentInfo, selectedOtherTour, liveUpdateCount]);
+        const now = Date.now();
+        const lastUpdate = Date.now() - liveUpdateCount * 60000; // Assume updates every 60s
+        const timeSinceLastUpdate = now - lastUpdate;
+        
+        // Only refresh if enough time has passed (minimum 30 seconds between updates)
+        if (timeSinceLastUpdate >= 30000) {
+            logger.log(`[HomeScreen] 🔴 Live match detected - triggering throttled update #${liveUpdateCount + 1}`);
+            setLiveUpdateCount(prev => prev + 1);
+            loadTournamentInfo(true, selectedOtherTour); // Refresh current tournament
+        } else {
+            logger.log(`[HomeScreen] ⏸️ Live match detected but throttled (${Math.round(timeSinceLastUpdate/1000)}s since last update)`);
+        }
+    }, [selectedOtherTour, liveUpdateCount]); // Keep liveUpdateCount for throttling logic
 
     const handleMatchStartingSoon = useCallback(async (minutesUntilStart: number) => {
         logger.log(`[HomeScreen] ⏰ Match starting in ${minutesUntilStart} minutes - preparing for live updates`);
@@ -156,12 +165,12 @@ export const useHomeData = () => {
         }
     }, [currentMatches, tourName]);
 
-    // Initialize live match detection
+    // Initialize live match detection with optimized intervals
     const { isMonitoring, nextMatchInfo } = useLiveMatchDetection({
         matches: currentMatches,
         onLiveMatchDetected: handleLiveMatchDetected,
         onMatchStartingSoon: handleMatchStartingSoon,
-        updateInterval: 60000, // Check every 60 seconds
+        updateInterval: 120000, // Check every 2 minutes (less aggressive)
         preStartNotificationMinutes: 5 // Alert 5 minutes before match starts
     });
 

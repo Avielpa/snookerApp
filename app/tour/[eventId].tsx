@@ -1,17 +1,21 @@
-// app/tour/[eventId].tsx
+// app/tour/[eventId].tsx - Enhanced Tournament Details Screen
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
     View, Text, StyleSheet, ActivityIndicator, FlatList,
-    TouchableOpacity, ScrollView, Platform, RefreshControl
+    TouchableOpacity, ScrollView, Platform, RefreshControl,
+    ImageBackground, Dimensions
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import * as Haptics from 'expo-haptics';
 
 // Import service functions - Ensure paths are correct
 // Service file is .js, use assertions if needed
 import { getTournamentDetails, getTournamentMatches } from '../../services/tourServices';
 import { logger } from '../../utils/logger';
+import { useColors } from '../../contexts/ThemeContext';
 
 // --- Interfaces (Using snake_case for API fields) ---
 interface Match {
@@ -41,9 +45,19 @@ interface Match {
     details_url?: string | null;
 }
 interface EventDetails {
-    ID: number; Name: string; StartDate?: string | null; EndDate?: string | null;
-    Venue?: string | null; City?: string | null; Country?: string | null;
-    Note?: string | null; CommonNote?: string | null;
+    ID: number; 
+    Name: string; 
+    StartDate?: string | null; 
+    EndDate?: string | null;
+    Venue?: string | null; 
+    City?: string | null; 
+    Country?: string | null;
+    Note?: string | null; 
+    CommonNote?: string | null;
+    Season?: number | null;
+    Type?: string | null;
+    Tour?: string | null;
+    Sponsor?: string | null;
 }
 // --- List Item Types ---
 type MatchCategory = 'livePlaying' | 'onBreak' | 'upcoming' | 'finished';
@@ -55,6 +69,110 @@ type ActiveFilterType = MatchCategory | 'all';
 
 // --- Type Definition for Ionicons Names ---
 type IoniconName = keyof typeof Ionicons.glyphMap; // Defined type alias
+
+const { width: screenWidth } = Dimensions.get('window');
+
+// Enhanced Tournament Header Component
+const TournamentHeader = ({ tournament, matchCount }: { tournament: EventDetails; matchCount: number }) => {
+    const colors = useColors();
+    
+    const formatDate = (dateString: string | null) => {
+        if (!dateString) return 'TBD';
+        try {
+            return new Date(dateString).toLocaleDateString('en-GB', { 
+                day: 'numeric', 
+                month: 'short', 
+                year: 'numeric' 
+            });
+        } catch {
+            return 'Invalid Date';
+        }
+    };
+
+    const getTourBadgeColor = (tour: string | null) => {
+        switch (tour) {
+            case 'main': return colors.primary;
+            case 'seniors': return colors.warning;
+            case 'womens': return colors.success;
+            case 'other': return colors.info;
+            default: return colors.textSecondary;
+        }
+    };
+
+    return (
+        <View style={[tournamentHeaderStyles.tournamentHeader, { backgroundColor: colors.cardBackground }]}>
+            <LinearGradient
+                colors={[colors.primary + '20', colors.cardBackground]}
+                style={tournamentHeaderStyles.headerGradient}
+            >
+                <View style={tournamentHeaderStyles.headerContent}>
+                    {/* Tournament Title */}
+                    <View style={tournamentHeaderStyles.titleSection}>
+                        <Text style={[tournamentHeaderStyles.tournamentTitle, { color: colors.textHeader }]}>
+                            {tournament.Name}
+                        </Text>
+                        {tournament.Tour && (
+                            <View style={[tournamentHeaderStyles.tourBadge, { backgroundColor: getTourBadgeColor(tournament.Tour) }]}>
+                                <Text style={tournamentHeaderStyles.tourBadgeText}>{tournament.Tour.toUpperCase()}</Text>
+                            </View>
+                        )}
+                    </View>
+                    
+                    {/* Tournament Details */}
+                    <View style={tournamentHeaderStyles.detailsGrid}>
+                        {/* Date Range */}
+                        <View style={tournamentHeaderStyles.detailCard}>
+                            <Ionicons name="calendar-outline" size={20} color={colors.primary} />
+                            <View>
+                                <Text style={[tournamentHeaderStyles.detailLabel, { color: colors.textSecondary }]}>Duration</Text>
+                                <Text style={[tournamentHeaderStyles.detailValue, { color: colors.textPrimary }]}>
+                                    {formatDate(tournament.StartDate)} - {formatDate(tournament.EndDate)}
+                                </Text>
+                            </View>
+                        </View>
+                        
+                        {/* Location */}
+                        {(tournament.Venue || tournament.City) && (
+                            <View style={tournamentHeaderStyles.detailCard}>
+                                <Ionicons name="location-outline" size={20} color={colors.success} />
+                                <View>
+                                    <Text style={[tournamentHeaderStyles.detailLabel, { color: colors.textSecondary }]}>Location</Text>
+                                    <Text style={[tournamentHeaderStyles.detailValue, { color: colors.textPrimary }]} numberOfLines={2}>
+                                        {[tournament.Venue, tournament.City, tournament.Country].filter(Boolean).join(', ')}
+                                    </Text>
+                                </View>
+                            </View>
+                        )}
+                        
+                        {/* Match Count */}
+                        <View style={tournamentHeaderStyles.detailCard}>
+                            <Ionicons name="trophy-outline" size={20} color={colors.warning} />
+                            <View>
+                                <Text style={[tournamentHeaderStyles.detailLabel, { color: colors.textSecondary }]}>Matches</Text>
+                                <Text style={[tournamentHeaderStyles.detailValue, { color: colors.textPrimary }]}>
+                                    {matchCount} total
+                                </Text>
+                            </View>
+                        </View>
+                        
+                        {/* Season */}
+                        {tournament.Season && (
+                            <View style={tournamentHeaderStyles.detailCard}>
+                                <Ionicons name="time-outline" size={20} color={colors.info} />
+                                <View>
+                                    <Text style={[tournamentHeaderStyles.detailLabel, { color: colors.textSecondary }]}>Season</Text>
+                                    <Text style={[tournamentHeaderStyles.detailValue, { color: colors.textPrimary }]}>
+                                        {tournament.Season}
+                                    </Text>
+                                </View>
+                            </View>
+                        )}
+                    </View>
+                </View>
+            </LinearGradient>
+        </View>
+    );
+};
 
 // --- Constants & Icons (Ensure these are defined at the top level) ---
 const COLORS = { background: 'transparent', cardBackground: 'rgba(255, 255, 255, 0.12)', cardBorder: 'rgba(255, 255, 255, 0.25)', textHeader: '#FFA726', textPrimary: '#FFFFFF', textSecondary: '#FFCC80', textMuted: '#E0E0E0', score: '#FFA726', accent: '#FFB74D', accentLight: '#FFCC80', live: '#4CAF50', onBreak: '#FF9800', error: '#F87171', white: '#FFFFFF', black: '#000000', filterButton: 'rgba(255, 167, 38, 0.2)', filterButtonActive: '#FFA726', filterText: '#FFCC80', filterTextActive: '#000000', };
@@ -322,26 +440,18 @@ const TournamentDetailsScreen = () => {
             <Stack.Screen options={{ headerShown: false }} />
             {/* Custom Header */}
             <View style={styles.customHeader}>
-                 <TouchableOpacity onPress={() => router.back()} style={styles.backButton}><Ionicons name={ICONS.backArrow} size={26} color={COLORS.textHeader} /></TouchableOpacity>
-                 <Text style={styles.customHeaderTitle} numberOfLines={1}>{tournamentDetails.Name}</Text>
+                 <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+                     <Ionicons name={ICONS.backArrow} size={26} color={COLORS.textHeader} />
+                 </TouchableOpacity>
+                 <Text style={styles.customHeaderTitle} numberOfLines={1}>Tournament Details</Text>
                  <View style={styles.headerPlaceholder} />
             </View>
-            {/* Tournament Info */}
-            <View style={styles.tournamentHeader}>
-                 <Text style={styles.tournamentDates}>
-                     {formatSimpleDate(tournamentDetails.StartDate ?? null)} - {formatSimpleDate(tournamentDetails.EndDate ?? null)}
-                 </Text>
-                 {(tournamentDetails.Venue || tournamentDetails.City) && ( 
-                     <View style={styles.venueContainer}>
-                         <Ionicons name={ICONS.location} size={14} color={COLORS.textMuted} />
-                         <Text style={styles.tournamentVenue}>
-                             {tournamentDetails.Venue}{tournamentDetails.City ? `, ${tournamentDetails.City}` : ''}{tournamentDetails.Country ? ` (${tournamentDetails.Country})` : ''}
-                         </Text>
-                     </View> 
-                 )}
-                 {tournamentDetails.CommonNote && <Text style={styles.tournamentNote}>{tournamentDetails.CommonNote}</Text>}
-                 {tournamentDetails.Note && !tournamentDetails.CommonNote && <Text style={styles.tournamentNote}>{tournamentDetails.Note}</Text>}
-            </View>
+            
+            {/* Enhanced Tournament Header */}
+            <TournamentHeader 
+                tournament={tournamentDetails} 
+                matchCount={processedListData.filter(item => item.type === 'match').length}
+            />
             {/* Filter Buttons */}
              <View style={styles.filterContainer}>
                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScrollView}>
@@ -395,6 +505,74 @@ const TournamentDetailsScreen = () => {
         </SafeAreaView>
     );
 }; // End TournamentDetailsScreen
+
+// --- Tournament Header Styles ---
+const tournamentHeaderStyles = StyleSheet.create({
+    tournamentHeader: {
+        marginHorizontal: 16,
+        marginVertical: 12,
+        borderRadius: 16,
+        overflow: 'hidden',
+        elevation: 4,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+    },
+    headerGradient: {
+        padding: 20,
+    },
+    headerContent: {
+        gap: 16,
+    },
+    titleSection: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+    },
+    tournamentTitle: {
+        fontSize: 24,
+        fontFamily: 'PoppinsBold',
+        flex: 1,
+        marginRight: 12,
+    },
+    tourBadge: {
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 12,
+    },
+    tourBadgeText: {
+        color: '#FFFFFF',
+        fontSize: 12,
+        fontFamily: 'PoppinsBold',
+        letterSpacing: 0.5,
+    },
+    detailsGrid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 12,
+    },
+    detailCard: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        flex: 1,
+        minWidth: '45%',
+        gap: 12,
+    },
+    detailLabel: {
+        fontSize: 12,
+        fontFamily: 'PoppinsMedium',
+        marginBottom: 2,
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
+    },
+    detailValue: {
+        fontSize: 14,
+        fontFamily: 'PoppinsSemiBold',
+        lineHeight: 18,
+    },
+});
 
 // --- Styles --- (Copied from previous version)
 const styles = StyleSheet.create({ container: { flex: 1, backgroundColor: COLORS.background }, customHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: Platform.OS === 'android' ? 15 : 10, paddingHorizontal: 5, paddingBottom: 8, borderBottomColor: COLORS.cardBorder, borderBottomWidth: 1, backgroundColor: 'transparent' }, backButton: { padding: 10 }, customHeaderTitle: { flex: 1, fontSize: 19, fontFamily: 'PoppinsSemiBold', color: COLORS.textHeader, textAlign: 'center', marginHorizontal: 5 }, headerPlaceholder: { width: 44 }, tournamentHeader: { paddingHorizontal: 15, paddingTop: 10, paddingBottom: 10, alignItems: 'center', borderBottomColor: COLORS.cardBorder, borderBottomWidth: 1, marginBottom: 5 }, tournamentDates: { fontSize: 15, fontFamily: 'PoppinsSemiBold', color: COLORS.textSecondary, marginBottom: 5 }, venueContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: 5 }, tournamentVenue: { fontSize: 14, fontFamily: 'PoppinsRegular', color: COLORS.textMuted, marginLeft: 5, textAlign: 'center' }, tournamentNote: { fontSize: 13, fontFamily: 'PoppinsItalic', color: COLORS.textMuted, textAlign: 'center', marginTop: 5, paddingHorizontal: 10 }, filterContainer: { paddingVertical: 8, paddingHorizontal: 10, borderBottomColor: COLORS.cardBorder, borderBottomWidth: 1, marginBottom: 5 }, filterScrollView: { flexDirection: 'row', alignItems: 'center', paddingRight: 10 }, filterButton: { flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.filterButton, paddingVertical: 8, paddingHorizontal: 15, borderRadius: 15, marginRight: 8 }, filterButtonActive: { backgroundColor: COLORS.filterButtonActive }, filterText: { color: COLORS.filterText, fontSize: 14, fontFamily: 'PoppinsMedium', marginLeft: 6 }, filterTextActive: { color: COLORS.filterTextActive, fontFamily: 'PoppinsSemiBold' }, listArea: { flex: 1 }, listContentContainer: { paddingHorizontal: 12, paddingBottom: 20 }, centerContent: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 30 }, messageText: { textAlign: 'center', fontSize: 16, fontFamily: 'PoppinsRegular', color: COLORS.textMuted, marginTop: 15 }, retryButton: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 20, backgroundColor: COLORS.accent, borderRadius: 8, marginTop: 20 }, retryButtonText: { color: COLORS.white, fontSize: 16, fontFamily: 'PoppinsMedium', marginLeft: 8 }, backBtnError: { marginTop: 10, paddingVertical: 8, paddingHorizontal: 16, backgroundColor: '#4b5563', borderRadius: 5 }, statusHeaderItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 15, paddingHorizontal: 5, marginTop: 15, marginBottom: 8 }, statusHeaderText: { fontSize: 18, fontFamily: 'PoppinsSemiBold', color: COLORS.textHeader, marginLeft: 10, textTransform: 'uppercase', letterSpacing: 0.5 }, roundHeaderItem: { paddingVertical: 6, paddingHorizontal: 5, marginTop: 5, marginBottom: 4 }, roundHeaderText: { fontSize: 14, fontFamily: 'PoppinsSemiBold', color: COLORS.textSecondary, marginLeft: 10 }, matchItemContainer: { marginVertical: 8, borderRadius: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 3 }, matchItemContent: { backgroundColor: COLORS.cardBackground, paddingVertical: 10, paddingHorizontal: 15, borderRadius: 12, borderWidth: 1, borderColor: COLORS.cardBorder, overflow: 'hidden' }, statusIndicatorWrapper: { position: 'absolute', top: 8, right: 8, zIndex: 1 }, statusIndicator: { flexDirection: 'row', alignItems: 'center', borderRadius: 6, paddingVertical: 3, paddingHorizontal: 8 }, statusIndicatorText: { color: COLORS.white, fontSize: 10, fontFamily: 'PoppinsBold', marginLeft: 0 }, playerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, marginTop: 5 }, playerName: { fontSize: 16, fontFamily: 'PoppinsMedium', color: COLORS.textPrimary, flexShrink: 1, flexBasis: '40%' }, playerLeft: { textAlign: 'left', marginRight: 5 }, playerRight: { textAlign: 'right', marginLeft: 5, paddingRight: 55 }, winnerText: { fontFamily: 'PoppinsBold', color: COLORS.score }, score: { fontSize: 18, fontFamily: 'PoppinsBold', color: COLORS.score, textAlign: 'center', paddingHorizontal: 5 }, detailsRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 10, paddingTop: 10, borderTopColor: COLORS.cardBorder, borderTopWidth: 1 }, detailItem: { flexDirection: 'row', alignItems: 'center', flexShrink: 1, paddingRight: 5 }, detailText: { fontSize: 13, fontFamily: 'PoppinsRegular', color: COLORS.textSecondary, marginLeft: 6, flexShrink: 1 }, });

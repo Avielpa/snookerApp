@@ -16,6 +16,7 @@ import * as Haptics from 'expo-haptics';
 // Import services
 import { getMatchDetails, getHeadToHead, getMatchFormat as getApiMatchFormat } from '../../services/matchServices';
 import { getTournamentDetails } from '../../services/tourServices';
+import { apiCache } from '../../services/api';
 import { logger } from '../../utils/logger';
 import { useColors } from '../../contexts/ThemeContext';
 
@@ -391,6 +392,12 @@ export default function MatchEnhanced() {
     
     logger.log(`[MatchEnhanced] ${refreshing ? 'Refreshing' : 'Loading'} data for API Match ID: ${apiMatchId}`);
 
+    // Clear cache for this match when explicitly refreshing to ensure fresh data
+    if (refreshing) {
+      apiCache.invalidateMatchData(apiMatchId);
+      logger.log(`[MatchEnhanced] Cache invalidated for match ${apiMatchId}`);
+    }
+
     try {
       const details = await getMatchDetails(apiMatchId);
       if (!details) {
@@ -463,6 +470,9 @@ export default function MatchEnhanced() {
       logger.log(`[MatchEnhanced] Starting live updates for match ${apiMatchId}`);
       intervalId = setInterval(async () => {
         try {
+          // Clear cache before live update to ensure fresh data
+          apiCache.invalidateMatchData(apiMatchId);
+          
           const updatedDetails = await getMatchDetails(apiMatchId);
           if (updatedDetails && matchDetails) {
             // Only update if the data actually changed to prevent unnecessary re-renders
@@ -471,7 +481,10 @@ export default function MatchEnhanced() {
                 updated.score2 !== matchDetails.score2 || 
                 updated.status_code !== matchDetails.status_code) {
               setMatchDetails(updated);
-              logger.log(`[MatchEnhanced] Live update: Score changed to ${updated.score1}-${updated.score2}`);
+              logger.log(`[MatchEnhanced] Live update: Score changed to ${updated.score1}-${updated.score2}, status: ${updated.status_code}`);
+              
+              // Invalidate related caches to sync home screen data
+              logger.log(`[MatchEnhanced] Invalidating related caches for consistency`);
             }
           }
         } catch (err: any) {

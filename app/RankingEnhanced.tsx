@@ -203,30 +203,29 @@ export default function RankingEnhanced() {
     return (
       <TouchableOpacity
         key={option.id}
-        style={[styles.filterButton, isSelected && styles.filterButtonActive]}
-        onPress={() => handleFilterPress(option.id)}
-        activeOpacity={0.6}
-        hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
-        delayPressIn={0}
-      >
-        <LinearGradient
-          colors={isSelected 
-            ? [option.color, `${option.color}80`] 
-            : ['rgba(255, 255, 255, 0.1)', 'rgba(255, 255, 255, 0.05)']
+        style={[
+          styles.filterButton,
+          {
+            backgroundColor: isSelected ? option.color : colors.cardBackground,
+            borderColor: isSelected ? option.color : colors.cardBorder,
+            borderWidth: 1,
           }
-          style={styles.filterGradient}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-        >
-          <Ionicons 
-            name={option.icon} 
-            size={20} 
-            color={isSelected ? colors.textPrimary : colors.textSecondary} 
-          />
-          <Text style={[styles.filterText, isSelected && styles.filterTextActive]}>
-            {option.label}
-          </Text>
-        </LinearGradient>
+        ]}
+        onPress={() => handleFilterPress(option.id)}
+        activeOpacity={0.7}
+        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+      >
+        <Ionicons 
+          name={option.icon} 
+          size={20} 
+          color={isSelected ? '#FFFFFF' : colors.textPrimary} 
+        />
+        <Text style={[
+          styles.filterText, 
+          { color: isSelected ? '#FFFFFF' : colors.textPrimary }
+        ]}>
+          {option.label}
+        </Text>
       </TouchableOpacity>
     );
   };
@@ -427,24 +426,13 @@ const createRankingStyles = (colors: any) => StyleSheet.create({
   filterButton: {
     marginRight: 12,
     borderRadius: 20,
-    overflow: 'hidden',
     minHeight: 44,
     minWidth: 90,
-  },
-  filterButtonActive: {
-    elevation: 4,
-    shadowColor: '#FFA726',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-  },
-  filterGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    minHeight: 44,
   },
   filterText: {
     marginLeft: 8,
