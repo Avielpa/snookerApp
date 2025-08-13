@@ -212,8 +212,9 @@ export default function RankingEnhanced() {
           }
         ]}
         onPress={() => handleFilterPress(option.id)}
-        activeOpacity={0.7}
-        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        activeOpacity={0.8}
+        hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+        delayPressIn={50}
       >
         <Ionicons 
           name={option.icon} 
@@ -426,13 +427,18 @@ const createRankingStyles = (colors: any) => StyleSheet.create({
   filterButton: {
     marginRight: 12,
     borderRadius: 20,
-    minHeight: 44,
-    minWidth: 90,
+    minHeight: 48,
+    minWidth: 100,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+    elevation: 2,
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   filterText: {
     marginLeft: 8,

@@ -1,5 +1,6 @@
 // app/match/utils/frameScoreParser.ts
 import { FrameScore } from '../types';
+import { logger } from '../../../utils/logger';
 
 /**
  * Parses HTML-formatted frame scores string into structured FrameScore objects
@@ -58,7 +59,7 @@ export function parseFrameScoresString(frameScoresString: string): FrameScore[] 
       }
     }
   } catch (error) {
-    console.error('[frameScoreParser] Error parsing frame scores:', error);
+    logger.error('[frameScoreParser] Error parsing frame scores:', error);
     return [];
   }
 
@@ -106,7 +107,7 @@ function parseIndividualFrame(frameString: string, frameNumber: number): FrameSc
       ...breakInfo, // Add player1Break and/or player2Break if available
     };
   } catch (error) {
-    console.error(`[frameScoreParser] Error parsing individual frame "${frameString}":`, error);
+    logger.error(`[frameScoreParser] Error parsing individual frame "${frameString}":`, error);
     return null;
   }
 }

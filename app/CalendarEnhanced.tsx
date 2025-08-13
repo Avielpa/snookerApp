@@ -34,11 +34,13 @@ interface Tournament {
   City?: string | null;
   Country?: string | null;
   Type?: string | null;
+  // Prize money fields (API might return either format)
+  prizeMoney?: string;
+  prize_money?: any;
   // Computed fields
   status?: 'active' | 'upcoming' | 'past';
   daysRemaining?: number;
   duration?: number;
-  prizeMoney?: string;
   isLive?: boolean;
   progress?: number;
 }
@@ -296,8 +298,9 @@ export default function CalendarEnhanced() {
           }
         ]}
         onPress={() => handleTabPress(option.id)}
-        activeOpacity={0.7}
-        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        activeOpacity={0.8}
+        hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+        delayPressIn={50}
       >
         <Ionicons 
           name={option.icon} 
@@ -381,13 +384,11 @@ export default function CalendarEnhanced() {
             </View>
             
             {/* Prize Money */}
-            {item.prizeMoney && (
+            {(item.prizeMoney || item.prize_money) && (
               <View style={styles.prizeContainer}>
-                {item.prizeMoney && (
-                  <Text style={styles.prizeMoney}>
-                    🏆 {item.prizeMoney}
-                  </Text>
-                )}
+                <Text style={styles.prizeMoney}>
+                  🏆 {item.prizeMoney || item.prize_money}
+                </Text>
               </View>
             )}
           </View>
@@ -530,8 +531,9 @@ export default function CalendarEnhanced() {
                   }
                 ]}
                 onPress={() => handleStatusPress(option.id)}
-                activeOpacity={0.7}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                activeOpacity={0.8}
+                hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+                delayPressIn={50}
               >
                 <Ionicons 
                   name={option.icon} 
@@ -619,13 +621,18 @@ const createCalendarStyles = (colors: any) => StyleSheet.create({
   filterButton: {
     marginRight: 12,
     borderRadius: 20,
-    minHeight: 44,
-    minWidth: 90,
+    minHeight: 48,
+    minWidth: 100,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+    elevation: 2,
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   filterText: {
     marginLeft: 8,

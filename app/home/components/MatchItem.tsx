@@ -3,6 +3,8 @@ import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { logger } from '../../../utils/logger';
+import { TOUCH_SLOP, MATCH_CONSTANTS } from '../../../utils/constants';
+import { getMatchPlayerNames, areScoresValid, normalizeScore } from '../../../utils/playerUtils';
 import { GlassCard } from '../../components/modern/GlassCard';
 import { LiveIndicator } from '../../components/modern/LiveIndicator';
 import { MatchListItem } from '../types';
@@ -25,21 +27,18 @@ export const MatchItem = React.memo(({
     const COLORS = useHomeColors();
     const styles = createStyles(COLORS);
     
-    const player1Name = item.player1_name || (item.player1_id && item.player1_id !== 376 ? `P${item.player1_id}` : 'TBD');
-    const player2Name = item.player2_name || (item.player2_id && item.player2_id !== 376 ? `P${item.player2_id}` : 'TBD');
+    // Get formatted player names using utility function
+    const { player1Name, player2Name } = getMatchPlayerNames(item);
     
-    // Enhanced score validation and consistent display
-    const hasValidScores = (
-        item.score1 !== null && item.score1 !== undefined && 
-        item.score2 !== null && item.score2 !== undefined &&
-        typeof item.score1 === 'number' && typeof item.score2 === 'number'
-    );
-    
-    const scoreDisplay = hasValidScores ? `${item.score1} - ${item.score2}` : 'vs';
+    // Enhanced score validation and consistent display using utility functions
+    const hasValidScores = areScoresValid(item.score1, item.score2);
+    const score1 = normalizeScore(item.score1);
+    const score2 = normalizeScore(item.score2);
+    const scoreDisplay = hasValidScores ? `${score1} - ${score2}` : 'vs';
     
     const scheduledDate = formatDate(item.scheduled_date);
     // Enhanced winner validation - check both winner_id and scores for consistency
-    const isMatchFinished = item.status_code === 3;
+    const isMatchFinished = item.status_code === MATCH_CONSTANTS.STATUS.FINISHED;
     const hasWinnerId = item.winner_id != null && item.winner_id !== undefined;
     
     let isPlayer1Winner = false;
@@ -52,8 +51,8 @@ export const MatchItem = React.memo(({
             isPlayer2Winner = item.winner_id === item.player2_id;
         } else if (hasValidScores) {
             // Fallback to score comparison if no winner_id
-            isPlayer1Winner = item.score1! > item.score2!;
-            isPlayer2Winner = item.score2! > item.score1!;
+            isPlayer1Winner = score1 > score2;
+            isPlayer2Winner = score2 > score1;
         }
     }
     
@@ -75,8 +74,8 @@ export const MatchItem = React.memo(({
         <TouchableOpacity 
             onPress={() => handleMatchPress(item.api_match_id)} 
             disabled={!item.api_match_id} 
-            activeOpacity={0.6}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            activeOpacity={0.8}
+            hitSlop={TOUCH_SLOP.MEDIUM}
             delayPressIn={0}
         >
             <GlassCard style={styles.matchItemContainer}>

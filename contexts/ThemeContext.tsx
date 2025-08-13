@@ -60,39 +60,39 @@ export interface Colors {
 // Light theme colors
 export const lightColors: Colors = {
   // Background colors
-  background: '#FFFFFF',
-  backgroundSecondary: '#F8FAFC',
-  backgroundTertiary: '#F1F5F9',
+  background: '#FAFAFA',
+  backgroundSecondary: '#F5F5F5',
+  backgroundTertiary: '#EEEEEE',
   
   // Card colors
   cardBackground: '#FFFFFF',
-  cardBorder: 'rgba(0, 0, 0, 0.08)',
+  cardBorder: 'rgba(0, 0, 0, 0.12)',
   
   // Text colors
-  textPrimary: '#1E293B',
-  textSecondary: '#475569',
-  textMuted: '#64748B',
-  textHeader: '#FFA726',
+  textPrimary: '#212121',
+  textSecondary: '#424242',
+  textMuted: '#757575',
+  textHeader: '#E65100',
   
   // Brand colors
-  primary: '#FFA726',
-  primaryDark: '#FF8F00',
-  secondary: '#FFCC80',
+  primary: '#FF8F00',
+  primaryDark: '#E65100',
+  secondary: '#FFB74D',
   
   // Status colors
-  success: '#4CAF50',
-  warning: '#FF9800',
-  error: '#F44336',
-  info: '#2196F3',
+  success: '#388E3C',
+  warning: '#F57C00',
+  error: '#D32F2F',
+  info: '#1976D2',
   
   // Interactive colors
   live: '#4CAF50',
   onBreak: '#FF9800',
   
   // Filter colors
-  filterButton: 'rgba(255, 167, 38, 0.1)',
-  filterButtonActive: '#FFA726',
-  filterText: '#475569',
+  filterButton: 'rgba(255, 143, 0, 0.08)',
+  filterButtonActive: '#FF8F00',
+  filterText: '#424242',
   filterTextActive: '#FFFFFF',
   
   // Misc colors
@@ -102,31 +102,31 @@ export const lightColors: Colors = {
   skeleton: '#E2E8F0',
   
   // Tab colors
-  tabBackground: 'rgba(255, 167, 38, 0.05)',
-  tabActive: '#FFA726',
-  tabInactive: '#64748B',
+  tabBackground: 'rgba(255, 143, 0, 0.06)',
+  tabActive: '#FF8F00',
+  tabInactive: '#757575',
 };
 
 // Dark theme colors
 export const darkColors: Colors = {
   // Background colors
-  background: '#0F172A',
-  backgroundSecondary: '#1E293B',
-  backgroundTertiary: '#334155',
+  background: '#121212',
+  backgroundSecondary: '#1E1E1E',
+  backgroundTertiary: '#2C2C2C',
   
   // Card colors
-  cardBackground: 'rgba(255, 255, 255, 0.12)',
-  cardBorder: 'rgba(255, 255, 255, 0.25)',
+  cardBackground: 'rgba(255, 255, 255, 0.08)',
+  cardBorder: 'rgba(255, 255, 255, 0.16)',
   
   // Text colors
   textPrimary: '#FFFFFF',
-  textSecondary: '#94A3B8',
-  textMuted: '#64748B',
-  textHeader: '#FFA726',
+  textSecondary: '#B3B3B3',
+  textMuted: '#999999',
+  textHeader: '#FFB74D',
   
   // Brand colors
-  primary: '#FFA726',
-  primaryDark: '#FF8F00',
+  primary: '#FFB74D',
+  primaryDark: '#FFA726',
   secondary: '#FFCC80',
   
   // Status colors
@@ -140,10 +140,10 @@ export const darkColors: Colors = {
   onBreak: '#FF9800',
   
   // Filter colors
-  filterButton: 'rgba(255, 167, 38, 0.2)',
-  filterButtonActive: '#FFA726',
-  filterText: '#FFCC80',
-  filterTextActive: '#000000',
+  filterButton: 'rgba(255, 183, 77, 0.12)',
+  filterButtonActive: '#FFB74D',
+  filterText: '#B3B3B3',
+  filterTextActive: '#121212',
   
   // Misc colors
   white: '#FFFFFF',
@@ -152,9 +152,9 @@ export const darkColors: Colors = {
   skeleton: '#334155',
   
   // Tab colors
-  tabBackground: 'rgba(255, 167, 38, 0.1)',
-  tabActive: '#FFA726',
-  tabInactive: '#64748B',
+  tabBackground: 'rgba(255, 183, 77, 0.08)',
+  tabActive: '#FFB74D',
+  tabInactive: '#999999',
 };
 
 export interface Theme {

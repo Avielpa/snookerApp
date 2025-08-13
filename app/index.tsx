@@ -11,6 +11,7 @@ import {
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { TOUCH_SLOP } from '../utils/constants';
 
 // --- Imports ---
 import { ListItem, ActiveFilterType, FilterButton } from './home/types';
@@ -125,8 +126,8 @@ const HomeScreen = (): React.ReactElement | null => {
                                     activeFilter === filter.value && styles.filterButtonActive
                                 ]}
                                 onPress={() => setActiveFilter(filter.value)}
-                                activeOpacity={0.6}
-                                hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+                                activeOpacity={0.8}
+                                hitSlop={TOUCH_SLOP.MEDIUM}
                                 delayPressIn={0}
                             >
                                 <Ionicons 
@@ -157,8 +158,8 @@ const HomeScreen = (): React.ReactElement | null => {
                                         selectedOtherTour === tour.ID && styles.otherTourChipActive
                                     ]}
                                     onPress={() => handleOtherTourSelection(tour.ID)}
-                                    activeOpacity={0.6}
-                                    hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+                                    activeOpacity={0.8}
+                                    hitSlop={TOUCH_SLOP.MEDIUM}
                                     delayPressIn={0}
                                 >
                                     <Text style={[
