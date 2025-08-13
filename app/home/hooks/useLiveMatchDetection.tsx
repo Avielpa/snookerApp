@@ -44,7 +44,7 @@ export const useLiveMatchDetection = ({
       // Handle different date formats from your API
       const date = new Date(timeString);
       return isNaN(date.getTime()) ? null : date;
-    } catch (error) {
+    } catch {
       logger.warn(`[LiveDetection] Failed to parse match time: ${timeString}`);
       return null;
     }

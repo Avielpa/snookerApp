@@ -8,7 +8,7 @@ import {
   RefreshControl,
   Alert,
 } from 'react-native';
-import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
+import { useLocalSearchParams, Stack } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -50,7 +50,6 @@ export default function MatchEnhanced() {
     return !isNaN(id) ? id : null;
   }, [params.matchId]);
 
-  const router = useRouter();
   const colors = useColors();
 
   // State management
@@ -258,7 +257,7 @@ export default function MatchEnhanced() {
       logger.error('[MatchEnhanced] Error parsing frame scores:', error);
       return [];
     }
-  }, [matchDetails]);
+  }, [matchDetails, realMatchFormat]);
 
   const matchStats = useMemo((): MatchStats => {
     if (!matchDetails) {
@@ -375,7 +374,7 @@ export default function MatchEnhanced() {
     } finally {
       setH2hLoading(false);
     }
-  }, []);
+  }, [h2hLoading]);
 
   // Load match data
   const loadData = useCallback(async (refreshing = false) => {
@@ -453,7 +452,7 @@ export default function MatchEnhanced() {
       setLoading(false);
       setIsRefreshing(false);
     }
-  }, [apiMatchId]);
+  }, [apiMatchId, h2hData, loadH2HData, loadRealMatchFormat, realMatchFormat, tournamentName]);
 
   // Auto-refresh for live matches - simplified to prevent infinite loops
   useEffect(() => {
@@ -487,7 +486,7 @@ export default function MatchEnhanced() {
         clearInterval(intervalId);
       }
     };
-  }, [matchDetails?.status_code, apiMatchId, matchDetails?.score1, matchDetails?.score2]);
+  }, [matchDetails?.status_code, apiMatchId, matchDetails?.score1, matchDetails?.score2, matchDetails]);
 
   useEffect(() => {
     checkLoginStatus();
@@ -500,7 +499,7 @@ export default function MatchEnhanced() {
       setError("Invalid Match ID.");
       setLoading(false);
     }
-  }, [apiMatchId]); // Remove loadData and loading from dependencies to prevent infinite loops
+  }, [apiMatchId, loadData]); // Add loadData dependency
 
   // Handle player prediction
   const handlePrediction = useCallback((player: 1 | 2) => {
@@ -525,10 +524,6 @@ export default function MatchEnhanced() {
   // Prepare display data
   const p1Name = matchDetails?.player1_name ?? 'TBD';
   const p2Name = matchDetails?.player2_name ?? 'TBD';
-  const score1 = matchDetails?.score1 ?? 0;
-  const score2 = matchDetails?.score2 ?? 0;
-  const isLive = matchDetails?.status_code === 1;
-  const isOnBreak = matchDetails?.status_code === 2;
   const isFinished = matchDetails?.status_code === 3;
 
   // Create styles with dynamic colors

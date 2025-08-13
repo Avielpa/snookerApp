@@ -1,5 +1,5 @@
 // components/modern/SearchBox.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   TextInput,
   StyleSheet,
@@ -34,7 +34,7 @@ export const SearchBox: React.FC<SearchBoxProps> = ({
 }) => {
   const [isFocused, setIsFocused] = useState(false);
   const [searchText, setSearchText] = useState(value);
-  const focusAnim = new Animated.Value(0);
+  const focusAnim = useMemo(() => new Animated.Value(0), []);
 
   useEffect(() => {
     setSearchText(value);

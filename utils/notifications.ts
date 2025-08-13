@@ -102,7 +102,10 @@ export class NotificationManager {
         
         const notificationId = await Notifications.scheduleNotificationAsync({
           content: notificationContent,
-          trigger: { seconds: triggerSeconds },
+          trigger: { 
+            type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+            seconds: triggerSeconds 
+          },
         });
         
         this.scheduledNotifications.set(matchId, notificationId);

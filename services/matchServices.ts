@@ -1,7 +1,6 @@
 // services/matchServices.ts
 import { api } from "./api";
 import { logger } from "../utils/logger";
-import { getTournamentDetails } from "./tourServices";
 
 // TypeScript interfaces for type safety
 export interface Player {

@@ -126,25 +126,6 @@ export default function CalendarEnhanced() {
   }, []);
 
 
-  // Check if tournament is in current season based on API season value
-  const isCurrentSeason = useCallback((tournament: Tournament) => {
-    if (!tournament.StartDate) return false;
-    
-    const tournamentDate = new Date(tournament.StartDate);
-    const tournamentYear = tournamentDate.getFullYear();
-    
-    // Get current calendar year
-    const currentCalendarYear = new Date().getFullYear();
-    
-    // Snooker seasons span two calendar years (e.g., 2025/2026)
-    // Current season tournaments are either:
-    // 1. In the current calendar year (2025) - main season
-    // 2. In early next year (2026) - same season continuation
-    const isCurrentSeasonYear = tournamentYear === currentCalendarYear;
-    const isNextYearEarlySeason = tournamentYear === (currentCalendarYear + 1) && tournamentDate.getMonth() <= 5; // Up to May
-    
-    return isCurrentSeasonYear || isNextYearEarlySeason;
-  }, []);
 
   // Fetch tournaments by tab
   const fetchTournaments = useCallback(async (tabType: string = 'main', isRefresh = false) => {

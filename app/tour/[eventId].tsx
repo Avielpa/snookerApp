@@ -252,7 +252,7 @@ const TournamentDetailsScreen = () => {
         } else { 
             setError("Invalid Event ID provided."); 
         } 
-    }, [eventId]); // ✅ Only eventId dependency to prevent infinite loops
+    }, [eventId, loadData]); // Add loadData dependency
 
     // Filtering logic
     const filteredListData = useMemo(() => { 
