@@ -28,9 +28,9 @@ export const useLiveMatchDetection = ({
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const notificationSentRef = useRef<Set<number>>(new Set());
 
-  // Get current time in Israel timezone
-  const getCurrentIsraeliTime = useCallback(() => {
-    return new Date().toLocaleString('en-US', { timeZone: 'Asia/Jerusalem' });
+  // Get current UTC time
+  const getCurrentUTCTime = useCallback(() => {
+    return new Date(); // JavaScript Date is always in UTC when working with timestamps
   }, []);
 
   // Parse match scheduled time and convert to Date
@@ -52,10 +52,9 @@ export const useLiveMatchDetection = ({
 
   // Check if a match is starting soon or live
   const analyzeMatches = useCallback(() => {
-    const now = new Date();
-    const israeliTime = new Date(getCurrentIsraeliTime());
+    const now = getCurrentUTCTime();
     
-    logger.debug(`[LiveDetection] Analyzing matches at ${israeliTime.toLocaleString()}`);
+    logger.debug(`[LiveDetection] Analyzing matches at ${now.toISOString()} UTC`);
     
     let foundLiveMatch = false;
     let nextUpcomingMatch: { match: Match; minutesUntilStart: number } | null = null;
@@ -77,7 +76,7 @@ export const useLiveMatchDetection = ({
         const timeDifferenceMs = matchTime.getTime() - now.getTime();
         const minutesUntilStart = Math.round(timeDifferenceMs / (1000 * 60));
         
-        logger.debug(`[LiveDetection] Match ${match.player1_name} vs ${match.player2_name} starts in ${minutesUntilStart} minutes`);
+        logger.debug(`[LiveDetection] Match ${match.player1_name} vs ${match.player2_name} starts in ${minutesUntilStart} minutes (UTC)`);
         
         // Check if match is starting within our notification window
         if (minutesUntilStart > 0 && minutesUntilStart <= preStartNotificationMinutes) {
@@ -113,7 +112,7 @@ export const useLiveMatchDetection = ({
     }
     
     return { foundLiveMatch, nextUpcomingMatch };
-  }, [matches, getCurrentIsraeliTime, parseMatchTime, preStartNotificationMinutes, onLiveMatchDetected, onMatchStartingSoon]);
+  }, [matches, getCurrentUTCTime, parseMatchTime, preStartNotificationMinutes, onLiveMatchDetected, onMatchStartingSoon]);
 
   // Start monitoring for live matches
   const startMonitoring = useCallback(() => {

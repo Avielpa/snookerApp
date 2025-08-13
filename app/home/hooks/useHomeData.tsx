@@ -161,7 +161,7 @@ export const useHomeData = () => {
         matches: currentMatches,
         onLiveMatchDetected: handleLiveMatchDetected,
         onMatchStartingSoon: handleMatchStartingSoon,
-        updateInterval: 30000, // Check every 30 seconds
+        updateInterval: 60000, // Check every 60 seconds
         preStartNotificationMinutes: 5 // Alert 5 minutes before match starts
     });
 
