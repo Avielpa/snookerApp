@@ -4,10 +4,12 @@ import { logger } from '../utils/logger';
 
 // --- Configuration ---
 // Dynamic API URL based on environment
-const API_BASE_URL: string = process.env.EXPO_PUBLIC_API_URL || 
-  (process.env.NODE_ENV === 'production' 
-    ? 'https://snookerapp.up.railway.app/oneFourSeven/'
-    : 'http://10.0.2.2:8000/oneFourSeven/');
+const API_BASE_URL = 'https://snookerapp.up.railway.app/oneFourSeven/';
+
+// : string = process.env.EXPO_PUBLIC_API_URL || 
+//   (process.env.NODE_ENV === 'production' 
+//     ? 'https://snookerapp.up.railway.app/oneFourSeven/'
+//     : 'http://10.0.2.2:8000/oneFourSeven/');
 
 // BACKUP URLs for debugging
 /*

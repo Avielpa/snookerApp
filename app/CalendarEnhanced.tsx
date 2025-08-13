@@ -204,7 +204,7 @@ export default function CalendarEnhanced() {
   // Tab options for tour type separation
   const tabOptions: FilterOption[] = useMemo(() => [
     { id: 'main', label: 'Main Tours', icon: 'trophy-outline', color: colors.primary },
-    { id: 'others', label: 'Others', icon: 'star-outline', color: colors.accent },
+    { id: 'others', label: 'Others', icon: 'star-outline', color: colors.secondary },
   ], [colors]);
 
   // Status filter options
@@ -217,7 +217,7 @@ export default function CalendarEnhanced() {
     return [
       { id: 'all', label: 'All', icon: 'apps-outline', color: colors.primary, count: all },
       { id: 'active', label: 'Live', icon: 'radio-outline', color: colors.success, count: live },
-      { id: 'upcoming', label: 'Upcoming', icon: 'calendar-outline', color: colors.accent, count: upcoming },
+      { id: 'upcoming', label: 'Upcoming', icon: 'calendar-outline', color: colors.primary, count: upcoming },
       { id: 'past', label: 'Past', icon: 'checkmark-done-outline', color: colors.textSecondary, count: past },
     ];
   }, [allTournaments, colors]);
@@ -367,7 +367,7 @@ export default function CalendarEnhanced() {
     const getStatusColor = () => {
       switch (item.status) {
         case 'active': return colors.warning;
-        case 'upcoming': return colors.accent;
+        case 'upcoming': return colors.primary;
         case 'past': return colors.textSecondary;
         default: return colors.primary;
       }
@@ -399,16 +399,11 @@ export default function CalendarEnhanced() {
             </View>
             
             {/* Prize Money */}
-            {item.prize_money && (
+            {item.prizeMoney && (
               <View style={styles.prizeContainer}>
-                {item.prize_money.winner && (
+                {item.prizeMoney && (
                   <Text style={styles.prizeMoney}>
-                    🏆 {item.prize_money.winner.formatted}
-                  </Text>
-                )}
-                {item.prize_money.runner_up && (
-                  <Text style={styles.runnerUpPrize}>
-                    🥈 {item.prize_money.runner_up.formatted}
+                    🏆 {item.prizeMoney}
                   </Text>
                 )}
               </View>
