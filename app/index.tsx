@@ -21,6 +21,7 @@ import { MatchItem } from './home/components/MatchItem';
 import { StatusHeaderItem } from './home/components/StatusHeaderItem';
 import { RoundHeaderItem } from './home/components/RoundHeaderItem';
 import { LoadingComponent, ErrorComponent, EmptyComponent } from './home/components/StateComponents';
+import { LiveIndicatorBar } from './home/components/LiveIndicatorBar';
 import { ICONS } from './home/utils/icons';
 
 const HomeScreen = (): React.ReactElement | null => {
@@ -38,7 +39,10 @@ const HomeScreen = (): React.ReactElement | null => {
         activeOtherTours,
         selectedOtherTour,
         loadTournamentInfo,
-        handleOtherTourSelection
+        handleOtherTourSelection,
+        isMonitoring,
+        nextMatchInfo,
+        liveUpdateCount
     } = useHomeData();
 
 
@@ -102,6 +106,14 @@ const HomeScreen = (): React.ReactElement | null => {
                     <Text style={styles.screenTitle}>Snooker Live</Text>
                     {tourName && <Text style={styles.tourTitle}>{tourName}</Text>}
                 </View>
+                
+                {/* Live Match Detection Indicator */}
+                <LiveIndicatorBar
+                    isMonitoring={isMonitoring}
+                    nextMatchInfo={nextMatchInfo}
+                    liveUpdateCount={liveUpdateCount}
+                    colors={COLORS}
+                />
                 
                 <View style={styles.filterContainer}>
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScrollView}>

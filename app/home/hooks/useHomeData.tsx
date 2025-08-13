@@ -4,15 +4,19 @@ import { getActiveTournamentId, getTournamentDetails, getTournamentMatches, getA
 import { logger } from '../../../utils/logger';
 import { Match, EventDetails, ListItem } from '../types';
 import { processMatchesForList } from '../utils/matchProcessing';
+import { useLiveMatchDetection } from './useLiveMatchDetection';
+import { notificationManager } from '../../../utils/notifications';
 
 export const useHomeData = () => {
     const [processedListData, setProcessedListData] = useState<ListItem[]>([]);
+    const [currentMatches, setCurrentMatches] = useState<Match[]>([]);
     const [tourName, setTourName] = useState<string | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
     const [refreshing, setRefreshing] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
     const [activeOtherTours, setActiveOtherTours] = useState<Event[]>([]);
     const [selectedOtherTour, setSelectedOtherTour] = useState<number | null>(null);
+    const [liveUpdateCount, setLiveUpdateCount] = useState<number>(0);
 
     // Load tournament information
     const loadTournamentInfo = useCallback(async (isRefresh = false, specificTournamentId: number | null = null) => {
@@ -76,6 +80,7 @@ export const useHomeData = () => {
                     }, {} as Record<string, number>)
                 });
                 
+                setCurrentMatches(currentMatches);
                 setProcessedListData(processedData);
             } else {
                 logger.warn(`[HomeScreen] No active tournament ID found`);
@@ -96,6 +101,8 @@ export const useHomeData = () => {
     }, []);
 
     useEffect(() => {
+        // Request notification permissions on first load
+        notificationManager.requestPermissions();
         loadTournamentInfo();
     }, [loadTournamentInfo]);
     
@@ -112,6 +119,52 @@ export const useHomeData = () => {
         }
     }, [selectedOtherTour, loadTournamentInfo]);
 
+    // Automatic live match detection
+    const handleLiveMatchDetected = useCallback(() => {
+        logger.log(`[HomeScreen] 🔴 Live match detected - triggering automatic update #${liveUpdateCount + 1}`);
+        setLiveUpdateCount(prev => prev + 1);
+        loadTournamentInfo(true, selectedOtherTour); // Refresh current tournament
+    }, [loadTournamentInfo, selectedOtherTour, liveUpdateCount]);
+
+    const handleMatchStartingSoon = useCallback(async (minutesUntilStart: number) => {
+        logger.log(`[HomeScreen] ⏰ Match starting in ${minutesUntilStart} minutes - preparing for live updates`);
+        
+        // Find the match that's starting soon
+        const upcomingMatch = currentMatches.find(match => {
+            if (match.status_code !== 0) return false; // Only scheduled matches
+            
+            const matchTime = match.scheduled_date || match.start_date;
+            if (!matchTime) return false;
+            
+            const now = new Date();
+            const matchDate = new Date(matchTime);
+            const timeDifferenceMs = matchDate.getTime() - now.getTime();
+            const matchMinutesUntilStart = Math.round(timeDifferenceMs / (1000 * 60));
+            
+            return Math.abs(matchMinutesUntilStart - minutesUntilStart) <= 1; // Within 1 minute tolerance
+        });
+        
+        if (upcomingMatch) {
+            // Send push notification
+            await notificationManager.scheduleMatchStartingSoon({
+                matchId: String(upcomingMatch.id || upcomingMatch.api_match_id || 0),
+                player1: upcomingMatch.player1_name || 'Player 1',
+                player2: upcomingMatch.player2_name || 'Player 2',
+                minutesUntilStart,
+                tournamentName: tourName || undefined
+            });
+        }
+    }, [currentMatches, tourName]);
+
+    // Initialize live match detection
+    const { isMonitoring, nextMatchInfo } = useLiveMatchDetection({
+        matches: currentMatches,
+        onLiveMatchDetected: handleLiveMatchDetected,
+        onMatchStartingSoon: handleMatchStartingSoon,
+        updateInterval: 30000, // Check every 30 seconds
+        preStartNotificationMinutes: 5 // Alert 5 minutes before match starts
+    });
+
     return {
         processedListData,
         tourName,
@@ -121,6 +174,10 @@ export const useHomeData = () => {
         activeOtherTours,
         selectedOtherTour,
         loadTournamentInfo,
-        handleOtherTourSelection
+        handleOtherTourSelection,
+        // Live detection info
+        isMonitoring,
+        nextMatchInfo,
+        liveUpdateCount
     };
 };

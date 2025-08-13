@@ -157,7 +157,7 @@ export default function CalendarEnhanced() {
     try {
       const response = await getCalendarByTab(tabType);
       if (!response) {
-        throw new Error('No data received from calendar API');
+        throw new Error(`Failed to load ${tabType} tournaments`);
       }
 
       // Combine all tournament statuses into one array and normalize field names
@@ -189,7 +189,8 @@ export default function CalendarEnhanced() {
       logger.log(`[CalendarEnhanced] Loaded ${enhancedData.length} ${tabType} tournaments`);
     } catch (err: any) {
       logger.error(`[CalendarEnhanced] Error fetching ${tabType} tournaments:`, err);
-      setError('Failed to load tournaments. Please try again.');
+      const errorMessage = err.message || `Failed to load ${tabType} tournaments`;
+      setError(errorMessage);
       setAllTournaments([]);
     } finally {
       setLoading(false);
@@ -276,6 +277,7 @@ export default function CalendarEnhanced() {
     logger.log(`[Calendar] Tab pressed: ${tabId}, current: ${selectedTab}`);
     if (tabId !== selectedTab) {
       setSelectedTab(tabId);
+      setError(null); // Clear any previous errors
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       logger.log(`[Calendar] Tab changed to: ${tabId}`);
     } else {

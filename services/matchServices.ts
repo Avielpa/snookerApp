@@ -229,8 +229,11 @@ export const getRanking = async (rankingType?: string): Promise<{ rankings: Rank
     } catch (error: any) {
         const status = error.response?.status;
         const errorData = error.response?.data;
-        logger.error(`[MatchService] Error fetching ranking (Status: ${status}):`, errorData || error.message);
-        return { rankings: [] };
+        const userFriendlyMessage = error.userFriendlyMessage || `Failed to load ${rankingType} rankings`;
+        logger.error(`[MatchService] Error fetching ${rankingType} rankings (Status: ${status}):`, errorData || error.message);
+        
+        // Re-throw error with user-friendly message for UI
+        throw new Error(userFriendlyMessage);
     }
 };
 
@@ -344,8 +347,11 @@ export const getCalendarByTab = async (tabType: string = 'main'): Promise<any> =
     } catch (error: any) {
         const status = error.response?.status;
         const errorData = error.response?.data;
-        logger.error(`[MatchService] Error fetching calendar for ${tabType} (Status: ${status}):`, errorData || error.message);
-        return null;
+        const userFriendlyMessage = error.userFriendlyMessage || `Failed to load ${tabType} tournaments`;
+        logger.error(`[MatchService] Error fetching ${tabType} calendar (Status: ${status}):`, errorData || error.message);
+        
+        // Re-throw error with user-friendly message for UI
+        throw new Error(userFriendlyMessage);
     }
 };
 

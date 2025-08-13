@@ -131,7 +131,8 @@ export default function RankingEnhanced() {
       logger.log(`[RankingEnhanced] Loaded ${enhancedRankings.length} ${rankingType} rankings`);
     } catch (error: any) {
       logger.error('[RankingEnhanced] Error loading rankings:', error);
-      setError('Failed to load rankings. Please try again.');
+      const errorMessage = error.message || `Failed to load ${rankingType} rankings`;
+      setError(errorMessage);
       setRankingData([]);
     } finally {
       setLoading(false);
@@ -174,6 +175,7 @@ export default function RankingEnhanced() {
   const handleFilterPress = (filterId: string) => {
     if (filterId !== selectedFilter) {
       setSelectedFilter(filterId);
+      setError(null); // Clear any previous errors
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
   };

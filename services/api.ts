@@ -27,10 +27,14 @@ logger.log(`[API Setup] Environment Variables:`, {
 // --- Create a single Axios instance ---
 const api: AxiosInstance = axios.create({
     baseURL: API_BASE_URL,
-    timeout: 8000, // Increased timeout slightly for potentially slower network/server
+    timeout: 15000, // Increased timeout for mobile networks
     headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
+    },
+    // Add retry configuration
+    validateStatus: function (status) {
+        return status >= 200 && status < 300; // default
     },
 });
 
@@ -51,15 +55,39 @@ api.interceptors.response.use(
         return response;
     },
     (error) => {
-        // Log detailed error information
+        // Enhanced error handling for mobile networks
+        const status = error.response?.status;
+        const isNetworkError = !error.response && (error.code === 'NETWORK_ERROR' || error.message.includes('Network Error'));
+        const isTimeoutError = error.code === 'ECONNABORTED' || error.message.includes('timeout');
+        
+        let userFriendlyMessage = error.message;
+        
+        if (isNetworkError) {
+            userFriendlyMessage = 'Network connection failed. Please check your internet connection.';
+        } else if (isTimeoutError) {
+            userFriendlyMessage = 'Request timed out. Please try again.';
+        } else if (status >= 500) {
+            userFriendlyMessage = 'Server error. Please try again later.';
+        } else if (status === 404) {
+            userFriendlyMessage = 'Requested data not found.';
+        }
+        
+        // Always log detailed error information
         logger.error("[API Error]:", {
-            status: error.response?.status,
+            status,
             statusText: error.response?.statusText,
             url: error.config?.url,
             baseURL: error.config?.baseURL,
             data: error.response?.data,
-            message: error.message
+            message: error.message,
+            userFriendlyMessage,
+            isNetworkError,
+            isTimeoutError
         });
+        
+        // Add user-friendly message to error object
+        error.userFriendlyMessage = userFriendlyMessage;
+        
         return Promise.reject(error);
     }
 );
