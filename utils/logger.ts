@@ -6,6 +6,7 @@
 import Constants from 'expo-constants';
 
 const IS_DEV = __DEV__ || Constants.expoConfig?.extra?.environment === 'development';
+const FORCE_DEBUG = process.env.EXPO_PUBLIC_FORCE_DEBUG_LOGGING === 'true';
 
 interface Logger {
   log: (...args: any[]) => void;
@@ -16,15 +17,15 @@ interface Logger {
 }
 
 /**
- * Development-only logger
- * In production builds, all methods are no-ops
+ * Smart logger that shows critical info in production for debugging
+ * Shows all logs in development, but only errors and forced debug in production
  */
 export const logger: Logger = {
-  log: IS_DEV ? console.log.bind(console) : () => {},
-  info: IS_DEV ? console.info.bind(console) : () => {},
-  warn: IS_DEV ? console.warn.bind(console) : () => {},
-  error: IS_DEV ? console.error.bind(console) : () => {},
-  debug: IS_DEV ? console.debug.bind(console) : () => {},
+  log: IS_DEV || FORCE_DEBUG ? console.log.bind(console) : () => {},
+  info: IS_DEV || FORCE_DEBUG ? console.info.bind(console) : () => {},
+  warn: console.warn.bind(console), // Always show warnings
+  error: console.error.bind(console), // Always show errors
+  debug: IS_DEV || FORCE_DEBUG ? console.debug.bind(console) : () => {},
 };
 
 /**

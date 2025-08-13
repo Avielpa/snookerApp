@@ -16,6 +16,11 @@ const API_BASE_URL: string = process.env.EXPO_PUBLIC_API_URL ||
 */
 
 logger.log(`[API Setup] Using API Base URL: ${API_BASE_URL}`);
+logger.log(`[API Setup] Environment Variables:`, {
+  EXPO_PUBLIC_API_URL: process.env.EXPO_PUBLIC_API_URL,
+  NODE_ENV: process.env.NODE_ENV,
+  __DEV__: __DEV__
+});
 
 // --- Create a single Axios instance ---
 const api: AxiosInstance = axios.create({
@@ -27,38 +32,35 @@ const api: AxiosInstance = axios.create({
     },
 });
 
-// --- Optional: Add interceptors for handling tokens or errors globally ---
-/*
+// --- Add interceptors for better debugging ---
 api.interceptors.request.use(async (config) => {
-    // Example: Automatically add JWT token to Authorization header
-    const token = await AsyncStorage.getItem('userToken'); // Assuming you store the access token
-    if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-    }
+    logger.debug(`[API Request] ${config.method?.toUpperCase()} ${config.url}`);
+    logger.debug(`[API Request] Base URL: ${config.baseURL}`);
     return config;
 }, (error) => {
+    logger.error("[API Request Error]:", error);
     return Promise.reject(error);
 });
 
 api.interceptors.response.use(
     (response) => {
-        // Any status code that lie within the range of 2xx cause this function to trigger
+        logger.debug(`[API Response] ${response.status} ${response.config.url}`);
+        logger.debug(`[API Response] Data length: ${JSON.stringify(response.data).length} characters`);
         return response;
     },
     (error) => {
-        // Any status codes that falls outside the range of 2xx cause this function to trigger
-        // Example: Handle 401 Unauthorized globally (e.g., redirect to login)
-        if (error.response && error.response.status === 401) {
-            logger.error("Unauthorized request - potentially expired token:", error.response.data);
-            // Add logic here to clear token and navigate to login screen
-            // e.g., AsyncStorage.removeItem('userToken'); router.replace('/login');
-        }
-        // Log other errors
-        logger.error("[API Interceptor Error]:", error.response?.data || error.message);
-        return Promise.reject(error); // Pass the error along
+        // Log detailed error information
+        logger.error("[API Error]:", {
+            status: error.response?.status,
+            statusText: error.response?.statusText,
+            url: error.config?.url,
+            baseURL: error.config?.baseURL,
+            data: error.response?.data,
+            message: error.message
+        });
+        return Promise.reject(error);
     }
 );
-*/
 
 // Export the configured instance
 export { api };

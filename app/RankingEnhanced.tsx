@@ -351,6 +351,9 @@ export default function RankingEnhanced() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.filtersContainer}
           style={styles.filtersScrollView}
+          scrollEventThrottle={16}
+          decelerationRate="fast"
+          bounces={false}
         >
           {filterOptions.map(renderFilterButton)}
         </ScrollView>
@@ -423,6 +426,8 @@ const createRankingStyles = (colors: any) => StyleSheet.create({
     marginRight: 12,
     borderRadius: 20,
     overflow: 'hidden',
+    minHeight: 44,
+    minWidth: 90,
   },
   filterButtonActive: {
     elevation: 4,
@@ -434,8 +439,10 @@ const createRankingStyles = (colors: any) => StyleSheet.create({
   filterGradient: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingVertical: 12,
+    minHeight: 44,
   },
   filterText: {
     marginLeft: 8,

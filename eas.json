@@ -29,7 +29,7 @@
       "env": {
         "NODE_ENV": "production",
         "EXPO_PUBLIC_API_URL": "https://snookerapp.up.railway.app/oneFourSeven/",
-        "DEBUG_LOGGING": "false"
+        "EXPO_PUBLIC_FORCE_DEBUG_LOGGING": "true"
       },
       "android": {
         "buildType": "apk",
@@ -44,7 +44,7 @@
       "channel": "production",
       "env": {
         "NODE_ENV": "production",
-        "API_BASE_URL": "https://snookerapp-server-production.up.railway.app/oneFourSeven/",
+        "EXPO_PUBLIC_API_URL": "https://snookerapp.up.railway.app/oneFourSeven/",
         "DEBUG_LOGGING": "false",
         "ENABLE_SSL_PINNING": "true"
       },

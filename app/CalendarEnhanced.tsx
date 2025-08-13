@@ -522,6 +522,9 @@ export default function CalendarEnhanced() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.filtersContainer}
           style={styles.filtersScrollView}
+          scrollEventThrottle={16}
+          decelerationRate="fast"
+          bounces={false}
         >
           {tabOptions.map(renderTabButton)}
         </ScrollView>
@@ -532,6 +535,9 @@ export default function CalendarEnhanced() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.filtersContainer}
           style={[styles.filtersScrollView, { marginTop: 4 }]}
+          scrollEventThrottle={16}
+          decelerationRate="fast"
+          bounces={false}
         >
           {statusOptions.map(option => {
             const isSelected = selectedStatus === option.id;
