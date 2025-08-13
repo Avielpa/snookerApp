@@ -181,7 +181,8 @@
       "Bash(venv/Scripts/pip.exe install:*)",
       "Bash(git push:*)",
       "Bash(copy:*)",
-      "Bash(cp:*)"
+      "Bash(cp:*)",
+      "Bash(npx expo install:*)"
     ],
     "deny": []
   }
