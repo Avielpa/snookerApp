@@ -186,8 +186,8 @@ const createStyles = (COLORS: any) => StyleSheet.create({
         opacity: 0.9,
     },
     filterContainer: { 
-        paddingVertical: 6, 
-        paddingHorizontal: 12, 
+        paddingVertical: 4, 
+        paddingHorizontal: 14, 
     },
     filterScrollView: { 
         flexDirection: 'row', 
@@ -197,10 +197,10 @@ const createStyles = (COLORS: any) => StyleSheet.create({
         flexDirection: 'row', 
         alignItems: 'center', 
         backgroundColor: COLORS.filterButton, 
-        paddingVertical: 7, 
-        paddingHorizontal: 12, 
-        borderRadius: 18, 
-        marginRight: 8,
+        paddingVertical: 6, 
+        paddingHorizontal: 10, 
+        borderRadius: 16, 
+        marginRight: 6,
         borderWidth: 1,
         borderColor: 'rgba(255, 167, 38, 0.25)',
         elevation: 1,
@@ -269,13 +269,13 @@ const createStyles = (COLORS: any) => StyleSheet.create({
     statusHeaderItem: { 
         flexDirection: 'row', 
         alignItems: 'center', 
-        paddingVertical: 12, 
-        paddingHorizontal: 16, 
-        marginTop: 16, 
-        marginBottom: 8,
-        marginHorizontal: 12,
+        paddingVertical: 10, 
+        paddingHorizontal: 14, 
+        marginTop: 12, 
+        marginBottom: 6,
+        marginHorizontal: 14,
         backgroundColor: 'rgba(255, 167, 38, 0.08)',
-        borderRadius: 10,
+        borderRadius: 8,
         borderLeftWidth: 3,
         borderLeftColor: COLORS.textHeader,
         elevation: 1,
@@ -285,19 +285,19 @@ const createStyles = (COLORS: any) => StyleSheet.create({
         shadowRadius: 2,
     },
     statusHeaderText: { 
-        fontSize: 15, 
+        fontSize: 14, 
         fontFamily: 'PoppinsBold', 
         color: COLORS.textHeader, 
-        marginLeft: 10, 
+        marginLeft: 8, 
         textTransform: 'uppercase', 
         letterSpacing: 0.5,
     },
     roundHeaderItem: { 
-        paddingVertical: 6, 
-        paddingHorizontal: 16, 
-        marginTop: 8, 
-        marginBottom: 4,
-        marginHorizontal: 12,
+        paddingVertical: 4, 
+        paddingHorizontal: 14, 
+        marginTop: 6, 
+        marginBottom: 2,
+        marginHorizontal: 14,
         backgroundColor: 'rgba(255, 255, 255, 0.03)',
         borderRadius: 6,
     },
@@ -310,23 +310,23 @@ const createStyles = (COLORS: any) => StyleSheet.create({
         opacity: 0.8,
     },
     matchItemContainer: { 
-        marginVertical: 4, 
-        marginHorizontal: 12,
+        marginVertical: 3, 
+        marginHorizontal: 14,
     },
     playerRow: { 
         flexDirection: 'row', 
         justifyContent: 'space-between', 
         alignItems: 'center', 
-        marginBottom: 8, 
-        marginTop: 3 
+        marginBottom: 6, 
+        marginTop: 2 
     },
     playerName: { 
-        fontSize: 15, 
-        fontFamily: 'PoppinsMedium', 
+        fontSize: 14, 
+        fontFamily: 'PoppinsSemiBold', 
         color: COLORS.textPrimary, 
         flexShrink: 1, 
         flexBasis: '38%',
-        lineHeight: 19,
+        lineHeight: 18,
     },
     playerLeft: { 
         textAlign: 'left', 
@@ -341,19 +341,19 @@ const createStyles = (COLORS: any) => StyleSheet.create({
         color: '#4CAF50',
     },
     score: { 
-        fontSize: 18, 
+        fontSize: 16, 
         fontFamily: 'PoppinsBold', 
         color: COLORS.score, 
         textAlign: 'center', 
         paddingHorizontal: 6,
-        minWidth: 50,
+        minWidth: 45,
     },
     detailsRow: { 
         flexDirection: 'row', 
         justifyContent: 'space-between', 
         alignItems: 'center', 
-        marginTop: 8, 
-        paddingTop: 8, 
+        marginTop: 6, 
+        paddingTop: 6, 
         borderTopColor: 'rgba(255, 255, 255, 0.15)', 
         borderTopWidth: 0.5 
     },
@@ -364,12 +364,12 @@ const createStyles = (COLORS: any) => StyleSheet.create({
         paddingRight: 4 
     },
     detailText: { 
-        fontSize: 11, 
-        fontFamily: 'PoppinsRegular', 
-        color: COLORS.textSecondary, 
+        fontSize: 12, 
+        fontFamily: 'PoppinsSemiBold', 
+        color: COLORS.textPrimary, 
         marginLeft: 4, 
         flexShrink: 1,
-        opacity: 0.85,
+        opacity: 0.9,
     },
     otherToursContainer: {
         paddingVertical: 6,
@@ -429,14 +429,34 @@ const MatchItem = React.memo(({
     const player1Name = item.player1_name || (item.player1_id && item.player1_id !== 376 ? `P${item.player1_id}` : 'TBD');
     const player2Name = item.player2_name || (item.player2_id && item.player2_id !== 376 ? `P${item.player2_id}` : 'TBD');
     
-    const scoreDisplay = (item.score1 !== null && item.score1 !== undefined && 
-                         item.score2 !== null && item.score2 !== undefined) 
-                         ? `${item.score1} - ${item.score2}` 
-                         : 'vs';
+    // Enhanced score validation and consistent display
+    const hasValidScores = (
+        item.score1 !== null && item.score1 !== undefined && 
+        item.score2 !== null && item.score2 !== undefined &&
+        typeof item.score1 === 'number' && typeof item.score2 === 'number'
+    );
+    
+    const scoreDisplay = hasValidScores ? `${item.score1} - ${item.score2}` : 'vs';
     
     const scheduledDate = formatDate(item.scheduled_date);
-    const isPlayer1Winner = item.status_code === 3 && item.winner_id != null && item.winner_id === item.player1_id;
-    const isPlayer2Winner = item.status_code === 3 && item.winner_id != null && item.winner_id === item.player2_id;
+    // Enhanced winner validation - check both winner_id and scores for consistency
+    const isMatchFinished = item.status_code === 3;
+    const hasWinnerId = item.winner_id != null && item.winner_id !== undefined;
+    
+    let isPlayer1Winner = false;
+    let isPlayer2Winner = false;
+    
+    if (isMatchFinished) {
+        if (hasWinnerId) {
+            // Use winner_id if available
+            isPlayer1Winner = item.winner_id === item.player1_id;
+            isPlayer2Winner = item.winner_id === item.player2_id;
+        } else if (hasValidScores) {
+            // Fallback to score comparison if no winner_id
+            isPlayer1Winner = item.score1! > item.score2!;
+            isPlayer2Winner = item.score2! > item.score1!;
+        }
+    }
     
     const handlePlayerPress = (playerId: number | null) => {
         if (playerId) {
@@ -456,7 +476,9 @@ const MatchItem = React.memo(({
         <TouchableOpacity 
             onPress={() => handleMatchPress(item.api_match_id)} 
             disabled={!item.api_match_id} 
-            activeOpacity={0.8}
+            activeOpacity={0.6}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            delayPressIn={0}
         >
             <GlassCard style={styles.matchItemContainer}>
                 {item.matchCategory === 'livePlaying' && <LiveIndicator />}
@@ -499,6 +521,21 @@ const MatchItem = React.memo(({
                 </View>
             </GlassCard>
         </TouchableOpacity>
+    );
+}, (prevProps, nextProps) => {
+    // Custom comparison for React.memo to ensure re-render when scores change
+    const prevItem = prevProps.item;
+    const nextItem = nextProps.item;
+    
+    return (
+        prevItem.id === nextItem.id &&
+        prevItem.score1 === nextItem.score1 &&
+        prevItem.score2 === nextItem.score2 &&
+        prevItem.status_code === nextItem.status_code &&
+        prevItem.winner_id === nextItem.winner_id &&
+        prevItem.player1_name === nextItem.player1_name &&
+        prevItem.player2_name === nextItem.player2_name &&
+        prevProps.tourName === nextProps.tourName
     );
 });
 
@@ -839,6 +876,9 @@ const HomeScreen = (): React.ReactElement | null => {
                                     activeFilter === filter.value && styles.filterButtonActive
                                 ]}
                                 onPress={() => setActiveFilter(filter.value)}
+                                activeOpacity={0.6}
+                                hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+                                delayPressIn={0}
                             >
                                 <Ionicons 
                                     name={filter.icon} 
@@ -868,7 +908,9 @@ const HomeScreen = (): React.ReactElement | null => {
                                         selectedOtherTour === tour.ID && styles.otherTourChipActive
                                     ]}
                                     onPress={() => handleOtherTourSelection(tour.ID)}
-                                    activeOpacity={0.8}
+                                    activeOpacity={0.6}
+                                    hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+                                    delayPressIn={0}
                                 >
                                     <Text style={[
                                         styles.otherTourText,
@@ -891,7 +933,9 @@ const HomeScreen = (): React.ReactElement | null => {
                             renderItem={renderListItem}
                             keyExtractor={(item: ListItem) => {
                                 if (item.type === 'match') {
-                                    return `match-${item.id}`;
+                                    // Include score data in key to force re-render when scores change
+                                    const scoreKey = `${item.score1 || 0}-${item.score2 || 0}-${item.status_code || 0}`;
+                                    return `match-${item.id}-${scoreKey}`;
                                 }
                                 return item.id;
                             }}

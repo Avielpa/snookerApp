@@ -203,8 +203,8 @@ export default function RankingEnhanced() {
         key={option.id}
         style={[styles.filterButton, isSelected && styles.filterButtonActive]}
         onPress={() => handleFilterPress(option.id)}
-        activeOpacity={0.8}
-        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        activeOpacity={0.6}
+        hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
         delayPressIn={0}
       >
         <LinearGradient
@@ -239,7 +239,9 @@ export default function RankingEnhanced() {
     return (
       <TouchableOpacity
         onPress={() => handlePlayerPress(item)}
-        activeOpacity={0.8}
+        activeOpacity={0.6}
+        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        delayPressIn={0}
         disabled={!item.Player}
       >
         <View style={styles.rankingCard}>

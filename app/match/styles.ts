@@ -92,10 +92,11 @@ export const createMatchStyles = (colors: any) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 12,
+    paddingVertical: 14,
     marginHorizontal: 4,
     borderRadius: 12,
     backgroundColor: colors.filterButton,
+    minHeight: 48,
   },
   tabButtonActive: {
     backgroundColor: colors.filterButtonActive,

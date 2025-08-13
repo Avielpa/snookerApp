@@ -306,8 +306,8 @@ export default function CalendarEnhanced() {
         key={option.id}
         style={styles.filterButton}
         onPress={() => handleTabPress(option.id)}
-        activeOpacity={0.8}
-        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        activeOpacity={0.6}
+        hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
         delayPressIn={0}
       >
         <LinearGradient
@@ -540,7 +540,9 @@ export default function CalendarEnhanced() {
                 key={`status-${option.id}`}
                 style={styles.filterButton}
                 onPress={() => handleStatusPress(option.id)}
-                activeOpacity={0.8}
+                activeOpacity={0.6}
+                hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+                delayPressIn={0}
               >
                 <LinearGradient
                   colors={isSelected 

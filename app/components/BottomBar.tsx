@@ -54,8 +54,8 @@ const BottomBar = () => {
                             logger.log(`[BottomBar] Navigating from ${pathname} to ${item.path}`);
                             router.push(item.path as any);
                         }}
-                        activeOpacity={0.7}
-                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                        activeOpacity={0.6}
+                        hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
                         delayPressIn={0}
                     >
                         <Ionicons 
@@ -90,7 +90,7 @@ const createBottomBarStyles = (colors: any) => StyleSheet.create({
         paddingHorizontal: 20,
         borderRadius: 12,
         minWidth: 90,
-        minHeight: 56,
+        minHeight: 64,
         justifyContent: 'center',
     },
     activeBottomBarItem: {
