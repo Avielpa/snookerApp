@@ -190,6 +190,7 @@
       "Bash(railway:*)",
       "Bash(venv\\Scripts\\python.exe maxBreak\\manage.py auto_live_monitor:*)"
     ],
-    "deny": []
+    "deny": [],
+    "defaultMode": "acceptEdits"
   }
 }
