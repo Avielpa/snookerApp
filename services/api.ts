@@ -59,7 +59,8 @@ class APICache {
             
             // If caching tournament matches, sync individual matches
             if (key.includes('/matches/') && Array.isArray(data)) {
-                logger.debug(`[Cache Sync] Syncing tournament matches array (${data.length} matches)`);
+                const liveCount = data.filter(m => m && (m.status_code === 1 || m.status_code === 2)).length;
+                logger.debug(`[Cache Sync] Syncing ${data.length} matches (${liveCount} live)`);
                 data.forEach((match: any) => {
                     if (match && match.api_match_id) {
                         // Update the individual match cache with consistent data
@@ -73,7 +74,10 @@ class APICache {
                                 timestamp: Date.now(),
                                 ttl: 15000 // Short TTL for sync data
                             });
-                            logger.debug(`[Cache Sync] Updated individual match cache for API ID ${match.api_match_id}`);
+                            // Only log for live matches to reduce spam
+                            if (match.status_code === 1 || match.status_code === 2) {
+                                logger.debug(`[Cache Sync] Updated LIVE match cache for API ID ${match.api_match_id}`);
+                            }
                         }
                     }
                 });
