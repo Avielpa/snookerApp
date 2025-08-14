@@ -4,7 +4,7 @@
 - **Main Django API** - Your snooker app backend
 - **Live Match Updates** - Automatic score updates every 2 minutes
 - **Daily Data Updates** - Rankings, tournaments, players
-- **PostgreSQL Database** - Provided by Railway
+- **SQLite Database** - Simple file database (no setup needed!)
 
 ---
 
@@ -14,26 +14,16 @@
 ```bash
 # Push your changes first
 git add .
-git commit -m "Add Railway configuration"
+git commit -m "Add Railway configuration with SQLite"
 git push origin master
 
 # Then deploy (Railway will auto-detect from your GitHub repo)
 ```
 
-### 2. Add PostgreSQL Database
-1. In Railway dashboard → Add service → PostgreSQL
-2. Railway automatically provides these environment variables:
-   - `PGDATABASE`
-   - `PGUSER` 
-   - `PGPASSWORD`
-   - `PGHOST`
-   - `PGPORT`
-
-### 3. Configure Your Main Service
-Your web service is ready! Railway will run:
-```bash
-cd maxBreak && python manage.py migrate && python manage.py collectstatic --noinput && gunicorn maxBreak.wsgi:application --bind 0.0.0.0:$PORT
-```
+### 2. Your Service is Ready!
+- **No database setup needed** - SQLite works automatically
+- Railway will run: `cd maxBreak && python manage.py migrate && python manage.py collectstatic --noinput && gunicorn maxBreak.wsgi:application --bind 0.0.0.0:$PORT`
+- Your existing `db.sqlite3` file will be used
 
 ---
 
@@ -73,7 +63,7 @@ Railway supports scheduled tasks (cron jobs). Create these separate services:
 - ✅ **Rankings**: Updated daily at 2 AM
 - ✅ **Tournaments**: Updated daily at 3 AM  
 - ✅ **Players**: Updated weekly on Sundays
-- ✅ **Database**: PostgreSQL managed by Railway
+- ✅ **Database**: SQLite file database (simple and works automatically)
 
 **Users get live scores automatically without any manual work from you!**
 
