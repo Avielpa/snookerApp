@@ -9,7 +9,7 @@ export const createLayoutStyles = (COLORS: any) => StyleSheet.create({
         flex: 1,
     },
     headerContainer: { 
-        paddingBottom: 6, 
+        paddingBottom: 2, 
         paddingHorizontal: 16 
     },
     screenTitle: { 
@@ -17,8 +17,8 @@ export const createLayoutStyles = (COLORS: any) => StyleSheet.create({
         fontFamily: 'PoppinsBold', 
         textAlign: 'center', 
         color: COLORS.textHeader, 
-        marginTop: 8, 
-        marginBottom: 2,
+        marginTop: 4, 
+        marginBottom: 1,
         textShadowColor: 'rgba(255, 167, 38, 0.3)',
         textShadowOffset: { width: 0, height: 1 },
         textShadowRadius: 3,
@@ -29,7 +29,7 @@ export const createLayoutStyles = (COLORS: any) => StyleSheet.create({
         fontFamily: 'PoppinsMedium', 
         textAlign: 'center', 
         color: COLORS.textSecondary, 
-        marginBottom: 8,
+        marginBottom: 4,
         letterSpacing: 0.2,
         opacity: 0.9,
     },

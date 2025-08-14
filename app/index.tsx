@@ -104,7 +104,7 @@ const HomeScreen = (): React.ReactElement | null => {
         <ImageBackground source={require('../assets/snooker_background.jpg')} style={styles.backgroundImage}>
             <SafeAreaView style={styles.container}>
                 <View style={styles.headerContainer}>
-                    <Text style={styles.screenTitle}>Snooker Live</Text>
+                    <Text style={styles.screenTitle}>Snooker.org</Text>
                     {tourName && <Text style={styles.tourTitle}>{tourName}</Text>}
                 </View>
                 

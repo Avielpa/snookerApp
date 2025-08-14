@@ -390,12 +390,16 @@ export default function CalendarEnhanced() {
               
               let displayText = 'Prize Money';
               if (typeof prizeData === 'string' && prizeData.trim()) {
-                displayText = `Winner: ${prizeData}`;
+                displayText = prizeData;
               } else if (typeof prizeData === 'object' && prizeData !== null) {
-                if (prizeData.winner && typeof prizeData.winner === 'string') {
-                  displayText = `Winner: ${prizeData.winner}`;
+                if (prizeData.winner && prizeData.winner.formatted) {
+                  displayText = prizeData.winner.formatted;
+                } else if (prizeData.winner && prizeData.winner.amount) {
+                  const currency = prizeData.winner.currency || 'GBP';
+                  const amount = prizeData.winner.amount;
+                  displayText = `${currency} ${amount.toLocaleString()}`;
                 } else {
-                  displayText = 'Prize Money Available';
+                  displayText = 'Prize Money';
                 }
               }
               

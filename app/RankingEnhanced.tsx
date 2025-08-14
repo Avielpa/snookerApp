@@ -247,7 +247,12 @@ export default function RankingEnhanced() {
         delayPressIn={0}
         disabled={!item.Player}
       >
-        <View style={styles.rankingCard}>
+        <LinearGradient
+          colors={['rgba(0, 0, 0, 0.8)', 'rgba(0, 0, 0, 0.6)']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.rankingCard}
+        >
           <View style={styles.rankingContent}>
             {/* Position and Change Indicator */}
             <View style={styles.positionContainer}>
@@ -300,7 +305,7 @@ export default function RankingEnhanced() {
               style={styles.actionArrow}
             />
           </View>
-        </View>
+        </LinearGradient>
       </TouchableOpacity>
     );
   };
@@ -338,7 +343,11 @@ export default function RankingEnhanced() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <LinearGradient
+      colors={['#1a1a2e', '#16213e', '#0f3460']}
+      style={styles.gradientBackground}
+    >
+      <SafeAreaView style={styles.container}>
       {/* Header */}
       <Text style={styles.title}>Player Rankings</Text>
       
@@ -406,14 +415,18 @@ export default function RankingEnhanced() {
         )}
       </View>
     </SafeAreaView>
+    </LinearGradient>
   );
 }
 
 // Dynamic styles function
 const createRankingStyles = (colors: any) => StyleSheet.create({
+  gradientBackground: {
+    flex: 1,
+  },
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: 'transparent',
   },
   title: {
     fontSize: 28,
@@ -485,13 +498,17 @@ const createRankingStyles = (colors: any) => StyleSheet.create({
     paddingBottom: 20,
   },
   rankingCard: {
-    marginVertical: 4,
+    marginVertical: 6,
     marginHorizontal: 16,
-    backgroundColor: colors.cardBackground,
+    borderRadius: 16,
+    padding: 18,
     borderWidth: 1,
-    borderColor: colors.cardBorder,
-    borderRadius: 12,
-    padding: 16,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
   },
   rankingContent: {
     flexDirection: 'row',
