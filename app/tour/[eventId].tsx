@@ -63,7 +63,7 @@ interface EventDetails {
 type MatchCategory = 'livePlaying' | 'onBreak' | 'upcoming' | 'finished';
 interface MatchListItem extends Match { type: 'match'; matchCategory: MatchCategory; }
 interface StatusHeaderListItem { type: 'statusHeader'; title: string; iconName: keyof typeof Ionicons.glyphMap; id: string; }
-interface RoundHeaderListItem { type: 'roundHeader'; roundName: string; id: string; }
+interface RoundHeaderListItem { type: 'roundHeader'; roundName: string; id: string; round?: number | null; }
 type ListItem = MatchListItem | StatusHeaderListItem | RoundHeaderListItem;
 type ActiveFilterType = MatchCategory | 'all';
 
@@ -73,7 +73,7 @@ type IoniconName = keyof typeof Ionicons.glyphMap; // Defined type alias
 const { width: screenWidth } = Dimensions.get('window');
 
 // Enhanced Tournament Header Component
-const TournamentHeader = ({ tournament, matchCount }: { tournament: EventDetails; matchCount: number }) => {
+const TournamentHeader = ({ tournament, matchCount, prizeData }: { tournament: EventDetails; matchCount: number; prizeData?: any }) => {
     const colors = useColors();
     
     const formatDate = (dateString: string | null) => {
@@ -167,6 +167,19 @@ const TournamentHeader = ({ tournament, matchCount }: { tournament: EventDetails
                                 </View>
                             </View>
                         )}
+                        
+                        {/* Prize Money */}
+                        {prizeData?.winner?.formatted && (
+                            <View style={tournamentHeaderStyles.detailCard}>
+                                <Ionicons name="diamond-outline" size={20} color={colors.warning} />
+                                <View>
+                                    <Text style={[tournamentHeaderStyles.detailLabel, { color: colors.textSecondary }]}>Winner</Text>
+                                    <Text style={[tournamentHeaderStyles.detailValue, { color: colors.warning }]}>
+                                        {prizeData.winner.formatted}
+                                    </Text>
+                                </View>
+                            </View>
+                        )}
                     </View>
                 </View>
             </LinearGradient>
@@ -216,7 +229,14 @@ const MatchItem = React.memo(({ item, navigation }: { item: MatchListItem; navig
 });
 MatchItem.displayName = 'MatchItem';
 const StatusHeaderItem = ({ title, iconName }: { title: string, iconName: keyof typeof Ionicons.glyphMap }) => ( <View style={styles.statusHeaderItem}><Ionicons name={iconName} size={24} color={COLORS.textHeader} /><Text style={styles.statusHeaderText}>{title}</Text></View> );
-const RoundHeaderItem = ({ roundName }: { roundName: string }) => ( <View style={styles.roundHeaderItem}><Text style={styles.roundHeaderText}>{roundName}</Text></View> );
+const RoundHeaderItem = ({ roundName, prizeAmount }: { roundName: string; prizeAmount?: string }) => ( 
+    <View style={styles.roundHeaderItem}>
+        <Text style={styles.roundHeaderText}>
+            {roundName}
+            {prizeAmount && <Text style={styles.prizeText}> • {prizeAmount}</Text>}
+        </Text>
+    </View> 
+);
 
 // --- Main Screen Component ---
 const TournamentDetailsScreen = () => {
@@ -234,9 +254,32 @@ const TournamentDetailsScreen = () => {
     const [loading, setLoading] = useState<boolean>(true);
     const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
+    const [prizeData, setPrizeData] = useState<any>(null);
+    const [roundPrizes, setRoundPrizes] = useState<Record<number, string>>({});
 
     const checkLoginStatus = useCallback(async () => { 
         // Empty function - no login check needed for now
+    }, []);
+
+    // Fetch prize money data
+    const fetchPrizeData = useCallback(async (eventId: number) => {
+        try {
+            // Fetch tournament prize breakdown
+            const response = await fetch(`${process.env.EXPO_PUBLIC_API_BASE_URL || 'https://snookerapp.up.railway.app'}/oneFourSeven/prize-money/${eventId}/`);
+            if (response.ok) {
+                const data = await response.json();
+                setPrizeData(data);
+                
+                // Also fetch round-specific prize amounts
+                const roundResponse = await fetch(`${process.env.EXPO_PUBLIC_API_BASE_URL || 'https://snookerapp.up.railway.app'}/oneFourSeven/round-prizes/${eventId}/`);
+                if (roundResponse.ok) {
+                    const roundData = await roundResponse.json();
+                    setRoundPrizes(roundData);
+                }
+            }
+        } catch (error) {
+            logger.warn('[PrizeData] Failed to fetch prize data:', error);
+        }
     }, []);
 
     // --- Process matches function (Using snake_case and corrected loop) ---
@@ -316,7 +359,8 @@ const TournamentDetailsScreen = () => {
                         processedList.push({ 
                             type: 'roundHeader', 
                             roundName: roundName, 
-                            id: uniqueRoundHeaderId 
+                            id: uniqueRoundHeaderId,
+                            round: currentRound
                         });
                     }
                     processedList.push(match);
@@ -352,6 +396,9 @@ const TournamentDetailsScreen = () => {
             const currentMatches = Array.isArray(matchesData) ? matchesData as Match[] : [];
             const processedData = processMatchesForList(currentMatches);
             setProcessedListData(processedData);
+            
+            // Also fetch prize data
+            await fetchPrizeData(eventId);
         } catch (err: any) {
             setError(err.message || "Failed to load tournament data."); 
             setTournamentDetails(null); 
@@ -399,7 +446,10 @@ const TournamentDetailsScreen = () => {
     // Render list item function (Corrected return type and potential issue)
     const renderListItem = ({ item }: { item: ListItem }): React.ReactElement | null => { // Explicit return type
         if (item.type === 'statusHeader') return <StatusHeaderItem title={item.title} iconName={item.iconName} />;
-        if (item.type === 'roundHeader') return <RoundHeaderItem roundName={item.roundName} />;
+        if (item.type === 'roundHeader') {
+            const prizeAmount = item.round !== null && item.round !== undefined ? roundPrizes[item.round] : undefined;
+            return <RoundHeaderItem roundName={item.roundName} prizeAmount={prizeAmount} />;
+        }
         if (item.type === 'match') return <MatchItem item={item} navigation={router} />;
         return null; // Explicitly return null for invalid item types
     };
@@ -451,6 +501,7 @@ const TournamentDetailsScreen = () => {
             <TournamentHeader 
                 tournament={tournamentDetails} 
                 matchCount={processedListData.filter(item => item.type === 'match').length}
+                prizeData={prizeData}
             />
             {/* Filter Buttons */}
              <View style={styles.filterContainer}>
@@ -575,7 +626,7 @@ const tournamentHeaderStyles = StyleSheet.create({
 });
 
 // --- Styles --- (Copied from previous version)
-const styles = StyleSheet.create({ container: { flex: 1, backgroundColor: COLORS.background }, customHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: Platform.OS === 'android' ? 15 : 10, paddingHorizontal: 5, paddingBottom: 8, borderBottomColor: COLORS.cardBorder, borderBottomWidth: 1, backgroundColor: 'transparent' }, backButton: { padding: 10 }, customHeaderTitle: { flex: 1, fontSize: 19, fontFamily: 'PoppinsSemiBold', color: COLORS.textHeader, textAlign: 'center', marginHorizontal: 5 }, headerPlaceholder: { width: 44 }, tournamentHeader: { paddingHorizontal: 15, paddingTop: 10, paddingBottom: 10, alignItems: 'center', borderBottomColor: COLORS.cardBorder, borderBottomWidth: 1, marginBottom: 5 }, tournamentDates: { fontSize: 15, fontFamily: 'PoppinsSemiBold', color: COLORS.textSecondary, marginBottom: 5 }, venueContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: 5 }, tournamentVenue: { fontSize: 14, fontFamily: 'PoppinsRegular', color: COLORS.textMuted, marginLeft: 5, textAlign: 'center' }, tournamentNote: { fontSize: 13, fontFamily: 'PoppinsItalic', color: COLORS.textMuted, textAlign: 'center', marginTop: 5, paddingHorizontal: 10 }, filterContainer: { paddingVertical: 8, paddingHorizontal: 10, borderBottomColor: COLORS.cardBorder, borderBottomWidth: 1, marginBottom: 5 }, filterScrollView: { flexDirection: 'row', alignItems: 'center', paddingRight: 10 }, filterButton: { flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.filterButton, paddingVertical: 8, paddingHorizontal: 15, borderRadius: 15, marginRight: 8 }, filterButtonActive: { backgroundColor: COLORS.filterButtonActive }, filterText: { color: COLORS.filterText, fontSize: 14, fontFamily: 'PoppinsMedium', marginLeft: 6 }, filterTextActive: { color: COLORS.filterTextActive, fontFamily: 'PoppinsSemiBold' }, listArea: { flex: 1 }, listContentContainer: { paddingHorizontal: 12, paddingBottom: 20 }, centerContent: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 30 }, messageText: { textAlign: 'center', fontSize: 16, fontFamily: 'PoppinsRegular', color: COLORS.textMuted, marginTop: 15 }, retryButton: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 20, backgroundColor: COLORS.accent, borderRadius: 8, marginTop: 20 }, retryButtonText: { color: COLORS.white, fontSize: 16, fontFamily: 'PoppinsMedium', marginLeft: 8 }, backBtnError: { marginTop: 10, paddingVertical: 8, paddingHorizontal: 16, backgroundColor: '#4b5563', borderRadius: 5 }, statusHeaderItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 15, paddingHorizontal: 5, marginTop: 15, marginBottom: 8 }, statusHeaderText: { fontSize: 18, fontFamily: 'PoppinsSemiBold', color: COLORS.textHeader, marginLeft: 10, textTransform: 'uppercase', letterSpacing: 0.5 }, roundHeaderItem: { paddingVertical: 6, paddingHorizontal: 5, marginTop: 5, marginBottom: 4 }, roundHeaderText: { fontSize: 14, fontFamily: 'PoppinsSemiBold', color: COLORS.textSecondary, marginLeft: 10 }, matchItemContainer: { marginVertical: 8, borderRadius: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 3 }, matchItemContent: { backgroundColor: COLORS.cardBackground, paddingVertical: 10, paddingHorizontal: 15, borderRadius: 12, borderWidth: 1, borderColor: COLORS.cardBorder, overflow: 'hidden' }, statusIndicatorWrapper: { position: 'absolute', top: 8, right: 8, zIndex: 1 }, statusIndicator: { flexDirection: 'row', alignItems: 'center', borderRadius: 6, paddingVertical: 3, paddingHorizontal: 8 }, statusIndicatorText: { color: COLORS.white, fontSize: 10, fontFamily: 'PoppinsBold', marginLeft: 0 }, playerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, marginTop: 5 }, playerName: { fontSize: 16, fontFamily: 'PoppinsMedium', color: COLORS.textPrimary, flexShrink: 1, flexBasis: '40%' }, playerLeft: { textAlign: 'left', marginRight: 5 }, playerRight: { textAlign: 'right', marginLeft: 5, paddingRight: 55 }, winnerText: { fontFamily: 'PoppinsBold', color: COLORS.score }, score: { fontSize: 18, fontFamily: 'PoppinsBold', color: COLORS.score, textAlign: 'center', paddingHorizontal: 5 }, detailsRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 10, paddingTop: 10, borderTopColor: COLORS.cardBorder, borderTopWidth: 1 }, detailItem: { flexDirection: 'row', alignItems: 'center', flexShrink: 1, paddingRight: 5 }, detailText: { fontSize: 13, fontFamily: 'PoppinsRegular', color: COLORS.textSecondary, marginLeft: 6, flexShrink: 1 }, });
+const styles = StyleSheet.create({ container: { flex: 1, backgroundColor: COLORS.background }, customHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: Platform.OS === 'android' ? 15 : 10, paddingHorizontal: 5, paddingBottom: 8, borderBottomColor: COLORS.cardBorder, borderBottomWidth: 1, backgroundColor: 'transparent' }, backButton: { padding: 10 }, customHeaderTitle: { flex: 1, fontSize: 19, fontFamily: 'PoppinsSemiBold', color: COLORS.textHeader, textAlign: 'center', marginHorizontal: 5 }, headerPlaceholder: { width: 44 }, tournamentHeader: { paddingHorizontal: 15, paddingTop: 10, paddingBottom: 10, alignItems: 'center', borderBottomColor: COLORS.cardBorder, borderBottomWidth: 1, marginBottom: 5 }, tournamentDates: { fontSize: 15, fontFamily: 'PoppinsSemiBold', color: COLORS.textSecondary, marginBottom: 5 }, venueContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: 5 }, tournamentVenue: { fontSize: 14, fontFamily: 'PoppinsRegular', color: COLORS.textMuted, marginLeft: 5, textAlign: 'center' }, tournamentNote: { fontSize: 13, fontFamily: 'PoppinsItalic', color: COLORS.textMuted, textAlign: 'center', marginTop: 5, paddingHorizontal: 10 }, filterContainer: { paddingVertical: 8, paddingHorizontal: 10, borderBottomColor: COLORS.cardBorder, borderBottomWidth: 1, marginBottom: 5 }, filterScrollView: { flexDirection: 'row', alignItems: 'center', paddingRight: 10 }, filterButton: { flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.filterButton, paddingVertical: 8, paddingHorizontal: 15, borderRadius: 15, marginRight: 8 }, filterButtonActive: { backgroundColor: COLORS.filterButtonActive }, filterText: { color: COLORS.filterText, fontSize: 14, fontFamily: 'PoppinsMedium', marginLeft: 6 }, filterTextActive: { color: COLORS.filterTextActive, fontFamily: 'PoppinsSemiBold' }, listArea: { flex: 1 }, listContentContainer: { paddingHorizontal: 12, paddingBottom: 20 }, centerContent: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 30 }, messageText: { textAlign: 'center', fontSize: 16, fontFamily: 'PoppinsRegular', color: COLORS.textMuted, marginTop: 15 }, retryButton: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 20, backgroundColor: COLORS.accent, borderRadius: 8, marginTop: 20 }, retryButtonText: { color: COLORS.white, fontSize: 16, fontFamily: 'PoppinsMedium', marginLeft: 8 }, backBtnError: { marginTop: 10, paddingVertical: 8, paddingHorizontal: 16, backgroundColor: '#4b5563', borderRadius: 5 }, statusHeaderItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 15, paddingHorizontal: 5, marginTop: 15, marginBottom: 8 }, statusHeaderText: { fontSize: 18, fontFamily: 'PoppinsSemiBold', color: COLORS.textHeader, marginLeft: 10, textTransform: 'uppercase', letterSpacing: 0.5 }, roundHeaderItem: { paddingVertical: 6, paddingHorizontal: 5, marginTop: 5, marginBottom: 4 }, roundHeaderText: { fontSize: 14, fontFamily: 'PoppinsSemiBold', color: COLORS.textSecondary, marginLeft: 10 }, prizeText: { fontSize: 12, fontFamily: 'PoppinsMedium', color: COLORS.accent }, matchItemContainer: { marginVertical: 8, borderRadius: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 3 }, matchItemContent: { backgroundColor: COLORS.cardBackground, paddingVertical: 10, paddingHorizontal: 15, borderRadius: 12, borderWidth: 1, borderColor: COLORS.cardBorder, overflow: 'hidden' }, statusIndicatorWrapper: { position: 'absolute', top: 8, right: 8, zIndex: 1 }, statusIndicator: { flexDirection: 'row', alignItems: 'center', borderRadius: 6, paddingVertical: 3, paddingHorizontal: 8 }, statusIndicatorText: { color: COLORS.white, fontSize: 10, fontFamily: 'PoppinsBold', marginLeft: 0 }, playerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, marginTop: 5 }, playerName: { fontSize: 16, fontFamily: 'PoppinsMedium', color: COLORS.textPrimary, flexShrink: 1, flexBasis: '40%' }, playerLeft: { textAlign: 'left', marginRight: 5 }, playerRight: { textAlign: 'right', marginLeft: 5, paddingRight: 55 }, winnerText: { fontFamily: 'PoppinsBold', color: COLORS.score }, score: { fontSize: 18, fontFamily: 'PoppinsBold', color: COLORS.score, textAlign: 'center', paddingHorizontal: 5 }, detailsRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 10, paddingTop: 10, borderTopColor: COLORS.cardBorder, borderTopWidth: 1 }, detailItem: { flexDirection: 'row', alignItems: 'center', flexShrink: 1, paddingRight: 5 }, detailText: { fontSize: 13, fontFamily: 'PoppinsRegular', color: COLORS.textSecondary, marginLeft: 6, flexShrink: 1 }, });
 
 export default TournamentDetailsScreen;
 
