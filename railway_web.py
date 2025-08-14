@@ -31,7 +31,7 @@ def main():
         # Run server
         execute_from_command_line(['manage.py', 'runserver', f'0.0.0.0:{port}'])
     except Exception as e:
-        print(f"Error starting server: {e}")
+        print(f"[WEB] Error starting server: {e}")
         # Fallback to direct system call
         os.system(f'python manage.py runserver 0.0.0.0:{port}')
 
