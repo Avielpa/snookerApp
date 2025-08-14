@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getActiveTournamentId, getTournamentDetails, getTournamentMatches, getActiveOtherTours, Event } from '../../../services/tourServices';
 import { logger } from '../../../utils/logger';
+import { forceCacheRefresh } from '../../../services/api';
 import { Match, EventDetails, ListItem } from '../types';
 import { processMatchesForList } from '../utils/matchProcessing';
 import { useLiveMatchDetection } from './useLiveMatchDetection';
@@ -17,6 +18,7 @@ export const useHomeData = () => {
     const [activeOtherTours, setActiveOtherTours] = useState<Event[]>([]);
     const [selectedOtherTour, setSelectedOtherTour] = useState<number | null>(null);
     const [liveUpdateCount, setLiveUpdateCount] = useState<number>(0);
+    const [lastLiveUpdate, setLastLiveUpdate] = useState<number>(0);
 
     // Load tournament information
     const loadTournamentInfo = useCallback(async (isRefresh = false, specificTournamentId: number | null = null) => {
@@ -122,18 +124,23 @@ export const useHomeData = () => {
     // Optimized automatic live match detection with throttling
     const handleLiveMatchDetected = useCallback(() => {
         const now = Date.now();
-        const lastUpdate = Date.now() - liveUpdateCount * 60000; // Assume updates every 60s
-        const timeSinceLastUpdate = now - lastUpdate;
+        const timeSinceLastUpdate = now - lastLiveUpdate;
         
-        // Only refresh if enough time has passed (minimum 30 seconds between updates)
-        if (timeSinceLastUpdate >= 30000) {
-            logger.log(`[HomeScreen] 🔴 Live match detected - triggering throttled update #${liveUpdateCount + 1}`);
+        // Only refresh if enough time has passed (minimum 2 minutes between updates)
+        if (timeSinceLastUpdate >= 120000) { // 2 minutes = 120000ms
+            logger.log(`[HomeScreen] 🔴 Live match detected - triggering update #${liveUpdateCount + 1}`);
             setLiveUpdateCount(prev => prev + 1);
+            setLastLiveUpdate(now);
+            
+            // Force cache refresh for live data
+            forceCacheRefresh(selectedOtherTour);
+            
             loadTournamentInfo(true, selectedOtherTour); // Refresh current tournament
         } else {
-            logger.log(`[HomeScreen] ⏸️ Live match detected but throttled (${Math.round(timeSinceLastUpdate/1000)}s since last update)`);
+            const remainingSeconds = Math.round((120000 - timeSinceLastUpdate) / 1000);
+            logger.log(`[HomeScreen] ⏸️ Live match detected but throttled (${Math.round(timeSinceLastUpdate/1000)}s since last update, ${remainingSeconds}s remaining)`);
         }
-    }, [selectedOtherTour, liveUpdateCount]); // Keep liveUpdateCount for throttling logic
+    }, [selectedOtherTour, lastLiveUpdate, liveUpdateCount]);
 
     const handleMatchStartingSoon = useCallback(async (minutesUntilStart: number) => {
         logger.log(`[HomeScreen] ⏰ Match starting in ${minutesUntilStart} minutes - preparing for live updates`);

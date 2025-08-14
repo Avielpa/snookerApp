@@ -255,5 +255,29 @@ api.interceptors.response.use(
     }
 );
 
+// Cache management functions for live match updates
+export const clearLiveMatchCache = () => {
+    logger.log('[API Cache] Clearing live match cache for real-time updates');
+    apiCache.clear();
+};
+
+export const forceCacheRefresh = (tournamentId?: number) => {
+    logger.log(`[API Cache] Force refreshing cache for tournament ${tournamentId || 'all'}`);
+    
+    // Clear tournament-specific caches
+    if (tournamentId) {
+        const keysToInvalidate = [];
+        for (const [key] of (apiCache as any).cache.entries()) {
+            if (key.includes(`/${tournamentId}/`) || key.includes(`events/`) || key.includes(`matches/`)) {
+                keysToInvalidate.push(key);
+            }
+        }
+        keysToInvalidate.forEach(key => (apiCache as any).cache.delete(key));
+        logger.log(`[API Cache] Invalidated ${keysToInvalidate.length} tournament-specific cache entries`);
+    } else {
+        apiCache.clear();
+    }
+};
+
 // Export the configured instance and cache
 export { api, apiCache };
