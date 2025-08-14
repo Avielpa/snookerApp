@@ -1,5 +1,7 @@
 [services.web]
-procfile = "web"
+build.builder = "nixpacks"
+deploy.startCommand = "cd maxBreak && python manage.py runserver 0.0.0.0:$PORT"
 
-[services.live_monitor]
-procfile = "live_monitor"
+[services.worker]
+build.builder = "nixpacks"
+deploy.startCommand = "cd maxBreak && python manage.py auto_live_monitor"
