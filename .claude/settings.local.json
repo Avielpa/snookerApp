@@ -183,7 +183,9 @@
       "Bash(copy:*)",
       "Bash(cp:*)",
       "Bash(npx expo install:*)",
-      "Bash(venv/../venv/Scripts/python.exe:*)"
+      "Bash(venv/../venv/Scripts/python.exe:*)",
+      "Bash(railway status:*)",
+      "Bash(railway link:*)"
     ],
     "deny": []
   }
