@@ -1,2 +1,1 @@
-web: python manage.py runserver 0.0.0.0:$PORT
-worker: python manage.py auto_live_monitor
+web: cd maxBreak && python manage.py migrate && python manage.py collectstatic --noinput && gunicorn maxBreak.wsgi:application --bind 0.0.0.0:$PORT
