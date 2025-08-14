@@ -188,7 +188,9 @@
       "Bash(railway link:*)",
       "Bash(railway projects:*)",
       "Bash(railway:*)",
-      "Bash(venv\\Scripts\\python.exe maxBreak\\manage.py auto_live_monitor:*)"
+      "Bash(venv\\Scripts\\python.exe maxBreak\\manage.py auto_live_monitor:*)",
+      "WebSearch",
+      "WebFetch(domain:docs.railway.com)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"

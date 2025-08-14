@@ -1,2 +1,2 @@
-web: python railway_web.py
-worker: python railway_worker.py
+web: python manage.py runserver 0.0.0.0:$PORT
+worker: python manage.py auto_live_monitor
