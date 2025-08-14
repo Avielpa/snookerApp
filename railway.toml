@@ -1,7 +1,0 @@
-[services.web]
-build.builder = "nixpacks"
-deploy.startCommand = "python debug_railway.py && cd maxBreak && python manage.py runserver 0.0.0.0:$PORT"
-
-[services.worker]
-build.builder = "nixpacks"
-deploy.startCommand = "python debug_railway.py && cd maxBreak && python manage.py auto_live_monitor"
