@@ -7,5 +7,17 @@
     "startCommand": "cd maxBreak && python manage.py runserver 0.0.0.0:$PORT",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 10
+  },
+  "environments": {
+    "production": {
+      "services": {
+        "web": {
+          "startCommand": "cd maxBreak && python manage.py runserver 0.0.0.0:$PORT"
+        },
+        "scheduler": {
+          "startCommand": "cd maxBreak && python manage.py smart_live_scheduler"
+        }
+      }
+    }
   }
 }
