@@ -239,6 +239,11 @@ export default function RankingEnhanced() {
     const isRising = positionChange && positionChange > 0;
     const isFalling = positionChange && positionChange < 0;
 
+    // Dynamic card colors based on theme
+    const cardGradient = colors.cardBackground === 'rgba(255, 255, 255, 0.95)'
+      ? ['rgba(255, 255, 255, 0.98)', 'rgba(248, 249, 250, 0.95)'] // Light mode
+      : ['rgba(0, 0, 0, 0.8)', 'rgba(0, 0, 0, 0.6)']; // Dark mode
+
     return (
       <TouchableOpacity
         onPress={() => handlePlayerPress(item)}
@@ -248,7 +253,7 @@ export default function RankingEnhanced() {
         disabled={!item.Player}
       >
         <LinearGradient
-          colors={['rgba(0, 0, 0, 0.8)', 'rgba(0, 0, 0, 0.6)']}
+          colors={cardGradient}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.rankingCard}
@@ -342,9 +347,14 @@ export default function RankingEnhanced() {
     );
   }
 
+  // Dynamic gradient colors based on theme
+  const backgroundGradient = colors.cardBackground === 'rgba(255, 255, 255, 0.95)'
+    ? ['#F8F9FA', '#E9ECEF', '#DEE2E6'] // Light mode gradient
+    : ['#1a1a2e', '#16213e', '#0f3460']; // Dark mode gradient
+
   return (
     <LinearGradient
-      colors={['#1a1a2e', '#16213e', '#0f3460']}
+      colors={backgroundGradient}
       style={styles.gradientBackground}
     >
       <SafeAreaView style={styles.container}>
@@ -448,9 +458,9 @@ const createRankingStyles = (colors: any) => StyleSheet.create({
     borderRadius: 22,
     paddingHorizontal: 16,
     fontSize: 16,
-    color: colors.text,
+    color: colors.textPrimary,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.cardBorder,
   },
   filtersScrollView: {
     marginVertical: 8,
@@ -469,7 +479,7 @@ const createRankingStyles = (colors: any) => StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
     elevation: 4,
-    shadowColor: colors.shadow,
+    shadowColor: colors.black,
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.15,
     shadowRadius: 6,
@@ -503,10 +513,10 @@ const createRankingStyles = (colors: any) => StyleSheet.create({
     borderRadius: 16,
     padding: 18,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
-    shadowColor: '#000',
+    borderColor: colors.cardBorder,
+    shadowColor: colors.black,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.15,
     shadowRadius: 8,
     elevation: 6,
   },

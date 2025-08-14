@@ -64,15 +64,15 @@ export const lightColors: Colors = {
   backgroundSecondary: '#F5F5F5',
   backgroundTertiary: '#EEEEEE',
   
-  // Card colors
-  cardBackground: '#FFFFFF',
-  cardBorder: 'rgba(0, 0, 0, 0.12)',
+  // Card colors - Enhanced for background image visibility
+  cardBackground: 'rgba(255, 255, 255, 0.95)',
+  cardBorder: 'rgba(0, 0, 0, 0.15)',
   
-  // Text colors
-  textPrimary: '#212121',
-  textSecondary: '#424242',
-  textMuted: '#757575',
-  textHeader: '#E65100',
+  // Text colors - Enhanced for background image readability
+  textPrimary: '#1A1A1A',
+  textSecondary: '#2C2C2C', 
+  textMuted: '#4A4A4A',
+  textHeader: '#FFFFFF',
   
   // Brand colors
   primary: '#FF8F00',

@@ -366,7 +366,14 @@ export default function CalendarEnhanced() {
         hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
         delayPressIn={0}
       >
-        <View style={styles.cardContent}>
+        <LinearGradient
+          colors={colors.cardBackground === 'rgba(255, 255, 255, 0.95)'
+            ? ['rgba(255, 255, 255, 0.98)', 'rgba(248, 250, 252, 0.95)'] // Light mode
+            : ['rgba(30, 41, 59, 0.9)', 'rgba(15, 23, 42, 0.8)']} // Dark mode
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.cardContent}
+        >
 
           {/* Tournament Header */}
           <View style={styles.tournamentHeader}>
@@ -479,7 +486,7 @@ export default function CalendarEnhanced() {
               <Text style={styles.statText}>{item.Type || 'Tournament'}</Text>
             </View>
           </View>
-        </View>
+        </LinearGradient>
       </TouchableOpacity>
     );
   };
@@ -513,8 +520,17 @@ export default function CalendarEnhanced() {
     );
   }
 
+  // Dynamic gradient colors based on theme
+  const backgroundGradient = colors.cardBackground === 'rgba(255, 255, 255, 0.95)'
+    ? ['#F0F9FF', '#E0F2FE', '#BAE6FD'] // Light blue gradient for light mode
+    : ['#0F172A', '#1E293B', '#334155']; // Dark gradient for dark mode
+
   return (
-    <SafeAreaView style={styles.container}>
+    <LinearGradient
+      colors={backgroundGradient}
+      style={styles.gradientBackground}
+    >
+      <SafeAreaView style={styles.container}>
       {/* Header */}
       <Text style={styles.title}>Tournament Calendar</Text>
       
@@ -629,14 +645,18 @@ export default function CalendarEnhanced() {
         )}
       </View>
     </SafeAreaView>
+    </LinearGradient>
   );
 }
 
 // Dynamic styles function
 const createCalendarStyles = (colors: any) => StyleSheet.create({
+  gradientBackground: {
+    flex: 1,
+  },
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: 'transparent',
   },
   title: {
     fontSize: 28,
@@ -718,17 +738,21 @@ const createCalendarStyles = (colors: any) => StyleSheet.create({
     paddingBottom: 20,
   },
   tournamentCard: {
-    marginVertical: 6,
+    marginVertical: 8,
     marginHorizontal: 16,
-    borderRadius: 12,
+    borderRadius: 18,
     overflow: 'hidden',
+    shadowColor: colors.black,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
   },
   cardContent: {
-    backgroundColor: colors.cardBackground,
     borderWidth: 1,
     borderColor: colors.cardBorder,
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 18,
+    padding: 20,
     position: 'relative',
   },
   tournamentHeader: {
@@ -804,7 +828,7 @@ const createCalendarStyles = (colors: any) => StyleSheet.create({
   venueText: {
     fontSize: 14,
     fontFamily: 'PoppinsRegular',
-    color: '#9CA3AF',
+    color: colors.textSecondary,
     marginLeft: 6,
     flex: 1,
   },
@@ -826,7 +850,7 @@ const createCalendarStyles = (colors: any) => StyleSheet.create({
   progressText: {
     fontSize: 11,
     fontFamily: 'PoppinsRegular',
-    color: '#9CA3AF',
+    color: colors.textSecondary,
   },
   statsContainer: {
     flexDirection: 'row',
@@ -839,7 +863,7 @@ const createCalendarStyles = (colors: any) => StyleSheet.create({
   statText: {
     fontSize: 12,
     fontFamily: 'PoppinsRegular',
-    color: '#9CA3AF',
+    color: colors.textSecondary,
     marginLeft: 6,
   },
   centerContent: {
