@@ -182,7 +182,8 @@
       "Bash(git push:*)",
       "Bash(copy:*)",
       "Bash(cp:*)",
-      "Bash(npx expo install:*)"
+      "Bash(npx expo install:*)",
+      "Bash(venv/../venv/Scripts/python.exe:*)"
     ],
     "deny": []
   }
