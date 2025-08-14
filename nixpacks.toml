@@ -1,14 +1,22 @@
+[providers]
+python = "3.12"
+
+[variables]
+NIXPACKS_PYTHON_VERSION = "3.12"
+
 [phases.setup]
 nixPkgs = ['python312', 'bash', 'curl']
 
 [phases.install]
-cmds = ['pip install -r requirements.txt']
+cmds = [
+    'python -m venv --copies /opt/venv',
+    '. /opt/venv/bin/activate && pip install -r requirements.txt'
+]
 
 [phases.build]
 cmds = [
-    'chmod +x start_railway.sh',
-    'cd maxBreak && python manage.py collectstatic --noinput'
+    'chmod +x start_railway.sh'
 ]
 
 [start]
-cmd = './start_railway.sh'
+cmd = 'python railway_start.py'
