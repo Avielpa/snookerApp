@@ -1,0 +1,187 @@
+
+ (NOBRIDGE) DEBUG  [API Request] GET matches/9553340/
+ (NOBRIDGE) DEBUG  [API Request] Base URL: https://snookerapp.up.railway.app/oneFourSeven/
+ (NOBRIDGE) DEBUG  [API Cache] Cache MISS for get:matches/9553340/
+ (NOBRIDGE) ERROR  [API Error]: {"baseURL": "https://snookerapp.up.railway.app/oneFourSeven/", "data": {"detail": "No MatchesOfAnEvent matches the given query."}, "isNetworkError": false, "isTimeoutError": false, "message": "Request failed with status code 404", "status": 404, "statusText": undefined, "url": "matches/9553340/", "userFriendlyMessage": "Requested data not found."}
+ (NOBRIDGE) LOG  [MatchService] Match with API ID 9553340 not found in internal DB (404).
+ (NOBRIDGE) DEBUG  [LiveDetection] Analyzing matches at 2025-08-14T17:38:09.561Z UTC
+ (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Kyren Wilson vs Ronnie O'Sullivan
+ (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Barry Hawkins vs Chris Wakelin
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Neil Robertson vs Elliot Slessor starts in 982 minutes (UTC)
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 1372 minutes (UTC)
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 2422 minutes (UTC)
+ (NOBRIDGE) LOG  [LiveDetection] 🎯 Live matches detected - refreshing client data
+ (NOBRIDGE) LOG  [HomeScreen] ⏸️ Live match detected but throttled (0s since last update)
+ (NOBRIDGE) DEBUG  [LiveDetection] Analyzing matches at 2025-08-14T17:38:10.927Z UTC
+ (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Kyren Wilson vs Ronnie O'Sullivan
+ (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Barry Hawkins vs Chris Wakelin
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Neil Robertson vs Elliot Slessor starts in 982 minutes (UTC)
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 1372 minutes (UTC)
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 2422 minutes (UTC)
+ (NOBRIDGE) LOG  [LiveDetection] 🎯 Live matches detected - refreshing client data
+ (NOBRIDGE) LOG  [HomeScreen] ⏸️ Live match detected but throttled (0s since last update)
+ (NOBRIDGE) DEBUG  [LiveDetection] Analyzing matches at 2025-08-14T17:38:12.461Z UTC
+ (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Kyren Wilson vs Ronnie O'Sullivan
+ (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Barry Hawkins vs Chris Wakelin
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Neil Robertson vs Elliot Slessor starts in 982 minutes (UTC)
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 1372 minutes (UTC)
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 2422 minutes (UTC)
+ (NOBRIDGE) LOG  [LiveDetection] 🎯 Live matches detected - refreshing client data
+ (NOBRIDGE) LOG  [HomeScreen] ⏸️ Live match detected but throttled (0s since last update)
+ (NOBRIDGE) DEBUG  [MatchService] Fetching match details from: matches/9553339/
+ (NOBRIDGE) DEBUG  [API Request] GET matches/9553339/
+ (NOBRIDGE) DEBUG  [API Request] Base URL: https://snookerapp.up.railway.app/oneFourSeven/
+ (NOBRIDGE) DEBUG  [API Cache] Cache MISS for get:matches/9553339/
+ (NOBRIDGE) ERROR  [API Error]: {"baseURL": "https://snookerapp.up.railway.app/oneFourSeven/", "data": {"detail": "No MatchesOfAnEvent matches the given query."}, "isNetworkError": false, "isTimeoutError": false, "message": "Request failed with status code 404", "status": 404, "statusText": undefined, "url": "matches/9553339/", "userFriendlyMessage": "Requested data not found."}
+ (NOBRIDGE) LOG  [MatchService] Match with API ID 9553339 not found in internal DB (404).
+ (NOBRIDGE) DEBUG  [MatchService] Fetching match details from: matches/9553340/
+ (NOBRIDGE) DEBUG  [API Request] GET matches/9553340/
+ (NOBRIDGE) DEBUG  [API Request] Base URL: https://snookerapp.up.railway.app/oneFourSeven/
+ (NOBRIDGE) DEBUG  [API Cache] Cache MISS for get:matches/9553340/
+ (NOBRIDGE) ERROR  [API Error]: {"baseURL": "https://snookerapp.up.railway.app/oneFourSeven/", "data": {"detail": "No MatchesOfAnEvent matches the given query."}, "isNetworkError": false, "isTimeoutError": false, "message": "Request failed with status code 404", "status": 404, "statusText": undefined, "url": "matches/9553340/", "userFriendlyMessage": "Requested data not found."}
+ (NOBRIDGE) LOG  [MatchService] Match with API ID 9553340 not found in internal DB (404).
+ (NOBRIDGE) DEBUG  [LiveDetection] Analyzing matches at 2025-08-14T17:38:21.060Z UTC
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Kyren Wilson vs Ronnie O'Sullivan starts in -68 minutes (UTC)
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Barry Hawkins vs Chris Wakelin starts in -68 minutes (UTC)
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Neil Robertson vs Elliot Slessor starts in 982 minutes (UTC)
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 1372 minutes (UTC)
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 2422 minutes (UTC)
+ (NOBRIDGE) DEBUG  [LiveDetection] Analyzing matches at 2025-08-14T17:38:23.762Z UTC
+ (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Kyren Wilson vs Ronnie O'Sullivan
+ (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Barry Hawkins vs Chris Wakelin
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Neil Robertson vs Elliot Slessor starts in 982 minutes (UTC)
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 1372 minutes (UTC)
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 2422 minutes (UTC)
+ (NOBRIDGE) LOG  [LiveDetection] 🎯 Live matches detected - refreshing client data
+ (NOBRIDGE) LOG  [HomeScreen] ⏸️ Live match detected but throttled (0s since last update)
+ (NOBRIDGE) DEBUG  [LiveDetection] Analyzing matches at 2025-08-14T17:38:25.394Z UTC
+ (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Kyren Wilson vs Ronnie O'Sullivan
+ (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Barry Hawkins vs Chris Wakelin
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Neil Robertson vs Elliot Slessor starts in 982 minutes (UTC)
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 1372 minutes (UTC)
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 2422 minutes (UTC)
+ (NOBRIDGE) LOG  [LiveDetection] 🎯 Live matches detected - refreshing client data
+ (NOBRIDGE) LOG  [HomeScreen] ⏸️ Live match detected but throttled (0s since last update)
+ (NOBRIDGE) DEBUG  [LiveDetection] Analyzing matches at 2025-08-14T17:38:25.428Z UTC
+ (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Kyren Wilson vs Ronnie O'Sullivan
+ (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Barry Hawkins vs Chris Wakelin
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Neil Robertson vs Elliot Slessor starts in 982 minutes (UTC)
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 1372 minutes (UTC)
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 2422 minutes (UTC)
+ (NOBRIDGE) LOG  [LiveDetection] 🎯 Live matches detected - refreshing client data
+ (NOBRIDGE) LOG  [HomeScreen] ⏸️ Live match detected but throttled (0s since last update)
+ (NOBRIDGE) DEBUG  [LiveDetection] Analyzing matches at 2025-08-14T17:38:25.678Z UTC
+ (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Kyren Wilson vs Ronnie O'Sullivan
+ (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Barry Hawkins vs Chris Wakelin
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Neil Robertson vs Elliot Slessor starts in 982 minutes (UTC)
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 1372 minutes (UTC)
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 2422 minutes (UTC)
+ (NOBRIDGE) LOG  [LiveDetection] 🎯 Live matches detected - refreshing client data
+ (NOBRIDGE) LOG  [HomeScreen] ⏸️ Live match detected but throttled (0s since last update)
+ (NOBRIDGE) DEBUG  [LiveDetection] Analyzing matches at 2025-08-14T17:38:26.945Z UTC
+ (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Kyren Wilson vs Ronnie O'Sullivan
+ (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Barry Hawkins vs Chris Wakelin
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Neil Robertson vs Elliot Slessor starts in 982 minutes (UTC)
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 1372 minutes (UTC)
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 2422 minutes (UTC)
+ (NOBRIDGE) LOG  [LiveDetection] 🎯 Live matches detected - refreshing client data
+ (NOBRIDGE) LOG  [HomeScreen] ⏸️ Live match detected but throttled (0s since last update)
+ (NOBRIDGE) DEBUG  [LiveDetection] Analyzing matches at 2025-08-14T17:38:26.978Z UTC
+ (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Kyren Wilson vs Ronnie O'Sullivan
+ (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Barry Hawkins vs Chris Wakelin
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Neil Robertson vs Elliot Slessor starts in 982 minutes (UTC)
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 1372 minutes (UTC)
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 2422 minutes (UTC)
+ (NOBRIDGE) LOG  [LiveDetection] 🎯 Live matches detected - refreshing client data
+ (NOBRIDGE) LOG  [HomeScreen] ⏸️ Live match detected but throttled (0s since last update)
+ (NOBRIDGE) DEBUG  [LiveDetection] Analyzing matches at 2025-08-14T17:38:27.327Z UTC
+ (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Kyren Wilson vs Ronnie O'Sullivan
+ (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Barry Hawkins vs Chris Wakelin
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Neil Robertson vs Elliot Slessor starts in 982 minutes (UTC)
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 1372 minutes (UTC)
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 2422 minutes (UTC)
+ (NOBRIDGE) LOG  [LiveDetection] 🎯 Live matches detected - refreshing client data
+ (NOBRIDGE) LOG  [HomeScreen] ⏸️ Live match detected but throttled (0s since last update)
+ (NOBRIDGE) DEBUG  [LiveDetection] Analyzing matches at 2025-08-14T17:38:28.661Z UTC
+ (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Kyren Wilson vs Ronnie O'Sullivan
+ (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Barry Hawkins vs Chris Wakelin
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Neil Robertson vs Elliot Slessor starts in 982 minutes (UTC)
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 1372 minutes (UTC)
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 2422 minutes (UTC)
+ (NOBRIDGE) LOG  [LiveDetection] 🎯 Live matches detected - refreshing client data
+ (NOBRIDGE) LOG  [HomeScreen] ⏸️ Live match detected but throttled (0s since last update)
+ (NOBRIDGE) DEBUG  [LiveDetection] Analyzing matches at 2025-08-14T17:38:28.711Z UTC
+ (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Kyren Wilson vs Ronnie O'Sullivan
+ (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Barry Hawkins vs Chris Wakelin
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Neil Robertson vs Elliot Slessor starts in 982 minutes (UTC)
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 1372 minutes (UTC)
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 2422 minutes (UTC)
+ (NOBRIDGE) LOG  [LiveDetection] 🎯 Live matches detected - refreshing client data
+ (NOBRIDGE) LOG  [HomeScreen] ⏸️ Live match detected but throttled (0s since last update)
+ (NOBRIDGE) DEBUG  [LiveDetection] Analyzing matches at 2025-08-14T17:38:29.994Z UTC
+ (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Kyren Wilson vs Ronnie O'Sullivan
+ (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Barry Hawkins vs Chris Wakelin
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Neil Robertson vs Elliot Slessor starts in 982 minutes (UTC)
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 1372 minutes (UTC)
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 2422 minutes (UTC)
+ (NOBRIDGE) LOG  [LiveDetection] 🎯 Live matches detected - refreshing client data
+ (NOBRIDGE) LOG  [HomeScreen] ⏸️ Live match detected but throttled (0s since last update)
+ (NOBRIDGE) DEBUG  [LiveDetection] Analyzing matches at 2025-08-14T17:38:30.261Z UTC
+ (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Kyren Wilson vs Ronnie O'Sullivan
+ (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Barry Hawkins vs Chris Wakelin
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Neil Robertson vs Elliot Slessor starts in 981 minutes (UTC)
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 1371 minutes (UTC)
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 2421 minutes (UTC)
+ (NOBRIDGE) LOG  [LiveDetection] 🎯 Live matches detected - refreshing client data
+ (NOBRIDGE) LOG  [HomeScreen] ⏸️ Live match detected but throttled (0s since last update)
+ (NOBRIDGE) DEBUG  [MatchService] Fetching match details from: matches/9553340/
+ (NOBRIDGE) DEBUG  [API Request] GET matches/9553340/
+ (NOBRIDGE) DEBUG  [API Request] Base URL: https://snookerapp.up.railway.app/oneFourSeven/
+ (NOBRIDGE) DEBUG  [API Cache] Cache MISS for get:matches/9553340/
+ (NOBRIDGE) ERROR  [API Error]: {"baseURL": "https://snookerapp.up.railway.app/oneFourSeven/", "data": {"detail": "No MatchesOfAnEvent matches the given query."}, "isNetworkError": false, "isTimeoutError": false, "message": "Request failed with status code 404", "status": 404, "statusText": undefined, "url": "matches/9553340/", "userFriendlyMessage": "Requested data not found."}
+ (NOBRIDGE) LOG  [MatchService] Match with API ID 9553340 not found in internal DB (404).
+ (NOBRIDGE) DEBUG  [MatchService] Fetching match details from: matches/9553339/
+ (NOBRIDGE) DEBUG  [API Request] GET matches/9553339/
+ (NOBRIDGE) DEBUG  [API Request] Base URL: https://snookerapp.up.railway.app/oneFourSeven/
+ (NOBRIDGE) DEBUG  [API Cache] Cache MISS for get:matches/9553339/
+ (NOBRIDGE) ERROR  [API Error]: {"baseURL": "https://snookerapp.up.railway.app/oneFourSeven/", "data": {"detail": "No MatchesOfAnEvent matches the given query."}, "isNetworkError": false, "isTimeoutError": false, "message": "Request failed with status code 404", "status": 404, "statusText": undefined, "url": "matches/9553339/", "userFriendlyMessage": "Requested data not found."}
+ (NOBRIDGE) LOG  [MatchService] Match with API ID 9553339 not found in internal DB (404).
+ (NOBRIDGE) DEBUG  [LiveDetection] Analyzing matches at 2025-08-14T17:38:45.836Z UTC
+ (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Kyren Wilson vs Ronnie O'Sullivan
+ (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Barry Hawkins vs Chris Wakelin
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Neil Robertson vs Elliot Slessor starts in 981 minutes (UTC)
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 1371 minutes (UTC)
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 2421 minutes (UTC)
+ (NOBRIDGE) LOG  [LiveDetection] 🎯 Live matches detected - refreshing client data
+ (NOBRIDGE) LOG  [HomeScreen] ⏸️ Live match detected but throttled (0s since last update)
+ (NOBRIDGE) DEBUG  [LiveDetection] Analyzing matches at 2025-08-14T17:38:46.977Z UTC
+ (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Kyren Wilson vs Ronnie O'Sullivan
+ (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Barry Hawkins vs Chris Wakelin
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Neil Robertson vs Elliot Slessor starts in 981 minutes (UTC)
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 1371 minutes (UTC)
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 2421 minutes (UTC)
+ (NOBRIDGE) LOG  [LiveDetection] 🎯 Live matches detected - refreshing client data
+ (NOBRIDGE) LOG  [HomeScreen] ⏸️ Live match detected but throttled (0s since last update)
+ (NOBRIDGE) DEBUG  [MatchService] Fetching match details from: matches/9553340/
+ (NOBRIDGE) DEBUG  [API Request] GET matches/9553340/
+ (NOBRIDGE) DEBUG  [API Request] Base URL: https://snookerapp.up.railway.app/oneFourSeven/
+ (NOBRIDGE) DEBUG  [API Cache] Cache MISS for get:matches/9553340/
+ (NOBRIDGE) ERROR  [API Error]: {"baseURL": "https://snookerapp.up.railway.app/oneFourSeven/", "data": {"detail": "No MatchesOfAnEvent matches the given query."}, "isNetworkError": false, "isTimeoutError": false, "message": "Request failed with status code 404", "status": 404, "statusText": undefined, "url": "matches/9553340/", "userFriendlyMessage": "Requested data not found."}
+ (NOBRIDGE) LOG  [MatchService] Match with API ID 9553340 not found in internal DB (404).
+ (NOBRIDGE) DEBUG  [LiveDetection] Analyzing matches at 2025-08-14T17:38:53.545Z UTC
+ (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Kyren Wilson vs Ronnie O'Sullivan
+ (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Barry Hawkins vs Chris Wakelin
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Neil Robertson vs Elliot Slessor starts in 981 minutes (UTC)
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 1371 minutes (UTC)
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 2421 minutes (UTC)
+ (NOBRIDGE) LOG  [LiveDetection] 🎯 Live matches detected - refreshing client data
+ (NOBRIDGE) LOG  [HomeScreen] ⏸️ Live match detected but throttled (0s since last update)
+ (NOBRIDGE) DEBUG  [LiveDetection] Analyzing matches at 2025-08-14T17:38:56.045Z UTC
+ (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Kyren Wilson vs Ronnie O'Sullivan
+ (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Barry Hawkins vs Chris Wakelin
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Neil Robertson vs Elliot Slessor starts in 981 minutes (UTC)
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 1371 minutes (UTC)
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 2421 minutes (UTC)
+ (NOBRIDGE) LOG  [LiveDetection] 🎯 Live matches detected - refreshing client data
+ (NOBRIDGE) LOG  [HomeScreen] ⏸️ Live match detected but throttled (0s since last update)
+ (NOBRIDGE) DEBUG  [LiveDetection] Analyzing matches at 2025-08-14T17:38:58.844Z UTC

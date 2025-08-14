@@ -5,4 +5,4 @@ cmds = ["pip install -r requirements.txt"]
 nixPkgs = ["python312", "pip"]
 
 [start]
-cmd = "cd maxBreak && gunicorn --bind 0.0.0.0:$PORT maxBreak.wsgi:application"
+cmd = "python start_with_live_monitor.py"
