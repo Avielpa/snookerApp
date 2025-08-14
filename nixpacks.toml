@@ -1,8 +1,0 @@
-[phases.build]
-cmds = ["pip install -r requirements.txt"]
-
-[phases.setup]
-nixPkgs = ["python312", "pip"]
-
-[start]
-cmd = "python start_with_live_monitor.py"

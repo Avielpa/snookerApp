@@ -1,0 +1,1 @@
+web: python start_with_live_monitor.py

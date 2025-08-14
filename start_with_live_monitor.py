@@ -57,14 +57,8 @@ def main():
     print(f"[RAILWAY] Starting Django server on port {port}")
     
     try:
-        # Use gunicorn for production
-        subprocess.run([
-            'gunicorn', 
-            '--bind', f'0.0.0.0:{port}',
-            '--workers', '2',
-            '--timeout', '120',
-            'maxBreak.wsgi:application'
-        ])
+        # Use gunicorn for production (Railway will install it automatically)
+        os.system(f'gunicorn --bind 0.0.0.0:{port} --workers 2 --timeout 120 maxBreak.wsgi:application')
     except KeyboardInterrupt:
         print("[RAILWAY] Shutting down...")
     except Exception as e:
