@@ -1,2 +1,2 @@
 web: cd maxBreak && python manage.py runserver 0.0.0.0:$PORT
-worker: python worker.py
+live_monitor: cd maxBreak && python manage.py auto_live_monitor
