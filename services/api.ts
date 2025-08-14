@@ -4,7 +4,7 @@ import { logger } from '../utils/logger';
 
 // --- Configuration ---
 // Dynamic API URL based on environment
-const API_BASE_URL = 'https://snookerapp.up.railway.app/oneFourSeven/';
+const API_BASE_URL = 'http://10.0.2.2:8000/oneFourSeven/'; // Default to local development
 
 // Simple in-memory cache for API responses
 interface CacheEntry {

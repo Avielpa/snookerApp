@@ -22,8 +22,7 @@ import { getCalendarByTab } from '../services/matchServices';
 import { logger } from '../utils/logger';
 import { useColors } from '../contexts/ThemeContext';
 
-// Import modern components - simplified to avoid crashes
-import { LiveIndicator } from './components/modern';
+// Removed all modern component imports to prevent crashes
 
 // Enhanced interface with additional computed fields
 interface Tournament {
@@ -376,10 +375,10 @@ export default function CalendarEnhanced() {
               <Text style={styles.tournamentName} numberOfLines={2}>
                 {item.Name}
               </Text>
-              {/* Live Indicator */}
+              {/* Simple Live Indicator */}
               {item.isLive && (
                 <View style={styles.liveIndicatorInline}>
-                  <LiveIndicator isLive={true} size="small" />
+                  <Text style={styles.liveText}>🔴 LIVE</Text>
                 </View>
               )}
             </View>
@@ -420,16 +419,21 @@ export default function CalendarEnhanced() {
             </View>
           ) : null}
 
-          {/* Progress Bar for Active Tournaments */}
+          {/* Progress Bar for Active Tournaments - Simplified to prevent crashes */}
           {(item.status === 'active' && item.progress !== undefined) ? (
             <View style={styles.progressContainer}>
-              <ProgressBar
-                progress={item.progress}
-                height={6}
-                colors={[getStatusColor(), `${getStatusColor()}80`]}
-                label="Tournament Progress"
-                showPercentage={true}
-              />
+              <View style={[styles.simpleProgressTrack]}>
+                <View style={[
+                  styles.simpleProgressFill, 
+                  { 
+                    width: `${Math.round(item.progress * 100)}%`,
+                    backgroundColor: getStatusColor()
+                  }
+                ]} />
+              </View>
+              <Text style={styles.progressText}>
+                Tournament Progress: {Math.round(item.progress * 100)}%
+              </Text>
             </View>
           ) : null}
 
@@ -778,6 +782,23 @@ const createCalendarStyles = (colors: any) => StyleSheet.create({
   },
   progressContainer: {
     marginBottom: 12,
+  },
+  simpleProgressTrack: {
+    width: '100%',
+    height: 6,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 3,
+    overflow: 'hidden',
+    marginBottom: 4,
+  },
+  simpleProgressFill: {
+    height: '100%',
+    borderRadius: 3,
+  },
+  progressText: {
+    fontSize: 11,
+    fontFamily: 'PoppinsRegular',
+    color: '#9CA3AF',
   },
   statsContainer: {
     flexDirection: 'row',

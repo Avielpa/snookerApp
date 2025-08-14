@@ -23,7 +23,7 @@ import { logger } from '../utils/logger';
 import { useColors } from '../contexts/ThemeContext';
 
 // Import modern components - simplified to avoid crashes
-import { ProgressBar } from './components/modern';
+// Removed ProgressBar to prevent crashes - using simple native views instead
 
 // Enhanced interface with additional fields
 interface RankingItem {
@@ -213,9 +213,9 @@ export default function RankingEnhanced() {
           }
         ]}
         onPress={() => handleFilterPress(option.id)}
-        activeOpacity={0.8}
-        hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
-        delayPressIn={50}
+        activeOpacity={0.7}
+        hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+        delayPressIn={0}
       >
         <Ionicons 
           name={option.icon} 
@@ -281,12 +281,15 @@ export default function RankingEnhanced() {
               <Text style={styles.prize}>£{item.Sum?.toLocaleString() || 'N/A'}</Text>
               
               {/* Mini progress bar showing relative performance */}
-              <ProgressBar 
-                progress={Math.min(item.Sum / 1000000, 1)} // Normalize to max 1M
-                height={4}
-                colors={[colors.primary, colors.secondary]}
-                animated={false}
-              />
+              <View style={styles.miniProgressTrack}>
+                <View style={[
+                  styles.miniProgressFill,
+                  {
+                    width: `${Math.min(Math.round((item.Sum / 1000000) * 100), 100)}%`,
+                    backgroundColor: colors.primary
+                  }
+                ]} />
+              </View>
             </View>
 
             {/* Action Arrow */}
@@ -445,18 +448,18 @@ const createRankingStyles = (colors: any) => StyleSheet.create({
   filterButton: {
     marginRight: 12,
     borderRadius: 20,
-    minHeight: 48,
-    minWidth: 100,
+    minHeight: 52,
+    minWidth: 110,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 18,
-    paddingVertical: 14,
-    elevation: 2,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    elevation: 4,
     shadowColor: colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
   },
   filterText: {
     marginLeft: 8,
@@ -543,6 +546,17 @@ const createRankingStyles = (colors: any) => StyleSheet.create({
     fontFamily: 'PoppinsBold',
     color: colors.success,
     marginBottom: 8,
+  },
+  miniProgressTrack: {
+    width: '100%',
+    height: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  miniProgressFill: {
+    height: '100%',
+    borderRadius: 2,
   },
   actionArrow: {
     marginLeft: 12,
