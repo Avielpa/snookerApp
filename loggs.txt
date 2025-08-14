@@ -1,187 +1,876 @@
-
- (NOBRIDGE) DEBUG  [API Request] GET matches/9553340/
+rSeven/
+ (NOBRIDGE) DEBUG  [API Cache] Cache HIT for get:events/
+ (NOBRIDGE) DEBUG  [API Cache] Returning cached data
+ (NOBRIDGE) DEBUG  [TourService] Successfully fetched 136 events.
+ (NOBRIDGE) DEBUG  [TourService] Found 1 active other tours: [{"ID": 2421, "Name": "World Games - Men", "Tour": "other"}]
+ (NOBRIDGE) LOG  [HomeScreen] Found 1 active other tours
+ (NOBRIDGE) LOG  [HomeScreen] Fetching details and matches for tournament 2350
+ (NOBRIDGE) DEBUG  [TourService] Fetching tournament details from: events/2350/
+ (NOBRIDGE) DEBUG  [TourService] Fetching tournament matches from: events/2350/matches/
+ (NOBRIDGE) DEBUG  [API Request] GET events/2350/
  (NOBRIDGE) DEBUG  [API Request] Base URL: https://snookerapp.up.railway.app/oneFourSeven/
- (NOBRIDGE) DEBUG  [API Cache] Cache MISS for get:matches/9553340/
- (NOBRIDGE) ERROR  [API Error]: {"baseURL": "https://snookerapp.up.railway.app/oneFourSeven/", "data": {"detail": "No MatchesOfAnEvent matches the given query."}, "isNetworkError": false, "isTimeoutError": false, "message": "Request failed with status code 404", "status": 404, "statusText": undefined, "url": "matches/9553340/", "userFriendlyMessage": "Requested data not found."}
- (NOBRIDGE) LOG  [MatchService] Match with API ID 9553340 not found in internal DB (404).
- (NOBRIDGE) DEBUG  [LiveDetection] Analyzing matches at 2025-08-14T17:38:09.561Z UTC
- (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Kyren Wilson vs Ronnie O'Sullivan
- (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Barry Hawkins vs Chris Wakelin
- (NOBRIDGE) DEBUG  [LiveDetection] Match Neil Robertson vs Elliot Slessor starts in 982 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 1372 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 2422 minutes (UTC)
- (NOBRIDGE) LOG  [LiveDetection] 🎯 Live matches detected - refreshing client data
- (NOBRIDGE) LOG  [HomeScreen] ⏸️ Live match detected but throttled (0s since last update)
- (NOBRIDGE) DEBUG  [LiveDetection] Analyzing matches at 2025-08-14T17:38:10.927Z UTC
- (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Kyren Wilson vs Ronnie O'Sullivan
- (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Barry Hawkins vs Chris Wakelin
- (NOBRIDGE) DEBUG  [LiveDetection] Match Neil Robertson vs Elliot Slessor starts in 982 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 1372 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 2422 minutes (UTC)
- (NOBRIDGE) LOG  [LiveDetection] 🎯 Live matches detected - refreshing client data
- (NOBRIDGE) LOG  [HomeScreen] ⏸️ Live match detected but throttled (0s since last update)
- (NOBRIDGE) DEBUG  [LiveDetection] Analyzing matches at 2025-08-14T17:38:12.461Z UTC
- (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Kyren Wilson vs Ronnie O'Sullivan
- (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Barry Hawkins vs Chris Wakelin
- (NOBRIDGE) DEBUG  [LiveDetection] Match Neil Robertson vs Elliot Slessor starts in 982 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 1372 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 2422 minutes (UTC)
- (NOBRIDGE) LOG  [LiveDetection] 🎯 Live matches detected - refreshing client data
- (NOBRIDGE) LOG  [HomeScreen] ⏸️ Live match detected but throttled (0s since last update)
- (NOBRIDGE) DEBUG  [MatchService] Fetching match details from: matches/9553339/
- (NOBRIDGE) DEBUG  [API Request] GET matches/9553339/
+ (NOBRIDGE) DEBUG  [API Cache] Cache MISS for get:events/2350/
+ (NOBRIDGE) DEBUG  [API Request] GET events/2350/matches/
  (NOBRIDGE) DEBUG  [API Request] Base URL: https://snookerapp.up.railway.app/oneFourSeven/
- (NOBRIDGE) DEBUG  [API Cache] Cache MISS for get:matches/9553339/
- (NOBRIDGE) ERROR  [API Error]: {"baseURL": "https://snookerapp.up.railway.app/oneFourSeven/", "data": {"detail": "No MatchesOfAnEvent matches the given query."}, "isNetworkError": false, "isTimeoutError": false, "message": "Request failed with status code 404", "status": 404, "statusText": undefined, "url": "matches/9553339/", "userFriendlyMessage": "Requested data not found."}
- (NOBRIDGE) LOG  [MatchService] Match with API ID 9553339 not found in internal DB (404).
- (NOBRIDGE) DEBUG  [MatchService] Fetching match details from: matches/9553340/
- (NOBRIDGE) DEBUG  [API Request] GET matches/9553340/
+ (NOBRIDGE) DEBUG  [API Cache] Cache MISS for get:events/2350/matches/
+ (NOBRIDGE) DEBUG  [API Response] 200 events/2350/
+ (NOBRIDGE) DEBUG  [API Response] Data length: 1044 characters
+ (NOBRIDGE) DEBUG  [API Cache] Cached response for get:events/2350/ (TTL: 30000ms)
+ (NOBRIDGE) DEBUG  [TourService] Successfully fetched details for event 2350.
+ (NOBRIDGE) DEBUG  [API Response] 200 events/2350/matches/
+ (NOBRIDGE) DEBUG  [API Response] Data length: 87756 characters
+ (NOBRIDGE) DEBUG  [Cache Sync] Syncing tournament matches array (143 matches)
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538648
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538649
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538650
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538653
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538656
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538660
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538661
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538678
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538651
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538654
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538655
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538657
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538658
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538659
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538662
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538663
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538652
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538665
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538666
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538667
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538668
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538669
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538670
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538674
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538671
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538664
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538672
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538673
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538675
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538676
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538677
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538679
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543262
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543263
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543264
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543265
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543266
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543267
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543268
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543269
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543254
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543255
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543256
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543257
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543259
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543260
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543261
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543284
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543258
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543278
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543279
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543280
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543281
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543282
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543283
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543285
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543270
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543271
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543272
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543273
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543274
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543275
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543276
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543277
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548510
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548511
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548512
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548513
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548515
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548516
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548517
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548540
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548518
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548519
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548520
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548521
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548522
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548523
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548524
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548525
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548514
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548526
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548527
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548528
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548529
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548530
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548531
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548532
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548533
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548534
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548535
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548536
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548537
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548538
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548539
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548541
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9550511
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9550512
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9550513
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9550514
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9550515
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9550516
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9550517
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9550518
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9550519
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9550520
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9550521
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9550522
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9550523
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9550524
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9550525
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9550526
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9552384
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9552385
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9552386
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9552387
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9552388
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9552389
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9552390
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9552391
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9552392
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9552393
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9552394
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9552395
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9552396
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9552397
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9552398
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9552399
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9553042
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9553043
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9553044
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9553045
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9553046
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9553047
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9553048
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9553049
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9553353
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9553354
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9553355
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9553356
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9553323
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9553324
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9552677
+ (NOBRIDGE) DEBUG  [API Cache] Cached response for get:events/2350/matches/ (TTL: 15000ms)
+ (NOBRIDGE) DEBUG  [TourService] Successfully fetched 143 matches for event 2350.
+ (NOBRIDGE) DEBUG  [TourService] Match details: [{"api_match_id": 9538648, "details_url": "https://www.wst.tv/match-centre/ec2270db-fe5e-4ad7-8f05-f14a1651a561", "end_date": "2025-08-08T14:18:45Z", "event_id": 2350, "frame_scores": "", "id": 2275, "live_url": "https://www.wst.tv/match-centre/ec2270db-fe5e-4ad7-8f05-f14a1651a561", "note": "", "number": 1, "on_break": false, "player1_id": 1835, "player1_name": "Florian Nüßle", "player2_id": 2320, "player2_name": "Dylan Emery", "round": 7, "scheduled_date": "2025-08-08T11:00:00Z", "score1": 3, "score2": 4, "sessions_str": "", "start_date": "2025-08-08T11:05:37Z", "status_code": 3, "status_display": "Unknown/Other", "unfinished": false, "winner_id": 2320}, {"api_match_id": 9538649, "details_url": "https://www.wst.tv/match-centre/a44e3226-3cac-46b5-ab75-ed3eed3fb867", "end_date": "2025-08-08T13:17:46Z", "event_id": 2350, "frame_scores": "", "id": 2276, "live_url": "https://www.wst.tv/match-centre/a44e3226-3cac-46b5-ab75-ed3eed3fb867", "note": "", "number": 2, "on_break": false, "player1_id": 2778, "player1_name": "Liam Pullen", "player2_id": 415, "player2_name": "Ahmed Aseeri", "round": 7, "scheduled_date": "2025-08-08T11:00:00Z", "score1": 4, "score2": 1, "sessions_str": "", "start_date": "2025-08-08T11:05:37Z", "status_code": 3, "status_display": "Unknown/Other", "unfinished": false, "winner_id": 2778}, {"api_match_id": 9538650, "details_url": "https://www.wst.tv/match-centre/14d9b7e9-6aa0-4765-a728-7f1b931f5a4f", "end_date": "2025-08-08T12:53:57Z", "event_id": 2350, "frame_scores": "", "id": 2277, "live_url": "https://www.wst.tv/match-centre/14d9b7e9-6aa0-4765-a728-7f1b931f5a4f", "note": "", "number": 3, "on_break": false, "player1_id": 2507, "player1_name": "Robbie McGuigan", "player2_id": 2607, "player2_name": "Yang Gao", "round": 7, "scheduled_date": "2025-08-08T11:00:00Z", "score1": 1, "score2": 4, "sessions_str": "", "start_date": "2025-08-08T11:05:37Z", "status_code": 3, "status_display": "Unknown/Other", "unfinished": false, "winner_id": 2607}]
+ (NOBRIDGE) DEBUG  [TourService] Match status breakdown: {"0": 3, "1": 2, "3": 138}
+ (NOBRIDGE) LOG  [HomeScreen] Tournament details: {"AgeGroup": "O", "AllRoundsAdded": true, "City": "Jeddah", "CommonNote": "TNT<!-- Sport-->/Eurosport/<a href=\"https://www.discoveryplus.com/\">Discovery+</a>, <a href=\"https://www.wst.tv/videos\">WST Play</a>, <a href=\"https://www.huya.com/880214\">Huya</a> & <a href=\"https://www.wst.tv/news/2025/august/05/how-to-watch-the-saudi-arabia-snooker-masters/\">more</a>", "ConversionRate": 1, "Country": "Saudi Arabia", "DefendingChampion": 12, "Discipline": "snooker", "EndDate": "2025-08-16", "EventPredictionID": 0, "Format": 1, "HashTag": "SaudiMasters", "ID": 2350, "Main": 2350, "Name": "Saudi Arabia Masters", "Note": "", "Num": 0, "NumActive": 0, "NumCompetitors": 144, "NumResults": 128, "NumUpcoming": 15, "PhotoURLs": "", "PreviousEdition": 1839, "RankingType": "WR", "Related": "", "Season": 2025, "Sex": "Both", "ShortName": "", "Sponsor": "", "Stage": "F", "StartDate": "2025-08-08", "Team": false, "Tour": "main", "Twitter": "", "Type": "Ranking", "Url": "", "ValueType": "SAM", "Venue": "Green Halls", "WorldSnookerId": 0, "winner_prize_money": {"amount": 500000, "currency": "GBP", "formatted": "GBP 500,000"}}
+ (NOBRIDGE) LOG  [HomeScreen] Raw matches received: {"isArray": true, "length": 143, "sample": [{"api_match_id": 9538648, "details_url": "https://www.wst.tv/match-centre/ec2270db-fe5e-4ad7-8f05-f14a1651a561", "end_date": "2025-08-08T14:18:45Z", "event_id": 2350, "frame_scores": "", "id": 2275, "live_url": "https://www.wst.tv/match-centre/ec2270db-fe5e-4ad7-8f05-f14a1651a561", "note": "", "number": 1, "on_break": false, "player1_id": 1835, "player1_name": "Florian Nüßle", "player2_id": 2320, "player2_name": "Dylan Emery", "round": 7, "scheduled_date": "2025-08-08T11:00:00Z", "score1": 3, "score2": 4, "sessions_str": "", "start_date": "2025-08-08T11:05:37Z", "status_code": 3, "status_display": "Unknown/Other", "unfinished": false, "winner_id": 2320}, {"api_match_id": 9538649, "details_url": "https://www.wst.tv/match-centre/a44e3226-3cac-46b5-ab75-ed3eed3fb867", "end_date": "2025-08-08T13:17:46Z", "event_id": 2350, "frame_scores": "", "id": 2276, "live_url": "https://www.wst.tv/match-centre/a44e3226-3cac-46b5-ab75-ed3eed3fb867", "note": "", "number": 2, "on_break": false, "player1_id": 2778, "player1_name": "Liam Pullen", "player2_id": 415, "player2_name": "Ahmed Aseeri", "round": 7, "scheduled_date": "2025-08-08T11:00:00Z", "score1": 4, "score2": 1, "sessions_str": "", "start_date": "2025-08-08T11:05:37Z", "status_code": 3, "status_display": "Unknown/Other", "unfinished": false, "winner_id": 2778}], "type": "object"}
+ (NOBRIDGE) LOG  [HomeScreen] Processing 143 matches...
+ (NOBRIDGE) LOG  [HomeScreen processMatches] Processing 143 matches...
+ (NOBRIDGE) LOG  [HomeScreen] Processed data: {"totalItems": 156, "types": {"match": 143, "roundHeader": 10, "statusHeader": 3}}
+ (NOBRIDGE) LOG  [LiveDetection] ⏹️ Stopping live match monitoring
+ (NOBRIDGE) LOG  [LiveDetection] ⏹️ Stopping live match monitoring
+ (NOBRIDGE) LOG  [LiveDetection] 🚀 Starting live match monitoring (interval: 120000ms)
+ (NOBRIDGE) DEBUG  [LiveDetection] Analyzing matches at 2025-08-14T18:20:31.079Z UTC
+ (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Kyren Wilson vs Ronnie O'Sullivan
+ (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Barry Hawkins vs Chris Wakelin
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Neil Robertson vs Elliot Slessor starts in 939 minutes (UTC)
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 1329 minutes (UTC)
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 2379 minutes (UTC)
+ (NOBRIDGE) LOG  [LiveDetection] 🎯 Live matches detected - refreshing client data
+ (NOBRIDGE) LOG  [HomeScreen] ⏸️ Live match detected but throttled (1s since last update, 119s remaining)
+ (NOBRIDGE) DEBUG  [LiveDetection] Analyzing matches at 2025-08-14T18:20:59.761Z UTC
+ (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Kyren Wilson vs Ronnie O'Sullivan
+ (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Barry Hawkins vs Chris Wakelin
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Neil Robertson vs Elliot Slessor starts in 939 minutes (UTC)
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 1329 minutes (UTC)
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 2379 minutes (UTC)
+ (NOBRIDGE) LOG  [LiveDetection] 🎯 Live matches detected - refreshing client data
+ (NOBRIDGE) LOG  [HomeScreen] 🔴 Live match detected - triggering update #3
+ (NOBRIDGE) LOG  [API Cache] Force refreshing cache for tournament all
+ (NOBRIDGE) LOG  [HomeScreen] Refreshing tournament info...
+ (NOBRIDGE) DEBUG  [TourService] Determining active tournament ID with main tour priority...
+ (NOBRIDGE) DEBUG  [TourService] Fetching season events from: events/
+ (NOBRIDGE) DEBUG  [API Request] GET events/
  (NOBRIDGE) DEBUG  [API Request] Base URL: https://snookerapp.up.railway.app/oneFourSeven/
- (NOBRIDGE) DEBUG  [API Cache] Cache MISS for get:matches/9553340/
- (NOBRIDGE) ERROR  [API Error]: {"baseURL": "https://snookerapp.up.railway.app/oneFourSeven/", "data": {"detail": "No MatchesOfAnEvent matches the given query."}, "isNetworkError": false, "isTimeoutError": false, "message": "Request failed with status code 404", "status": 404, "statusText": undefined, "url": "matches/9553340/", "userFriendlyMessage": "Requested data not found."}
- (NOBRIDGE) LOG  [MatchService] Match with API ID 9553340 not found in internal DB (404).
- (NOBRIDGE) DEBUG  [LiveDetection] Analyzing matches at 2025-08-14T17:38:21.060Z UTC
- (NOBRIDGE) DEBUG  [LiveDetection] Match Kyren Wilson vs Ronnie O'Sullivan starts in -68 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Match Barry Hawkins vs Chris Wakelin starts in -68 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Match Neil Robertson vs Elliot Slessor starts in 982 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 1372 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 2422 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Analyzing matches at 2025-08-14T17:38:23.762Z UTC
+ (NOBRIDGE) DEBUG  [API Cache] Cache MISS for get:events/
+ (NOBRIDGE) LOG  [LiveDetection] ⏹️ Stopping live match monitoring
+ (NOBRIDGE) LOG  [LiveDetection] ⏹️ Stopping live match monitoring
+ (NOBRIDGE) LOG  [LiveDetection] 🚀 Starting live match monitoring (interval: 120000ms)
+ (NOBRIDGE) DEBUG  [LiveDetection] Analyzing matches at 2025-08-14T18:21:00.002Z UTC
  (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Kyren Wilson vs Ronnie O'Sullivan
  (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Barry Hawkins vs Chris Wakelin
- (NOBRIDGE) DEBUG  [LiveDetection] Match Neil Robertson vs Elliot Slessor starts in 982 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 1372 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 2422 minutes (UTC)
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Neil Robertson vs Elliot Slessor starts in 939 minutes (UTC)
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 1329 minutes (UTC)
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 2379 minutes (UTC)
  (NOBRIDGE) LOG  [LiveDetection] 🎯 Live matches detected - refreshing client data
- (NOBRIDGE) LOG  [HomeScreen] ⏸️ Live match detected but throttled (0s since last update)
- (NOBRIDGE) DEBUG  [LiveDetection] Analyzing matches at 2025-08-14T17:38:25.394Z UTC
- (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Kyren Wilson vs Ronnie O'Sullivan
- (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Barry Hawkins vs Chris Wakelin
- (NOBRIDGE) DEBUG  [LiveDetection] Match Neil Robertson vs Elliot Slessor starts in 982 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 1372 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 2422 minutes (UTC)
- (NOBRIDGE) LOG  [LiveDetection] 🎯 Live matches detected - refreshing client data
- (NOBRIDGE) LOG  [HomeScreen] ⏸️ Live match detected but throttled (0s since last update)
- (NOBRIDGE) DEBUG  [LiveDetection] Analyzing matches at 2025-08-14T17:38:25.428Z UTC
- (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Kyren Wilson vs Ronnie O'Sullivan
- (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Barry Hawkins vs Chris Wakelin
- (NOBRIDGE) DEBUG  [LiveDetection] Match Neil Robertson vs Elliot Slessor starts in 982 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 1372 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 2422 minutes (UTC)
- (NOBRIDGE) LOG  [LiveDetection] 🎯 Live matches detected - refreshing client data
- (NOBRIDGE) LOG  [HomeScreen] ⏸️ Live match detected but throttled (0s since last update)
- (NOBRIDGE) DEBUG  [LiveDetection] Analyzing matches at 2025-08-14T17:38:25.678Z UTC
- (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Kyren Wilson vs Ronnie O'Sullivan
- (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Barry Hawkins vs Chris Wakelin
- (NOBRIDGE) DEBUG  [LiveDetection] Match Neil Robertson vs Elliot Slessor starts in 982 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 1372 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 2422 minutes (UTC)
- (NOBRIDGE) LOG  [LiveDetection] 🎯 Live matches detected - refreshing client data
- (NOBRIDGE) LOG  [HomeScreen] ⏸️ Live match detected but throttled (0s since last update)
- (NOBRIDGE) DEBUG  [LiveDetection] Analyzing matches at 2025-08-14T17:38:26.945Z UTC
- (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Kyren Wilson vs Ronnie O'Sullivan
- (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Barry Hawkins vs Chris Wakelin
- (NOBRIDGE) DEBUG  [LiveDetection] Match Neil Robertson vs Elliot Slessor starts in 982 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 1372 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 2422 minutes (UTC)
- (NOBRIDGE) LOG  [LiveDetection] 🎯 Live matches detected - refreshing client data
- (NOBRIDGE) LOG  [HomeScreen] ⏸️ Live match detected but throttled (0s since last update)
- (NOBRIDGE) DEBUG  [LiveDetection] Analyzing matches at 2025-08-14T17:38:26.978Z UTC
- (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Kyren Wilson vs Ronnie O'Sullivan
- (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Barry Hawkins vs Chris Wakelin
- (NOBRIDGE) DEBUG  [LiveDetection] Match Neil Robertson vs Elliot Slessor starts in 982 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 1372 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 2422 minutes (UTC)
- (NOBRIDGE) LOG  [LiveDetection] 🎯 Live matches detected - refreshing client data
- (NOBRIDGE) LOG  [HomeScreen] ⏸️ Live match detected but throttled (0s since last update)
- (NOBRIDGE) DEBUG  [LiveDetection] Analyzing matches at 2025-08-14T17:38:27.327Z UTC
- (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Kyren Wilson vs Ronnie O'Sullivan
- (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Barry Hawkins vs Chris Wakelin
- (NOBRIDGE) DEBUG  [LiveDetection] Match Neil Robertson vs Elliot Slessor starts in 982 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 1372 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 2422 minutes (UTC)
- (NOBRIDGE) LOG  [LiveDetection] 🎯 Live matches detected - refreshing client data
- (NOBRIDGE) LOG  [HomeScreen] ⏸️ Live match detected but throttled (0s since last update)
- (NOBRIDGE) DEBUG  [LiveDetection] Analyzing matches at 2025-08-14T17:38:28.661Z UTC
- (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Kyren Wilson vs Ronnie O'Sullivan
- (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Barry Hawkins vs Chris Wakelin
- (NOBRIDGE) DEBUG  [LiveDetection] Match Neil Robertson vs Elliot Slessor starts in 982 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 1372 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 2422 minutes (UTC)
- (NOBRIDGE) LOG  [LiveDetection] 🎯 Live matches detected - refreshing client data
- (NOBRIDGE) LOG  [HomeScreen] ⏸️ Live match detected but throttled (0s since last update)
- (NOBRIDGE) DEBUG  [LiveDetection] Analyzing matches at 2025-08-14T17:38:28.711Z UTC
- (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Kyren Wilson vs Ronnie O'Sullivan
- (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Barry Hawkins vs Chris Wakelin
- (NOBRIDGE) DEBUG  [LiveDetection] Match Neil Robertson vs Elliot Slessor starts in 982 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 1372 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 2422 minutes (UTC)
- (NOBRIDGE) LOG  [LiveDetection] 🎯 Live matches detected - refreshing client data
- (NOBRIDGE) LOG  [HomeScreen] ⏸️ Live match detected but throttled (0s since last update)
- (NOBRIDGE) DEBUG  [LiveDetection] Analyzing matches at 2025-08-14T17:38:29.994Z UTC
- (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Kyren Wilson vs Ronnie O'Sullivan
- (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Barry Hawkins vs Chris Wakelin
- (NOBRIDGE) DEBUG  [LiveDetection] Match Neil Robertson vs Elliot Slessor starts in 982 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 1372 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 2422 minutes (UTC)
- (NOBRIDGE) LOG  [LiveDetection] 🎯 Live matches detected - refreshing client data
- (NOBRIDGE) LOG  [HomeScreen] ⏸️ Live match detected but throttled (0s since last update)
- (NOBRIDGE) DEBUG  [LiveDetection] Analyzing matches at 2025-08-14T17:38:30.261Z UTC
- (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Kyren Wilson vs Ronnie O'Sullivan
- (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Barry Hawkins vs Chris Wakelin
- (NOBRIDGE) DEBUG  [LiveDetection] Match Neil Robertson vs Elliot Slessor starts in 981 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 1371 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 2421 minutes (UTC)
- (NOBRIDGE) LOG  [LiveDetection] 🎯 Live matches detected - refreshing client data
- (NOBRIDGE) LOG  [HomeScreen] ⏸️ Live match detected but throttled (0s since last update)
- (NOBRIDGE) DEBUG  [MatchService] Fetching match details from: matches/9553340/
- (NOBRIDGE) DEBUG  [API Request] GET matches/9553340/
+ (NOBRIDGE) LOG  [HomeScreen] ⏸️ Live match detected but throttled (0s since last update, 120s remaining)
+ (NOBRIDGE) DEBUG  [API Response] 200 events/
+ (NOBRIDGE) DEBUG  [API Response] Data length: 125710 characters
+ (NOBRIDGE) DEBUG  [API Cache] Cached response for get:events/ (TTL: 30000ms)
+ (NOBRIDGE) DEBUG  [TourService] Successfully fetched 136 events.
+ (NOBRIDGE) DEBUG  [TourService] Active MAIN tournament found: ID = 2350 ('Saudi Arabia Masters')
+ (NOBRIDGE) LOG  [HomeScreen] Target tournament ID: 2350
+ (NOBRIDGE) DEBUG  [TourService] Getting active other tours...
+ (NOBRIDGE) DEBUG  [TourService] Fetching season events from: events/
+ (NOBRIDGE) DEBUG  [API Request] GET events/
  (NOBRIDGE) DEBUG  [API Request] Base URL: https://snookerapp.up.railway.app/oneFourSeven/
- (NOBRIDGE) DEBUG  [API Cache] Cache MISS for get:matches/9553340/
- (NOBRIDGE) ERROR  [API Error]: {"baseURL": "https://snookerapp.up.railway.app/oneFourSeven/", "data": {"detail": "No MatchesOfAnEvent matches the given query."}, "isNetworkError": false, "isTimeoutError": false, "message": "Request failed with status code 404", "status": 404, "statusText": undefined, "url": "matches/9553340/", "userFriendlyMessage": "Requested data not found."}
- (NOBRIDGE) LOG  [MatchService] Match with API ID 9553340 not found in internal DB (404).
- (NOBRIDGE) DEBUG  [MatchService] Fetching match details from: matches/9553339/
- (NOBRIDGE) DEBUG  [API Request] GET matches/9553339/
+ (NOBRIDGE) DEBUG  [API Cache] Cache HIT for get:events/
+ (NOBRIDGE) DEBUG  [API Cache] Returning cached data
+ (NOBRIDGE) DEBUG  [TourService] Successfully fetched 136 events.
+ (NOBRIDGE) DEBUG  [TourService] Found 1 active other tours: [{"ID": 2421, "Name": "World Games - Men", "Tour": "other"}]
+ (NOBRIDGE) LOG  [HomeScreen] Found 1 active other tours
+ (NOBRIDGE) LOG  [HomeScreen] Fetching details and matches for tournament 2350
+ (NOBRIDGE) DEBUG  [TourService] Fetching tournament details from: events/2350/
+ (NOBRIDGE) DEBUG  [TourService] Fetching tournament matches from: events/2350/matches/
+ (NOBRIDGE) DEBUG  [API Request] GET events/2350/
  (NOBRIDGE) DEBUG  [API Request] Base URL: https://snookerapp.up.railway.app/oneFourSeven/
- (NOBRIDGE) DEBUG  [API Cache] Cache MISS for get:matches/9553339/
- (NOBRIDGE) ERROR  [API Error]: {"baseURL": "https://snookerapp.up.railway.app/oneFourSeven/", "data": {"detail": "No MatchesOfAnEvent matches the given query."}, "isNetworkError": false, "isTimeoutError": false, "message": "Request failed with status code 404", "status": 404, "statusText": undefined, "url": "matches/9553339/", "userFriendlyMessage": "Requested data not found."}
- (NOBRIDGE) LOG  [MatchService] Match with API ID 9553339 not found in internal DB (404).
- (NOBRIDGE) DEBUG  [LiveDetection] Analyzing matches at 2025-08-14T17:38:45.836Z UTC
- (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Kyren Wilson vs Ronnie O'Sullivan
- (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Barry Hawkins vs Chris Wakelin
- (NOBRIDGE) DEBUG  [LiveDetection] Match Neil Robertson vs Elliot Slessor starts in 981 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 1371 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 2421 minutes (UTC)
- (NOBRIDGE) LOG  [LiveDetection] 🎯 Live matches detected - refreshing client data
- (NOBRIDGE) LOG  [HomeScreen] ⏸️ Live match detected but throttled (0s since last update)
- (NOBRIDGE) DEBUG  [LiveDetection] Analyzing matches at 2025-08-14T17:38:46.977Z UTC
- (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Kyren Wilson vs Ronnie O'Sullivan
- (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Barry Hawkins vs Chris Wakelin
- (NOBRIDGE) DEBUG  [LiveDetection] Match Neil Robertson vs Elliot Slessor starts in 981 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 1371 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 2421 minutes (UTC)
- (NOBRIDGE) LOG  [LiveDetection] 🎯 Live matches detected - refreshing client data
- (NOBRIDGE) LOG  [HomeScreen] ⏸️ Live match detected but throttled (0s since last update)
- (NOBRIDGE) DEBUG  [MatchService] Fetching match details from: matches/9553340/
- (NOBRIDGE) DEBUG  [API Request] GET matches/9553340/
+ (NOBRIDGE) DEBUG  [API Cache] Cache MISS for get:events/2350/
+ (NOBRIDGE) DEBUG  [API Request] GET events/2350/matches/
  (NOBRIDGE) DEBUG  [API Request] Base URL: https://snookerapp.up.railway.app/oneFourSeven/
- (NOBRIDGE) DEBUG  [API Cache] Cache MISS for get:matches/9553340/
- (NOBRIDGE) ERROR  [API Error]: {"baseURL": "https://snookerapp.up.railway.app/oneFourSeven/", "data": {"detail": "No MatchesOfAnEvent matches the given query."}, "isNetworkError": false, "isTimeoutError": false, "message": "Request failed with status code 404", "status": 404, "statusText": undefined, "url": "matches/9553340/", "userFriendlyMessage": "Requested data not found."}
- (NOBRIDGE) LOG  [MatchService] Match with API ID 9553340 not found in internal DB (404).
- (NOBRIDGE) DEBUG  [LiveDetection] Analyzing matches at 2025-08-14T17:38:53.545Z UTC
+ (NOBRIDGE) DEBUG  [API Cache] Cache MISS for get:events/2350/matches/
+ (NOBRIDGE) DEBUG  [API Response] 200 events/2350/
+ (NOBRIDGE) DEBUG  [API Response] Data length: 1044 characters
+ (NOBRIDGE) DEBUG  [API Cache] Cached response for get:events/2350/ (TTL: 30000ms)
+ (NOBRIDGE) DEBUG  [TourService] Successfully fetched details for event 2350.
+ (NOBRIDGE) DEBUG  [API Response] 200 events/2350/matches/
+ (NOBRIDGE) DEBUG  [API Response] Data length: 87756 characters
+ (NOBRIDGE) DEBUG  [Cache Sync] Syncing tournament matches array (143 matches)
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538648
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538649
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538650
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538653
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538656
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538660
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538661
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538678
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538651
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538654
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538655
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538657
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538658
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538659
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538662
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538663
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538652
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538665
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538666
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538667
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538668
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538669
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538670
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538674
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538671
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538664
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538672
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538673
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538675
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538676
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538677
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538679
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543262
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543263
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543264
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543265
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543266
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543267
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543268
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543269
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543254
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543255
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543256
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543257
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543259
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543260
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543261
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543284
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543258
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543278
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543279
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543280
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543281
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543282
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543283
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543285
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543270
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543271
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543272
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543273
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543274
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543275
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543276
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543277
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548510
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548511
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548512
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548513
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548515
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548516
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548517
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548540
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548518
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548519
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548520
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548521
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548522
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548523
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548524
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548525
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548514
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548526
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548527
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548528
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548529
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548530
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548531
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548532
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548533
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548534
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548535
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548536
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548537
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548538
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548539
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548541
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9550511
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9550512
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9550513
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9550514
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9550515
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9550516
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9550517
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9550518
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9550519
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9550520
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9550521
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9550522
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9550523
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9550524
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9550525
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9550526
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9552384
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9552385
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9552386
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9552387
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9552388
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9552389
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9552390
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9552391
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9552392
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9552393
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9552394
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9552395
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9552396
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9552397
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9552398
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9552399
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9553042
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9553043
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9553044
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9553045
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9553046
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9553047
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9553048
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9553049
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9553353
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9553354
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9553355
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9553356
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9553323
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9553324
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9552677
+ (NOBRIDGE) DEBUG  [API Cache] Cached response for get:events/2350/matches/ (TTL: 15000ms)
+ (NOBRIDGE) DEBUG  [TourService] Successfully fetched 143 matches for event 2350.
+ (NOBRIDGE) DEBUG  [TourService] Match details: [{"api_match_id": 9538648, "details_url": "https://www.wst.tv/match-centre/ec2270db-fe5e-4ad7-8f05-f14a1651a561", "end_date": "2025-08-08T14:18:45Z", "event_id": 2350, "frame_scores": "", "id": 2275, "live_url": "https://www.wst.tv/match-centre/ec2270db-fe5e-4ad7-8f05-f14a1651a561", "note": "", "number": 1, "on_break": false, "player1_id": 1835, "player1_name": "Florian Nüßle", "player2_id": 2320, "player2_name": "Dylan Emery", "round": 7, "scheduled_date": "2025-08-08T11:00:00Z", "score1": 3, "score2": 4, "sessions_str": "", "start_date": "2025-08-08T11:05:37Z", "status_code": 3, "status_display": "Unknown/Other", "unfinished": false, "winner_id": 2320}, {"api_match_id": 9538649, "details_url": "https://www.wst.tv/match-centre/a44e3226-3cac-46b5-ab75-ed3eed3fb867", "end_date": "2025-08-08T13:17:46Z", "event_id": 2350, "frame_scores": "", "id": 2276, "live_url": "https://www.wst.tv/match-centre/a44e3226-3cac-46b5-ab75-ed3eed3fb867", "note": "", "number": 2, "on_break": false, "player1_id": 2778, "player1_name": "Liam Pullen", "player2_id": 415, "player2_name": "Ahmed Aseeri", "round": 7, "scheduled_date": "2025-08-08T11:00:00Z", "score1": 4, "score2": 1, "sessions_str": "", "start_date": "2025-08-08T11:05:37Z", "status_code": 3, "status_display": "Unknown/Other", "unfinished": false, "winner_id": 2778}, {"api_match_id": 9538650, "details_url": "https://www.wst.tv/match-centre/14d9b7e9-6aa0-4765-a728-7f1b931f5a4f", "end_date": "2025-08-08T12:53:57Z", "event_id": 2350, "frame_scores": "", "id": 2277, "live_url": "https://www.wst.tv/match-centre/14d9b7e9-6aa0-4765-a728-7f1b931f5a4f", "note": "", "number": 3, "on_break": false, "player1_id": 2507, "player1_name": "Robbie McGuigan", "player2_id": 2607, "player2_name": "Yang Gao", "round": 7, "scheduled_date": "2025-08-08T11:00:00Z", "score1": 1, "score2": 4, "sessions_str": "", "start_date": "2025-08-08T11:05:37Z", "status_code": 3, "status_display": "Unknown/Other", "unfinished": false, "winner_id": 2607}]
+ (NOBRIDGE) DEBUG  [TourService] Match status breakdown: {"0": 3, "1": 2, "3": 138}
+ (NOBRIDGE) LOG  [HomeScreen] Tournament details: {"AgeGroup": "O", "AllRoundsAdded": true, "City": "Jeddah", "CommonNote": "TNT<!-- Sport-->/Eurosport/<a href=\"https://www.discoveryplus.com/\">Discovery+</a>, <a href=\"https://www.wst.tv/videos\">WST Play</a>, <a href=\"https://www.huya.com/880214\">Huya</a> & <a href=\"https://www.wst.tv/news/2025/august/05/how-to-watch-the-saudi-arabia-snooker-masters/\">more</a>", "ConversionRate": 1, "Country": "Saudi Arabia", "DefendingChampion": 12, "Discipline": "snooker", "EndDate": "2025-08-16", "EventPredictionID": 0, "Format": 1, "HashTag": "SaudiMasters", "ID": 2350, "Main": 2350, "Name": "Saudi Arabia Masters", "Note": "", "Num": 0, "NumActive": 0, "NumCompetitors": 144, "NumResults": 128, "NumUpcoming": 15, "PhotoURLs": "", "PreviousEdition": 1839, "RankingType": "WR", "Related": "", "Season": 2025, "Sex": "Both", "ShortName": "", "Sponsor": "", "Stage": "F", "StartDate": "2025-08-08", "Team": false, "Tour": "main", "Twitter": "", "Type": "Ranking", "Url": "", "ValueType": "SAM", "Venue": "Green Halls", "WorldSnookerId": 0, "winner_prize_money": {"amount": 500000, "currency": "GBP", "formatted": "GBP 500,000"}}
+ (NOBRIDGE) LOG  [HomeScreen] Raw matches received: {"isArray": true, "length": 143, "sample": [{"api_match_id": 9538648, "details_url": "https://www.wst.tv/match-centre/ec2270db-fe5e-4ad7-8f05-f14a1651a561", "end_date": "2025-08-08T14:18:45Z", "event_id": 2350, "frame_scores": "", "id": 2275, "live_url": "https://www.wst.tv/match-centre/ec2270db-fe5e-4ad7-8f05-f14a1651a561", "note": "", "number": 1, "on_break": false, "player1_id": 1835, "player1_name": "Florian Nüßle", "player2_id": 2320, "player2_name": "Dylan Emery", "round": 7, "scheduled_date": "2025-08-08T11:00:00Z", "score1": 3, "score2": 4, "sessions_str": "", "start_date": "2025-08-08T11:05:37Z", "status_code": 3, "status_display": "Unknown/Other", "unfinished": false, "winner_id": 2320}, {"api_match_id": 9538649, "details_url": "https://www.wst.tv/match-centre/a44e3226-3cac-46b5-ab75-ed3eed3fb867", "end_date": "2025-08-08T13:17:46Z", "event_id": 2350, "frame_scores": "", "id": 2276, "live_url": "https://www.wst.tv/match-centre/a44e3226-3cac-46b5-ab75-ed3eed3fb867", "note": "", "number": 2, "on_break": false, "player1_id": 2778, "player1_name": "Liam Pullen", "player2_id": 415, "player2_name": "Ahmed Aseeri", "round": 7, "scheduled_date": "2025-08-08T11:00:00Z", "score1": 4, "score2": 1, "sessions_str": "", "start_date": "2025-08-08T11:05:37Z", "status_code": 3, "status_display": "Unknown/Other", "unfinished": false, "winner_id": 2778}], "type": "object"}
+ (NOBRIDGE) LOG  [HomeScreen] Processing 143 matches...
+ (NOBRIDGE) LOG  [HomeScreen processMatches] Processing 143 matches...
+ (NOBRIDGE) LOG  [HomeScreen] Processed data: {"totalItems": 156, "types": {"match": 143, "roundHeader": 10, "statusHeader": 3}}
+ (NOBRIDGE) LOG  [LiveDetection] ⏹️ Stopping live match monitoring
+ (NOBRIDGE) LOG  [LiveDetection] ⏹️ Stopping live match monitoring
+ (NOBRIDGE) LOG  [LiveDetection] 🚀 Starting live match monitoring (interval: 120000ms)
+ (NOBRIDGE) DEBUG  [LiveDetection] Analyzing matches at 2025-08-14T18:21:00.744Z UTC
  (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Kyren Wilson vs Ronnie O'Sullivan
  (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Barry Hawkins vs Chris Wakelin
- (NOBRIDGE) DEBUG  [LiveDetection] Match Neil Robertson vs Elliot Slessor starts in 981 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 1371 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 2421 minutes (UTC)
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Neil Robertson vs Elliot Slessor starts in 939 minutes (UTC)
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 1329 minutes (UTC)
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 2379 minutes (UTC)
  (NOBRIDGE) LOG  [LiveDetection] 🎯 Live matches detected - refreshing client data
- (NOBRIDGE) LOG  [HomeScreen] ⏸️ Live match detected but throttled (0s since last update)
- (NOBRIDGE) DEBUG  [LiveDetection] Analyzing matches at 2025-08-14T17:38:56.045Z UTC
+ (NOBRIDGE) LOG  [HomeScreen] ⏸️ Live match detected but throttled (1s since last update, 119s remaining)
+ (NOBRIDGE) LOG  [BottomBar] Navigating from / to /
+ (NOBRIDGE) LOG  [HomeScreen] Loading tournament info...
+ (NOBRIDGE) DEBUG  [TourService] Determining active tournament ID with main tour priority...
+ (NOBRIDGE) DEBUG  [TourService] Fetching season events from: events/
+ (NOBRIDGE) DEBUG  [API Request] GET events/
+ (NOBRIDGE) DEBUG  [API Request] Base URL: https://snookerapp.up.railway.app/oneFourSeven/
+ (NOBRIDGE) DEBUG  [API Cache] Cache HIT for get:events/
+ (NOBRIDGE) DEBUG  [API Cache] Returning cached data
+ (NOBRIDGE) DEBUG  [TourService] Successfully fetched 136 events.
+ (NOBRIDGE) DEBUG  [TourService] Active MAIN tournament found: ID = 2350 ('Saudi Arabia Masters')
+ (NOBRIDGE) LOG  [HomeScreen] Target tournament ID: 2350
+ (NOBRIDGE) DEBUG  [TourService] Getting active other tours...
+ (NOBRIDGE) DEBUG  [TourService] Fetching season events from: events/
+ (NOBRIDGE) DEBUG  [API Request] GET events/
+ (NOBRIDGE) DEBUG  [API Request] Base URL: https://snookerapp.up.railway.app/oneFourSeven/
+ (NOBRIDGE) DEBUG  [API Cache] Cache HIT for get:events/
+ (NOBRIDGE) DEBUG  [API Cache] Returning cached data
+ (NOBRIDGE) DEBUG  [TourService] Successfully fetched 136 events.
+ (NOBRIDGE) DEBUG  [TourService] Found 1 active other tours: [{"ID": 2421, "Name": "World Games - Men", "Tour": "other"}]
+ (NOBRIDGE) LOG  [HomeScreen] Found 1 active other tours
+ (NOBRIDGE) LOG  [HomeScreen] Fetching details and matches for tournament 2350
+ (NOBRIDGE) DEBUG  [TourService] Fetching tournament details from: events/2350/
+ (NOBRIDGE) DEBUG  [TourService] Fetching tournament matches from: events/2350/matches/
+ (NOBRIDGE) DEBUG  [API Request] GET events/2350/
+ (NOBRIDGE) DEBUG  [API Request] Base URL: https://snookerapp.up.railway.app/oneFourSeven/
+ (NOBRIDGE) DEBUG  [API Cache] Cache HIT for get:events/2350/
+ (NOBRIDGE) DEBUG  [API Request] GET events/2350/matches/
+ (NOBRIDGE) DEBUG  [API Request] Base URL: https://snookerapp.up.railway.app/oneFourSeven/
+ (NOBRIDGE) DEBUG  [API Cache] Cache HIT for get:events/2350/matches/
+ (NOBRIDGE) DEBUG  [API Cache] Returning cached data
+ (NOBRIDGE) DEBUG  [API Cache] Returning cached data
+ (NOBRIDGE) DEBUG  [TourService] Successfully fetched details for event 2350.
+ (NOBRIDGE) DEBUG  [TourService] Successfully fetched 143 matches for event 2350.
+ (NOBRIDGE) DEBUG  [TourService] Match details: [{"api_match_id": 9538648, "details_url": "https://www.wst.tv/match-centre/ec2270db-fe5e-4ad7-8f05-f14a1651a561", "end_date": "2025-08-08T14:18:45Z", "event_id": 2350, "frame_scores": "", "id": 2275, "live_url": "https://www.wst.tv/match-centre/ec2270db-fe5e-4ad7-8f05-f14a1651a561", "note": "", "number": 1, "on_break": false, "player1_id": 1835, "player1_name": "Florian Nüßle", "player2_id": 2320, "player2_name": "Dylan Emery", "round": 7, "scheduled_date": "2025-08-08T11:00:00Z", "score1": 3, "score2": 4, "sessions_str": "", "start_date": "2025-08-08T11:05:37Z", "status_code": 3, "status_display": "Unknown/Other", "unfinished": false, "winner_id": 2320}, {"api_match_id": 9538649, "details_url": "https://www.wst.tv/match-centre/a44e3226-3cac-46b5-ab75-ed3eed3fb867", "end_date": "2025-08-08T13:17:46Z", "event_id": 2350, "frame_scores": "", "id": 2276, "live_url": "https://www.wst.tv/match-centre/a44e3226-3cac-46b5-ab75-ed3eed3fb867", "note": "", "number": 2, "on_break": false, "player1_id": 2778, "player1_name": "Liam Pullen", "player2_id": 415, "player2_name": "Ahmed Aseeri", "round": 7, "scheduled_date": "2025-08-08T11:00:00Z", "score1": 4, "score2": 1, "sessions_str": "", "start_date": "2025-08-08T11:05:37Z", "status_code": 3, "status_display": "Unknown/Other", "unfinished": false, "winner_id": 2778}, {"api_match_id": 9538650, "details_url": "https://www.wst.tv/match-centre/14d9b7e9-6aa0-4765-a728-7f1b931f5a4f", "end_date": "2025-08-08T12:53:57Z", "event_id": 2350, "frame_scores": "", "id": 2277, "live_url": "https://www.wst.tv/match-centre/14d9b7e9-6aa0-4765-a728-7f1b931f5a4f", "note": "", "number": 3, "on_break": false, "player1_id": 2507, "player1_name": "Robbie McGuigan", "player2_id": 2607, "player2_name": "Yang Gao", "round": 7, "scheduled_date": "2025-08-08T11:00:00Z", "score1": 1, "score2": 4, "sessions_str": "", "start_date": "2025-08-08T11:05:37Z", "status_code": 3, "status_display": "Unknown/Other", "unfinished": false, "winner_id": 2607}]
+ (NOBRIDGE) DEBUG  [TourService] Match status breakdown: {"0": 3, "1": 2, "3": 138}
+ (NOBRIDGE) LOG  [HomeScreen] Tournament details: {"AgeGroup": "O", "AllRoundsAdded": true, "City": "Jeddah", "CommonNote": "TNT<!-- Sport-->/Eurosport/<a href=\"https://www.discoveryplus.com/\">Discovery+</a>, <a href=\"https://www.wst.tv/videos\">WST Play</a>, <a href=\"https://www.huya.com/880214\">Huya</a> & <a href=\"https://www.wst.tv/news/2025/august/05/how-to-watch-the-saudi-arabia-snooker-masters/\">more</a>", "ConversionRate": 1, "Country": "Saudi Arabia", "DefendingChampion": 12, "Discipline": "snooker", "EndDate": "2025-08-16", "EventPredictionID": 0, "Format": 1, "HashTag": "SaudiMasters", "ID": 2350, "Main": 2350, "Name": "Saudi Arabia Masters", "Note": "", "Num": 0, "NumActive": 0, "NumCompetitors": 144, "NumResults": 128, "NumUpcoming": 15, "PhotoURLs": "", "PreviousEdition": 1839, "RankingType": "WR", "Related": "", "Season": 2025, "Sex": "Both", "ShortName": "", "Sponsor": "", "Stage": "F", "StartDate": "2025-08-08", "Team": false, "Tour": "main", "Twitter": "", "Type": "Ranking", "Url": "", "ValueType": "SAM", "Venue": "Green Halls", "WorldSnookerId": 0, "winner_prize_money": {"amount": 500000, "currency": "GBP", "formatted": "GBP 500,000"}}
+ (NOBRIDGE) LOG  [HomeScreen] Raw matches received: {"isArray": true, "length": 143, "sample": [{"api_match_id": 9538648, "details_url": "https://www.wst.tv/match-centre/ec2270db-fe5e-4ad7-8f05-f14a1651a561", "end_date": "2025-08-08T14:18:45Z", "event_id": 2350, "frame_scores": "", "id": 2275, "live_url": "https://www.wst.tv/match-centre/ec2270db-fe5e-4ad7-8f05-f14a1651a561", "note": "", "number": 1, "on_break": false, "player1_id": 1835, "player1_name": "Florian Nüßle", "player2_id": 2320, "player2_name": "Dylan Emery", "round": 7, "scheduled_date": "2025-08-08T11:00:00Z", "score1": 3, "score2": 4, "sessions_str": "", "start_date": "2025-08-08T11:05:37Z", "status_code": 3, "status_display": "Unknown/Other", "unfinished": false, "winner_id": 2320}, {"api_match_id": 9538649, "details_url": "https://www.wst.tv/match-centre/a44e3226-3cac-46b5-ab75-ed3eed3fb867", "end_date": "2025-08-08T13:17:46Z", "event_id": 2350, "frame_scores": "", "id": 2276, "live_url": "https://www.wst.tv/match-centre/a44e3226-3cac-46b5-ab75-ed3eed3fb867", "note": "", "number": 2, "on_break": false, "player1_id": 2778, "player1_name": "Liam Pullen", "player2_id": 415, "player2_name": "Ahmed Aseeri", "round": 7, "scheduled_date": "2025-08-08T11:00:00Z", "score1": 4, "score2": 1, "sessions_str": "", "start_date": "2025-08-08T11:05:37Z", "status_code": 3, "status_display": "Unknown/Other", "unfinished": false, "winner_id": 2778}], "type": "object"}
+ (NOBRIDGE) LOG  [HomeScreen] Processing 143 matches...
+ (NOBRIDGE) LOG  [HomeScreen processMatches] Processing 143 matches...
+ (NOBRIDGE) LOG  [HomeScreen] Processed data: {"totalItems": 156, "types": {"match": 143, "roundHeader": 10, "statusHeader": 3}}
+ (NOBRIDGE) LOG  [Notifications] Permission status: granted
+ (NOBRIDGE) LOG  [LiveDetection] 🚀 Starting live match monitoring (interval: 120000ms)
+ (NOBRIDGE) DEBUG  [LiveDetection] Analyzing matches at 2025-08-14T18:21:07.745Z UTC
  (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Kyren Wilson vs Ronnie O'Sullivan
  (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Barry Hawkins vs Chris Wakelin
- (NOBRIDGE) DEBUG  [LiveDetection] Match Neil Robertson vs Elliot Slessor starts in 981 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 1371 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 2421 minutes (UTC)
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Neil Robertson vs Elliot Slessor starts in 939 minutes (UTC)
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 1329 minutes (UTC)
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 2379 minutes (UTC)
  (NOBRIDGE) LOG  [LiveDetection] 🎯 Live matches detected - refreshing client data
- (NOBRIDGE) LOG  [HomeScreen] ⏸️ Live match detected but throttled (0s since last update)
- (NOBRIDGE) DEBUG  [LiveDetection] Analyzing matches at 2025-08-14T17:38:58.844Z UTC
+ (NOBRIDGE) LOG  [HomeScreen] 🔴 Live match detected - triggering update #1
+ (NOBRIDGE) LOG  [API Cache] Force refreshing cache for tournament all
+ (NOBRIDGE) LOG  [HomeScreen] Refreshing tournament info...
+ (NOBRIDGE) DEBUG  [TourService] Determining active tournament ID with main tour priority...
+ (NOBRIDGE) DEBUG  [TourService] Fetching season events from: events/
+ (NOBRIDGE) DEBUG  [API Request] GET events/
+ (NOBRIDGE) DEBUG  [API Request] Base URL: https://snookerapp.up.railway.app/oneFourSeven/
+ (NOBRIDGE) DEBUG  [API Cache] Cache MISS for get:events/
+ (NOBRIDGE) DEBUG  [API Response] 200 events/
+ (NOBRIDGE) DEBUG  [API Response] Data length: 125710 characters
+ (NOBRIDGE) DEBUG  [API Cache] Cached response for get:events/ (TTL: 30000ms)
+ (NOBRIDGE) DEBUG  [TourService] Successfully fetched 136 events.
+ (NOBRIDGE) DEBUG  [TourService] Active MAIN tournament found: ID = 2350 ('Saudi Arabia Masters')
+ (NOBRIDGE) LOG  [HomeScreen] Target tournament ID: 2350
+ (NOBRIDGE) DEBUG  [TourService] Getting active other tours...
+ (NOBRIDGE) DEBUG  [TourService] Fetching season events from: events/
+ (NOBRIDGE) DEBUG  [API Request] GET events/
+ (NOBRIDGE) DEBUG  [API Request] Base URL: https://snookerapp.up.railway.app/oneFourSeven/
+ (NOBRIDGE) DEBUG  [API Cache] Cache HIT for get:events/
+ (NOBRIDGE) DEBUG  [API Cache] Returning cached data
+ (NOBRIDGE) DEBUG  [TourService] Successfully fetched 136 events.
+ (NOBRIDGE) DEBUG  [TourService] Found 1 active other tours: [{"ID": 2421, "Name": "World Games - Men", "Tour": "other"}]
+ (NOBRIDGE) LOG  [HomeScreen] Found 1 active other tours
+ (NOBRIDGE) LOG  [HomeScreen] Fetching details and matches for tournament 2350
+ (NOBRIDGE) DEBUG  [TourService] Fetching tournament details from: events/2350/
+ (NOBRIDGE) DEBUG  [TourService] Fetching tournament matches from: events/2350/matches/
+ (NOBRIDGE) DEBUG  [API Request] GET events/2350/
+ (NOBRIDGE) DEBUG  [API Request] Base URL: https://snookerapp.up.railway.app/oneFourSeven/
+ (NOBRIDGE) DEBUG  [API Cache] Cache MISS for get:events/2350/
+ (NOBRIDGE) DEBUG  [API Request] GET events/2350/matches/
+ (NOBRIDGE) DEBUG  [API Request] Base URL: https://snookerapp.up.railway.app/oneFourSeven/
+ (NOBRIDGE) DEBUG  [API Cache] Cache MISS for get:events/2350/matches/
+ (NOBRIDGE) DEBUG  [API Response] 200 events/2350/
+ (NOBRIDGE) DEBUG  [API Response] Data length: 1044 characters
+ (NOBRIDGE) DEBUG  [API Cache] Cached response for get:events/2350/ (TTL: 30000ms)
+ (NOBRIDGE) DEBUG  [TourService] Successfully fetched details for event 2350.
+ (NOBRIDGE) DEBUG  [API Response] 200 events/2350/matches/
+ (NOBRIDGE) DEBUG  [API Response] Data length: 87756 characters
+ (NOBRIDGE) DEBUG  [Cache Sync] Syncing tournament matches array (143 matches)
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538648
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538649
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538650
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538653
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538656
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538660
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538661
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538678
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538651
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538654
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538655
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538657
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538658
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538659
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538662
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538663
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538652
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538665
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538666
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538667
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538668
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538669
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538670
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538674
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538671
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538664
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538672
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538673
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538675
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538676
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538677
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538679
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543262
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543263
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543264
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543265
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543266
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543267
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543268
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543269
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543254
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543255
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543256
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543257
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543259
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543260
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543261
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543284
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543258
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543278
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543279
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543280
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543281
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543282
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543283
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543285
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543270
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543271
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543272
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543273
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543274
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543275
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543276
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543277
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548510
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548511
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548512
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548513
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548515
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548516
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548517
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548540
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548518
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548519
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548520
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548521
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548522
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548523
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548524
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548525
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548514
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548526
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548527
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548528
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548529
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548530
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548531
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548532
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548533
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548534
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548535
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548536
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548537
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548538
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548539
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548541
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9550511
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9550512
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9550513
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9550514
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9550515
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9550516
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9550517
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9550518
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9550519
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9550520
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9550521
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9550522
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9550523
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9550524
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9550525
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9550526
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9552384
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9552385
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9552386
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9552387
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9552388
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9552389
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9552390
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9552391
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9552392
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9552393
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9552394
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9552395
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9552396
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9552397
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9552398
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9552399
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9553042
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9553043
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9553044
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9553045
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9553046
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9553047
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9553048
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9553049
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9553353
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9553354
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9553355
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9553356
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9553323
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9553324
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9552677
+ (NOBRIDGE) DEBUG  [API Cache] Cached response for get:events/2350/matches/ (TTL: 15000ms)
+ (NOBRIDGE) DEBUG  [TourService] Successfully fetched 143 matches for event 2350.
+ (NOBRIDGE) DEBUG  [TourService] Match details: [{"api_match_id": 9538648, "details_url": "https://www.wst.tv/match-centre/ec2270db-fe5e-4ad7-8f05-f14a1651a561", "end_date": "2025-08-08T14:18:45Z", "event_id": 2350, "frame_scores": "", "id": 2275, "live_url": "https://www.wst.tv/match-centre/ec2270db-fe5e-4ad7-8f05-f14a1651a561", "note": "", "number": 1, "on_break": false, "player1_id": 1835, "player1_name": "Florian Nüßle", "player2_id": 2320, "player2_name": "Dylan Emery", "round": 7, "scheduled_date": "2025-08-08T11:00:00Z", "score1": 3, "score2": 4, "sessions_str": "", "start_date": "2025-08-08T11:05:37Z", "status_code": 3, "status_display": "Unknown/Other", "unfinished": false, "winner_id": 2320}, {"api_match_id": 9538649, "details_url": "https://www.wst.tv/match-centre/a44e3226-3cac-46b5-ab75-ed3eed3fb867", "end_date": "2025-08-08T13:17:46Z", "event_id": 2350, "frame_scores": "", "id": 2276, "live_url": "https://www.wst.tv/match-centre/a44e3226-3cac-46b5-ab75-ed3eed3fb867", "note": "", "number": 2, "on_break": false, "player1_id": 2778, "player1_name": "Liam Pullen", "player2_id": 415, "player2_name": "Ahmed Aseeri", "round": 7, "scheduled_date": "2025-08-08T11:00:00Z", "score1": 4, "score2": 1, "sessions_str": "", "start_date": "2025-08-08T11:05:37Z", "status_code": 3, "status_display": "Unknown/Other", "unfinished": false, "winner_id": 2778}, {"api_match_id": 9538650, "details_url": "https://www.wst.tv/match-centre/14d9b7e9-6aa0-4765-a728-7f1b931f5a4f", "end_date": "2025-08-08T12:53:57Z", "event_id": 2350, "frame_scores": "", "id": 2277, "live_url": "https://www.wst.tv/match-centre/14d9b7e9-6aa0-4765-a728-7f1b931f5a4f", "note": "", "number": 3, "on_break": false, "player1_id": 2507, "player1_name": "Robbie McGuigan", "player2_id": 2607, "player2_name": "Yang Gao", "round": 7, "scheduled_date": "2025-08-08T11:00:00Z", "score1": 1, "score2": 4, "sessions_str": "", "start_date": "2025-08-08T11:05:37Z", "status_code": 3, "status_display": "Unknown/Other", "unfinished": false, "winner_id": 2607}]
+ (NOBRIDGE) DEBUG  [TourService] Match status breakdown: {"0": 3, "1": 2, "3": 138}
+ (NOBRIDGE) LOG  [HomeScreen] Tournament details: {"AgeGroup": "O", "AllRoundsAdded": true, "City": "Jeddah", "CommonNote": "TNT<!-- Sport-->/Eurosport/<a href=\"https://www.discoveryplus.com/\">Discovery+</a>, <a href=\"https://www.wst.tv/videos\">WST Play</a>, <a href=\"https://www.huya.com/880214\">Huya</a> & <a href=\"https://www.wst.tv/news/2025/august/05/how-to-watch-the-saudi-arabia-snooker-masters/\">more</a>", "ConversionRate": 1, "Country": "Saudi Arabia", "DefendingChampion": 12, "Discipline": "snooker", "EndDate": "2025-08-16", "EventPredictionID": 0, "Format": 1, "HashTag": "SaudiMasters", "ID": 2350, "Main": 2350, "Name": "Saudi Arabia Masters", "Note": "", "Num": 0, "NumActive": 0, "NumCompetitors": 144, "NumResults": 128, "NumUpcoming": 15, "PhotoURLs": "", "PreviousEdition": 1839, "RankingType": "WR", "Related": "", "Season": 2025, "Sex": "Both", "ShortName": "", "Sponsor": "", "Stage": "F", "StartDate": "2025-08-08", "Team": false, "Tour": "main", "Twitter": "", "Type": "Ranking", "Url": "", "ValueType": "SAM", "Venue": "Green Halls", "WorldSnookerId": 0, "winner_prize_money": {"amount": 500000, "currency": "GBP", "formatted": "GBP 500,000"}}
+ (NOBRIDGE) LOG  [HomeScreen] Raw matches received: {"isArray": true, "length": 143, "sample": [{"api_match_id": 9538648, "details_url": "https://www.wst.tv/match-centre/ec2270db-fe5e-4ad7-8f05-f14a1651a561", "end_date": "2025-08-08T14:18:45Z", "event_id": 2350, "frame_scores": "", "id": 2275, "live_url": "https://www.wst.tv/match-centre/ec2270db-fe5e-4ad7-8f05-f14a1651a561", "note": "", "number": 1, "on_break": false, "player1_id": 1835, "player1_name": "Florian Nüßle", "player2_id": 2320, "player2_name": "Dylan Emery", "round": 7, "scheduled_date": "2025-08-08T11:00:00Z", "score1": 3, "score2": 4, "sessions_str": "", "start_date": "2025-08-08T11:05:37Z", "status_code": 3, "status_display": "Unknown/Other", "unfinished": false, "winner_id": 2320}, {"api_match_id": 9538649, "details_url": "https://www.wst.tv/match-centre/a44e3226-3cac-46b5-ab75-ed3eed3fb867", "end_date": "2025-08-08T13:17:46Z", "event_id": 2350, "frame_scores": "", "id": 2276, "live_url": "https://www.wst.tv/match-centre/a44e3226-3cac-46b5-ab75-ed3eed3fb867", "note": "", "number": 2, "on_break": false, "player1_id": 2778, "player1_name": "Liam Pullen", "player2_id": 415, "player2_name": "Ahmed Aseeri", "round": 7, "scheduled_date": "2025-08-08T11:00:00Z", "score1": 4, "score2": 1, "sessions_str": "", "start_date": "2025-08-08T11:05:37Z", "status_code": 3, "status_display": "Unknown/Other", "unfinished": false, "winner_id": 2778}], "type": "object"}
+ (NOBRIDGE) LOG  [HomeScreen] Processing 143 matches...
+ (NOBRIDGE) LOG  [HomeScreen processMatches] Processing 143 matches...
+ (NOBRIDGE) LOG  [HomeScreen] Processed data: {"totalItems": 156, "types": {"match": 143, "roundHeader": 10, "statusHeader": 3}}
+ (NOBRIDGE) LOG  [LiveDetection] ⏹️ Stopping live match monitoring
+ (NOBRIDGE) LOG  [LiveDetection] ⏹️ Stopping live match monitoring
+ (NOBRIDGE) LOG  [LiveDetection] 🚀 Starting live match monitoring (interval: 120000ms)
+ (NOBRIDGE) DEBUG  [LiveDetection] Analyzing matches at 2025-08-14T18:21:09.235Z UTC
+ (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Kyren Wilson vs Ronnie O'Sullivan
+ (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Barry Hawkins vs Chris Wakelin
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Neil Robertson vs Elliot Slessor starts in 939 minutes (UTC)
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 1329 minutes (UTC)
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 2379 minutes (UTC)
+ (NOBRIDGE) LOG  [LiveDetection] 🎯 Live matches detected - refreshing client data
+ (NOBRIDGE) LOG  [HomeScreen] ⏸️ Live match detected but throttled (1s since last update, 119s remaining)
+ (NOBRIDGE) DEBUG  [LiveDetection] Analyzing matches at 2025-08-14T18:21:25.310Z UTC
+ (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Kyren Wilson vs Ronnie O'Sullivan
+ (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Barry Hawkins vs Chris Wakelin
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Neil Robertson vs Elliot Slessor starts in 939 minutes (UTC)
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 1329 minutes (UTC)
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 2379 minutes (UTC)
+ (NOBRIDGE) LOG  [LiveDetection] 🎯 Live matches detected - refreshing client data
+ (NOBRIDGE) LOG  [HomeScreen] 🔴 Live match detected - triggering update #5
+ (NOBRIDGE) LOG  [API Cache] Force refreshing cache for tournament all
+ (NOBRIDGE) LOG  [HomeScreen] Refreshing tournament info...
+ (NOBRIDGE) DEBUG  [TourService] Determining active tournament ID with main tour priority...
+ (NOBRIDGE) DEBUG  [TourService] Fetching season events from: events/
+ (NOBRIDGE) DEBUG  [API Request] GET events/
+ (NOBRIDGE) DEBUG  [API Request] Base URL: https://snookerapp.up.railway.app/oneFourSeven/
+ (NOBRIDGE) DEBUG  [API Cache] Cache MISS for get:events/
+ (NOBRIDGE) LOG  [LiveDetection] ⏹️ Stopping live match monitoring
+ (NOBRIDGE) LOG  [LiveDetection] ⏹️ Stopping live match monitoring
+ (NOBRIDGE) LOG  [LiveDetection] 🚀 Starting live match monitoring (interval: 120000ms)
+ (NOBRIDGE) DEBUG  [LiveDetection] Analyzing matches at 2025-08-14T18:21:25.573Z UTC
+ (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Kyren Wilson vs Ronnie O'Sullivan
+ (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Barry Hawkins vs Chris Wakelin
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Neil Robertson vs Elliot Slessor starts in 939 minutes (UTC)
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 1329 minutes (UTC)
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 2379 minutes (UTC)
+ (NOBRIDGE) LOG  [LiveDetection] 🎯 Live matches detected - refreshing client data
+ (NOBRIDGE) LOG  [HomeScreen] ⏸️ Live match detected but throttled (0s since last update, 120s remaining)
+ (NOBRIDGE) DEBUG  [API Response] 200 events/
+ (NOBRIDGE) DEBUG  [API Response] Data length: 125710 characters
+ (NOBRIDGE) DEBUG  [API Cache] Cached response for get:events/ (TTL: 30000ms)
+ (NOBRIDGE) DEBUG  [TourService] Successfully fetched 136 events.
+ (NOBRIDGE) DEBUG  [TourService] Active MAIN tournament found: ID = 2350 ('Saudi Arabia Masters')
+ (NOBRIDGE) LOG  [HomeScreen] Target tournament ID: 2350
+ (NOBRIDGE) DEBUG  [TourService] Getting active other tours...
+ (NOBRIDGE) DEBUG  [TourService] Fetching season events from: events/
+ (NOBRIDGE) DEBUG  [API Request] GET events/
+ (NOBRIDGE) DEBUG  [API Request] Base URL: https://snookerapp.up.railway.app/oneFourSeven/
+ (NOBRIDGE) DEBUG  [API Cache] Cache HIT for get:events/
+ (NOBRIDGE) DEBUG  [API Cache] Returning cached data
+ (NOBRIDGE) DEBUG  [TourService] Successfully fetched 136 events.
+ (NOBRIDGE) DEBUG  [TourService] Found 1 active other tours: [{"ID": 2421, "Name": "World Games - Men", "Tour": "other"}]
+ (NOBRIDGE) LOG  [HomeScreen] Found 1 active other tours
+ (NOBRIDGE) LOG  [HomeScreen] Fetching details and matches for tournament 2350
+ (NOBRIDGE) DEBUG  [TourService] Fetching tournament details from: events/2350/
+ (NOBRIDGE) DEBUG  [TourService] Fetching tournament matches from: events/2350/matches/
+ (NOBRIDGE) DEBUG  [API Request] GET events/2350/
+ (NOBRIDGE) DEBUG  [API Request] Base URL: https://snookerapp.up.railway.app/oneFourSeven/
+ (NOBRIDGE) DEBUG  [API Cache] Cache MISS for get:events/2350/
+ (NOBRIDGE) DEBUG  [API Request] GET events/2350/matches/
+ (NOBRIDGE) DEBUG  [API Request] Base URL: https://snookerapp.up.railway.app/oneFourSeven/
+ (NOBRIDGE) DEBUG  [API Cache] Cache MISS for get:events/2350/matches/
+ (NOBRIDGE) DEBUG  [API Response] 200 events/2350/
+ (NOBRIDGE) DEBUG  [API Response] Data length: 1044 characters
+ (NOBRIDGE) DEBUG  [API Cache] Cached response for get:events/2350/ (TTL: 30000ms)
+ (NOBRIDGE) DEBUG  [TourService] Successfully fetched details for event 2350.
+ (NOBRIDGE) DEBUG  [API Response] 200 events/2350/matches/
+ (NOBRIDGE) DEBUG  [API Response] Data length: 87756 characters
+ (NOBRIDGE) DEBUG  [Cache Sync] Syncing tournament matches array (143 matches)
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538648
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538649
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538650
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538653
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538656
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538660
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538661
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538678
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538651
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538654
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538655
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538657
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538658
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538659
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538662
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538663
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538652
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538665
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538666
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538667
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538668
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538669
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538670
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538674
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538671
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538664
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538672
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538673
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538675
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538676
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538677
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9538679
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543262
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543263
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543264
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543265
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543266
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543267
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543268
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543269
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543254
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543255
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543256
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543257
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543259
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543260
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543261
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543284
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543258
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543278
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543279
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543280
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543281
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543282
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543283
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543285
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543270
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543271
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543272
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543273
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543274
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543275
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543276
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9543277
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548510
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548511
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548512
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548513
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548515
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548516
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548517
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548540
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548518
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548519
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548520
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548521
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548522
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548523
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548524
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548525
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548514
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548526
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548527
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548528
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548529
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548530
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548531
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548532
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548533
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548534
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548535
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548536
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548537
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548538
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548539
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9548541
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9550511
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9550512
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9550513
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9550514
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9550515
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9550516
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9550517
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9550518
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9550519
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9550520
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9550521
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9550522
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9550523
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9550524
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9550525
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9550526
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9552384
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9552385
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9552386
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9552387
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9552388
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9552389
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9552390
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9552391
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9552392
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9552393
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9552394
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9552395
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9552396
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9552397
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9552398
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9552399
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9553042
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9553043
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9553044
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9553045
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9553046
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9553047
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9553048
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9553049
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9553353
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9553354
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9553355
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9553356
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9553323
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9553324
+ (NOBRIDGE) DEBUG  [Cache Sync] Updated individual match cache for API ID 9552677
+ (NOBRIDGE) DEBUG  [API Cache] Cached response for get:events/2350/matches/ (TTL: 15000ms)
+ (NOBRIDGE) DEBUG  [TourService] Successfully fetched 143 matches for event 2350.
+ (NOBRIDGE) DEBUG  [TourService] Match details: [{"api_match_id": 9538648, "details_url": "https://www.wst.tv/match-centre/ec2270db-fe5e-4ad7-8f05-f14a1651a561", "end_date": "2025-08-08T14:18:45Z", "event_id": 2350, "frame_scores": "", "id": 2275, "live_url": "https://www.wst.tv/match-centre/ec2270db-fe5e-4ad7-8f05-f14a1651a561", "note": "", "number": 1, "on_break": false, "player1_id": 1835, "player1_name": "Florian Nüßle", "player2_id": 2320, "player2_name": "Dylan Emery", "round": 7, "scheduled_date": "2025-08-08T11:00:00Z", "score1": 3, "score2": 4, "sessions_str": "", "start_date": "2025-08-08T11:05:37Z", "status_code": 3, "status_display": "Unknown/Other", "unfinished": false, "winner_id": 2320}, {"api_match_id": 9538649, "details_url": "https://www.wst.tv/match-centre/a44e3226-3cac-46b5-ab75-ed3eed3fb867", "end_date": "2025-08-08T13:17:46Z", "event_id": 2350, "frame_scores": "", "id": 2276, "live_url": "https://www.wst.tv/match-centre/a44e3226-3cac-46b5-ab75-ed3eed3fb867", "note": "", "number": 2, "on_break": false, "player1_id": 2778, "player1_name": "Liam Pullen", "player2_id": 415, "player2_name": "Ahmed Aseeri", "round": 7, "scheduled_date": "2025-08-08T11:00:00Z", "score1": 4, "score2": 1, "sessions_str": "", "start_date": "2025-08-08T11:05:37Z", "status_code": 3, "status_display": "Unknown/Other", "unfinished": false, "winner_id": 2778}, {"api_match_id": 9538650, "details_url": "https://www.wst.tv/match-centre/14d9b7e9-6aa0-4765-a728-7f1b931f5a4f", "end_date": "2025-08-08T12:53:57Z", "event_id": 2350, "frame_scores": "", "id": 2277, "live_url": "https://www.wst.tv/match-centre/14d9b7e9-6aa0-4765-a728-7f1b931f5a4f", "note": "", "number": 3, "on_break": false, "player1_id": 2507, "player1_name": "Robbie McGuigan", "player2_id": 2607, "player2_name": "Yang Gao", "round": 7, "scheduled_date": "2025-08-08T11:00:00Z", "score1": 1, "score2": 4, "sessions_str": "", "start_date": "2025-08-08T11:05:37Z", "status_code": 3, "status_display": "Unknown/Other", "unfinished": false, "winner_id": 2607}]
+ (NOBRIDGE) DEBUG  [TourService] Match status breakdown: {"0": 3, "1": 2, "3": 138}
+ (NOBRIDGE) LOG  [HomeScreen] Tournament details: {"AgeGroup": "O", "AllRoundsAdded": true, "City": "Jeddah", "CommonNote": "TNT<!-- Sport-->/Eurosport/<a href=\"https://www.discoveryplus.com/\">Discovery+</a>, <a href=\"https://www.wst.tv/videos\">WST Play</a>, <a href=\"https://www.huya.com/880214\">Huya</a> & <a href=\"https://www.wst.tv/news/2025/august/05/how-to-watch-the-saudi-arabia-snooker-masters/\">more</a>", "ConversionRate": 1, "Country": "Saudi Arabia", "DefendingChampion": 12, "Discipline": "snooker", "EndDate": "2025-08-16", "EventPredictionID": 0, "Format": 1, "HashTag": "SaudiMasters", "ID": 2350, "Main": 2350, "Name": "Saudi Arabia Masters", "Note": "", "Num": 0, "NumActive": 0, "NumCompetitors": 144, "NumResults": 128, "NumUpcoming": 15, "PhotoURLs": "", "PreviousEdition": 1839, "RankingType": "WR", "Related": "", "Season": 2025, "Sex": "Both", "ShortName": "", "Sponsor": "", "Stage": "F", "StartDate": "2025-08-08", "Team": false, "Tour": "main", "Twitter": "", "Type": "Ranking", "Url": "", "ValueType": "SAM", "Venue": "Green Halls", "WorldSnookerId": 0, "winner_prize_money": {"amount": 500000, "currency": "GBP", "formatted": "GBP 500,000"}}
+ (NOBRIDGE) LOG  [HomeScreen] Raw matches received: {"isArray": true, "length": 143, "sample": [{"api_match_id": 9538648, "details_url": "https://www.wst.tv/match-centre/ec2270db-fe5e-4ad7-8f05-f14a1651a561", "end_date": "2025-08-08T14:18:45Z", "event_id": 2350, "frame_scores": "", "id": 2275, "live_url": "https://www.wst.tv/match-centre/ec2270db-fe5e-4ad7-8f05-f14a1651a561", "note": "", "number": 1, "on_break": false, "player1_id": 1835, "player1_name": "Florian Nüßle", "player2_id": 2320, "player2_name": "Dylan Emery", "round": 7, "scheduled_date": "2025-08-08T11:00:00Z", "score1": 3, "score2": 4, "sessions_str": "", "start_date": "2025-08-08T11:05:37Z", "status_code": 3, "status_display": "Unknown/Other", "unfinished": false, "winner_id": 2320}, {"api_match_id": 9538649, "details_url": "https://www.wst.tv/match-centre/a44e3226-3cac-46b5-ab75-ed3eed3fb867", "end_date": "2025-08-08T13:17:46Z", "event_id": 2350, "frame_scores": "", "id": 2276, "live_url": "https://www.wst.tv/match-centre/a44e3226-3cac-46b5-ab75-ed3eed3fb867", "note": "", "number": 2, "on_break": false, "player1_id": 2778, "player1_name": "Liam Pullen", "player2_id": 415, "player2_name": "Ahmed Aseeri", "round": 7, "scheduled_date": "2025-08-08T11:00:00Z", "score1": 4, "score2": 1, "sessions_str": "", "start_date": "2025-08-08T11:05:37Z", "status_code": 3, "status_display": "Unknown/Other", "unfinished": false, "winner_id": 2778}], "type": "object"}
+ (NOBRIDGE) LOG  [HomeScreen] Processing 143 matches...
+ (NOBRIDGE) LOG  [HomeScreen processMatches] Processing 143 matches...
+ (NOBRIDGE) LOG  [HomeScreen] Processed data: {"totalItems": 156, "types": {"match": 143, "roundHeader": 10, "statusHeader": 3}}
+ (NOBRIDGE) LOG  [LiveDetection] ⏹️ Stopping live match monitoring
+ (NOBRIDGE) LOG  [LiveDetection] ⏹️ Stopping live match monitoring
+ (NOBRIDGE) LOG  [LiveDetection] 🚀 Starting live match monitoring (interval: 120000ms)
+ (NOBRIDGE) DEBUG  [LiveDetection] Analyzing matches at 2025-08-14T18:21:26.273Z UTC
+ (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Kyren Wilson vs Ronnie O'Sullivan
+ (NOBRIDGE) DEBUG  [LiveDetection] Found live match: Barry Hawkins vs Chris Wakelin
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Neil Robertson vs Elliot Slessor starts in 939 minutes (UTC)
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 1329 minutes (UTC)
+ (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 2379 minutes (UTC)
+ (NOBRIDGE) LOG  [LiveDetection] 🎯 Live matches detected - refreshing client data
+ (NOBRIDGE) LOG  [HomeScreen] ⏸️ Live match detected but throttled (1s since last update, 119s remaining)

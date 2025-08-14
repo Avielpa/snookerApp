@@ -13,7 +13,7 @@ from pathlib import Path
 
 def run_live_monitor():
     """Run the live monitor in a background thread"""
-    print("[LIVE_MONITOR] Starting background live monitor...")
+    print("[LIVE_MONITOR] Starting background live monitor v2...")
     
     try:
         # Change to Django directory
