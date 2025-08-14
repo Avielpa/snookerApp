@@ -342,10 +342,10 @@ export default function CalendarEnhanced() {
 
     const getStatusIcon = () => {
       switch (item.status) {
-        case 'active': return '🔥';
-        case 'upcoming': return '📅';
-        case 'past': return '✅';
-        default: return '🏆';
+        case 'active': return '●'; // Bullet point
+        case 'upcoming': return '○'; // Hollow bullet
+        case 'past': return '✓'; // Checkmark
+        default: return '★'; // Star
       }
     };
 
@@ -373,24 +373,40 @@ export default function CalendarEnhanced() {
             <View style={styles.tournamentTitle}>
               <Text style={styles.statusIcon}>{getStatusIcon()}</Text>
               <Text style={styles.tournamentName} numberOfLines={2}>
-                {item.Name}
+                {item.Name || 'Tournament'}
               </Text>
               {/* Simple Live Indicator */}
               {item.isLive && (
                 <View style={styles.liveIndicatorInline}>
-                  <Text style={styles.liveText}>🔴 LIVE</Text>
+                  <Text style={styles.liveText}>● LIVE</Text>
                 </View>
               )}
             </View>
             
-            {/* Prize Money */}
-            {(item.prizeMoney || item.prize_money) && (
-              <View style={styles.prizeContainer}>
-                <Text style={styles.prizeMoney}>
-                  🏆 {item.prizeMoney || item.prize_money}
-                </Text>
-              </View>
-            )}
+            {/* Prize Money - Safe rendering */}
+            {(() => {
+              const prizeData = item.prizeMoney || item.prize_money;
+              if (!prizeData) return null;
+              
+              let displayText = 'Prize Money';
+              if (typeof prizeData === 'string' && prizeData.trim()) {
+                displayText = `Winner: ${prizeData}`;
+              } else if (typeof prizeData === 'object' && prizeData !== null) {
+                if (prizeData.winner && typeof prizeData.winner === 'string') {
+                  displayText = `Winner: ${prizeData.winner}`;
+                } else {
+                  displayText = 'Prize Money Available';
+                }
+              }
+              
+              return (
+                <View style={styles.prizeContainer}>
+                  <Text style={styles.prizeMoney}>
+                    {displayText}
+                  </Text>
+                </View>
+              );
+            })()}
           </View>
 
           {/* Tournament Dates */}
@@ -414,7 +430,12 @@ export default function CalendarEnhanced() {
             <View style={styles.venueContainer}>
               <Ionicons name="location-outline" size={14} color="#9CA3AF" />
               <Text style={styles.venueText} numberOfLines={1}>
-                {`${item.Venue || ''}${item.City ? `, ${item.City}` : ''}${item.Country ? ` (${item.Country})` : ''}`}
+                {(() => {
+                  const venue = typeof item.Venue === 'string' ? item.Venue : '';
+                  const city = typeof item.City === 'string' ? item.City : '';
+                  const country = typeof item.Country === 'string' ? item.Country : '';
+                  return `${venue}${city ? `, ${city}` : ''}${country ? ` (${country})` : ''}`.trim() || 'Venue TBD';
+                })()}
               </Text>
             </View>
           ) : null}
@@ -442,7 +463,10 @@ export default function CalendarEnhanced() {
             <View style={styles.statItem}>
               <Ionicons name="time-outline" size={16} color="#9CA3AF" />
               <Text style={styles.statText}>
-                {`${item.duration} ${item.duration === 1 ? 'day' : 'days'}`}
+                {(() => {
+                  const duration = typeof item.duration === 'number' ? item.duration : 0;
+                  return `${duration} ${duration === 1 ? 'day' : 'days'}`;
+                })()}
               </Text>
             </View>
             
