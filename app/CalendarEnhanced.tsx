@@ -4,6 +4,7 @@ import {
   View,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
@@ -21,8 +22,8 @@ import { getCalendarByTab } from '../services/matchServices';
 import { logger } from '../utils/logger';
 import { useColors } from '../contexts/ThemeContext';
 
-// Import modern components
-import { SearchBox, LiveIndicator, ProgressBar } from './components/modern';
+// Import modern components - simplified to avoid crashes
+import { LiveIndicator } from './components/modern';
 
 // Enhanced interface with additional computed fields
 interface Tournament {
@@ -487,12 +488,16 @@ export default function CalendarEnhanced() {
       
       {/* Search and Filters Container */}
       <View style={styles.headerContainer}>
-        <SearchBox
-          placeholder="Search tournaments, venues..."
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          onClear={() => setSearchQuery('')}
-        />
+        {/* Simple search input to avoid crashes */}
+        <View style={styles.searchContainer}>
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search tournaments, venues..."
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholderTextColor={colors.textSecondary}
+          />
+        </View>
 
         {/* Tab Buttons */}
         <ScrollView 
@@ -611,6 +616,19 @@ const createCalendarStyles = (colors: any) => StyleSheet.create({
   headerContainer: {
     paddingHorizontal: 16,
     marginBottom: 8,
+  },
+  searchContainer: {
+    marginBottom: 12,
+  },
+  searchInput: {
+    height: 44,
+    backgroundColor: colors.cardBackground,
+    borderRadius: 22,
+    paddingHorizontal: 16,
+    fontSize: 16,
+    color: colors.text,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   filtersScrollView: {
     marginVertical: 8,

@@ -37,7 +37,7 @@ export const LiveIndicatorBar: React.FC<LiveIndicatorBarProps> = ({
         if (isMonitoring) {
             return liveUpdateCount > 0 
                 ? `🔄 Live monitoring (${liveUpdateCount} updates)`
-                : '👁️ Monitoring for live matches';
+                : '📡 Monitoring for live matches';
         }
         
         return '';
