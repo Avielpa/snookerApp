@@ -1,1 +1,1 @@
-web: cd maxBreak && python manage.py migrate && python manage.py collectstatic --noinput && gunicorn maxBreak.wsgi:application --bind 0.0.0.0:$PORT
+web: cd maxBreak && pwd && ls -la && python manage.py migrate && python manage.py collectstatic --noinput && gunicorn maxBreak.wsgi:application --bind 0.0.0.0:$PORT
