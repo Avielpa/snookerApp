@@ -1,0 +1,14 @@
+[phases.setup]
+nixPkgs = ['python312', 'bash', 'curl']
+
+[phases.install]
+cmds = ['pip install -r requirements.txt']
+
+[phases.build]
+cmds = [
+    'chmod +x start_railway.sh',
+    'cd maxBreak && python manage.py collectstatic --noinput'
+]
+
+[start]
+cmd = './start_railway.sh'
