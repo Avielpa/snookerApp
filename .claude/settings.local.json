@@ -191,7 +191,8 @@
       "Bash(venv\\Scripts\\python.exe maxBreak\\manage.py auto_live_monitor:*)",
       "WebSearch",
       "WebFetch(domain:docs.railway.com)",
-      "WebFetch(domain:docs.railway.app)"
+      "WebFetch(domain:docs.railway.app)",
+      "Bash(xcopy:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"
