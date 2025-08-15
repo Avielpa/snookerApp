@@ -19,6 +19,7 @@ export const useHomeData = () => {
     const [selectedOtherTour, setSelectedOtherTour] = useState<number | null>(null);
     const [liveUpdateCount, setLiveUpdateCount] = useState<number>(0);
     const [lastLiveUpdate, setLastLiveUpdate] = useState<number>(0);
+    const [tournamentPrize, setTournamentPrize] = useState<string | null>(null);
 
     // Load tournament information
     const loadTournamentInfo = useCallback(async (isRefresh = false, specificTournamentId: number | null = null) => {
@@ -50,6 +51,22 @@ export const useHomeData = () => {
                     getTournamentDetails(targetTournamentId),
                     getTournamentMatches(targetTournamentId)
                 ]);
+                
+                // Also fetch prize money data
+                try {
+                    const prizeResponse = await fetch(`${process.env.EXPO_PUBLIC_API_BASE_URL || 'https://snookerapp.up.railway.app'}/oneFourSeven/prize-money/${targetTournamentId}/`);
+                    if (prizeResponse.ok) {
+                        const prizeData = await prizeResponse.json();
+                        const prizeText = prizeData?.winner?.formatted || null;
+                        setTournamentPrize(prizeText);
+                        logger.log(`[HomeScreen] Prize money: ${prizeText}`);
+                    } else {
+                        setTournamentPrize(null);
+                    }
+                } catch (prizeError) {
+                    logger.warn('[HomeScreen] Failed to fetch prize data:', prizeError);
+                    setTournamentPrize(null);
+                }
                 
                 logger.log(`[HomeScreen] Tournament details:`, detailsData);
                 logger.log(`[HomeScreen] Raw matches received:`, {
@@ -87,6 +104,7 @@ export const useHomeData = () => {
             } else {
                 logger.warn(`[HomeScreen] No active tournament ID found`);
                 setTourName(null);
+                setTournamentPrize(null);
                 setProcessedListData([]);
             }
         } catch (err: any) {
@@ -133,7 +151,7 @@ export const useHomeData = () => {
             setLastLiveUpdate(now);
             
             // Force cache refresh for live data
-            forceCacheRefresh(selectedOtherTour);
+            forceCacheRefresh(selectedOtherTour ?? undefined);
             
             loadTournamentInfo(true, selectedOtherTour); // Refresh current tournament
         } else {
@@ -184,6 +202,7 @@ export const useHomeData = () => {
     return {
         processedListData,
         tourName,
+        tournamentPrize,
         loading,
         refreshing,
         error,

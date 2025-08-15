@@ -6,7 +6,7 @@ import { logger } from '../utils/logger';
 // Dynamic API URL based on environment
 const API_BASE_URL = 'https://snookerapp.up.railway.app/oneFourSeven/'; // Default to local development
 
-// Simple in-memory cache for API responses
+// Simple in-memory cache for API responses 
 interface CacheEntry {
     data: any;
     timestamp: number;

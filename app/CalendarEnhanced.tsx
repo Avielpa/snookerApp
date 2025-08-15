@@ -300,7 +300,7 @@ export default function CalendarEnhanced() {
         onPress={() => handleTabPress(option.id)}
         activeOpacity={0.8}
         hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
-        delayPressIn={50}
+        delayPressIn={0}
       >
         <Ionicons 
           name={option.icon} 
@@ -385,7 +385,7 @@ export default function CalendarEnhanced() {
               {/* Simple Live Indicator */}
               {item.isLive && (
                 <View style={styles.liveIndicatorInline}>
-                  <Text style={styles.liveText}>● LIVE</Text>
+                  <Text style={{ color: '#4CAF50', fontSize: 10, fontFamily: 'PoppinsBold' }}>● LIVE</Text>
                 </View>
               )}
             </View>
@@ -522,8 +522,8 @@ export default function CalendarEnhanced() {
 
   // Dynamic gradient colors based on theme
   const backgroundGradient = colors.cardBackground === 'rgba(255, 255, 255, 0.95)'
-    ? ['#F0F9FF', '#E0F2FE', '#BAE6FD'] // Light blue gradient for light mode
-    : ['#0F172A', '#1E293B', '#334155']; // Dark gradient for dark mode
+    ? ['#F0F9FF', '#E0F2FE', '#BAE6FD'] as const // Light blue gradient for light mode
+    : ['#0F172A', '#1E293B', '#334155'] as const; // Dark gradient for dark mode
 
   return (
     <LinearGradient
@@ -586,7 +586,7 @@ export default function CalendarEnhanced() {
                 onPress={() => handleStatusPress(option.id)}
                 activeOpacity={0.8}
                 hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
-                delayPressIn={50}
+                delayPressIn={0}
               >
                 <Ionicons 
                   name={option.icon} 

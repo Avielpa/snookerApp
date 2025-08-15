@@ -13,8 +13,8 @@ export const GlassCard: React.FC<GlassCardProps> = ({ children, style }) => {
   
   // Dynamic gradient colors based on theme
   const gradientColors = colors.cardBackground === 'rgba(255, 255, 255, 0.95)'
-    ? ['rgba(255, 255, 255, 0.95)', 'rgba(255, 255, 255, 0.85)'] // Light mode
-    : ['rgba(0, 0, 0, 0.7)', 'rgba(0, 0, 0, 0.5)']; // Dark mode
+    ? ['rgba(255, 255, 255, 0.95)', 'rgba(255, 255, 255, 0.85)'] as const // Light mode
+    : ['rgba(0, 0, 0, 0.7)', 'rgba(0, 0, 0, 0.5)'] as const; // Dark mode
     
   const borderColor = colors.cardBackground === 'rgba(255, 255, 255, 0.95)'
     ? 'rgba(0, 0, 0, 0.15)' // Light mode

@@ -241,8 +241,8 @@ export default function RankingEnhanced() {
 
     // Dynamic card colors based on theme
     const cardGradient = colors.cardBackground === 'rgba(255, 255, 255, 0.95)'
-      ? ['rgba(255, 255, 255, 0.98)', 'rgba(248, 249, 250, 0.95)'] // Light mode
-      : ['rgba(0, 0, 0, 0.8)', 'rgba(0, 0, 0, 0.6)']; // Dark mode
+      ? ['rgba(255, 255, 255, 0.98)', 'rgba(248, 249, 250, 0.95)'] as const // Light mode
+      : ['rgba(0, 0, 0, 0.8)', 'rgba(0, 0, 0, 0.6)'] as const; // Dark mode
 
     return (
       <TouchableOpacity
@@ -349,8 +349,8 @@ export default function RankingEnhanced() {
 
   // Dynamic gradient colors based on theme
   const backgroundGradient = colors.cardBackground === 'rgba(255, 255, 255, 0.95)'
-    ? ['#F8F9FA', '#E9ECEF', '#DEE2E6'] // Light mode gradient
-    : ['#1a1a2e', '#16213e', '#0f3460']; // Dark mode gradient
+    ? ['#F8F9FA', '#E9ECEF', '#DEE2E6'] as const // Light mode gradient
+    : ['#1a1a2e', '#16213e', '#0f3460'] as const; // Dark mode gradient
 
   return (
     <LinearGradient

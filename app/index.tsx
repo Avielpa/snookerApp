@@ -22,7 +22,6 @@ import { MatchItem } from './home/components/MatchItem';
 import { StatusHeaderItem } from './home/components/StatusHeaderItem';
 import { RoundHeaderItem } from './home/components/RoundHeaderItem';
 import { LoadingComponent, ErrorComponent, EmptyComponent } from './home/components/StateComponents';
-import { LiveIndicatorBar } from './home/components/LiveIndicatorBar';
 import { ICONS } from './home/utils/icons';
 
 const HomeScreen = (): React.ReactElement | null => {
@@ -34,16 +33,14 @@ const HomeScreen = (): React.ReactElement | null => {
     const {
         processedListData,
         tourName,
+        tournamentPrize,
         loading,
         refreshing,
         error,
         activeOtherTours,
         selectedOtherTour,
         loadTournamentInfo,
-        handleOtherTourSelection,
-        isMonitoring,
-        nextMatchInfo,
-        liveUpdateCount
+        handleOtherTourSelection
     } = useHomeData();
 
 
@@ -106,15 +103,13 @@ const HomeScreen = (): React.ReactElement | null => {
                 <View style={styles.headerContainer}>
                     <Text style={styles.screenTitle}>Snooker.org</Text>
                     {tourName && <Text style={styles.tourTitle}>{tourName}</Text>}
+                    {tournamentPrize && (
+                        <View style={styles.prizeContainer}>
+                            <Ionicons name="diamond-outline" size={14} color={COLORS.accentLight} />
+                            <Text style={styles.prizeText}>Winner: {tournamentPrize}</Text>
+                        </View>
+                    )}
                 </View>
-                
-                {/* Live Match Detection Indicator */}
-                <LiveIndicatorBar
-                    isMonitoring={isMonitoring}
-                    nextMatchInfo={nextMatchInfo}
-                    liveUpdateCount={liveUpdateCount}
-                    colors={COLORS}
-                />
                 
                 <View style={styles.filterContainer}>
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScrollView}>
