@@ -8,6 +8,8 @@
 # PYTHON & DJANGO BACKEND
 # ===============================================
 
+db.sqlite3
+
 # Python Compiled Files
 __pycache__/
 *.py[cod]
