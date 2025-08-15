@@ -192,7 +192,8 @@
       "WebSearch",
       "WebFetch(domain:docs.railway.com)",
       "WebFetch(domain:docs.railway.app)",
-      "Bash(xcopy:*)"
+      "Bash(xcopy:*)",
+      "Bash(git submodule:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"
