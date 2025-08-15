@@ -101,9 +101,11 @@ WSGI_APPLICATION = 'maxBreak.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
+DATABASE_URL = "postgresql://postgres:JWlAisDwPVMDLSPdOTmMXpcbeAnrrADQ@metro.proxy.rlwy.net:59673/railway"
+
 DATABASES = {
     'default': dj_database_url.config(
-        default=os.environ.get('DATABASE_URL')
+        default=os.environ.get('DATABASE_URL', DATABASE_URL),
     )
 }
 
