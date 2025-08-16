@@ -1069,14 +1069,19 @@ def debug_status_view(request):
             end = event.EndDate
             
             if start and end:
-                # Make timezone aware if needed
-                if start.tzinfo is None:
+                # Convert date objects to datetime objects if needed
+                if isinstance(start, date) and not isinstance(start, datetime):
+                    start = datetime.combine(start, datetime.min.time()).replace(tzinfo=dt_timezone.utc)
+                elif isinstance(start, datetime) and start.tzinfo is None:
                     start = start.replace(tzinfo=dt_timezone.utc)
-                if end.tzinfo is None:
+                    
+                if isinstance(end, date) and not isinstance(end, datetime):
+                    end = datetime.combine(end, datetime.max.time()).replace(tzinfo=dt_timezone.utc)
+                elif isinstance(end, datetime) and end.tzinfo is None:
                     end = end.replace(tzinfo=dt_timezone.utc)
                 
                 # Check if active
-                is_active = start <= now <= end.replace(hour=23, minute=59, second=59)
+                is_active = start <= now <= end
                 
                 # Count matches for this event
                 match_count = MatchesOfAnEvent.objects.filter(Event=event).count()
