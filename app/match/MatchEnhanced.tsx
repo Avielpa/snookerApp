@@ -291,13 +291,8 @@ export default function MatchEnhanced() {
         const elapsedMinutes = Math.floor((now.getTime() - startTime.getTime()) / (1000 * 60));
         timeElapsed = formatDuration(elapsedMinutes);
         
-        // Estimate remaining time based on average frame time
-        if (completedFrames > 0 && totalFrames > completedFrames) {
-          const averageFrameTime = elapsedMinutes / completedFrames;
-          const remainingFrames = totalFrames - completedFrames;
-          const estimatedMinutes = Math.round(remainingFrames * averageFrameTime);
-          estimatedTimeRemaining = formatDuration(estimatedMinutes);
-        }
+        // Note: Frame-based time estimation removed per snooker.org feedback
+        // as frame timing data is not always reliable
       }
     }
     

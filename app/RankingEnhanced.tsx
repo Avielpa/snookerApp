@@ -66,53 +66,50 @@ export default function RankingEnhanced() {
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [selectedFilter, setSelectedFilter] = useState<string>('money_rankings');
+  const [selectedFilter, setSelectedFilter] = useState<string>('mens');
+  // Cache to prevent unnecessary reloads
+  const [rankingCache, setRankingCache] = useState<Record<string, RankingItem[]>>({});
 
   const router = useRouter();
   const colors = useColors();
 
-  // Tab options for all 5 ranking types
+  // Tab options for ranking types (using correct endpoints)
   const filterOptions: FilterOption[] = useMemo(() => [
     {
-      id: 'money_rankings',
-      label: 'Money Rankings',
-      value: RANKING_TYPES.MONEY_RANKINGS,
+      id: 'mens',
+      label: 'Mens',
+      value: 'mens',
       icon: 'trophy-outline',
       color: colors.primary,
     },
     {
-      id: 'money_seedings',
-      label: 'Money Seedings',
-      value: RANKING_TYPES.MONEY_SEEDINGS,
-      icon: 'medal-outline',
-      color: colors.secondary,
-    },
-    {
-      id: 'one_year_money',
-      label: 'One Year Money',
-      value: RANKING_TYPES.ONE_YEAR_MONEY_RANKINGS,
-      icon: 'calendar-outline',
-      color: colors.success,
-    },
-    {
-      id: 'qt_rankings',
-      label: 'QT Rankings',
-      value: RANKING_TYPES.QT_RANKINGS,
-      icon: 'star-outline',
-      color: '#FF6B35',
-    },
-    {
       id: 'womens',
-      label: "Women's Rankings",
-      value: RANKING_TYPES.WOMENS_RANKINGS,
+      label: 'Womens',
+      value: 'womens',
       icon: 'ribbon-outline',
       color: '#E91E63',
     },
+    {
+      id: 'amateur',
+      label: 'Amateur',
+      value: 'amateur',
+      icon: 'star-outline',
+      color: colors.success,
+    },
   ], [colors]);
 
-  // Load ranking data using new ranking-types endpoint
+  // Load ranking data with caching to prevent unnecessary reloads
   const loadRankingData = useCallback(async (rankingType: string, isRefresh = false) => {
     logger.log(`[RankingEnhanced] Loading ${rankingType} rankings...`);
+    
+    // Check cache first (unless refreshing)
+    if (!isRefresh && rankingCache[rankingType]) {
+      logger.log(`[RankingEnhanced] Using cached data for ${rankingType}: ${rankingCache[rankingType].length} items`);
+      setRankingData(rankingCache[rankingType]);
+      setLoading(false);
+      setError(null); // Clear any previous errors when using cache
+      return;
+    }
     
     if (!isRefresh) setLoading(true);
     setRefreshing(isRefresh);
@@ -120,18 +117,36 @@ export default function RankingEnhanced() {
 
     try {
       const response = await getRanking(rankingType);
+      logger.log(`[RankingEnhanced] API response for ${rankingType}:`, {
+        hasRankings: !!response.rankings,
+        rankingsLength: response.rankings?.length || 0,
+        tabName: response.tab_name,
+        hasData: !!response
+      });
+      
       const rankings: RankingItem[] = (response.rankings || []).map((item: any) => ({
         ...item,
         Position: typeof item.Position === 'number' && item.Position !== null ? item.Position : 0,
       }));
       
-      // Use real data from new ranking-types API
-      const enhancedRankings = rankings;
-
-      setRankingData(enhancedRankings);
-      logger.log(`[RankingEnhanced] Loaded ${enhancedRankings.length} ${rankingType} rankings`);
+      // Cache the data
+      setRankingCache(prev => ({
+        ...prev,
+        [rankingType]: rankings
+      }));
+      
+      setRankingData(rankings);
+      logger.log(`[RankingEnhanced] Successfully loaded ${rankings.length} ${rankingType} rankings`);
+      
+      // Clear any previous errors on successful load
+      if (rankings.length > 0) {
+        setError(null);
+      } else {
+        logger.warn(`[RankingEnhanced] No rankings returned for ${rankingType}`);
+        setError(`No ${rankingType} rankings available for the current season`);
+      }
     } catch (error: any) {
-      logger.error('[RankingEnhanced] Error loading rankings:', error);
+      logger.error(`[RankingEnhanced] Error loading ${rankingType} rankings:`, error);
       const errorMessage = error.message || `Failed to load ${rankingType} rankings`;
       setError(errorMessage);
       setRankingData([]);
@@ -139,7 +154,7 @@ export default function RankingEnhanced() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [rankingCache]);
 
 
   // Filter and search logic
@@ -163,6 +178,11 @@ export default function RankingEnhanced() {
 
     setFilteredData(filtered);
   }, [rankingData, searchQuery]);
+
+  // Initial data load on component mount
+  useEffect(() => {
+    loadRankingData('mens'); // Load default data immediately
+  }, []); // Only run once on mount
 
   // Load data when filter changes
   useEffect(() => {
@@ -212,10 +232,15 @@ export default function RankingEnhanced() {
             borderWidth: 1,
           }
         ]}
-        onPress={() => handleFilterPress(option.id)}
-        activeOpacity={0.7}
-        hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+        onPress={() => {
+          console.log(`[RankingTab] Pressed: ${option.id}`);
+          handleFilterPress(option.id);
+        }}
+        activeOpacity={0.6}
+        hitSlop={{ top: 25, bottom: 25, left: 25, right: 25 }}
         delayPressIn={0}
+        delayPressOut={0}
+        pressRetentionOffset={{ top: 30, bottom: 30, left: 30, right: 30 }}
       >
         <Ionicons 
           name={option.icon} 
@@ -248,8 +273,10 @@ export default function RankingEnhanced() {
       <TouchableOpacity
         onPress={() => handlePlayerPress(item)}
         activeOpacity={0.6}
-        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
         delayPressIn={0}
+        delayPressOut={0}
+        pressRetentionOffset={{ top: 20, bottom: 20, left: 20, right: 20 }}
         disabled={!item.Player}
       >
         <LinearGradient
@@ -339,7 +366,15 @@ export default function RankingEnhanced() {
         <View style={styles.centerContent}>
           <Ionicons name="alert-circle-outline" size={48} color={colors.error} />
           <Text style={styles.errorText}>{error}</Text>
-          <TouchableOpacity style={styles.retryButton} onPress={handleRefresh}>
+          <TouchableOpacity 
+            style={styles.retryButton} 
+            onPress={handleRefresh}
+            activeOpacity={0.6}
+            hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+            delayPressIn={0}
+            delayPressOut={0}
+            pressRetentionOffset={{ top: 20, bottom: 20, left: 20, right: 20 }}
+          >
             <Text style={styles.retryText}>Try Again</Text>
           </TouchableOpacity>
         </View>

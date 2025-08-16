@@ -120,10 +120,15 @@ const HomeScreen = (): React.ReactElement | null => {
                                     styles.filterButton,
                                     activeFilter === filter.value && styles.filterButtonActive
                                 ]}
-                                onPress={() => setActiveFilter(filter.value)}
-                                activeOpacity={0.8}
-                                hitSlop={TOUCH_SLOP.MEDIUM}
+                                onPress={() => {
+                                    console.log(`[HomeFilter] Pressed: ${filter.value}`);
+                                    setActiveFilter(filter.value);
+                                }}
+                                activeOpacity={0.6}
+                                hitSlop={{ top: 25, bottom: 25, left: 25, right: 25 }}
                                 delayPressIn={0}
+                                delayPressOut={0}
+                                pressRetentionOffset={{ top: 30, bottom: 30, left: 30, right: 30 }}
                             >
                                 <Ionicons 
                                     name={filter.icon} 
@@ -152,10 +157,15 @@ const HomeScreen = (): React.ReactElement | null => {
                                         styles.otherTourChip,
                                         selectedOtherTour === tour.ID && styles.otherTourChipActive
                                     ]}
-                                    onPress={() => handleOtherTourSelection(tour.ID)}
-                                    activeOpacity={0.8}
-                                    hitSlop={TOUCH_SLOP.MEDIUM}
+                                    onPress={() => {
+                                        console.log(`[OtherTour] Pressed: ${tour.ID}`);
+                                        handleOtherTourSelection(tour.ID);
+                                    }}
+                                    activeOpacity={0.6}
+                                    hitSlop={{ top: 25, bottom: 25, left: 25, right: 25 }}
                                     delayPressIn={0}
+                                    delayPressOut={0}
+                                    pressRetentionOffset={{ top: 30, bottom: 30, left: 30, right: 30 }}
                                 >
                                     <Text style={[
                                         styles.otherTourText,

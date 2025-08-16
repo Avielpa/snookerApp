@@ -86,36 +86,17 @@ export function StatsTab({
       </View>
 
       {/* Timing Statistics */}
-      {(matchStats.timeElapsed || matchStats.estimatedTimeRemaining) && (
+      {matchStats.timeElapsed && (
         <View style={styles.statsCard}>
           <Text style={styles.statsTitle}>Timing Statistics</Text>
           
-          {matchStats.timeElapsed && (
-            <View style={styles.statRow}>
-              <Text style={styles.statLabel}>Time Elapsed:</Text>
-              <Text style={styles.statValue}>{matchStats.timeElapsed}</Text>
-            </View>
-          )}
+          <View style={styles.statRow}>
+            <Text style={styles.statLabel}>Time Elapsed:</Text>
+            <Text style={styles.statValue}>{matchStats.timeElapsed}</Text>
+          </View>
           
-          {matchStats.estimatedTimeRemaining && (
-            <View style={styles.statRow}>
-              <Text style={styles.statLabel}>Est. Time Remaining:</Text>
-              <Text style={styles.statValue}>{matchStats.estimatedTimeRemaining}</Text>
-            </View>
-          )}
-          
-          {matchStats.completedFrames > 0 && matchStats.timeElapsed && (
-            <View style={styles.statRow}>
-              <Text style={styles.statLabel}>Avg. Frame Duration:</Text>
-              <Text style={styles.statValue}>
-                {(() => {
-                  const timeElapsedMinutes = parseTimeString(matchStats.timeElapsed);
-                  const avgMinutes = Math.round(timeElapsedMinutes / matchStats.completedFrames);
-                  return formatDuration(avgMinutes);
-                })()}
-              </Text>
-            </View>
-          )}
+          {/* Note: Estimated time remaining removed per snooker.org feedback
+              as frame timing data is not always reliable */}
         </View>
       )}
 

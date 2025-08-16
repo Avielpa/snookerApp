@@ -297,10 +297,15 @@ export default function CalendarEnhanced() {
             borderWidth: 1,
           }
         ]}
-        onPress={() => handleTabPress(option.id)}
-        activeOpacity={0.8}
-        hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+        onPress={() => {
+          console.log(`[CalendarTab] Pressed: ${option.id}`);
+          handleTabPress(option.id);
+        }}
+        activeOpacity={0.6}
+        hitSlop={{ top: 25, bottom: 25, left: 25, right: 25 }}
         delayPressIn={0}
+        delayPressOut={0}
+        pressRetentionOffset={{ top: 30, bottom: 30, left: 30, right: 30 }}
       >
         <Ionicons 
           name={option.icon} 
@@ -583,10 +588,15 @@ export default function CalendarEnhanced() {
                     borderWidth: 1,
                   }
                 ]}
-                onPress={() => handleStatusPress(option.id)}
-                activeOpacity={0.8}
-                hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+                onPress={() => {
+                  console.log(`[CalendarStatus] Pressed: ${option.id}`);
+                  handleStatusPress(option.id);
+                }}
+                activeOpacity={0.6}
+                hitSlop={{ top: 25, bottom: 25, left: 25, right: 25 }}
                 delayPressIn={0}
+                delayPressOut={0}
+                pressRetentionOffset={{ top: 30, bottom: 30, left: 30, right: 30 }}
               >
                 <Ionicons 
                   name={option.icon} 
