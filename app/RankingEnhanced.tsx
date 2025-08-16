@@ -73,7 +73,7 @@ export default function RankingEnhanced() {
   const router = useRouter();
   const colors = useColors();
 
-  // Tab options for ranking types (using all available API endpoints)
+  // Tab options for ranking types - start with what's actually available in database
   const filterOptions: FilterOption[] = useMemo(() => [
     {
       id: 'MoneyRankings',
@@ -82,6 +82,9 @@ export default function RankingEnhanced() {
       icon: 'trophy-outline',
       color: colors.primary,
     },
+    // TODO: Add other ranking types when data is available in database
+    // To populate these, run: python manage.py update_rankings --ranking-type all
+    /*
     {
       id: 'MoneySeedings',
       label: 'Money Seedings',
@@ -110,6 +113,7 @@ export default function RankingEnhanced() {
       icon: 'ribbon-outline',
       color: '#E91E63',
     },
+    */
   ], [colors]);
 
   // Load ranking data with caching to prevent unnecessary reloads
@@ -157,12 +161,12 @@ export default function RankingEnhanced() {
         setError(null);
       } else {
         logger.warn(`[RankingEnhanced] No rankings returned for ${rankingType}`);
-        setError(`No ${rankingType} rankings available for the current season`);
+        setError(`No ${rankingType} rankings available. Data may need to be updated by running management commands.`);
       }
     } catch (error: any) {
       logger.error(`[RankingEnhanced] Error loading ${rankingType} rankings:`, error);
       const errorMessage = error.message || `Failed to load ${rankingType} rankings`;
-      setError(errorMessage);
+      setError(`${errorMessage}. Please check if ranking data has been populated in the database.`);
       setRankingData([]);
     } finally {
       setLoading(false);
