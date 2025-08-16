@@ -66,35 +66,49 @@ export default function RankingEnhanced() {
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [selectedFilter, setSelectedFilter] = useState<string>('mens');
+  const [selectedFilter, setSelectedFilter] = useState<string>('MoneyRankings');
   // Cache to prevent unnecessary reloads
   const [rankingCache, setRankingCache] = useState<Record<string, RankingItem[]>>({});
 
   const router = useRouter();
   const colors = useColors();
 
-  // Tab options for ranking types (using correct endpoints)
+  // Tab options for ranking types (using all available API endpoints)
   const filterOptions: FilterOption[] = useMemo(() => [
     {
-      id: 'mens',
-      label: 'Mens',
-      value: 'mens',
+      id: 'MoneyRankings',
+      label: 'Money Rankings',
+      value: 'MoneyRankings',
       icon: 'trophy-outline',
       color: colors.primary,
     },
     {
-      id: 'womens',
-      label: 'Womens',
-      value: 'womens',
-      icon: 'ribbon-outline',
-      color: '#E91E63',
+      id: 'MoneySeedings',
+      label: 'Money Seedings',
+      value: 'MoneySeedings',
+      icon: 'medal-outline',
+      color: '#FF9800',
     },
     {
-      id: 'amateur',
-      label: 'Amateur',
-      value: 'amateur',
-      icon: 'star-outline',
-      color: colors.success,
+      id: 'OneYearMoneyRankings',
+      label: 'One Year Money',
+      value: 'OneYearMoneyRankings',
+      icon: 'calendar-outline',
+      color: '#9C27B0',
+    },
+    {
+      id: 'QTRankings',
+      label: 'Q-School',
+      value: 'QTRankings',
+      icon: 'school-outline',
+      color: '#607D8B',
+    },
+    {
+      id: 'WomensRankings',
+      label: 'Womens',
+      value: 'WomensRankings',
+      icon: 'ribbon-outline',
+      color: '#E91E63',
     },
   ], [colors]);
 
@@ -181,7 +195,7 @@ export default function RankingEnhanced() {
 
   // Initial data load on component mount
   useEffect(() => {
-    loadRankingData('mens'); // Load default data immediately
+    loadRankingData('MoneyRankings'); // Load default data immediately
   }, []); // Only run once on mount
 
   // Load data when filter changes
@@ -237,10 +251,10 @@ export default function RankingEnhanced() {
           handleFilterPress(option.id);
         }}
         activeOpacity={0.6}
-        hitSlop={{ top: 25, bottom: 25, left: 25, right: 25 }}
+        hitSlop={{ top: 35, bottom: 35, left: 35, right: 35 }}
         delayPressIn={0}
         delayPressOut={0}
-        pressRetentionOffset={{ top: 30, bottom: 30, left: 30, right: 30 }}
+        pressRetentionOffset={{ top: 40, bottom: 40, left: 40, right: 40 }}
       >
         <Ionicons 
           name={option.icon} 

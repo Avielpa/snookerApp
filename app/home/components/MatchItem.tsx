@@ -44,15 +44,32 @@ export const MatchItem = React.memo(({
     let isPlayer1Winner = false;
     let isPlayer2Winner = false;
     
-    if (isMatchFinished) {
+    if (isMatchFinished && hasValidScores) {
+        // Primary validation: Use scores as the most reliable indicator
+        const scoreBasedWinner1 = score1 > score2;
+        const scoreBasedWinner2 = score2 > score1;
+        
         if (hasWinnerId) {
-            // Use winner_id if available
-            isPlayer1Winner = item.winner_id === item.player1_id;
-            isPlayer2Winner = item.winner_id === item.player2_id;
-        } else if (hasValidScores) {
-            // Fallback to score comparison if no winner_id
-            isPlayer1Winner = score1 > score2;
-            isPlayer2Winner = score2 > score1;
+            // Validate that winner_id matches score-based winner
+            const winnerIdBasedWinner1 = item.winner_id === item.player1_id;
+            const winnerIdBasedWinner2 = item.winner_id === item.player2_id;
+            
+            // Only use winner_id if it's consistent with scores
+            if ((scoreBasedWinner1 && winnerIdBasedWinner1) || (scoreBasedWinner2 && winnerIdBasedWinner2)) {
+                isPlayer1Winner = winnerIdBasedWinner1;
+                isPlayer2Winner = winnerIdBasedWinner2;
+                logger.debug(`[MatchItem] Using consistent winner_id for match ${item.api_match_id}: ${item.winner_id}`);
+            } else {
+                // Winner_id doesn't match scores - use scores as authoritative
+                isPlayer1Winner = scoreBasedWinner1;
+                isPlayer2Winner = scoreBasedWinner2;
+                logger.warn(`[MatchItem] Winner_id ${item.winner_id} inconsistent with scores ${score1}-${score2} for match ${item.api_match_id}. Using scores.`);
+            }
+        } else {
+            // No winner_id, use score comparison
+            isPlayer1Winner = scoreBasedWinner1;
+            isPlayer2Winner = scoreBasedWinner2;
+            logger.debug(`[MatchItem] Using score-based winner for match ${item.api_match_id}: ${score1}-${score2}`);
         }
     }
     
@@ -74,9 +91,11 @@ export const MatchItem = React.memo(({
         <TouchableOpacity 
             onPress={() => handleMatchPress(item.api_match_id)} 
             disabled={!item.api_match_id} 
-            activeOpacity={0.8}
-            hitSlop={TOUCH_SLOP.MEDIUM}
+            activeOpacity={0.6}
+            hitSlop={{ top: 35, bottom: 35, left: 35, right: 35 }}
             delayPressIn={0}
+            delayPressOut={0}
+            pressRetentionOffset={{ top: 40, bottom: 40, left: 40, right: 40 }}
         >
             <GlassCard style={styles.matchItemContainer}>
                 {item.matchCategory === 'livePlaying' && <LiveIndicator />}
@@ -121,20 +140,31 @@ export const MatchItem = React.memo(({
         </TouchableOpacity>
     );
 }, (prevProps, nextProps) => {
-    // Custom comparison for React.memo to ensure re-render when scores change
+    // Custom comparison for React.memo to ensure re-render when any relevant data changes
     const prevItem = prevProps.item;
     const nextItem = nextProps.item;
     
-    return (
+    // Compare all critical fields that affect display
+    const isEqual = (
         prevItem.id === nextItem.id &&
         prevItem.score1 === nextItem.score1 &&
         prevItem.score2 === nextItem.score2 &&
         prevItem.status_code === nextItem.status_code &&
         prevItem.winner_id === nextItem.winner_id &&
+        prevItem.player1_id === nextItem.player1_id &&
+        prevItem.player2_id === nextItem.player2_id &&
         prevItem.player1_name === nextItem.player1_name &&
         prevItem.player2_name === nextItem.player2_name &&
+        prevItem.api_match_id === nextItem.api_match_id &&
         prevProps.tourName === nextProps.tourName
     );
+    
+    // Log when re-render occurs for debugging
+    if (!isEqual) {
+        logger.debug(`[MatchItem] Re-rendering match ${nextItem.api_match_id} due to data change`);
+    }
+    
+    return isEqual;
 });
 
 MatchItem.displayName = 'MatchItem';

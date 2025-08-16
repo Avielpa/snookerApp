@@ -185,43 +185,71 @@ export const getRanking = async (rankingType?: string): Promise<{ rankings: Rank
     }
     
     logger.debug(`[MatchService] Fetching rankings from ${urlPath}...`);
+    
+    // Helper function to try current and previous seasons
+    const tryFetchWithFallback = async (currentSeason: number): Promise<any> => {
+        for (let seasonOffset = 0; seasonOffset <= 2; seasonOffset++) {
+            const season = currentSeason - seasonOffset;
+            try {
+                logger.debug(`[MatchService] Trying ${rankingType} for season ${season}...`);
+                const response = await api.get<any>(urlPath, {
+                    params: isRankingTypeEndpoint ? { season } : undefined
+                });
+                
+                if (response.data && 
+                    ((isRankingTypeEndpoint && Array.isArray(response.data.rankings) && response.data.rankings.length > 0) ||
+                     (isLegacyTabEndpoint && Array.isArray(response.data.rankings) && response.data.rankings.length > 0) ||
+                     (!isRankingTypeEndpoint && !isLegacyTabEndpoint && Array.isArray(response.data) && response.data.length > 0))) {
+                    logger.debug(`[MatchService] Found ${rankingType} data for season ${season}`);
+                    return { ...response.data, season };
+                }
+            } catch (error) {
+                logger.debug(`[MatchService] No data for ${rankingType} in season ${season}, trying previous season...`);
+            }
+        }
+        throw new Error(`No ${rankingType} data found for current or previous seasons`);
+    };
+    
     try {
-        const response = await api.get<any>(urlPath);
+        const currentYear = new Date().getFullYear();
+        const currentSeason = currentYear; // Assuming season = year
+        const responseData = await tryFetchWithFallback(currentSeason);
 
         if (isRankingTypeEndpoint) {
             // New ranking-types endpoint returns { ranking_type, ranking_name, rankings, summary, season }
-            if (response.data && Array.isArray(response.data.rankings)) {
-                logger.debug(`[MatchService] Successfully fetched ${response.data.rankings.length} ${rankingType} rankings from season ${response.data.season}.`);
+            if (responseData && Array.isArray(responseData.rankings)) {
+                logger.debug(`[MatchService] Successfully fetched ${responseData.rankings.length} ${rankingType} rankings from season ${responseData.season}.`);
                 return {
-                    rankings: response.data.rankings,
-                    tab_name: response.data.ranking_name || rankingType,
-                    summary: response.data.summary,
-                    season: response.data.season
+                    rankings: responseData.rankings,
+                    tab_name: responseData.ranking_name || rankingType,
+                    summary: responseData.summary,
+                    season: responseData.season
                 };
             } else {
-                logger.warn(`[MatchService] Invalid ranking-type response format for ${rankingType}:`, response.data);
+                logger.warn(`[MatchService] Invalid ranking-type response format for ${rankingType}:`, responseData);
                 return { rankings: [] };
             }
         } else if (isLegacyTabEndpoint) {
             // Legacy tab endpoints return { tab_name, rankings, summary }
-            if (response.data && Array.isArray(response.data.rankings)) {
-                logger.debug(`[MatchService] Successfully fetched ${response.data.rankings.length} ${rankingType} rankings.`);
+            if (responseData && Array.isArray(responseData.rankings)) {
+                logger.debug(`[MatchService] Successfully fetched ${responseData.rankings.length} ${rankingType} rankings.`);
                 return {
-                    rankings: response.data.rankings,
-                    tab_name: response.data.tab_name,
-                    summary: response.data.summary
+                    rankings: responseData.rankings,
+                    tab_name: responseData.tab_name,
+                    summary: responseData.summary,
+                    season: responseData.season
                 };
             } else {
-                logger.warn(`[MatchService] Invalid tab response format for ${rankingType}:`, response.data);
+                logger.warn(`[MatchService] Invalid tab response format for ${rankingType}:`, responseData);
                 return { rankings: [] };
             }
         } else {
             // Legacy endpoint returns array directly
-            if (Array.isArray(response.data)) {
-                logger.debug(`[MatchService] Successfully fetched ${response.data.length} legacy ranking entries.`);
-                return { rankings: response.data };
+            if (Array.isArray(responseData)) {
+                logger.debug(`[MatchService] Successfully fetched ${responseData.length} legacy ranking entries.`);
+                return { rankings: responseData, season: responseData.season };
             } else {
-                logger.warn(`[MatchService] Received non-array data (${typeof response.data}) when fetching rankings.`);
+                logger.warn(`[MatchService] Received non-array data (${typeof responseData}) when fetching rankings.`);
                 return { rankings: [] };
             }
         }

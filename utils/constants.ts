@@ -1,10 +1,11 @@
 // utils/constants.ts
 export const APP_CONSTANTS = {
-  // Touch and interaction constants
+  // Touch and interaction constants - Enhanced for universal Android compatibility
   TOUCH_SLOP: {
-    SMALL: 10,
-    MEDIUM: 15,
-    LARGE: 20,
+    SMALL: 20,
+    MEDIUM: 30,
+    LARGE: 40,
+    UNIVERSAL: 35, // For maximum Android device compatibility
   },
   
   // Animation durations (ms)

@@ -125,10 +125,10 @@ const HomeScreen = (): React.ReactElement | null => {
                                     setActiveFilter(filter.value);
                                 }}
                                 activeOpacity={0.6}
-                                hitSlop={{ top: 25, bottom: 25, left: 25, right: 25 }}
+                                hitSlop={{ top: 35, bottom: 35, left: 35, right: 35 }}
                                 delayPressIn={0}
                                 delayPressOut={0}
-                                pressRetentionOffset={{ top: 30, bottom: 30, left: 30, right: 30 }}
+                                pressRetentionOffset={{ top: 40, bottom: 40, left: 40, right: 40 }}
                             >
                                 <Ionicons 
                                     name={filter.icon} 
@@ -162,10 +162,10 @@ const HomeScreen = (): React.ReactElement | null => {
                                         handleOtherTourSelection(tour.ID);
                                     }}
                                     activeOpacity={0.6}
-                                    hitSlop={{ top: 25, bottom: 25, left: 25, right: 25 }}
+                                    hitSlop={{ top: 35, bottom: 35, left: 35, right: 35 }}
                                     delayPressIn={0}
                                     delayPressOut={0}
-                                    pressRetentionOffset={{ top: 30, bottom: 30, left: 30, right: 30 }}
+                                    pressRetentionOffset={{ top: 40, bottom: 40, left: 40, right: 40 }}
                                 >
                                     <Text style={[
                                         styles.otherTourText,
