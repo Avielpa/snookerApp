@@ -91,6 +91,10 @@ class Command(BaseCommand):
                     if self._check_monthly_updates():
                         self.stdout.write('[AUTOMATION] Monthly updates completed')
                     
+                    # Check for upcoming tournaments needing match data (every 4 hours)
+                    if self._check_upcoming_tournament_updates():
+                        self.stdout.write('[AUTOMATION] Upcoming tournament updates completed')
+                    
                     next_check = sleep_interval
                     self.stdout.write(f'[TIMER] Next check in {next_check//60} minutes')
                 
@@ -277,3 +281,67 @@ class Command(BaseCommand):
         except Exception as e:
             logger.error(f'Monthly updates failed: {str(e)}')
             self.stdout.write(f'[FAILED] Monthly updates failed: {str(e)}')
+    
+    def _check_upcoming_tournament_updates(self):
+        """Check if upcoming tournaments need match/round data updates (every 4 hours)."""
+        current_time = timezone.now()
+        
+        # Only run every 4 hours (check if current hour is divisible by 4)
+        if current_time.hour % 4 != 0:
+            return False
+        
+        # Check if we already ran this hour
+        from oneFourSeven.models import Event, MatchesOfAnEvent, RoundDetails
+        
+        # Find upcoming tournaments in next 2-3 days without match data
+        upcoming_start = current_time.date() + timedelta(days=2)
+        upcoming_end = current_time.date() + timedelta(days=3)
+        
+        upcoming_tournaments = Event.objects.filter(
+            StartDate__gte=upcoming_start,
+            StartDate__lte=upcoming_end
+        )
+        
+        tournaments_needing_update = []
+        for tournament in upcoming_tournaments:
+            match_count = MatchesOfAnEvent.objects.filter(Event=tournament).count()
+            round_count = RoundDetails.objects.filter(Event=tournament).count()
+            
+            # Tournament needs update if it has no matches AND no rounds
+            if match_count == 0 and round_count == 0:
+                tournaments_needing_update.append(tournament)
+        
+        if tournaments_needing_update:
+            self.stdout.write(f'[UPCOMING] Found {len(tournaments_needing_update)} tournaments needing data updates')
+            self._run_upcoming_tournament_updates(tournaments_needing_update)
+            return True
+        
+        return False
+    
+    def _run_upcoming_tournament_updates(self, tournaments):
+        """Update match and round data for upcoming tournaments."""
+        try:
+            for tournament in tournaments:
+                self.stdout.write(f'[UPCOMING] Updating {tournament.Name} (ID: {tournament.ID})')
+                
+                # Try to update matches first
+                try:
+                    call_command('update_matches', '--event-id', str(tournament.ID))
+                    self.stdout.write(f'[SUCCESS] Updated matches for {tournament.Name}')
+                except Exception as e:
+                    self.stdout.write(f'[INFO] No matches yet for {tournament.Name}: {str(e)}')
+                
+                # Try to update round details
+                try:
+                    call_command('update_round_details', '--event-id', str(tournament.ID))
+                    self.stdout.write(f'[SUCCESS] Updated round details for {tournament.Name}')
+                except Exception as e:
+                    self.stdout.write(f'[INFO] No round details yet for {tournament.Name}: {str(e)}')
+                
+                # Small delay between tournaments to respect API limits
+                import time
+                time.sleep(2)
+                
+        except Exception as e:
+            logger.error(f'Upcoming tournament updates failed: {str(e)}')
+            self.stdout.write(f'[FAILED] Upcoming tournament updates failed: {str(e)}')
