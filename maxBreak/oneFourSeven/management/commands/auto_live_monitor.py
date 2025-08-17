@@ -83,6 +83,14 @@ class Command(BaseCommand):
                     # Update upcoming matches as fallback when no active tournaments
                     self._update_upcoming_matches_fallback()
                     
+                    # Check for scheduled daily updates (3am UTC)
+                    if self._check_daily_updates():
+                        self.stdout.write('[AUTOMATION] Daily updates completed')
+                    
+                    # Check for scheduled monthly updates (1st of month, 3am UTC)
+                    if self._check_monthly_updates():
+                        self.stdout.write('[AUTOMATION] Monthly updates completed')
+                    
                     next_check = sleep_interval
                     self.stdout.write(f'[TIMER] Next check in {next_check//60} minutes')
                 
@@ -186,3 +194,86 @@ class Command(BaseCommand):
         except Exception as e:
             logger.error(f'Failed to update upcoming matches fallback: {str(e)}')
             self.stdout.write(f'[FAILED] Upcoming matches fallback failed: {str(e)}')
+
+    def _check_daily_updates(self):
+        """Check if daily updates should run (3am UTC)."""
+        current_time = timezone.now()
+        
+        # Check if it's around 3am UTC (within 1 hour window)
+        if 2 <= current_time.hour <= 4:
+            # Check if we already ran today
+            today = current_time.date()
+            from oneFourSeven.models import Event
+            
+            # Use a simple flag - check if any event was updated today
+            recent_update = Event.objects.filter(
+                created_at__date=today
+            ).exists()
+            
+            if not recent_update:
+                self.stdout.write('[DAILY] Running daily updates at 3am...')
+                self._run_daily_updates()
+                return True
+        
+        return False
+    
+    def _run_daily_updates(self):
+        """Run daily maintenance updates."""
+        try:
+            self.stdout.write('[DAILY] Starting daily matches and round updates...')
+            
+            # Update active tournaments
+            call_command('update_matches', '--active-only')
+            self.stdout.write('[SUCCESS] Daily matches updated')
+            
+            # Update upcoming tournaments round details (next 30 days)
+            call_command('update_round_details', '--upcoming-only', '--days', '30')
+            self.stdout.write('[SUCCESS] Daily round details updated')
+            
+        except Exception as e:
+            logger.error(f'Daily updates failed: {str(e)}')
+            self.stdout.write(f'[FAILED] Daily updates failed: {str(e)}')
+    
+    def _check_monthly_updates(self):
+        """Check if monthly updates should run (1st of month)."""
+        current_time = timezone.now()
+        
+        # Check if it's the 1st day of the month and early morning
+        if current_time.day == 1 and 2 <= current_time.hour <= 4:
+            # Check if we already ran this month
+            from oneFourSeven.models import Player
+            
+            # Check if any player was updated this month
+            this_month = current_time.replace(day=1).date()
+            recent_update = Player.objects.filter(
+                created_at__date__gte=this_month
+            ).exists()
+            
+            if not recent_update:
+                self.stdout.write('[MONTHLY] Running monthly full updates...')
+                self._run_monthly_updates()
+                return True
+        
+        return False
+    
+    def _run_monthly_updates(self):
+        """Run monthly comprehensive updates."""
+        try:
+            self.stdout.write('[MONTHLY] Starting monthly comprehensive updates...')
+            
+            # Update tournaments for current season
+            call_command('update_tournaments', '--season', '2025', '--tour', 'main')
+            self.stdout.write('[SUCCESS] Monthly tournaments updated')
+            
+            # Update players
+            call_command('update_players', '--status', 'pro', '--sex', 'men')
+            call_command('update_players', '--status', 'pro', '--sex', 'women')
+            self.stdout.write('[SUCCESS] Monthly players updated')
+            
+            # Update rankings
+            call_command('update_rankings', '--current-season-only')
+            self.stdout.write('[SUCCESS] Monthly rankings updated')
+            
+        except Exception as e:
+            logger.error(f'Monthly updates failed: {str(e)}')
+            self.stdout.write(f'[FAILED] Monthly updates failed: {str(e)}')
