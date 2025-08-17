@@ -29,7 +29,9 @@ from .views import (
     round_format,
     # Prize Money Views
     prize_money_view,
-    round_prizes_view
+    round_prizes_view,
+    # Fallback Views
+    upcoming_matches_fallback_view
 )
 
 # --- DRF Router Setup ---
@@ -101,6 +103,10 @@ urlpatterns = [
     # Calendar tab endpoints for main tours vs others
     path('calendar/<str:tab_type>/', calendar_tabs_view, name='calendar-tabs'),
     path('calendar/', calendar_tabs_view, {'tab_type': 'main'}, name='calendar-main'),
+    
+    # --- Fallback URLs ---
+    # Upcoming matches fallback endpoint when no active tournaments
+    path('upcoming-matches/', upcoming_matches_fallback_view, name='upcoming-matches-fallback'),
     
     # --- Debug URL ---
     # Debug endpoint for checking system status

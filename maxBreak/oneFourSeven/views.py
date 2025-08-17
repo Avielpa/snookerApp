@@ -22,7 +22,7 @@ from rest_framework.response import Response # Use DRF Response
 from rest_framework_simplejwt.tokens import RefreshToken
 
 # Local Imports
-from .models import MatchesOfAnEvent, Player, Ranking, Event, RoundDetails
+from .models import MatchesOfAnEvent, Player, Ranking, Event, RoundDetails, UpcomingMatch
 from .serializers import (
     EventSerializer, MatchesOfAnEventSerializer, PlayerSerializer,
     RankingSerializer, UserSerializer
@@ -1228,6 +1228,83 @@ def round_prizes_view(request, event_id):
         
     except Exception as e:
         logger.error(f"Error in round_prizes_view for event {event_id}: {e}", exc_info=True)
+        return Response({"error": "Internal server error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def upcoming_matches_fallback_view(request):
+    """
+    API endpoint to serve upcoming matches as fallback when no active tournaments exist.
+    Used when main database doesn't have current active tournaments with matches.
+    """
+    try:
+        tour_type = request.GET.get('tour', 'main')
+        days_ahead = int(request.GET.get('days', 7))  # Default 7 days
+        
+        # Get upcoming matches from fallback data
+        from django.utils import timezone
+        now = timezone.now()
+        end_date = now + django_timezone.timedelta(days=days_ahead)
+        
+        upcoming_matches = UpcomingMatch.objects.filter(
+            tour_type=tour_type,
+            scheduled_date__gte=now,
+            scheduled_date__lte=end_date
+        ).order_by('scheduled_date', 'round_number', 'match_number')
+        
+        # Format matches for API response
+        matches_data = []
+        for match in upcoming_matches:
+            match_data = {
+                'id': match.id,
+                'api_match_id': match.api_match_id,
+                'event_id': match.event_id,
+                'event_name': match.event_name,
+                'round': match.round_number,
+                'match_number': match.match_number,
+                'player1_id': match.player1_id,
+                'player2_id': match.player2_id,
+                'player1_name': match.player1_name,
+                'player2_name': match.player2_name,
+                'score1': match.score1,
+                'score2': match.score2,
+                'winner_id': match.winner_id,
+                'status_code': match.status,
+                'status_display': match.status_display,
+                'scheduled_date': match.scheduled_date.isoformat() if match.scheduled_date else None,
+                'is_live': match.is_live,
+                'is_today': match.is_today,
+                'score_display': match.score_display,
+                'tour_type': match.tour_type,
+                'created_at': match.created_at.isoformat(),
+            }
+            matches_data.append(match_data)
+        
+        # Group by today vs upcoming
+        today_matches = [m for m in matches_data if m['is_today']]
+        upcoming_other = [m for m in matches_data if not m['is_today']]
+        
+        response_data = {
+            'success': True,
+            'tour_type': tour_type,
+            'days_ahead': days_ahead,
+            'total_matches': len(matches_data),
+            'today_matches': today_matches,
+            'upcoming_matches': upcoming_other,
+            'last_updated': now.isoformat(),
+            'data_source': 'fallback_upcoming_matches',
+            'message': 'Showing upcoming matches from fallback data'
+        }
+        
+        logger.info(f"Served {len(matches_data)} upcoming matches for {tour_type} tour (fallback)")
+        return Response(response_data, status=status.HTTP_200_OK)
+        
+    except ValueError as e:
+        logger.warning(f"Invalid parameter in upcoming_matches_fallback_view: {e}")
+        return Response({"error": "Invalid parameters"}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        logger.error(f"Error in upcoming_matches_fallback_view: {e}", exc_info=True)
         return Response({"error": "Internal server error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 

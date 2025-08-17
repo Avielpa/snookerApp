@@ -78,7 +78,11 @@ class Command(BaseCommand):
                     next_check = active_interval
                     self.stdout.write(f'[TIMER] Next check in {next_check//60} minutes')
                 else:
-                    self.stdout.write('[SLEEP] No active matches - Sleeping')
+                    self.stdout.write('[SLEEP] No active matches - Checking fallback upcoming matches')
+                    
+                    # Update upcoming matches as fallback when no active tournaments
+                    self._update_upcoming_matches_fallback()
+                    
                     next_check = sleep_interval
                     self.stdout.write(f'[TIMER] Next check in {next_check//60} minutes')
                 
@@ -160,3 +164,25 @@ class Command(BaseCommand):
             logger.error(f'Failed to run live updates: {str(e)}')
             self.stdout.write(f'[FAILED] Live update failed: {str(e)}')
             raise
+    
+    def _update_upcoming_matches_fallback(self):
+        """Update upcoming matches as fallback when no active tournaments."""
+        try:
+            from django.utils import timezone
+            from oneFourSeven.models import UpcomingMatch
+            
+            # Check if we need to update upcoming matches (every 4 hours)
+            recent_update = UpcomingMatch.objects.filter(
+                created_at__gte=timezone.now() - timedelta(hours=4)
+            ).exists()
+            
+            if not recent_update:
+                self.stdout.write('[FALLBACK] Updating upcoming matches - no recent data')
+                call_command('update_upcoming_matches', '--tour', 'main')
+                self.stdout.write('[SUCCESS] Upcoming matches fallback updated')
+            else:
+                self.stdout.write('[SKIP] Upcoming matches fallback recent - skipping')
+                
+        except Exception as e:
+            logger.error(f'Failed to update upcoming matches fallback: {str(e)}')
+            self.stdout.write(f'[FAILED] Upcoming matches fallback failed: {str(e)}')

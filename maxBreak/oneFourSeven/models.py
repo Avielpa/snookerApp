@@ -1,6 +1,7 @@
 # oneFourSeven/models.py
 from django.db import models
 from django.utils import timezone # Keep for potential future use with default/auto_now
+import json
 
 # ================== Player Model ==================
 class Player(models.Model):
@@ -607,4 +608,156 @@ class RoundDetails(models.Model):
         indexes = [
             models.Index(fields=['Event', 'Round']),  # Index for lookups
             models.Index(fields=['Event']),  # Index for event-based queries
+        ]
+
+
+# ================== Upcoming Match Model (Fallback) ==================
+class UpcomingMatch(models.Model):
+    """
+    Fallback model for upcoming matches fetched directly from snooker.org API
+    Used when no active tournaments exist in the main database
+    """
+    
+    # Match identification
+    api_match_id = models.IntegerField(
+        help_text="Original match ID from snooker.org API"
+    )
+    event_id = models.IntegerField(
+        null=True, blank=True,
+        help_text="Event ID from snooker.org API"
+    )
+    event_name = models.CharField(
+        max_length=200, null=True, blank=True,
+        help_text="Event/Tournament name"
+    )
+    
+    # Match details
+    round_number = models.IntegerField(
+        null=True, blank=True,
+        help_text="Round number in the tournament"
+    )
+    match_number = models.IntegerField(
+        null=True, blank=True,
+        help_text="Match number within the round"
+    )
+    
+    # Player information
+    player1_id = models.IntegerField(
+        null=True, blank=True,
+        help_text="Player 1 ID from snooker.org"
+    )
+    player2_id = models.IntegerField(
+        null=True, blank=True,
+        help_text="Player 2 ID from snooker.org"
+    )
+    player1_name = models.CharField(
+        max_length=100, null=True, blank=True,
+        help_text="Player 1 name"
+    )
+    player2_name = models.CharField(
+        max_length=100, null=True, blank=True,
+        help_text="Player 2 name"
+    )
+    
+    # Match results
+    score1 = models.IntegerField(
+        null=True, blank=True,
+        help_text="Player 1 score/frames won"
+    )
+    score2 = models.IntegerField(
+        null=True, blank=True,
+        help_text="Player 2 score/frames won"
+    )
+    winner_id = models.IntegerField(
+        null=True, blank=True,
+        help_text="Winner player ID (if match is finished)"
+    )
+    
+    # Match status
+    STATUS_CHOICES = [
+        (0, 'Scheduled'),
+        (1, 'Live'),
+        (2, 'On Break'),
+        (3, 'Finished'),
+    ]
+    status = models.IntegerField(
+        choices=STATUS_CHOICES,
+        default=0,
+        help_text="Current match status"
+    )
+    
+    # Timing
+    scheduled_date = models.DateTimeField(
+        null=True, blank=True,
+        help_text="Scheduled start date and time"
+    )
+    
+    # Tour classification
+    TOUR_CHOICES = [
+        ('main', 'Main Tour'),
+        ('womens', 'Womens Tour'),
+        ('seniors', 'Seniors Tour'),
+        ('other', 'Other Tours'),
+        ('all', 'All Tours'),
+    ]
+    tour_type = models.CharField(
+        max_length=10,
+        choices=TOUR_CHOICES,
+        default='main',
+        help_text="Tour type this match belongs to"
+    )
+    
+    # Metadata
+    raw_data = models.TextField(
+        null=True, blank=True,
+        help_text="Raw JSON data from snooker.org API"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return f"{self.player1_name} vs {self.player2_name} - {self.event_name}"
+    
+    @property
+    def is_today(self):
+        """Check if match is scheduled for today"""
+        if not self.scheduled_date:
+            return False
+        return self.scheduled_date.date() == timezone.now().date()
+    
+    @property
+    def is_live(self):
+        """Check if match is currently live"""
+        return self.status in [1, 2]  # Live or On Break
+    
+    @property
+    def status_display(self):
+        """Get human-readable status"""
+        return dict(self.STATUS_CHOICES).get(self.status, 'Unknown')
+    
+    @property
+    def score_display(self):
+        """Get formatted score display"""
+        if self.status == 3 and self.score1 is not None and self.score2 is not None:
+            return f"{self.score1}-{self.score2}"
+        return "vs"
+    
+    def get_raw_data_dict(self):
+        """Parse raw JSON data"""
+        if self.raw_data:
+            try:
+                return json.loads(self.raw_data)
+            except json.JSONDecodeError:
+                return {}
+        return {}
+    
+    class Meta:
+        verbose_name = "Upcoming Match"
+        verbose_name_plural = "Upcoming Matches"
+        ordering = ['scheduled_date', 'round_number', 'match_number']
+        indexes = [
+            models.Index(fields=['tour_type', 'scheduled_date']),
+            models.Index(fields=['status', 'scheduled_date']),
+            models.Index(fields=['event_id', 'round_number']),
+            models.Index(fields=['created_at']),
         ]
