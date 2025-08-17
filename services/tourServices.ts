@@ -1,5 +1,5 @@
 // services/tourServices.ts
-import { api } from "./api";
+import { api, apiWithRetry } from "./api";
 import { logger } from "../utils/logger";
 
 // TypeScript interfaces for better type safety
@@ -54,39 +54,29 @@ export interface Match {
 export const getSeasonEvents = async (retryAttempts: number = 0): Promise<Event[]> => {
     const urlPath = 'events/';
     const maxRetries = 3;
-    const retryDelay = 1000 * (retryAttempts + 1); // Progressive delay: 1s, 2s, 3s
     
     logger.debug(`[TourService] Fetching season events from: ${urlPath} (attempt ${retryAttempts + 1}/${maxRetries + 1})`);
     
     try {
-        const response = await api.get<Event[]>(urlPath);
+        // Use enhanced retry API for better mobile network resilience
+        const responseData = await apiWithRetry.get<Event[]>(urlPath, maxRetries);
         
-        if (Array.isArray(response.data)) {
-            logger.debug(`[TourService] Successfully fetched ${response.data.length} events.`);
-            return response.data;
+        if (Array.isArray(responseData)) {
+            logger.debug(`[TourService] Successfully fetched ${responseData.length} events.`);
+            return responseData;
         } else {
-            logger.warn(`[TourService] Received non-array data (${typeof response.data}) when fetching events. Returning empty array.`);
+            logger.warn(`[TourService] Received non-array data (${typeof responseData}) when fetching events. Returning empty array.`);
             return [];
         }
     } catch (error: any) {
         const status = error.response?.status;
-        const errorData = error.response?.data;
         const isNetworkError = !error.response && (error.code === 'NETWORK_ERROR' || error.message.includes('Network Error'));
-        const isTimeoutError = error.code === 'ECONNABORTED' || error.message.includes('timeout');
         
-        logger.error(`[TourService] Error fetching season events (status: ${status}) ${error.message}`);
+        logger.error(`[TourService] Error fetching season events after retries (status: ${status}): ${error.message}`);
         
-        // Retry logic for network and timeout errors
-        if ((isNetworkError || isTimeoutError || status >= 500) && retryAttempts < maxRetries) {
-            logger.log(`[TourService] Retrying in ${retryDelay}ms... (attempt ${retryAttempts + 1}/${maxRetries})`);
-            
-            await new Promise(resolve => setTimeout(resolve, retryDelay));
-            return getSeasonEvents(retryAttempts + 1);
-        }
-        
-        // Log final error after all retries exhausted
-        if (retryAttempts >= maxRetries) {
-            logger.error(`[TourService] All ${maxRetries + 1} attempts failed for season events. Final error:`, error.message);
+        // Enhanced error details for mobile debugging
+        if (isNetworkError) {
+            logger.error(`[TourService] 🚨 NETWORK ERROR: Check mobile internet connection, WiFi vs cellular, or backend availability`);
         }
         
         return [];

@@ -318,7 +318,6 @@ export default function CalendarEnhanced() {
         isSelected={isSelected}
         onPress={handleTabPress}
         count={option.count}
-        style={styles.filterButton}
       />
     );
   };
@@ -584,7 +583,6 @@ export default function CalendarEnhanced() {
                 isSelected={isSelected}
                 onPress={handleStatusPress}
                 count={option.count}
-                style={styles.filterButton}
               />
             );
           })}

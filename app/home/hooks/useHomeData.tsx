@@ -7,6 +7,7 @@ import { Match, EventDetails, ListItem } from '../types';
 import { processMatchesForList } from '../utils/matchProcessing';
 import { useLiveMatchDetection } from './useLiveMatchDetection';
 import { notificationManager } from '../../../utils/notifications';
+import { runNetworkDiagnostics, isBackendReachable } from '../../../utils/networkDiagnostics';
 
 export const useHomeData = () => {
     const [processedListData, setProcessedListData] = useState<ListItem[]>([]);
@@ -94,6 +95,36 @@ export const useHomeData = () => {
                 
                 const currentMatches = Array.isArray(matchesResult) ? matchesResult as Match[] : [];
                 
+                // Data consistency validation for finished matches
+                if (currentMatches.length > 0) {
+                    const inconsistentMatches = currentMatches.filter(match => {
+                        if (match.status_code === 3 && // Finished match
+                            match.score1 != null && match.score2 != null && 
+                            match.winner_id != null) {
+                            const scoreWinner1 = match.score1 > match.score2;
+                            const scoreWinner2 = match.score2 > match.score1;
+                            const winnerIdWinner1 = match.winner_id === match.player1_id;
+                            const winnerIdWinner2 = match.winner_id === match.player2_id;
+                            
+                            // Inconsistent if winner_id doesn't match scores
+                            return (scoreWinner1 && !winnerIdWinner1) || (scoreWinner2 && !winnerIdWinner2);
+                        }
+                        return false;
+                    });
+                    
+                    if (inconsistentMatches.length > 0) {
+                        logger.warn(`[HomeScreen] 🚨 ${inconsistentMatches.length} matches have inconsistent winner data:`, 
+                            inconsistentMatches.map(m => ({
+                                api_match_id: m.api_match_id,
+                                score: `${m.score1}-${m.score2}`,
+                                winner_id: m.winner_id,
+                                player1_id: m.player1_id,
+                                player2_id: m.player2_id
+                            }))
+                        );
+                    }
+                }
+                
                 logger.log(`[HomeScreen] Processing ${currentMatches.length} matches...`);
                 const processedData = processMatchesForList(currentMatches);
                 logger.log(`[HomeScreen] Processed data:`, {
@@ -173,11 +204,27 @@ export const useHomeData = () => {
         } catch (err: any) {
             logger.error(`[HomeScreen] Error loading tournament info:`, err);
             
-            // Enhanced error handling with network-specific messages
+            // Enhanced error handling with network diagnostics
             let errorMessage = 'Failed to load tournament data.';
             
             if (err.message.includes('Network Error') || err.message.includes('ERR_NETWORK')) {
                 errorMessage = 'Network connection failed. Please check your internet connection and try again.';
+                
+                // Run network diagnostics for Network Error
+                logger.log('[HomeScreen] Running network diagnostics due to Network Error...');
+                runNetworkDiagnostics().then(diagnostics => {
+                    logger.log('[HomeScreen] Network Diagnostics Results:', diagnostics);
+                    
+                    if (!diagnostics.isConnected) {
+                        logger.error('[HomeScreen] 🚨 NO INTERNET: Device has no internet connectivity');
+                    } else if (!diagnostics.backendReachable) {
+                        logger.error('[HomeScreen] 🚨 BACKEND UNREACHABLE: Railway backend not responding');
+                    } else {
+                        logger.error('[HomeScreen] 🚨 UNKNOWN NETWORK ISSUE: Internet works but API fails');
+                    }
+                }).catch(diagErr => {
+                    logger.error('[HomeScreen] Network diagnostics failed:', diagErr);
+                });
             } else if (err.message.includes('timeout')) {
                 errorMessage = 'Request timed out. Please check your connection and try again.';
             } else if (err.response?.status >= 500) {

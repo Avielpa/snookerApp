@@ -151,10 +151,12 @@ logger.log(`[API Setup] Environment Variables:`, {
 // --- Create a single Axios instance ---
 const api: AxiosInstance = axios.create({
     baseURL: API_BASE_URL,
-    timeout: 15000, // Increased timeout for mobile networks
+    timeout: 30000, // Increased to 30 seconds for slow mobile networks
     headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
+        'Cache-Control': 'no-cache', // Prevent mobile browser caching issues
+        'Pragma': 'no-cache',
     },
     // Add retry configuration
     validateStatus: function (status) {
@@ -290,6 +292,37 @@ export const forceCacheRefresh = (tournamentId?: number) => {
         logger.log(`[API Cache] Invalidated ${keysToInvalidate.length} tournament-specific cache entries`);
     } else {
         apiCache.clear();
+    }
+};
+
+// Enhanced API wrapper with mobile-optimized retry logic
+export const apiWithRetry = {
+    async get<T = any>(url: string, retries: number = 2): Promise<T> {
+        for (let attempt = 1; attempt <= retries + 1; attempt++) {
+            try {
+                const response = await api.get<T>(url);
+                if (attempt > 1) {
+                    logger.log(`[API Retry] Success on attempt ${attempt} for ${url}`);
+                }
+                return response.data;
+            } catch (error: any) {
+                const isLastAttempt = attempt === retries + 1;
+                const isNetworkError = !error.response && (error.code === 'NETWORK_ERROR' || error.message.includes('Network Error'));
+                const isTimeoutError = error.code === 'ECONNABORTED' || error.message.includes('timeout');
+                
+                if (isLastAttempt || (!isNetworkError && !isTimeoutError)) {
+                    // Don't retry non-network errors or if max retries reached
+                    throw error;
+                }
+                
+                const waitTime = Math.min(1000 * attempt, 5000); // Exponential backoff, max 5 seconds
+                logger.warn(`[API Retry] Attempt ${attempt} failed for ${url}, retrying in ${waitTime}ms...`);
+                await new Promise(resolve => setTimeout(resolve, waitTime));
+            }
+        }
+        
+        // This should never be reached, but TypeScript needs it
+        throw new Error('Unexpected error in retry logic');
     }
 };
 

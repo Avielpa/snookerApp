@@ -58,25 +58,47 @@ export const UniversalTab: React.FC<UniversalTabProps> = ({
   
   const handlePress = React.useCallback(() => {
     console.log(`[UniversalTab] Tab pressed: ${id}, enhanced: ${needsEnhanced}`);
+    console.log(`[UniversalTab] Galaxy S24 Debug - Touch event received for tab: ${id}`);
+    
+    // Enhanced logging for Galaxy S24 debugging
+    const { width, height } = require('react-native').Dimensions.get('window');
+    console.log(`[UniversalTab] Device: ${width}x${height}, Platform: ${Platform.OS}`);
     
     // Haptic feedback for better UX
     try {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      console.log(`[UniversalTab] Haptic feedback triggered for ${id}`);
     } catch (error) {
       console.log('[UniversalTab] Haptics not available:', error);
     }
     
     // Use Samsung-compatible handler if needed
     const handler = needsEnhanced ? createSamsungCompatibleHandler(() => onPress(id)) : () => onPress(id);
+    
+    console.log(`[UniversalTab] Calling onPress handler for ${id}`);
     handler();
   }, [id, onPress, needsEnhanced]);
 
   const tabStyle = [
     styles.tabButton,
     {
-      backgroundColor,
-      borderColor,
-      borderWidth: 1,
+      backgroundColor: isSelected ? backgroundColor : `${backgroundColor}70`, // More transparent when not selected
+      borderColor: isSelected ? borderColor : `${borderColor}50`,
+      borderWidth: isSelected ? 2.5 : 1.5,
+      // Enhanced selected state with more pronounced effects
+      ...(isSelected && {
+        shadowColor: color,
+        shadowOpacity: 0.4,
+        shadowRadius: 10,
+        elevation: 8,
+        // Add subtle transform for selected state
+        transform: [{ scale: 1.02 }],
+      }),
+      // Subtle hover effect for non-selected
+      ...(!isSelected && {
+        shadowOpacity: 0.15,
+        elevation: 4,
+      }),
     },
     style,
   ];
@@ -162,47 +184,71 @@ export const UniversalTab: React.FC<UniversalTabProps> = ({
 
 const styles = StyleSheet.create({
   tabButton: {
-    borderRadius: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    borderRadius: 24,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
     marginHorizontal: 6,
-    minHeight: 48,
+    minHeight: 56,
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 2,
+    elevation: 6,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    // Enhanced modern design with subtle gradient background
+    backgroundColor: 'rgba(255, 255, 255, 0.98)',
+    borderWidth: 1.5,
+    // Subtle inner glow effect
+    overflow: 'hidden',
   },
   pressed: {
-    opacity: 0.8,
-    transform: [{ scale: 0.98 }],
+    opacity: 0.88,
+    transform: [{ scale: 0.97 }],
+    elevation: 3,
   },
   tabContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
+    paddingHorizontal: 2,
   },
   tabText: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 15,
+    fontWeight: '700',
     textAlign: 'center',
+    letterSpacing: 0.4,
+    // Better text rendering
+    includeFontPadding: false,
+    textAlignVertical: 'center',
   },
   countBadge: {
-    borderRadius: 10,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    minWidth: 20,
-    height: 20,
+    borderRadius: 14,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    minWidth: 28,
+    height: 28,
     justifyContent: 'center',
     alignItems: 'center',
+    marginLeft: 6,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    // Enhanced badge styling
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.4)',
   },
   countText: {
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: '900',
     color: '#FFFFFF',
     textAlign: 'center',
+    letterSpacing: 0.3,
+    // Better text rendering for badge
+    includeFontPadding: false,
+    textAlignVertical: 'center',
   },
 });

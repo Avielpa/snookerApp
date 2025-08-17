@@ -210,15 +210,17 @@ export default function RankingEnhanced() {
     }
   }, [selectedFilter, loadRankingData, filterOptions]);
 
-  // Handle filter selection with enhanced logging
+  // Handle filter selection with enhanced Galaxy S24 debugging
   const handleFilterPress = (filterId: string) => {
     logger.log(`[RankingEnhanced] Filter pressed: ${filterId}, current: ${selectedFilter}`);
+    logger.log(`[RankingEnhanced] Galaxy S24 Debug - Event received for filter: ${filterId}`);
+    
     if (filterId !== selectedFilter) {
-      logger.log(`[RankingEnhanced] Changing filter from ${selectedFilter} to ${filterId}`);
+      logger.log(`[RankingEnhanced] SUCCESS: Changing filter from ${selectedFilter} to ${filterId}`);
       setSelectedFilter(filterId);
       setError(null); // Clear any previous errors
     } else {
-      logger.log(`[RankingEnhanced] Filter already selected: ${filterId}`);
+      logger.log(`[RankingEnhanced] INFO: Filter already selected: ${filterId}`);
     }
   };
 
@@ -254,7 +256,7 @@ export default function RankingEnhanced() {
         textColor={colors.textPrimary}
         isSelected={isSelected}
         onPress={handleFilterPress}
-        style={styles.filterButton}
+        count={filteredData.length > 0 ? filteredData.length : undefined}
       />
     );
   };
@@ -504,22 +506,6 @@ const createRankingStyles = (colors: any) => StyleSheet.create({
   },
   filtersContainer: {
     paddingRight: 16,
-  },
-  filterButton: {
-    marginRight: 12,
-    borderRadius: 20,
-    minHeight: 52,
-    minWidth: 110,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    elevation: 4,
-    shadowColor: colors.black,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
   },
   filterText: {
     marginLeft: 8,

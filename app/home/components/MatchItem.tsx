@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { logger } from '../../../utils/logger';
 import { TOUCH_SLOP, MATCH_CONSTANTS } from '../../../utils/constants';
 import { getMatchPlayerNames, areScoresValid, normalizeScore } from '../../../utils/playerUtils';
+import { clearMatchCache } from '../../../services/matchServices';
 import { GlassCard } from '../../components/modern/GlassCard';
 import { LiveIndicator } from '../../components/modern/LiveIndicator';
 import { MatchListItem } from '../types';
@@ -27,6 +28,9 @@ export const MatchItem = React.memo(({
     const COLORS = useHomeColors();
     const styles = createStyles(COLORS);
     
+    // Debug counter for force refresh on multiple taps
+    const [debugTapCount, setDebugTapCount] = React.useState(0);
+    
     // Get formatted player names using utility function
     const { player1Name, player2Name } = getMatchPlayerNames(item);
     
@@ -37,7 +41,7 @@ export const MatchItem = React.memo(({
     const scoreDisplay = hasValidScores ? `${score1} - ${score2}` : 'vs';
     
     const scheduledDate = formatDate(item.scheduled_date);
-    // Enhanced winner validation - check both winner_id and scores for consistency
+    // Enhanced winner validation with data consistency checking
     const isMatchFinished = item.status_code === MATCH_CONSTANTS.STATUS.FINISHED;
     const hasWinnerId = item.winner_id != null && item.winner_id !== undefined;
     
@@ -48,22 +52,53 @@ export const MatchItem = React.memo(({
         // Primary validation: Use scores as the most reliable indicator
         const scoreBasedWinner1 = score1 > score2;
         const scoreBasedWinner2 = score2 > score1;
+        const isScoreTie = score1 === score2;
+        
+        // Enhanced data consistency logging
+        const dataConsistencyInfo = {
+            api_match_id: item.api_match_id,
+            scores: `${score1}-${score2}`,
+            winner_id: item.winner_id,
+            player1_id: item.player1_id,
+            player2_id: item.player2_id,
+            status_code: item.status_code,
+            scoreBasedWinner: scoreBasedWinner1 ? 'Player1' : scoreBasedWinner2 ? 'Player2' : 'Tie'
+        };
+        
+        if (isScoreTie && hasWinnerId) {
+            logger.warn(`[MatchItem] DATA INCONSISTENCY: Tie score but winner_id exists:`, dataConsistencyInfo);
+        }
         
         if (hasWinnerId) {
             // Validate that winner_id matches score-based winner
             const winnerIdBasedWinner1 = item.winner_id === item.player1_id;
             const winnerIdBasedWinner2 = item.winner_id === item.player2_id;
             
-            // Only use winner_id if it's consistent with scores
-            if ((scoreBasedWinner1 && winnerIdBasedWinner1) || (scoreBasedWinner2 && winnerIdBasedWinner2)) {
+            // Check for data inconsistency
+            const isWinnerIdConsistent = 
+                (scoreBasedWinner1 && winnerIdBasedWinner1) || 
+                (scoreBasedWinner2 && winnerIdBasedWinner2) ||
+                isScoreTie; // Allow winner_id on ties (possible in snooker)
+            
+            if (isWinnerIdConsistent) {
                 isPlayer1Winner = winnerIdBasedWinner1;
                 isPlayer2Winner = winnerIdBasedWinner2;
                 logger.debug(`[MatchItem] Using consistent winner_id for match ${item.api_match_id}: ${item.winner_id}`);
             } else {
-                // Winner_id doesn't match scores - use scores as authoritative
+                // DATA INCONSISTENCY DETECTED - Use scores as authoritative
                 isPlayer1Winner = scoreBasedWinner1;
                 isPlayer2Winner = scoreBasedWinner2;
-                logger.warn(`[MatchItem] Winner_id ${item.winner_id} inconsistent with scores ${score1}-${score2} for match ${item.api_match_id}. Using scores.`);
+                logger.error(`[MatchItem] 🚨 DATA INCONSISTENCY DETECTED:`, {
+                    ...dataConsistencyInfo,
+                    winnerIdBasedWinner: winnerIdBasedWinner1 ? 'Player1' : winnerIdBasedWinner2 ? 'Player2' : 'Neither',
+                    action: 'Using score-based winner as authoritative'
+                });
+                
+                // Clear cache for this match to force fresh data on next access
+                if (item.api_match_id) {
+                    clearMatchCache(item.api_match_id);
+                    logger.debug(`[MatchItem] Cache cleared for inconsistent match ${item.api_match_id}`);
+                }
             }
         } else {
             // No winner_id, use score comparison
@@ -81,6 +116,17 @@ export const MatchItem = React.memo(({
     
     const handleMatchPress = (apiMatchId: number | null) => {
         if (apiMatchId) {
+            // Debug functionality: Multiple taps force cache refresh
+            const newTapCount = debugTapCount + 1;
+            setDebugTapCount(newTapCount);
+            
+            if (newTapCount >= 5) {
+                // After 5 taps, force cache refresh for this match
+                logger.log(`[MatchItem] DEBUG: Force refreshing cache for match ${apiMatchId} after ${newTapCount} taps`);
+                clearMatchCache(apiMatchId);
+                setDebugTapCount(0);
+            }
+            
             navigation.push(`/match/${apiMatchId}`);
         } else {
             logger.warn("Cannot navigate: missing api_match_id");
