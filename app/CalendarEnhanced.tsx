@@ -21,6 +21,8 @@ import * as Haptics from 'expo-haptics';
 import { getCalendarByTab } from '../services/matchServices';
 import { logger } from '../utils/logger';
 import { useColors } from '../contexts/ThemeContext';
+import { UniversalTab } from '../components/UniversalTab';
+import { logDeviceCompatibility } from '../utils/deviceCompatibility';
 
 // Removed all modern component imports to prevent crashes
 
@@ -195,6 +197,8 @@ export default function CalendarEnhanced() {
   }, [enhanceTournamentData]);
 
   useEffect(() => {
+    // Log device compatibility info for debugging tab issues
+    logDeviceCompatibility();
     fetchTournaments(selectedTab);
   }, [selectedTab, fetchTournaments]);
 
@@ -268,24 +272,26 @@ export default function CalendarEnhanced() {
     setFilteredTournaments(filtered);
   }, [allTournaments, selectedStatus, searchQuery]);
 
-  // Handle tab selection
+  // Handle tab selection with enhanced logging
   const handleTabPress = (tabId: string) => {
-    logger.log(`[Calendar] Tab pressed: ${tabId}, current: ${selectedTab}`);
+    logger.log(`[CalendarEnhanced] Tab pressed: ${tabId}, current: ${selectedTab}`);
     if (tabId !== selectedTab) {
+      logger.log(`[CalendarEnhanced] Changing tab from ${selectedTab} to ${tabId}`);
       setSelectedTab(tabId);
       setError(null); // Clear any previous errors
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      logger.log(`[Calendar] Tab changed to: ${tabId}`);
     } else {
-      logger.log(`[Calendar] Tab already selected: ${tabId}`);
+      logger.log(`[CalendarEnhanced] Tab already selected: ${tabId}`);
     }
   };
 
-  // Handle status filter selection
+  // Handle status filter selection with enhanced logging
   const handleStatusPress = (statusId: string) => {
+    logger.log(`[CalendarEnhanced] Status pressed: ${statusId}, current: ${selectedStatus}`);
     if (statusId !== selectedStatus) {
+      logger.log(`[CalendarEnhanced] Changing status from ${selectedStatus} to ${statusId}`);
       setSelectedStatus(statusId);
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } else {
+      logger.log(`[CalendarEnhanced] Status already selected: ${statusId}`);
     }
   };
 
@@ -295,50 +301,25 @@ export default function CalendarEnhanced() {
     router.push(`/tour/${tournament.ID}`);
   };
 
-  // Render tab button
+  // Render tab button using UniversalTab for better compatibility
   const renderTabButton = (option: FilterOption) => {
     const isSelected = selectedTab === option.id;
     
     return (
-      <TouchableOpacity
+      <UniversalTab
         key={option.id}
-        style={[
-          styles.filterButton,
-          {
-            backgroundColor: isSelected ? option.color : colors.cardBackground,
-            borderColor: isSelected ? option.color : colors.cardBorder,
-            borderWidth: 1,
-          }
-        ]}
-        onPress={() => {
-          console.log(`[CalendarTab] Pressed: ${option.id}`);
-          handleTabPress(option.id);
-        }}
-        activeOpacity={0.6}
-        hitSlop={{ top: 35, bottom: 35, left: 35, right: 35 }}
-        delayPressIn={0}
-        delayPressOut={0}
-        pressRetentionOffset={{ top: 40, bottom: 40, left: 40, right: 40 }}
-      >
-        <Ionicons 
-          name={option.icon} 
-          size={18} 
-          color={isSelected ? '#FFFFFF' : colors.textPrimary} 
-        />
-        <Text style={[
-          styles.filterText, 
-          { color: isSelected ? '#FFFFFF' : colors.textPrimary }
-        ]}>
-          {option.label}
-        </Text>
-        {(option.count !== undefined && option.count > 0) ? (
-          <View style={[styles.countBadge, { backgroundColor: isSelected ? '#FFFFFF20' : option.color }]}>
-            <Text style={[styles.countText, { color: '#FFFFFF' }]}>
-              {option.count}
-            </Text>
-          </View>
-        ) : null}
-      </TouchableOpacity>
+        id={option.id}
+        label={option.label}
+        icon={option.icon}
+        color={option.color}
+        backgroundColor={isSelected ? option.color : colors.cardBackground}
+        borderColor={isSelected ? option.color : colors.cardBorder}
+        textColor={colors.textPrimary}
+        isSelected={isSelected}
+        onPress={handleTabPress}
+        count={option.count}
+        style={styles.filterButton}
+      />
     );
   };
 
@@ -591,45 +572,20 @@ export default function CalendarEnhanced() {
           {statusOptions.map(option => {
             const isSelected = selectedStatus === option.id;
             return (
-              <TouchableOpacity
+              <UniversalTab
                 key={`status-${option.id}`}
-                style={[
-                  styles.filterButton,
-                  {
-                    backgroundColor: isSelected ? option.color : colors.cardBackground,
-                    borderColor: isSelected ? option.color : colors.cardBorder,
-                    borderWidth: 1,
-                  }
-                ]}
-                onPress={() => {
-                  console.log(`[CalendarStatus] Pressed: ${option.id}`);
-                  handleStatusPress(option.id);
-                }}
-                activeOpacity={0.6}
-                hitSlop={{ top: 35, bottom: 35, left: 35, right: 35 }}
-                delayPressIn={0}
-                delayPressOut={0}
-                pressRetentionOffset={{ top: 40, bottom: 40, left: 40, right: 40 }}
-              >
-                <Ionicons 
-                  name={option.icon} 
-                  size={16} 
-                  color={isSelected ? '#FFFFFF' : colors.textPrimary} 
-                />
-                <Text style={[
-                  styles.filterText, 
-                  { color: isSelected ? '#FFFFFF' : colors.textPrimary }
-                ]}>
-                  {option.label}
-                </Text>
-                {(option.count !== undefined && option.count > 0) ? (
-                  <View style={[styles.countBadge, { backgroundColor: isSelected ? '#FFFFFF20' : option.color }]}>
-                    <Text style={[styles.countText, { color: '#FFFFFF' }]}>
-                      {option.count}
-                    </Text>
-                  </View>
-                ) : null}
-              </TouchableOpacity>
+                id={option.id}
+                label={option.label}
+                icon={option.icon}
+                color={option.color}
+                backgroundColor={isSelected ? option.color : colors.cardBackground}
+                borderColor={isSelected ? option.color : colors.cardBorder}
+                textColor={colors.textPrimary}
+                isSelected={isSelected}
+                onPress={handleStatusPress}
+                count={option.count}
+                style={styles.filterButton}
+              />
             );
           })}
         </ScrollView>

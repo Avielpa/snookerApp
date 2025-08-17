@@ -21,6 +21,8 @@ import { getRanking, RANKING_TYPES } from '../services/matchServices';
 import { useRouter } from 'expo-router';
 import { logger } from '../utils/logger';
 import { useColors } from '../contexts/ThemeContext';
+import { UniversalTab } from '../components/UniversalTab';
+import { logDeviceCompatibility } from '../utils/deviceCompatibility';
 
 // Import modern components - simplified to avoid crashes
 // Removed ProgressBar to prevent crashes - using simple native views instead
@@ -195,6 +197,8 @@ export default function RankingEnhanced() {
 
   // Initial data load on component mount
   useEffect(() => {
+    // Log device compatibility info for debugging tab issues
+    logDeviceCompatibility();
     loadRankingData('MoneyRankings'); // Load default data immediately
   }, []); // Only run once on mount
 
@@ -206,12 +210,15 @@ export default function RankingEnhanced() {
     }
   }, [selectedFilter, loadRankingData, filterOptions]);
 
-  // Handle filter selection
+  // Handle filter selection with enhanced logging
   const handleFilterPress = (filterId: string) => {
+    logger.log(`[RankingEnhanced] Filter pressed: ${filterId}, current: ${selectedFilter}`);
     if (filterId !== selectedFilter) {
+      logger.log(`[RankingEnhanced] Changing filter from ${selectedFilter} to ${filterId}`);
       setSelectedFilter(filterId);
       setError(null); // Clear any previous errors
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    } else {
+      logger.log(`[RankingEnhanced] Filter already selected: ${filterId}`);
     }
   };
 
@@ -231,43 +238,24 @@ export default function RankingEnhanced() {
     }
   };
 
-  // Render filter button
+  // Render filter button using UniversalTab for better compatibility
   const renderFilterButton = (option: FilterOption) => {
     const isSelected = selectedFilter === option.id;
     
     return (
-      <TouchableOpacity
+      <UniversalTab
         key={option.id}
-        style={[
-          styles.filterButton,
-          {
-            backgroundColor: isSelected ? option.color : colors.cardBackground,
-            borderColor: isSelected ? option.color : colors.cardBorder,
-            borderWidth: 1,
-          }
-        ]}
-        onPress={() => {
-          console.log(`[RankingTab] Pressed: ${option.id}`);
-          handleFilterPress(option.id);
-        }}
-        activeOpacity={0.6}
-        hitSlop={{ top: 35, bottom: 35, left: 35, right: 35 }}
-        delayPressIn={0}
-        delayPressOut={0}
-        pressRetentionOffset={{ top: 40, bottom: 40, left: 40, right: 40 }}
-      >
-        <Ionicons 
-          name={option.icon} 
-          size={20} 
-          color={isSelected ? '#FFFFFF' : colors.textPrimary} 
-        />
-        <Text style={[
-          styles.filterText, 
-          { color: isSelected ? '#FFFFFF' : colors.textPrimary }
-        ]}>
-          {option.label}
-        </Text>
-      </TouchableOpacity>
+        id={option.id}
+        label={option.label}
+        icon={option.icon}
+        color={option.color}
+        backgroundColor={isSelected ? option.color : colors.cardBackground}
+        borderColor={isSelected ? option.color : colors.cardBorder}
+        textColor={colors.textPrimary}
+        isSelected={isSelected}
+        onPress={handleFilterPress}
+        style={styles.filterButton}
+      />
     );
   };
 
