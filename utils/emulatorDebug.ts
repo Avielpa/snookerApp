@@ -17,14 +17,32 @@ export interface EmulatorDiagnostics {
 export const isAndroidEmulator = (): boolean => {
   if (Platform.OS !== 'android') return false;
   
-  // Check for emulator-specific indicators
-  const { Release } = require('react-native-device-info');
   try {
-    const release = Release.getSystemVersion();
-    // Emulators often have specific version patterns
-    return release.includes('sdk') || release.includes('generic');
-  } catch {
-    // Fallback detection methods
+    // Use React Native's built-in constants for detection
+    const { Version, Release } = Platform.constants;
+    
+    // Common emulator indicators in Android
+    const emulatorIndicators = [
+      'sdk',
+      'generic',
+      'emulator',
+      'goldfish',
+      'ranchu'
+    ];
+    
+    // Check version string for emulator patterns
+    const versionString = Version?.toString().toLowerCase() || '';
+    const releaseString = Release?.toLowerCase() || '';
+    
+    const hasEmulatorIndicator = emulatorIndicators.some(indicator => 
+      versionString.includes(indicator) || releaseString.includes(indicator)
+    );
+    
+    // Fallback: if we can't detect specifically, assume emulator in dev mode
+    return hasEmulatorIndicator || (__DEV__ && Platform.OS === 'android');
+  } catch (error) {
+    logger.debug('[EmulatorDebug] Error detecting emulator, defaulting to dev mode check:', error);
+    // Fallback detection method
     return __DEV__ && Platform.OS === 'android';
   }
 };
