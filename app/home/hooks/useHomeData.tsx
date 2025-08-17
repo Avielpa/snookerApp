@@ -1,6 +1,6 @@
 // app/home/hooks/useHomeData.tsx
 import { useState, useEffect, useCallback } from 'react';
-import { getActiveTournamentId, getTournamentDetails, getTournamentMatches, getActiveOtherTours, Event } from '../../../services/tourServices';
+import { getActiveTournamentId, getTournamentDetails, getTournamentMatches, getActiveOtherTours, getUpcomingMatchesFallback, Event } from '../../../services/tourServices';
 import { logger } from '../../../utils/logger';
 import { forceCacheRefresh } from '../../../services/api';
 import { Match, EventDetails, ListItem } from '../types';
@@ -107,10 +107,68 @@ export const useHomeData = () => {
                 setCurrentMatches(currentMatches);
                 setProcessedListData(processedData);
             } else {
-                logger.warn(`[HomeScreen] No active tournament ID found`);
-                setTourName(null);
-                setTournamentPrize(null);
-                setProcessedListData([]);
+                logger.warn(`[HomeScreen] No active tournament ID found - trying fallback upcoming matches`);
+                
+                // Try fallback upcoming matches when no active tournament exists
+                try {
+                    const fallbackData = await getUpcomingMatchesFallback('main', 7);
+                    
+                    if (fallbackData && fallbackData.success && fallbackData.total_matches > 0) {
+                        logger.log(`[HomeScreen] Using fallback data: ${fallbackData.total_matches} upcoming matches`);
+                        
+                        // Convert fallback matches to our expected format
+                        const allFallbackMatches = [
+                            ...fallbackData.today_matches,
+                            ...fallbackData.upcoming_matches
+                        ];
+                        
+                        const convertedMatches: Match[] = allFallbackMatches.map((match: any) => ({
+                            id: match.id,
+                            api_match_id: match.api_match_id,
+                            event_id: match.event_id,
+                            round: match.round,
+                            number: match.match_number,
+                            player1_id: match.player1_id,
+                            player2_id: match.player2_id,
+                            player1_name: match.player1_name,
+                            player2_name: match.player2_name,
+                            score1: match.score1,
+                            score2: match.score2,
+                            winner_id: match.winner_id,
+                            status_code: match.status_code,
+                            status_display: match.status_display,
+                            scheduled_date: match.scheduled_date,
+                            start_date: match.scheduled_date,
+                            end_date: null,
+                            frame_scores: null,
+                            sessions_str: null,
+                            on_break: match.status_code === 2,
+                            unfinished: match.status_code !== 3,
+                            live_url: null,
+                            details_url: null,
+                            note: null
+                        }));
+                        
+                        setTourName("Upcoming Matches");
+                        setTournamentPrize(null);
+                        setCurrentMatches(convertedMatches);
+                        
+                        const processedData = processMatchesForList(convertedMatches);
+                        setProcessedListData(processedData);
+                        
+                        logger.log(`[HomeScreen] Fallback: Processed ${processedData.length} items from ${convertedMatches.length} upcoming matches`);
+                    } else {
+                        logger.warn(`[HomeScreen] Fallback data unavailable or empty`);
+                        setTourName(null);
+                        setTournamentPrize(null);
+                        setProcessedListData([]);
+                    }
+                } catch (fallbackError: any) {
+                    logger.error(`[HomeScreen] Fallback fetch failed:`, fallbackError);
+                    setTourName(null);
+                    setTournamentPrize(null);
+                    setProcessedListData([]);
+                }
             }
         } catch (err: any) {
             logger.error(`[HomeScreen] Error loading tournament info:`, err);

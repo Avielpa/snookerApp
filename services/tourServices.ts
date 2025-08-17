@@ -339,6 +339,35 @@ export const getActiveOtherTours = async (): Promise<Event[]> => {
 };
 
 /**
+ * Fetch upcoming matches from fallback API when no active tournaments exist
+ * @param tour Tour type: 'main', 'womens', 'seniors', 'other'
+ * @param days Number of days ahead to fetch (default: 7)
+ * @returns Promise with upcoming matches data
+ */
+export const getUpcomingMatchesFallback = async (tour: string = 'main', days: number = 7): Promise<any> => {
+    logger.debug(`[TourService] Fetching upcoming matches fallback for ${tour} tour (${days} days ahead)...`);
+    
+    try {
+        const urlPath = `upcoming-matches/?tour=${tour}&days=${days}`;
+        const response = await api.get<any>(urlPath);
+        
+        if (response.data && response.data.success) {
+            logger.debug(`[TourService] Successfully fetched ${response.data.total_matches} upcoming matches from fallback`);
+            return response.data;
+        } else {
+            logger.warn(`[TourService] Invalid fallback response format:`, response.data);
+            return null;
+        }
+    } catch (error: any) {
+        const status = error.response?.status;
+        const errorData = error.response?.data;
+        
+        logger.error(`[TourService] Error fetching upcoming matches fallback (Status: ${status}):`, errorData || error.message);
+        return null;
+    }
+};
+
+/**
  * Fetches details for a specific event (tournament) from the internal backend API with retry logic.
  * @param {number | string | undefined | null} eventId - The ID (PK) of the event.
  * @param {number} retryAttempts - Number of retry attempts (for internal use)
