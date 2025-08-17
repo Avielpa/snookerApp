@@ -8,6 +8,7 @@ import { processMatchesForList } from '../utils/matchProcessing';
 import { useLiveMatchDetection } from './useLiveMatchDetection';
 import { notificationManager } from '../../../utils/notifications';
 import { runNetworkDiagnostics, isBackendReachable } from '../../../utils/networkDiagnostics';
+import { runEmulatorDiagnostics, logEnvironmentConfig, isAndroidEmulator } from '../../../utils/emulatorDebug';
 
 export const useHomeData = () => {
     const [processedListData, setProcessedListData] = useState<ListItem[]>([]);
@@ -210,21 +211,37 @@ export const useHomeData = () => {
             if (err.message.includes('Network Error') || err.message.includes('ERR_NETWORK')) {
                 errorMessage = 'Network connection failed. Please check your internet connection and try again.';
                 
-                // Run network diagnostics for Network Error
-                logger.log('[HomeScreen] Running network diagnostics due to Network Error...');
-                runNetworkDiagnostics().then(diagnostics => {
-                    logger.log('[HomeScreen] Network Diagnostics Results:', diagnostics);
-                    
-                    if (!diagnostics.isConnected) {
-                        logger.error('[HomeScreen] 🚨 NO INTERNET: Device has no internet connectivity');
-                    } else if (!diagnostics.backendReachable) {
-                        logger.error('[HomeScreen] 🚨 BACKEND UNREACHABLE: Railway backend not responding');
-                    } else {
-                        logger.error('[HomeScreen] 🚨 UNKNOWN NETWORK ISSUE: Internet works but API fails');
-                    }
-                }).catch(diagErr => {
-                    logger.error('[HomeScreen] Network diagnostics failed:', diagErr);
-                });
+                // Enhanced diagnostics for emulator vs physical device
+                if (isAndroidEmulator()) {
+                    errorMessage = 'Network Error on Android Emulator. This is often due to emulator network configuration issues.';
+                    logger.log('[HomeScreen] 📱 Running emulator-specific diagnostics for Network Error...');
+                    runEmulatorDiagnostics().then(emulatorDiag => {
+                        logger.log('[HomeScreen] Emulator Diagnostics Results:', emulatorDiag);
+                        
+                        if (emulatorDiag.emulatorSpecificIssues.length > 0) {
+                            logger.error('[HomeScreen] 🚨 EMULATOR ISSUES:', emulatorDiag.emulatorSpecificIssues);
+                            logger.log('[HomeScreen] 💡 EMULATOR FIXES:', emulatorDiag.recommendations);
+                        }
+                    }).catch(diagErr => {
+                        logger.error('[HomeScreen] Emulator diagnostics failed:', diagErr);
+                    });
+                } else {
+                    // Run regular network diagnostics for physical devices
+                    logger.log('[HomeScreen] Running network diagnostics due to Network Error...');
+                    runNetworkDiagnostics().then(diagnostics => {
+                        logger.log('[HomeScreen] Network Diagnostics Results:', diagnostics);
+                        
+                        if (!diagnostics.isConnected) {
+                            logger.error('[HomeScreen] 🚨 NO INTERNET: Device has no internet connectivity');
+                        } else if (!diagnostics.backendReachable) {
+                            logger.error('[HomeScreen] 🚨 BACKEND UNREACHABLE: Railway backend not responding');
+                        } else {
+                            logger.error('[HomeScreen] 🚨 UNKNOWN NETWORK ISSUE: Internet works but API fails');
+                        }
+                    }).catch(diagErr => {
+                        logger.error('[HomeScreen] Network diagnostics failed:', diagErr);
+                    });
+                }
             } else if (err.message.includes('timeout')) {
                 errorMessage = 'Request timed out. Please check your connection and try again.';
             } else if (err.response?.status >= 500) {
@@ -245,6 +262,24 @@ export const useHomeData = () => {
     }, []);
 
     useEffect(() => {
+        // Log environment configuration for debugging
+        logEnvironmentConfig();
+        
+        // Run emulator diagnostics if on Android emulator
+        if (isAndroidEmulator()) {
+            logger.log('[HomeScreen] 📱 Android emulator detected - running diagnostics...');
+            runEmulatorDiagnostics().then(diagnostics => {
+                if (diagnostics.emulatorSpecificIssues.length > 0) {
+                    logger.warn('[HomeScreen] 🚨 Emulator issues detected:', diagnostics.emulatorSpecificIssues);
+                    logger.log('[HomeScreen] 💡 Recommendations:', diagnostics.recommendations);
+                } else {
+                    logger.log('[HomeScreen] ✅ Emulator configuration looks good');
+                }
+            }).catch(error => {
+                logger.warn('[HomeScreen] Emulator diagnostics failed:', error);
+            });
+        }
+        
         // Request notification permissions on first load
         notificationManager.requestPermissions();
         loadTournamentInfo();

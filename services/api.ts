@@ -4,7 +4,9 @@ import { logger } from '../utils/logger';
 
 // --- Configuration ---
 // Dynamic API URL based on environment
-const API_BASE_URL = 'https://snookerapp.up.railway.app/oneFourSeven/'; // Default to local development
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 
+  process.env.API_BASE_URL || 
+  'https://snookerapp.up.railway.app/oneFourSeven/'; // Fallback to production
 
 // Simple in-memory cache for API responses 
 interface CacheEntry {
