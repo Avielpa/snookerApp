@@ -34,7 +34,12 @@ export const useHomeData = () => {
             let targetTournamentId = specificTournamentId;
             
             if (!targetTournamentId) {
+                logger.log(`[HomeScreen] Fetching active tournament ID...`);
                 targetTournamentId = await getActiveTournamentId();
+                
+                if (!targetTournamentId) {
+                    logger.warn(`[HomeScreen] No active tournament found - this may indicate a network connectivity issue`);
+                }
             }
             
             logger.log(`[HomeScreen] Target tournament ID: ${targetTournamentId}`);
@@ -109,7 +114,21 @@ export const useHomeData = () => {
             }
         } catch (err: any) {
             logger.error(`[HomeScreen] Error loading tournament info:`, err);
-            setError(`Failed to load data. ${err.message || ''}`.trim());
+            
+            // Enhanced error handling with network-specific messages
+            let errorMessage = 'Failed to load tournament data.';
+            
+            if (err.message.includes('Network Error') || err.message.includes('ERR_NETWORK')) {
+                errorMessage = 'Network connection failed. Please check your internet connection and try again.';
+            } else if (err.message.includes('timeout')) {
+                errorMessage = 'Request timed out. Please check your connection and try again.';
+            } else if (err.response?.status >= 500) {
+                errorMessage = 'Server is temporarily unavailable. Please try again in a moment.';
+            } else if (err.message) {
+                errorMessage = `Failed to load data: ${err.message}`;
+            }
+            
+            setError(errorMessage);
             
             if (!isRefresh) {
                 setProcessedListData([]);

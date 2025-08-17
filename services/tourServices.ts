@@ -47,12 +47,16 @@ export interface Match {
 }
 
 /**
- * Fetches the list of season events from the backend API.
+ * Fetches the list of season events from the backend API with auto-retry logic.
+ * @param {number} retryAttempts - Number of retry attempts (for internal use)
  * @returns {Promise<Event[]>} An array of event objects, or empty array on error.
  */
-export const getSeasonEvents = async (): Promise<Event[]> => {
+export const getSeasonEvents = async (retryAttempts: number = 0): Promise<Event[]> => {
     const urlPath = 'events/';
-    logger.debug(`[TourService] Fetching season events from: ${urlPath}`);
+    const maxRetries = 3;
+    const retryDelay = 1000 * (retryAttempts + 1); // Progressive delay: 1s, 2s, 3s
+    
+    logger.debug(`[TourService] Fetching season events from: ${urlPath} (attempt ${retryAttempts + 1}/${maxRetries + 1})`);
     
     try {
         const response = await api.get<Event[]>(urlPath);
@@ -67,7 +71,24 @@ export const getSeasonEvents = async (): Promise<Event[]> => {
     } catch (error: any) {
         const status = error.response?.status;
         const errorData = error.response?.data;
-        logger.error(`[TourService] Error fetching season events (Status: ${status}):`, errorData || error.message);
+        const isNetworkError = !error.response && (error.code === 'NETWORK_ERROR' || error.message.includes('Network Error'));
+        const isTimeoutError = error.code === 'ECONNABORTED' || error.message.includes('timeout');
+        
+        logger.error(`[TourService] Error fetching season events (status: ${status}) ${error.message}`);
+        
+        // Retry logic for network and timeout errors
+        if ((isNetworkError || isTimeoutError || status >= 500) && retryAttempts < maxRetries) {
+            logger.log(`[TourService] Retrying in ${retryDelay}ms... (attempt ${retryAttempts + 1}/${maxRetries})`);
+            
+            await new Promise(resolve => setTimeout(resolve, retryDelay));
+            return getSeasonEvents(retryAttempts + 1);
+        }
+        
+        // Log final error after all retries exhausted
+        if (retryAttempts >= maxRetries) {
+            logger.error(`[TourService] All ${maxRetries + 1} attempts failed for season events. Final error:`, error.message);
+        }
+        
         return [];
     }
 };
@@ -318,12 +339,15 @@ export const getActiveOtherTours = async (): Promise<Event[]> => {
 };
 
 /**
- * Fetches details for a specific event (tournament) from the internal backend API.
+ * Fetches details for a specific event (tournament) from the internal backend API with retry logic.
  * @param {number | string | undefined | null} eventId - The ID (PK) of the event.
+ * @param {number} retryAttempts - Number of retry attempts (for internal use)
  * @returns {Promise<Event|null>} Event details object or null if not found or error.
  */
-export const getTournamentDetails = async (eventId: number | string | undefined | null): Promise<Event | null> => {
+export const getTournamentDetails = async (eventId: number | string | undefined | null, retryAttempts: number = 0): Promise<Event | null> => {
     const numericEventId = typeof eventId === 'string' ? parseInt(eventId, 10) : eventId;
+    const maxRetries = 2;
+    const retryDelay = 1500 * (retryAttempts + 1); // 1.5s, 3s
     
     if (typeof numericEventId !== 'number' || isNaN(numericEventId) || numericEventId <= 0) {
         logger.error("[TourService] Invalid Event ID provided to getTournamentDetails:", eventId);
@@ -331,7 +355,7 @@ export const getTournamentDetails = async (eventId: number | string | undefined 
     }
     
     const urlPath = `events/${numericEventId}/`;
-    logger.debug(`[TourService] Fetching tournament details from: ${urlPath}`);
+    logger.debug(`[TourService] Fetching tournament details from: ${urlPath} (attempt ${retryAttempts + 1}/${maxRetries + 1})`);
     
     try {
         const response = await api.get<Event>(urlPath);
@@ -346,24 +370,37 @@ export const getTournamentDetails = async (eventId: number | string | undefined 
     } catch (error: any) {
         const status = error.response?.status;
         const errorData = error.response?.data;
+        const isNetworkError = !error.response && (error.code === 'NETWORK_ERROR' || error.message.includes('Network Error'));
+        const isTimeoutError = error.code === 'ECONNABORTED' || error.message.includes('timeout');
         
         if (status === 404) {
             logger.log(`[TourService] Event ${numericEventId} not found (404).`);
-        } else {
-            logger.error(`[TourService] Error fetching tournament details for ID ${numericEventId} (Status: ${status}):`, errorData || error.message);
+            return null;
         }
         
+        // Retry logic for network and server errors
+        if ((isNetworkError || isTimeoutError || status >= 500) && retryAttempts < maxRetries) {
+            logger.log(`[TourService] Retrying tournament details in ${retryDelay}ms... (attempt ${retryAttempts + 1}/${maxRetries})`);
+            
+            await new Promise(resolve => setTimeout(resolve, retryDelay));
+            return getTournamentDetails(eventId, retryAttempts + 1);
+        }
+        
+        logger.error(`[TourService] Error fetching tournament details for ID ${numericEventId} (Status: ${status}):`, errorData || error.message);
         return null;
     }
 };
 
 /**
- * Fetches all matches for a specific event (tournament) from the internal backend API.
+ * Fetches all matches for a specific event (tournament) from the internal backend API with retry logic.
  * @param {number | string | undefined | null} eventId - The ID (PK) of the event.
+ * @param {number} retryAttempts - Number of retry attempts (for internal use)
  * @returns {Promise<Match[]>} An array of match objects, or empty array on error.
  */
-export const getTournamentMatches = async (eventId: number | string | undefined | null): Promise<Match[]> => {
+export const getTournamentMatches = async (eventId: number | string | undefined | null, retryAttempts: number = 0): Promise<Match[]> => {
     const numericEventId = typeof eventId === 'string' ? parseInt(eventId, 10) : eventId;
+    const maxRetries = 2;
+    const retryDelay = 1500 * (retryAttempts + 1); // 1.5s, 3s
     
     if (typeof numericEventId !== 'number' || isNaN(numericEventId) || numericEventId <= 0) {
         logger.error("[TourService] Invalid Event ID provided to getTournamentMatches:", eventId);
@@ -371,7 +408,7 @@ export const getTournamentMatches = async (eventId: number | string | undefined 
     }
     
     const urlPath = `events/${numericEventId}/matches/`;
-    logger.debug(`[TourService] Fetching tournament matches from: ${urlPath}`);
+    logger.debug(`[TourService] Fetching tournament matches from: ${urlPath} (attempt ${retryAttempts + 1}/${maxRetries + 1})`);
     
     try {
         const response = await api.get<Match[]>(urlPath);
@@ -403,10 +440,23 @@ export const getTournamentMatches = async (eventId: number | string | undefined 
     } catch (error: any) {
         const status = error.response?.status;
         const errorData = error.response?.data;
+        const isNetworkError = !error.response && (error.code === 'NETWORK_ERROR' || error.message.includes('Network Error'));
+        const isTimeoutError = error.code === 'ECONNABORTED' || error.message.includes('timeout');
         
         if (status === 404) {
             logger.warn(`[TourService] ⚠️  Event ${numericEventId} not found or has no matches (404)`);
-        } else if (status >= 500) {
+            return [];
+        }
+        
+        // Retry logic for network and server errors
+        if ((isNetworkError || isTimeoutError || status >= 500) && retryAttempts < maxRetries) {
+            logger.log(`[TourService] Retrying tournament matches in ${retryDelay}ms... (attempt ${retryAttempts + 1}/${maxRetries})`);
+            
+            await new Promise(resolve => setTimeout(resolve, retryDelay));
+            return getTournamentMatches(eventId, retryAttempts + 1);
+        }
+        
+        if (status >= 500) {
             logger.error(`[TourService] ❌ Server error fetching matches for ID ${numericEventId} (Status: ${status}):`, errorData || error.message);
         } else {
             logger.error(`[TourService] ❌ Error fetching tournament matches for ID ${numericEventId} (Status: ${status}):`, errorData || error.message);

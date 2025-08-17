@@ -394,9 +394,9 @@ export default function MatchEnhanced() {
     }
 
     try {
-      const details = await getMatchDetails(apiMatchId);
+      const details = await getMatchDetails(apiMatchId, refreshing); // bypass cache if refreshing
       if (!details) {
-        throw new Error(`Match details not found for API ID: ${apiMatchId}.`);
+        throw new Error(`Match details not found for API ID: ${apiMatchId}. This could be due to match ID changes during breaks.`);
       }
       
       const matchDetailsTyped = details as MatchDetails;
@@ -468,7 +468,7 @@ export default function MatchEnhanced() {
           // Clear cache before live update to ensure fresh data
           apiCache.invalidateMatchData(apiMatchId);
           
-          const updatedDetails = await getMatchDetails(apiMatchId);
+          const updatedDetails = await getMatchDetails(apiMatchId, true); // bypass cache for live updates
           if (updatedDetails && matchDetails) {
             // Only update if the data actually changed to prevent unnecessary re-renders
             const updated = updatedDetails as MatchDetails;

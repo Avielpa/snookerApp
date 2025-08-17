@@ -73,7 +73,7 @@ export default function RankingEnhanced() {
   const router = useRouter();
   const colors = useColors();
 
-  // Tab options for ranking types - start with what's actually available in database
+  // Tab options for ranking types - using all 5 available ranking types in database
   const filterOptions: FilterOption[] = useMemo(() => [
     {
       id: 'MoneyRankings',
@@ -82,9 +82,6 @@ export default function RankingEnhanced() {
       icon: 'trophy-outline',
       color: colors.primary,
     },
-    // TODO: Add other ranking types when data is available in database
-    // To populate these, run: python manage.py update_rankings --ranking-type all
-    /*
     {
       id: 'MoneySeedings',
       label: 'Money Seedings',
@@ -113,7 +110,6 @@ export default function RankingEnhanced() {
       icon: 'ribbon-outline',
       color: '#E91E63',
     },
-    */
   ], [colors]);
 
   // Load ranking data with caching to prevent unnecessary reloads

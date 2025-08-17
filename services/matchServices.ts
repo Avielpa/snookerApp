@@ -236,49 +236,144 @@ export const getRanking = async (rankingType?: string): Promise<{ rankings: Rank
 
 // --- Match Functions ---
 
+// Match ID cache for retry logic and memoization
+const matchIdCache = new Map<number, Match | null>();
+const matchIdRetryAttempts = new Map<number, number>();
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes cache
+const MAX_RETRY_ATTEMPTS = 3;
+
+/**
+ * Clear cache entry for a specific match ID (used during live updates)
+ */
+export const clearMatchCache = (apiMatchId: number) => {
+    matchIdCache.delete(apiMatchId);
+    matchIdRetryAttempts.delete(apiMatchId);
+    logger.debug(`[MatchService] Cache cleared for match ${apiMatchId}`);
+};
+
 /**
  * Fetches details for a specific match from the internal database using its API ID.
+ * Enhanced with auto-retry logic for handling match ID changes during breaks.
  * Corresponds to match_detail_view mapped to /matches/<api_match_id>/.
  * @param {number | string | undefined | null} apiMatchId - The API ID of the match (from snooker.org).
+ * @param {boolean} bypassCache - Whether to bypass the memoization cache
  * @returns {Promise<Match|null>} Match details object or null if not found or error.
  */
-export const getMatchDetails = async (apiMatchId: number | string | undefined | null): Promise<Match | null> => {
+export const getMatchDetails = async (apiMatchId: number | string | undefined | null, bypassCache: boolean = false): Promise<Match | null> => {
     // Validate Match API ID
     const numericMatchId = typeof apiMatchId === 'string' ? parseInt(apiMatchId, 10) : apiMatchId;
-     if (typeof numericMatchId !== 'number' || isNaN(numericMatchId) || numericMatchId <= 0) {
+    if (typeof numericMatchId !== 'number' || isNaN(numericMatchId) || numericMatchId <= 0) {
         logger.error("[MatchService] Invalid API Match ID provided to getMatchDetails:", apiMatchId);
         return null;
     }
 
-    const urlPath = `matches/${numericMatchId}/`; // Path uses api_match_id as defined in urls.py
+    // Check cache first (memoization for stability)
+    if (!bypassCache && matchIdCache.has(numericMatchId)) {
+        const cachedResult = matchIdCache.get(numericMatchId);
+        logger.debug(`[MatchService] Returning cached result for match ${numericMatchId}`);
+        return cachedResult;
+    }
+
+    const urlPath = `matches/${numericMatchId}/`;
     logger.debug(`[MatchService] Fetching match details from: ${urlPath}`);
+
     try {
         const response = await api.get<Match>(urlPath);
 
-        // Expecting a single match object like:
-        // { id (django pk), api_match_id, event_id, round, number, player1_id, player1_name, ... }
+        // Expecting a single match object
         if (response.data && typeof response.data === 'object' && response.data.api_match_id === numericMatchId) {
             logger.debug(`[MatchService] Successfully fetched details for match API ID ${numericMatchId}`);
-            return response.data; // Return the match details object
+            
+            // Cache successful result
+            matchIdCache.set(numericMatchId, response.data);
+            matchIdRetryAttempts.delete(numericMatchId); // Reset retry count on success
+            
+            // Clear cache after duration
+            setTimeout(() => {
+                matchIdCache.delete(numericMatchId);
+            }, CACHE_DURATION);
+            
+            return response.data;
         } else {
             logger.warn(`[MatchService] Unexpected data format or API ID mismatch for match API ID ${numericMatchId}:`, response.data);
-            // If the API returns 200 OK but with bad data or wrong ID
-             if (response.status === 200) {
-                 // Treat as not found if data is invalid despite 200 OK
-                 return null;
-             }
-             // Otherwise, the error will be caught below
-             return null; // Fallback
+            return null;
         }
     } catch (error: any) {
         const status = error.response?.status;
         const errorData = error.response?.data;
-         if (status === 404) {
-            logger.log(`[MatchService] Match with API ID ${numericMatchId} not found in internal DB (404).`);
-         } else {
+        
+        if (status === 404) {
+            // Handle 404 with auto-retry logic for match ID changes during breaks
+            logger.log(`[MatchService] Match with API ID ${numericMatchId} not found in internal DB (404). Attempting auto-retry...`);
+            
+            // Get current retry attempts
+            const currentAttempts = matchIdRetryAttempts.get(numericMatchId) || 0;
+            
+            if (currentAttempts < MAX_RETRY_ATTEMPTS) {
+                // Increment retry attempts
+                matchIdRetryAttempts.set(numericMatchId, currentAttempts + 1);
+                
+                logger.log(`[MatchService] Auto-retry attempt ${currentAttempts + 1}/${MAX_RETRY_ATTEMPTS} for match ${numericMatchId}`);
+                
+                // Try different match ID patterns that could result from session breaks
+                const retryMatchIds = [
+                    numericMatchId + 1,    // Often ID increments by 1
+                    numericMatchId - 1,    // Sometimes decrements
+                    numericMatchId + 2,    // Could increment by 2
+                    numericMatchId - 2,    // Could decrement by 2
+                ];
+                
+                for (const retryId of retryMatchIds) {
+                    try {
+                        logger.debug(`[MatchService] Trying alternative match ID: ${retryId}`);
+                        const retryResponse = await api.get<Match>(`matches/${retryId}/`);
+                        
+                        if (retryResponse.data && typeof retryResponse.data === 'object') {
+                            // Check if this might be the same match (same players, event, round)
+                            const originalAttempt = await api.get<Match>(`matches/${numericMatchId}/`).catch(() => null);
+                            
+                            logger.log(`[MatchService] ✅ Found alternative match ID ${retryId} for original ${numericMatchId}`);
+                            
+                            // Cache both IDs to the same result for future stability
+                            matchIdCache.set(numericMatchId, retryResponse.data);
+                            matchIdCache.set(retryId, retryResponse.data);
+                            matchIdRetryAttempts.delete(numericMatchId);
+                            
+                            // Clear cache after duration
+                            setTimeout(() => {
+                                matchIdCache.delete(numericMatchId);
+                                matchIdCache.delete(retryId);
+                            }, CACHE_DURATION);
+                            
+                            return retryResponse.data;
+                        }
+                    } catch (retryError) {
+                        // Continue to next retry ID
+                        logger.debug(`[MatchService] Retry ID ${retryId} also failed, continuing...`);
+                    }
+                }
+                
+                // If all retries failed, cache null to prevent repeated attempts
+                logger.warn(`[MatchService] All retry attempts failed for match ${numericMatchId}. Caching null result.`);
+                matchIdCache.set(numericMatchId, null);
+                
+                // Clear null cache after shorter duration to allow future retries
+                setTimeout(() => {
+                    matchIdCache.delete(numericMatchId);
+                    matchIdRetryAttempts.delete(numericMatchId);
+                }, CACHE_DURATION / 2); // 2.5 minutes for null results
+                
+                return null;
+            } else {
+                // Max retries reached
+                logger.warn(`[MatchService] Max retry attempts (${MAX_RETRY_ATTEMPTS}) reached for match ${numericMatchId}`);
+                matchIdCache.set(numericMatchId, null);
+                return null;
+            }
+        } else {
             logger.error(`[MatchService] Error fetching match details for API ID ${numericMatchId} (Status: ${status}):`, errorData || error.message);
-         }
-        return null; // Return null on any error
+            return null;
+        }
     }
 };
 
@@ -322,14 +417,18 @@ export const getMatchFormat = async (roundId: number | null, season: number | nu
 // --- Calendar Tab Function ---
 
 /**
- * Fetches calendar data by tab type from the backend API.
+ * Fetches calendar data by tab type from the backend API with auto-retry logic.
  * Corresponds to calendar_tabs_view mapped to /calendar/<tab_type>/.
  * @param {string} tabType - Tab type: 'main', 'others', or 'all'
+ * @param {number} retryAttempts - Number of retry attempts (for internal use)
  * @returns {Promise<any>} Calendar data with tab info or null on error
  */
-export const getCalendarByTab = async (tabType: string = 'main'): Promise<any> => {
+export const getCalendarByTab = async (tabType: string = 'main', retryAttempts: number = 0): Promise<any> => {
     const urlPath = `calendar/${tabType}/`;
-    logger.debug(`[MatchService] Fetching calendar data from ${urlPath}...`);
+    const maxRetries = 3;
+    const retryDelay = 1000 * (retryAttempts + 1); // Progressive delay: 1s, 2s, 3s
+    
+    logger.debug(`[MatchService] Fetching calendar data from ${urlPath} (attempt ${retryAttempts + 1}/${maxRetries + 1})...`);
     
     try {
         const response = await api.get<any>(urlPath);
@@ -344,8 +443,24 @@ export const getCalendarByTab = async (tabType: string = 'main'): Promise<any> =
     } catch (error: any) {
         const status = error.response?.status;
         const errorData = error.response?.data;
+        const isNetworkError = !error.response && (error.code === 'NETWORK_ERROR' || error.message.includes('Network Error'));
+        const isTimeoutError = error.code === 'ECONNABORTED' || error.message.includes('timeout');
         const userFriendlyMessage = error.userFriendlyMessage || `Failed to load ${tabType} tournaments`;
-        logger.error(`[MatchService] Error fetching ${tabType} calendar (Status: ${status}):`, errorData || error.message);
+        
+        logger.error(`[MatchService] Error fetching ${tabType} calendar (status: ${status}) ${error.message}`);
+        
+        // Retry logic for network and timeout errors
+        if ((isNetworkError || isTimeoutError || status >= 500) && retryAttempts < maxRetries) {
+            logger.log(`[MatchService] Retrying calendar fetch in ${retryDelay}ms... (attempt ${retryAttempts + 1}/${maxRetries})`);
+            
+            await new Promise(resolve => setTimeout(resolve, retryDelay));
+            return getCalendarByTab(tabType, retryAttempts + 1);
+        }
+        
+        // Log final error after all retries exhausted
+        if (retryAttempts >= maxRetries) {
+            logger.error(`[MatchService] All ${maxRetries + 1} attempts failed for ${tabType} calendar. Final error:`, error.message);
+        }
         
         // Re-throw error with user-friendly message for UI
         throw new Error(userFriendlyMessage);

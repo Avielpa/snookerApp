@@ -97,7 +97,7 @@ class APICache {
         }
     }
     
-    // Invalidate related match caches
+    // Invalidate related match caches and call match service cache clearing
     invalidateMatchData(apiMatchId: number) {
         const keysToInvalidate = [];
         for (const key of this.cache.keys()) {
@@ -112,6 +112,16 @@ class APICache {
             this.cache.delete(key);
             logger.debug(`[Cache Invalidate] Cleared cache for ${key}`);
         });
+
+        // Also clear the match service cache for this match ID
+        try {
+            // Dynamic import to avoid circular dependency
+            import('./matchServices').then(({ clearMatchCache }) => {
+                clearMatchCache(apiMatchId);
+            });
+        } catch (error) {
+            logger.debug(`[Cache Invalidate] Could not clear match service cache: ${error}`);
+        }
     }
 }
 

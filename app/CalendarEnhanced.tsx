@@ -172,7 +172,20 @@ export default function CalendarEnhanced() {
       logger.log(`[CalendarEnhanced] Loaded ${enhancedData.length} ${tabType} tournaments`);
     } catch (err: any) {
       logger.error(`[CalendarEnhanced] Error fetching ${tabType} tournaments:`, err);
-      const errorMessage = err.message || `Failed to load ${tabType} tournaments`;
+      
+      // Enhanced error handling with network-specific messages
+      let errorMessage = `Failed to load ${tabType} tournaments`;
+      
+      if (err.message.includes('Network Error') || err.message.includes('ERR_NETWORK')) {
+        errorMessage = 'Network connection failed. Please check your internet connection and try again.';
+      } else if (err.message.includes('timeout')) {
+        errorMessage = 'Request timed out. Please check your connection and try again.';
+      } else if (err.message.includes('Server')) {
+        errorMessage = 'Server is temporarily unavailable. Please try again in a moment.';
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
       setError(errorMessage);
       setAllTournaments([]);
     } finally {
