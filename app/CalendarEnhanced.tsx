@@ -21,7 +21,6 @@ import * as Haptics from 'expo-haptics';
 import { getCalendarByTab } from '../services/matchServices';
 import { logger } from '../utils/logger';
 import { useColors } from '../contexts/ThemeContext';
-import { UniversalTab } from '../components/UniversalTab';
 import { logDeviceCompatibility } from '../utils/deviceCompatibility';
 
 // Removed all modern component imports to prevent crashes
@@ -301,24 +300,39 @@ export default function CalendarEnhanced() {
     router.push(`/tour/${tournament.ID}`);
   };
 
-  // Render tab button using UniversalTab for better compatibility
+  // Render tab button using SAME simple approach as home screen
   const renderTabButton = (option: FilterOption) => {
     const isSelected = selectedTab === option.id;
     
     return (
-      <UniversalTab
+      <TouchableOpacity
         key={option.id}
-        id={option.id}
-        label={option.label}
-        icon={option.icon}
-        color={option.color}
-        backgroundColor={isSelected ? option.color : colors.cardBackground}
-        borderColor={isSelected ? option.color : colors.cardBorder}
-        textColor={colors.textPrimary}
-        isSelected={isSelected}
-        onPress={handleTabPress}
-        count={option.count}
-      />
+        style={[
+          styles.filterButton,
+          isSelected && styles.filterButtonActive
+        ]}
+        onPress={() => {
+          console.log(`[CalendarFilter] Pressed: ${option.id}`);
+          handleTabPress(option.id);
+        }}
+        activeOpacity={0.6}
+        hitSlop={{ top: 35, bottom: 35, left: 35, right: 35 }}
+        delayPressIn={0}
+        delayPressOut={0}
+        pressRetentionOffset={{ top: 40, bottom: 40, left: 40, right: 40 }}
+      >
+        <Ionicons 
+          name={option.icon} 
+          size={14} 
+          color={isSelected ? '#FFFFFF' : colors.textSecondary} 
+        />
+        <Text style={[
+          styles.filterText,
+          isSelected && styles.filterTextActive
+        ]}>
+          {option.label}
+        </Text>
+      </TouchableOpacity>
     );
   };
 
@@ -558,7 +572,7 @@ export default function CalendarEnhanced() {
           {tabOptions.map(renderTabButton)}
         </ScrollView>
 
-        {/* Status Filter Buttons */}
+        {/* Status Filter Buttons - SAME simple approach as home screen */}
         <ScrollView 
           horizontal 
           showsHorizontalScrollIndicator={false}
@@ -571,19 +585,47 @@ export default function CalendarEnhanced() {
           {statusOptions.map(option => {
             const isSelected = selectedStatus === option.id;
             return (
-              <UniversalTab
+              <TouchableOpacity
                 key={`status-${option.id}`}
-                id={option.id}
-                label={option.label}
-                icon={option.icon}
-                color={option.color}
-                backgroundColor={isSelected ? option.color : colors.cardBackground}
-                borderColor={isSelected ? option.color : colors.cardBorder}
-                textColor={colors.textPrimary}
-                isSelected={isSelected}
-                onPress={handleStatusPress}
-                count={option.count}
-              />
+                style={[
+                  styles.filterButton,
+                  isSelected && styles.filterButtonActive
+                ]}
+                onPress={() => {
+                  console.log(`[CalendarStatusFilter] Pressed: ${option.id}`);
+                  handleStatusPress(option.id);
+                }}
+                activeOpacity={0.6}
+                hitSlop={{ top: 35, bottom: 35, left: 35, right: 35 }}
+                delayPressIn={0}
+                delayPressOut={0}
+                pressRetentionOffset={{ top: 40, bottom: 40, left: 40, right: 40 }}
+              >
+                <Ionicons 
+                  name={option.icon} 
+                  size={14} 
+                  color={isSelected ? '#FFFFFF' : colors.textSecondary} 
+                />
+                <Text style={[
+                  styles.filterText,
+                  isSelected && styles.filterTextActive
+                ]}>
+                  {option.label}
+                </Text>
+                {option.count !== undefined && (
+                  <View style={[
+                    styles.countBadge,
+                    { backgroundColor: isSelected ? 'rgba(255,255,255,0.2)' : colors.primary }
+                  ]}>
+                    <Text style={[
+                      styles.countText,
+                      { color: isSelected ? '#FFFFFF' : '#FFFFFF' }
+                    ]}>
+                      {option.count}
+                    </Text>
+                  </View>
+                )}
+              </TouchableOpacity>
             );
           })}
         </ScrollView>
@@ -665,31 +707,38 @@ const createCalendarStyles = (colors: any) => StyleSheet.create({
   filtersContainer: {
     paddingRight: 16,
   },
-  filterButton: {
-    marginRight: 12,
-    borderRadius: 20,
-    minHeight: 48,
-    minWidth: 100,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 18,
-    paddingVertical: 14,
-    elevation: 2,
-    shadowColor: colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
+  filterButton: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    backgroundColor: colors.cardBackground, 
+    paddingVertical: 6, 
+    paddingHorizontal: 10, 
+    borderRadius: 16, 
+    marginRight: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 167, 38, 0.25)',
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowRadius: 2,
   },
-  filterText: {
-    marginLeft: 8,
-    fontSize: 14,
-    fontFamily: 'PoppinsMedium',
-    color: '#9CA3AF',
+  filterButtonActive: { 
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+    elevation: 2,
+    shadowOpacity: 0.15,
   },
-  filterTextActive: {
-    color: '#FFFFFF',
-    fontFamily: 'PoppinsSemiBold',
+  filterText: { 
+    color: colors.textSecondary, 
+    fontSize: 12, 
+    fontFamily: 'PoppinsMedium', 
+    marginLeft: 4,
+    letterSpacing: 0.1,
+  },
+  filterTextActive: { 
+    color: '#FFFFFF', 
+    fontFamily: 'PoppinsBold',
   },
   countBadge: {
     marginLeft: 8,

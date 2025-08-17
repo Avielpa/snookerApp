@@ -1,10 +1,9 @@
 // app/match/components/TabNavigation.tsx
 import React from 'react';
-import { View } from 'react-native';
+import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { TabType } from '../types';
-import { UniversalTab } from '../../../components/UniversalTab';
 
 interface TabNavigationProps {
   selectedTab: TabType;
@@ -32,29 +31,75 @@ export function TabNavigation({ selectedTab, onTabChange, colors, styles }: TabN
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   };
 
+  // Create local styles using same approach as home screen
+  const tabStyles = StyleSheet.create({
+    filterButton: { 
+      flexDirection: 'row', 
+      alignItems: 'center', 
+      backgroundColor: colors.cardBackground, 
+      paddingVertical: 6, 
+      paddingHorizontal: 10, 
+      borderRadius: 16, 
+      marginRight: 6,
+      borderWidth: 1,
+      borderColor: 'rgba(255, 167, 38, 0.25)',
+      elevation: 1,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.1,
+      shadowRadius: 2,
+    },
+    filterButtonActive: { 
+      backgroundColor: colors.primary,
+      borderColor: colors.primary,
+      elevation: 2,
+      shadowOpacity: 0.15,
+    },
+    filterText: { 
+      color: colors.textSecondary, 
+      fontSize: 12, 
+      fontFamily: 'PoppinsMedium', 
+      marginLeft: 4,
+      letterSpacing: 0.1,
+    },
+    filterTextActive: { 
+      color: '#FFFFFF', 
+      fontFamily: 'PoppinsBold',
+    },
+  });
+
   const renderTabButton = (tab: TabConfig) => {
     const isSelected = selectedTab === tab.id;
     
     return (
-      <UniversalTab
+      <TouchableOpacity
         key={tab.id}
-        id={tab.id}
-        label={tab.label}
-        icon={tab.icon}
-        color={colors.primary}
-        backgroundColor={isSelected ? colors.primary : colors.cardBackground}
-        borderColor={isSelected ? colors.primary : colors.cardBorder}
-        textColor={isSelected ? colors.surface : colors.textSecondary}
-        isSelected={isSelected}
-        onPress={handleTabPress}
-        customStyle={{
-          marginHorizontal: 4,
-          paddingVertical: 12,
-          paddingHorizontal: 16,
-          minHeight: 44,
-          borderRadius: 12,
+        style={[
+          tabStyles.filterButton,
+          isSelected && tabStyles.filterButtonActive
+        ]}
+        onPress={() => {
+          console.log(`[MatchTabFilter] Pressed: ${tab.id}`);
+          handleTabPress(tab.id);
         }}
-      />
+        activeOpacity={0.6}
+        hitSlop={{ top: 35, bottom: 35, left: 35, right: 35 }}
+        delayPressIn={0}
+        delayPressOut={0}
+        pressRetentionOffset={{ top: 40, bottom: 40, left: 40, right: 40 }}
+      >
+        <Ionicons 
+          name={tab.icon} 
+          size={14} 
+          color={isSelected ? '#FFFFFF' : colors.textSecondary} 
+        />
+        <Text style={[
+          tabStyles.filterText,
+          isSelected && tabStyles.filterTextActive
+        ]}>
+          {tab.label}
+        </Text>
+      </TouchableOpacity>
     );
   };
 

@@ -504,15 +504,19 @@ const TournamentDetailsScreen = () => {
                                                 activeFilter === filter.value && styles.stickyFilterButtonActive, 
                                             ]} 
                                             onPress={() => {
+                                                console.log(`[TourFilter] Pressed: ${filter.value}`);
                                                 setActiveFilter(filter.value);
                                                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                                             }}
-                                            activeOpacity={0.8}
+                                            activeOpacity={0.6}
+                                            hitSlop={{ top: 35, bottom: 35, left: 35, right: 35 }}
                                             delayPressIn={0}
+                                            delayPressOut={0}
+                                            pressRetentionOffset={{ top: 40, bottom: 40, left: 40, right: 40 }}
                                         > 
                                             <Ionicons 
                                                 name={filter.icon} 
-                                                size={16} 
+                                                size={14} 
                                                 color={activeFilter === filter.value ? COLORS.filterTextActive : COLORS.filterText} 
                                             /> 
                                             <Text 
@@ -657,35 +661,38 @@ const styles = StyleSheet.create({
         paddingHorizontal: 12,
         paddingRight: 20,
     },
-    stickyFilterButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: COLORS.filterButton,
-        paddingVertical: 10,
-        paddingHorizontal: 16,
-        borderRadius: 20,
-        marginRight: 10,
-        minHeight: 40,
+    stickyFilterButton: { 
+        flexDirection: 'row', 
+        alignItems: 'center', 
+        backgroundColor: COLORS.filterButton, 
+        paddingVertical: 6, 
+        paddingHorizontal: 10, 
+        borderRadius: 16, 
+        marginRight: 6,
+        borderWidth: 1,
+        borderColor: 'rgba(255, 167, 38, 0.25)',
         elevation: 1,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.1,
         shadowRadius: 2,
     },
-    stickyFilterButtonActive: {
+    stickyFilterButtonActive: { 
         backgroundColor: COLORS.filterButtonActive,
+        borderColor: COLORS.filterButtonActive,
         elevation: 2,
         shadowOpacity: 0.15,
     },
-    stickyFilterText: {
-        color: COLORS.filterText,
-        fontSize: 13,
-        fontFamily: 'PoppinsMedium',
-        marginLeft: 6,
+    stickyFilterText: { 
+        color: COLORS.filterText, 
+        fontSize: 12, 
+        fontFamily: 'PoppinsMedium', 
+        marginLeft: 4,
+        letterSpacing: 0.1,
     },
-    stickyFilterTextActive: {
-        color: COLORS.filterTextActive,
-        fontFamily: 'PoppinsSemiBold',
+    stickyFilterTextActive: { 
+        color: COLORS.filterTextActive, 
+        fontFamily: 'PoppinsBold',
     },
     integratedListContentContainer: {
         paddingHorizontal: 12,
