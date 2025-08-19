@@ -831,7 +831,7 @@ def calendar_tabs_view(request, tab_type='main'):
         target_season = int(season_param) if season_param else 2025
         
         today = date.today()
-        recent_cutoff = today - timedelta(days=14)
+        recent_cutoff = today - timedelta(days=365)  # Show all past tournaments in current season
         
         # Filter tournaments based on tab type
         base_query = Event.objects.all()
