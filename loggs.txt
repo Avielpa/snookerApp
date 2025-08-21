@@ -1,106 +1,101 @@
-{
-  "severity": "info",
-  "timestamp": "2025-08-15T11:35:22.810624198Z",
-  "message": "    Found 1 live matches",
-  "tags": {
-    "deploymentId": "390d5535-0071-4d2f-80f9-c4ae362ee151",
-    "deploymentInstanceId": "a6c80132-eef6-44ea-90d2-a8db70eb63b6",
-    "environmentId": "22b95876-c730-4332-9908-190dd4f4c54f",
-    "pluginId": null,
-    "projectId": "584486f6-272b-4c3d-b78b-c9dc3bd932c0",
-    "serviceId": "e528b2fe-141d-4a76-add7-f76d5812088e",
-    "snapshotId": null
-  },
-  "attributes": {
-    "level": "info"
-  }
-}
 
-Starting Container
-
-Starting live matches update...
-
-Found 2 active tournament(s) to update
-
-Updating matches for: Saudi Arabia Masters
-
-  Fetching matches data... SUCCESS: Updated 143 matches
-
-    Found 1 live matches
-level:
-"info"
-replica: a6c80132-eef6-44ea-90d2-a8db70eb63b6
-View in Context
-
-Copy as JSON
-
-Updating matches for: World Games - Men
-
-  Fetching matches data... SUCCESS: Updated 8 matches
-
-Live update completed: 2 updated, 0 failed
-
-
-
- (NOBRIDGE) DEBUG  [API Response] 200 events/2350/
- (NOBRIDGE) DEBUG  [API Response] Data length: 1044 characters
- (NOBRIDGE) DEBUG  [API Cache] Cached response for get:events/2350/ (TTL: 30000ms)
- (NOBRIDGE) DEBUG  [TourService] Successfully fetched details for event 2350.
- (NOBRIDGE) DEBUG  [API Response] 200 events/2350/matches/
- (NOBRIDGE) DEBUG  [API Response] Data length: 88046 characters
- (NOBRIDGE) DEBUG  [Cache Sync] Syncing 143 matches (0 live)
- (NOBRIDGE) DEBUG  [API Cache] Cached response for get:events/2350/matches/ (TTL: 15000ms)
- (NOBRIDGE) DEBUG  [TourService] Successfully fetched 143 matches for event 2350.
- (NOBRIDGE) DEBUG  [TourService] Match details: [{"api_match_id": 9538648, "details_url": "https://www.wst.tv/match-centre/ec2270db-fe5e-4ad7-8f05-f14a1651a561", "end_date": "2025-08-08T14:18:45Z", "event_id": 2350, "frame_scores": "", "id": 2275, "live_url": "https://www.wst.tv/match-centre/ec2270db-fe5e-4ad7-8f05-f14a1651a561", "note": "", "number": 1, "on_break": false, "player1_id": 1835, "player1_name": "Florian Nüßle", "player2_id": 2320, "player2_name": "Dylan Emery", "round": 7, "scheduled_date": "2025-08-08T11:00:00Z", "score1": 3, "score2": 4, "sessions_str": "", "start_date": "2025-08-08T11:05:37Z", "status_code": 3, "status_display": "Unknown/Other", "unfinished": false, "winner_id": 2320}, {"api_match_id": 9538649, "details_url": "https://www.wst.tv/match-centre/a44e3226-3cac-46b5-ab75-ed3eed3fb867", "end_date": "2025-08-08T13:17:46Z", "event_id": 2350, "frame_scores": "", "id": 2276, "live_url": "https://www.wst.tv/match-centre/a44e3226-3cac-46b5-ab75-ed3eed3fb867", "note": "", "number": 2, "on_break": false, "player1_id": 2778, "player1_name": "Liam Pullen", "player2_id": 415, "player2_name": "Ahmed Aseeri", "round": 7, "scheduled_date": "2025-08-08T11:00:00Z", "score1": 4, "score2": 1, "sessions_str": "", "start_date": "2025-08-08T11:05:37Z", "status_code": 3, "status_display": "Unknown/Other", "unfinished": false, "winner_id": 2778}, {"api_match_id": 9538650, "details_url": "https://www.wst.tv/match-centre/14d9b7e9-6aa0-4765-a728-7f1b931f5a4f", "end_date": "2025-08-08T12:53:57Z", "event_id": 2350, "frame_scores": "", "id": 2277, "live_url": "https://www.wst.tv/match-centre/14d9b7e9-6aa0-4765-a728-7f1b931f5a4f", "note": "", "number": 3, "on_break": false, "player1_id": 2507, "player1_name": "Robbie McGuigan", "player2_id": 2607, "player2_name": "Yang Gao", "round": 7, "scheduled_date": "2025-08-08T11:00:00Z", "score1": 1, "score2": 4, "sessions_str": "", "start_date": "2025-08-08T11:05:37Z", "status_code": 3, "status_display": "Unknown/Other", "unfinished": false, "winner_id": 2607}]
- (NOBRIDGE) DEBUG  [TourService] Match status breakdown: {"0": 3, "3": 140}
- (NOBRIDGE) LOG  [HomeScreen] Prize money: GBP 500,000
- (NOBRIDGE) LOG  [HomeScreen] Tournament details: {"AgeGroup": "O", "AllRoundsAdded": true, "City": "Jeddah", "CommonNote": "TNT<!-- Sport-->/Eurosport/<a href=\"https://www.discoveryplus.com/\">Discovery+</a>, <a href=\"https://www.wst.tv/videos\">WST Play</a>, <a href=\"https://www.huya.com/880214\">Huya</a> & <a href=\"https://www.wst.tv/news/2025/august/05/how-to-watch-the-saudi-arabia-snooker-masters/\">more</a>", "ConversionRate": 1, "Country": "Saudi Arabia", "DefendingChampion": 12, "Discipline": "snooker", "EndDate": "2025-08-16", "EventPredictionID": 0, "Format": 1, "HashTag": "SaudiMasters", "ID": 2350, "Main": 2350, "Name": "Saudi Arabia Masters", "Note": "", "Num": 0, "NumActive": 0, "NumCompetitors": 144, "NumResults": 128, "NumUpcoming": 15, "PhotoURLs": "", "PreviousEdition": 1839, "RankingType": "WR", "Related": "", "Season": 2025, "Sex": "Both", "ShortName": "", "Sponsor": "", "Stage": "F", "StartDate": "2025-08-08", "Team": false, "Tour": "main", "Twitter": "", "Type": "Ranking", "Url": "", "ValueType": "SAM", "Venue": "Green Halls", "WorldSnookerId": 0, "winner_prize_money": {"amount": 500000, "currency": "GBP", "formatted": "GBP 500,000"}}
- (NOBRIDGE) LOG  [HomeScreen] Raw matches received: {"isArray": true, "length": 143, "sample": [{"api_match_id": 9538648, "details_url": "https://www.wst.tv/match-centre/ec2270db-fe5e-4ad7-8f05-f14a1651a561", "end_date": "2025-08-08T14:18:45Z", "event_id": 2350, "frame_scores": "", "id": 2275, "live_url": "https://www.wst.tv/match-centre/ec2270db-fe5e-4ad7-8f05-f14a1651a561", "note": "", "number": 1, "on_break": false, "player1_id": 1835, "player1_name": "Florian Nüßle", "player2_id": 2320, "player2_name": "Dylan Emery", "round": 7, "scheduled_date": "2025-08-08T11:00:00Z", "score1": 3, "score2": 4, "sessions_str": "", "start_date": "2025-08-08T11:05:37Z", "status_code": 3, "status_display": "Unknown/Other", "unfinished": false, "winner_id": 2320}, {"api_match_id": 9538649, "details_url": "https://www.wst.tv/match-centre/a44e3226-3cac-46b5-ab75-ed3eed3fb867", "end_date": "2025-08-08T13:17:46Z", "event_id": 2350, "frame_scores": "", "id": 2276, "live_url": "https://www.wst.tv/match-centre/a44e3226-3cac-46b5-ab75-ed3eed3fb867", "note": "", "number": 2, "on_break": false, "player1_id": 2778, "player1_name": "Liam Pullen", "player2_id": 415, "player2_name": "Ahmed Aseeri", "round": 7, "scheduled_date": "2025-08-08T11:00:00Z", "score1": 4, "score2": 1, "sessions_str": "", "start_date": "2025-08-08T11:05:37Z", "status_code": 3, "status_display": "Unknown/Other", "unfinished": false, "winner_id": 2778}], "type": "object"}
- (NOBRIDGE) LOG  [HomeScreen] Processing 143 matches...
- (NOBRIDGE) LOG  [HomeScreen processMatches] Processing 143 matches...
- (NOBRIDGE) LOG  [HomeScreen] Processed data: {"totalItems": 154, "types": {"match": 143, "roundHeader": 9, "statusHeader": 2}}
- (NOBRIDGE) LOG  [LiveDetection] 🚀 Starting live match monitoring (interval: 120000ms)
- (NOBRIDGE) DEBUG  [LiveDetection] Analyzing matches at 2025-08-15T11:40:16.912Z UTC
- (NOBRIDGE) DEBUG  [LiveDetection] Match Neil Robertson vs Elliot Slessor starts in -40 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Match Ronnie O'Sullivan vs Chris Wakelin starts in 320 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 1340 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Analyzing matches at 2025-08-15T11:40:56.820Z UTC
- (NOBRIDGE) DEBUG  [LiveDetection] Match Neil Robertson vs Elliot Slessor starts in -41 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Match Ronnie O'Sullivan vs Chris Wakelin starts in 319 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 1339 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Analyzing matches at 2025-08-15T11:40:56.823Z UTC
- (NOBRIDGE) DEBUG  [LiveDetection] Match Neil Robertson vs Elliot Slessor starts in -41 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Match Ronnie O'Sullivan vs Chris Wakelin starts in 319 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 1339 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Analyzing matches at 2025-08-15T11:40:56.836Z UTC
- (NOBRIDGE) DEBUG  [LiveDetection] Match Neil Robertson vs Elliot Slessor starts in -41 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Match Ronnie O'Sullivan vs Chris Wakelin starts in 319 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 1339 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Analyzing matches at 2025-08-15T11:40:56.838Z UTC
- (NOBRIDGE) DEBUG  [LiveDetection] Match Neil Robertson vs Elliot Slessor starts in -41 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Match Ronnie O'Sullivan vs Chris Wakelin starts in 319 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 1339 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Analyzing matches at 2025-08-15T11:40:56.854Z UTC
- (NOBRIDGE) DEBUG  [LiveDetection] Match Neil Robertson vs Elliot Slessor starts in -41 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Match Ronnie O'Sullivan vs Chris Wakelin starts in 319 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 1339 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Analyzing matches at 2025-08-15T11:40:56.858Z UTC
- (NOBRIDGE) DEBUG  [LiveDetection] Match Neil Robertson vs Elliot Slessor starts in -41 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Match Ronnie O'Sullivan vs Chris Wakelin starts in 319 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 1339 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Analyzing matches at 2025-08-15T11:40:56.861Z UTC
- (NOBRIDGE) DEBUG  [LiveDetection] Match Neil Robertson vs Elliot Slessor starts in -41 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Match Ronnie O'Sullivan vs Chris Wakelin starts in 319 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 1339 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Analyzing matches at 2025-08-15T11:40:56.870Z UTC
- (NOBRIDGE) DEBUG  [LiveDetection] Match Neil Robertson vs Elliot Slessor starts in -41 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Match Ronnie O'Sullivan vs Chris Wakelin starts in 319 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 1339 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Analyzing matches at 2025-08-15T11:40:56.873Z UTC
- (NOBRIDGE) DEBUG  [LiveDetection] Match Neil Robertson vs Elliot Slessor starts in -41 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Match Ronnie O'Sullivan vs Chris Wakelin starts in 319 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 1339 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Analyzing matches at 2025-08-15T11:40:56.876Z UTC
- (NOBRIDGE) DEBUG  [LiveDetection] Match Neil Robertson vs Elliot Slessor starts in -41 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Match Ronnie O'Sullivan vs Chris Wakelin starts in 319 minutes (UTC)
- (NOBRIDGE) DEBUG  [LiveDetection] Match Player ID 376 (Not Found) vs Player ID 376 (Not Found) starts in 1339 minutes (UTC)
+ (NOBRIDGE) ERROR  Warning: A props object containing a "key" prop is being spread into JSX:
+  let props = {key: someKey, onPress: ..., hitSlop: ..., pressRetentionOffset: ..., delayPressIn: ..., delayPressOut: ..., accessibilityRole: ..., accessible: ..., style: ..., android_ripple: ..., children: ...};
+  <CssInterop.Pressable {...props} />
+React keys must be passed directly to JSX without using spread:
+  let props = {onPress: ..., hitSlop: ..., pressRetentionOffset: ..., delayPressIn: ..., delayPressOut: ..., accessibilityRole: ..., accessible: ..., style: ..., android_ripple: ..., children: ...};
+  <CssInterop.Pressable key={someKey} {...props} />
+    in DeviceAwareFilterButton (created by DeviceAwareFilterScrollView)
+    in AndroidHorizontalScrollContentView (created by ScrollView)
+    in AndroidHorizontalScrollView
+    in HScrollViewNativeComponent (created by ScrollView)
+    in ScrollView (created by ScrollView)
+    in Wrapper (created by CssInterop.ScrollView)
+    in CssInterop.ScrollView (created by DeviceAwareFilterScrollView)
+    in RCTView (created by View)
+    in View (created by CssInterop.View)
+    in CssInterop.View (created by DeviceAwareFilterScrollView)
+    in DeviceAwareFilterScrollView (created by HomeScreen)
+    in RNCSafeAreaView
+    in Unknown (created by CssInterop.unknown)
+    in CssInterop.unknown (created by HomeScreen)
+    in RCTView (created by View)
+    in View (created by CssInterop.View)
+    in CssInterop.View (created by ImageBackground)
+    in ImageBackground
+    in RemapPropsComponent (created by HomeScreen)
+    in HomeScreen
+    in Unknown (created by Route(index))
+    in Suspense (created by Route(index))
+    in Route (created by Route(index))
+    in Route(index) (created by SceneView)
+    in StaticContainer
+    in EnsureSingleNavigator (created by SceneView)
+    in SceneView (created by NativeStackNavigator)
+    in RNSScreenContentWrapper (created by ScreenContentWrapper)
+    in ScreenContentWrapper (created by DebugContainer)
+    in DebugContainer
+    in RNSScreen (created by Animated(Anonymous))
+    in Animated(Anonymous)
+    in Suspender (created by Freeze)
+    in Suspense (created by Freeze)
+    in Freeze (created by DelayedFreeze)
+    in DelayedFreeze
+    in InnerScreen (created by Screen)
+    in Screen
+    in ScreenStackItem (created by SceneView)
+    in SceneView (created by NativeStackView)
+    in RNSScreenStack (created by ScreenStack)
+    in Unknown (created by ScreenStack)
+    in ScreenStack (created by NativeStackView)
+    in RCTView (created by View)
+    in View (created by SafeAreaProviderCompat)
+    in SafeAreaProviderCompat (created by NativeStackView)
+    in NativeStackView (created by NativeStackNavigator)
+    in PreventRemoveProvider (created by NavigationContent)
+    in NavigationContent
+    in Unknown (created by NativeStackNavigator)
+    in NativeStackNavigator
+    in Unknown (created by ThemedLayout)
+    in RCTView (created by View)
+    in View (created by CssInterop.View)
+    in CssInterop.View (created by ThemedLayout)
+    in RCTView (created by View)
+    in View (created by CssInterop.View)
+    in CssInterop.View (created by ImageBackground)
+    in ImageBackground
+    in RemapPropsComponent (created by ThemedLayout)
+    in SafeAreaEnv (created by SafeAreaProviderShim)
+    in RNCSafeAreaProvider (created by SafeAreaProvider)
+    in SafeAreaProvider (created by SafeAreaProviderShim)
+    in SafeAreaProviderShim (created by ThemedLayout)
+    in ThemedLayout (created by RootLayout)
+    in ThemeProvider (created by RootLayout)
+    in RootLayout
+    in Unknown (created by Route())
+    in Suspense (created by Route())
+    in Route (created by Route())
+    in Route() (created by ContextNavigator)
+    in SafeAreaEnv (created by SafeAreaProviderShim)
+    in RNCSafeAreaProvider (created by SafeAreaProvider)
+    in SafeAreaProvider (created by SafeAreaProviderShim)
+    in SafeAreaProviderShim (created by wrapper)
+    in wrapper (created by ContextNavigator)
+    in ThemeProvider
+    in EnsureSingleNavigator
+    in BaseNavigationContainer
+    in NavigationContainerInner (created by ContextNavigator)
+    in ContextNavigator (created by ExpoRoot)
+    in ExpoRoot (created by App)
+    in App (created by ErrorOverlay)
+    in ErrorToastContainer (created by ErrorOverlay)
+    in ErrorOverlay (created by withDevTools(ErrorOverlay))
+    in withDevTools(ErrorOverlay)
+    in RCTView (created by View)
+    in View (created by CssInterop.View)
+    in CssInterop.View (created by AppContainer)
+    in RCTView (created by View)
+    in View (created by CssInterop.View)
+    in CssInterop.View (created by AppContainer)
+    in AppContainer
+    in main(RootComponent)
