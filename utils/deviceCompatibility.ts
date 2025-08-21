@@ -92,7 +92,7 @@ export const logDeviceCompatibility = () => {
   
   // Special logging for potential Samsung Galaxy S23+ detection
   if (Platform.OS === 'android') {
-    const { width, height } = deviceInfo;
+    const { screenWidth: width, screenHeight: height } = deviceInfo;
     
     // Galaxy S23 series common resolutions
     const isLikelyS23Series = 

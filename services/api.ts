@@ -4,9 +4,32 @@ import { logger } from '../utils/logger';
 
 // --- Configuration ---
 // Dynamic API URL based on environment
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 
-  process.env.API_BASE_URL || 
-  'https://snookerapp.up.railway.app/oneFourSeven/'; // Fallback to production
+const getApiBaseUrl = () => {
+  // If explicit environment variable is set, use it
+  if (process.env.EXPO_PUBLIC_API_BASE_URL) {
+    return process.env.EXPO_PUBLIC_API_BASE_URL;
+  }
+  
+  // For development/debugging - check if running on emulator
+  if (__DEV__) {
+    // Android emulator uses 10.0.2.2 to reach host machine
+    // iOS simulator uses localhost/127.0.0.1
+    const Platform = require('react-native').Platform;
+    
+    if (Platform.OS === 'android') {
+      // Try local development server first for Android emulator
+      return 'http://10.0.2.2:8000/oneFourSeven/';
+    } else if (Platform.OS === 'ios') {
+      // iOS simulator can use localhost
+      return 'http://localhost:8000/oneFourSeven/';
+    }
+  }
+  
+  // Production fallback
+  return 'https://snookerapp.up.railway.app/oneFourSeven/';
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 // Simple in-memory cache for API responses 
 interface CacheEntry {
