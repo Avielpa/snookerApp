@@ -10,6 +10,7 @@ import {
   ScrollView,
   RefreshControl,
   FlatList,
+  ImageBackground,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,9 +19,13 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 // Import services
 import { getRanking, RANKING_TYPES } from '../services/matchServices';
+import { api } from '../services/api';
 import { useRouter } from 'expo-router';
 import { logger } from '../utils/logger';
 import { useColors } from '../contexts/ThemeContext';
+import { getDeviceTabConfig } from '../config/deviceTabConfig';
+import { DeviceAwareFilterScrollView } from '../components/DeviceAwareFilterScrollView';
+import { DeviceAwareFilterButton } from '../components/DeviceAwareFilterButton';
 
 // Import modern components - simplified to avoid crashes
 // Removed ProgressBar to prevent crashes - using simple native views instead
@@ -114,10 +119,13 @@ export default function RankingEnhanced() {
 
   // Load ranking data with caching to prevent unnecessary reloads
   const loadRankingData = useCallback(async (rankingType: string, isRefresh = false) => {
+    console.log(`[RankingEnhanced] === LOADING ${rankingType} RANKINGS ===`);
+    console.log(`[RankingEnhanced] isRefresh: ${isRefresh}, cached: ${!!rankingCache[rankingType]}`);
     logger.log(`[RankingEnhanced] Loading ${rankingType} rankings...`);
     
     // Check cache first (unless refreshing)
     if (!isRefresh && rankingCache[rankingType]) {
+      console.log(`[RankingEnhanced] USING CACHE for ${rankingType}: ${rankingCache[rankingType].length} items`);
       logger.log(`[RankingEnhanced] Using cached data for ${rankingType}: ${rankingCache[rankingType].length} items`);
       setRankingData(rankingCache[rankingType]);
       setLoading(false);
@@ -125,12 +133,23 @@ export default function RankingEnhanced() {
       return;
     }
     
+    console.log(`[RankingEnhanced] MAKING API CALL for ${rankingType}...`);
     if (!isRefresh) setLoading(true);
     setRefreshing(isRefresh);
     setError(null);
 
     try {
+      console.log(`[RankingEnhanced] Calling getRanking(${rankingType})...`);
       const response = await getRanking(rankingType);
+      console.log(`[RankingEnhanced] getRanking response:`, {
+        hasResponse: !!response,
+        hasRankings: !!response?.rankings,
+        rankingsLength: response?.rankings?.length || 0,
+        tabName: response?.tab_name,
+        responseKeys: response ? Object.keys(response) : 'NO RESPONSE',
+        firstRanking: response?.rankings?.[0] || 'NO FIRST RANKING'
+      });
+      
       logger.log(`[RankingEnhanced] API response for ${rankingType}:`, {
         hasRankings: !!response.rankings,
         rankingsLength: response.rankings?.length || 0,
@@ -143,6 +162,11 @@ export default function RankingEnhanced() {
         Position: typeof item.Position === 'number' && item.Position !== null ? item.Position : 0,
       }));
       
+      console.log(`[RankingEnhanced] Processed ${rankings.length} rankings`);
+      if (rankings.length > 0) {
+        console.log(`[RankingEnhanced] First ranking:`, rankings[0]);
+      }
+      
       // Cache the data
       setRankingCache(prev => ({
         ...prev,
@@ -150,21 +174,30 @@ export default function RankingEnhanced() {
       }));
       
       setRankingData(rankings);
+      console.log(`[RankingEnhanced] SUCCESS: Set ranking data with ${rankings.length} items`);
       logger.log(`[RankingEnhanced] Successfully loaded ${rankings.length} ${rankingType} rankings`);
       
       // Clear any previous errors on successful load
       if (rankings.length > 0) {
         setError(null);
       } else {
+        console.log(`[RankingEnhanced] WARNING: No rankings returned for ${rankingType}`);
         logger.warn(`[RankingEnhanced] No rankings returned for ${rankingType}`);
         setError(`No ${rankingType} rankings available. Data may need to be updated by running management commands.`);
       }
     } catch (error: any) {
+      console.error(`[RankingEnhanced] ERROR loading ${rankingType}:`, {
+        errorMessage: error.message,
+        errorStatus: error.response?.status,
+        errorData: error.response?.data,
+        fullError: error
+      });
       logger.error(`[RankingEnhanced] Error loading ${rankingType} rankings:`, error);
       const errorMessage = error.message || `Failed to load ${rankingType} rankings`;
       setError(`${errorMessage}. Please check if ranking data has been populated in the database.`);
       setRankingData([]);
     } finally {
+      console.log(`[RankingEnhanced] FINALLY: Setting loading=false, refreshing=false`);
       setLoading(false);
       setRefreshing(false);
     }
@@ -178,6 +211,10 @@ export default function RankingEnhanced() {
 
   // Apply filters and search
   useEffect(() => {
+    console.log(`[RankingEnhanced] === FILTERING DATA ===`);
+    console.log(`[RankingEnhanced] rankingData length: ${rankingData.length}`);
+    console.log(`[RankingEnhanced] searchQuery: "${searchQuery}"`);
+    
     let filtered = [...rankingData];
 
     // Apply search filter
@@ -188,13 +225,52 @@ export default function RankingEnhanced() {
         (item.country && item.country.toLowerCase().includes(query)) ||
         item.Position.toString().includes(query)
       );
+      console.log(`[RankingEnhanced] After search filter: ${filtered.length} items`);
     }
 
+    console.log(`[RankingEnhanced] Final filtered data: ${filtered.length} items`);
     setFilteredData(filtered);
   }, [rankingData, searchQuery]);
 
+  // Direct API test function - bypass all complex logic
+  const testDirectAPI = async () => {
+    console.log('[RankingEnhanced] === TESTING DIRECT API ===');
+    try {
+      // Test direct API call to ranking-types/MoneyRankings/
+      const response = await api.get('ranking-types/MoneyRankings/');
+      console.log('[RankingEnhanced] Direct API SUCCESS:', {
+        status: response.status,
+        hasData: !!response.data,
+        dataKeys: response.data ? Object.keys(response.data) : 'NO DATA',
+        hasRankings: !!response.data?.rankings,
+        rankingsLength: response.data?.rankings?.length || 0
+      });
+
+      if (response.data?.rankings && response.data.rankings.length > 0) {
+        console.log('[RankingEnhanced] DIRECT API WORKS - Setting data directly');
+        setRankingData(response.data.rankings);
+        setError(null);
+        setLoading(false);
+      }
+    } catch (error: any) {
+      console.error('[RankingEnhanced] Direct API ERROR:', {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data
+      });
+    }
+  };
+
   // Initial data load on component mount
   useEffect(() => {
+    console.log('[RankingEnhanced] Component mounted, loading default data...');
+    console.log('[RankingEnhanced] API Base URL:', process.env.EXPO_PUBLIC_API_BASE_URL);
+    console.log('[RankingEnhanced] Environment:', process.env.NODE_ENV);
+    
+    // Try direct API first as fallback
+    testDirectAPI();
+    
+    // Also try normal flow
     loadRankingData('MoneyRankings'); // Load default data immediately
   }, []); // Only run once on mount
 
@@ -208,14 +284,19 @@ export default function RankingEnhanced() {
 
   // Handle filter selection with enhanced Galaxy S24 debugging
   const handleFilterPress = (filterId: string) => {
+    console.log(`[RankingEnhanced] === TAB PRESSED: ${filterId} ===`);
+    console.log(`[RankingEnhanced] Current filter: ${selectedFilter}`);
+    console.log(`[RankingEnhanced] TouchableOpacity successfully triggered`);
     logger.log(`[RankingEnhanced] Filter pressed: ${filterId}, current: ${selectedFilter}`);
     logger.log(`[RankingEnhanced] Galaxy S24 Debug - Event received for filter: ${filterId}`);
     
     if (filterId !== selectedFilter) {
+      console.log(`[RankingEnhanced] CHANGING FILTER from ${selectedFilter} to ${filterId}`);
       logger.log(`[RankingEnhanced] SUCCESS: Changing filter from ${selectedFilter} to ${filterId}`);
       setSelectedFilter(filterId);
       setError(null); // Clear any previous errors
     } else {
+      console.log(`[RankingEnhanced] Filter already selected: ${filterId}`);
       logger.log(`[RankingEnhanced] INFO: Filter already selected: ${filterId}`);
     }
   };
@@ -236,39 +317,22 @@ export default function RankingEnhanced() {
     }
   };
 
-  // Render filter button using SAME simple approach as home screen
+  // Use device-aware filter button component for consistency
   const renderFilterButton = (option: FilterOption) => {
     const isSelected = selectedFilter === option.id;
     
     return (
-      <TouchableOpacity
+      <DeviceAwareFilterButton
         key={option.id}
-        style={[
-          styles.filterButton,
-          isSelected && styles.filterButtonActive
-        ]}
-        onPress={() => {
-          console.log(`[RankingFilter] Pressed: ${option.id}`);
-          handleFilterPress(option.id);
+        option={{
+          id: option.id,
+          label: option.label,
+          icon: option.icon
         }}
-        activeOpacity={0.6}
-        hitSlop={{ top: 35, bottom: 35, left: 35, right: 35 }}
-        delayPressIn={0}
-        delayPressOut={0}
-        pressRetentionOffset={{ top: 40, bottom: 40, left: 40, right: 40 }}
-      >
-        <Ionicons 
-          name={option.icon} 
-          size={14} 
-          color={isSelected ? colors.filterTextActive : colors.filterText} 
-        />
-        <Text style={[
-          styles.filterText,
-          isSelected && styles.filterTextActive
-        ]}>
-          {option.label}
-        </Text>
-      </TouchableOpacity>
+        isSelected={isSelected}
+        onPress={handleFilterPress}
+        colors={colors}
+      />
     );
   };
 
@@ -359,9 +423,20 @@ export default function RankingEnhanced() {
 
   // Create styles with dynamic colors
   const styles = useMemo(() => createRankingStyles(colors), [colors]);
+  const deviceConfig = useMemo(() => getDeviceTabConfig(), []);
+  const deviceStyles = useMemo(() => deviceConfig.createDynamicStyles(colors), [colors, deviceConfig]);
+
+  // Debug current state before rendering
+  console.log(`[RankingEnhanced] === RENDER STATE CHECK ===`);
+  console.log(`[RankingEnhanced] loading: ${loading}, refreshing: ${refreshing}`);
+  console.log(`[RankingEnhanced] error: ${error}`);
+  console.log(`[RankingEnhanced] rankingData length: ${rankingData.length}`);
+  console.log(`[RankingEnhanced] filteredData length: ${filteredData.length}`);
+  console.log(`[RankingEnhanced] selectedFilter: ${selectedFilter}`);
 
   // Loading state
   if (loading && !refreshing) {
+    console.log(`[RankingEnhanced] SHOWING LOADING STATE`);
     return (
       <SafeAreaView style={styles.container}>
         <Text style={styles.title}>Player Rankings</Text>
@@ -375,6 +450,7 @@ export default function RankingEnhanced() {
 
   // Error state
   if (error && !refreshing) {
+    console.log(`[RankingEnhanced] SHOWING ERROR STATE: ${error}`);
     return (
       <SafeAreaView style={styles.container}>
         <Text style={styles.title}>Player Rankings</Text>
@@ -397,16 +473,16 @@ export default function RankingEnhanced() {
     );
   }
 
-  // Dynamic gradient colors based on theme
-  const backgroundGradient = colors.cardBackground === 'rgba(255, 255, 255, 0.95)'
-    ? ['#F8F9FA', '#E9ECEF', '#DEE2E6'] as const // Light mode gradient
-    : ['#1a1a2e', '#16213e', '#0f3460'] as const; // Dark mode gradient
+  console.log(`[RankingEnhanced] SHOWING MAIN UI - filteredData: ${filteredData.length} items`);
 
   return (
-    <LinearGradient
-      colors={backgroundGradient}
-      style={styles.gradientBackground}
+    <ImageBackground
+      source={require('../assets/snooker_background.jpg')}
+      style={styles.backgroundImage}
+      resizeMode="cover"
     >
+      {/* Semi-transparent overlay for readability */}
+      <View style={styles.overlay} />
       <SafeAreaView style={styles.container}>
       {/* Header */}
       <Text style={styles.title}>Player Rankings</Text>
@@ -424,18 +500,21 @@ export default function RankingEnhanced() {
           />
         </View>
 
-        {/* Filter Buttons */}
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.filtersContainer}
-          style={styles.filtersScrollView}
-          scrollEventThrottle={16}
-          decelerationRate="fast"
-          bounces={false}
-        >
-          {filterOptions.map(renderFilterButton)}
-        </ScrollView>
+        {/* Filter Buttons - Device Aware */}
+        <DeviceAwareFilterScrollView
+          options={filterOptions.map(option => ({
+            id: option.id,
+            label: option.label,
+            icon: option.icon
+          }))}
+          selectedValue={selectedFilter}
+          onSelectionChange={(value) => {
+            console.log(`[RankingFilter] Device-Aware: ${value}`);
+            handleFilterPress(value);
+          }}
+          colors={colors}
+          containerStyle={{ marginVertical: 8 }}
+        />
 
         {/* Results Count */}
         <Text style={styles.resultsText}>
@@ -475,14 +554,20 @@ export default function RankingEnhanced() {
         )}
       </View>
     </SafeAreaView>
-    </LinearGradient>
+    </ImageBackground>
   );
 }
 
 // Dynamic styles function
 const createRankingStyles = (colors: any) => StyleSheet.create({
-  gradientBackground: {
+  backgroundImage: {
     flex: 1,
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: colors.cardBackground === 'rgba(255, 255, 255, 0.95)'
+      ? 'rgba(255, 255, 255, 0.75)' // Light semi-transparent overlay
+      : 'rgba(0, 0, 0, 0.6)', // Dark semi-transparent overlay
   },
   container: {
     flex: 1,

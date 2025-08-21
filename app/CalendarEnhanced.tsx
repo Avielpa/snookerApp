@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   RefreshControl,
   FlatList,
+  ImageBackground,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -22,6 +23,9 @@ import { getCalendarByTab } from '../services/matchServices';
 import { logger } from '../utils/logger';
 import { useColors } from '../contexts/ThemeContext';
 import { logDeviceCompatibility } from '../utils/deviceCompatibility';
+import { getDeviceTabConfig } from '../config/deviceTabConfig';
+import { DeviceAwareFilterScrollView } from '../components/DeviceAwareFilterScrollView';
+import { DeviceAwareFilterButton } from '../components/DeviceAwareFilterButton';
 
 // Removed all modern component imports to prevent crashes
 
@@ -82,6 +86,8 @@ export default function CalendarEnhanced() {
 
   // Create styles with dynamic colors
   const styles = useMemo(() => createCalendarStyles(colors), [colors]);
+  const deviceConfig = useMemo(() => getDeviceTabConfig(), []);
+  const deviceStyles = useMemo(() => deviceConfig.createDynamicStyles(colors), [colors, deviceConfig]);
 
   // Enhanced tournament processing with computed fields
   const enhanceTournamentData = useCallback((tournaments: Tournament[]): Tournament[] => {
@@ -300,39 +306,18 @@ export default function CalendarEnhanced() {
     router.push(`/tour/${tournament.ID}`);
   };
 
-  // Render tab button using SAME simple approach as home screen
+  // Use device-aware filter button component for consistency
   const renderTabButton = (option: FilterOption) => {
     const isSelected = selectedTab === option.id;
     
     return (
-      <TouchableOpacity
+      <DeviceAwareFilterButton
         key={option.id}
-        style={[
-          styles.filterButton,
-          isSelected && styles.filterButtonActive
-        ]}
-        onPress={() => {
-          console.log(`[CalendarFilter] Pressed: ${option.id}`);
-          handleTabPress(option.id);
-        }}
-        activeOpacity={0.6}
-        hitSlop={{ top: 35, bottom: 35, left: 35, right: 35 }}
-        delayPressIn={0}
-        delayPressOut={0}
-        pressRetentionOffset={{ top: 40, bottom: 40, left: 40, right: 40 }}
-      >
-        <Ionicons 
-          name={option.icon} 
-          size={14} 
-          color={isSelected ? '#FFFFFF' : colors.textSecondary} 
-        />
-        <Text style={[
-          styles.filterText,
-          isSelected && styles.filterTextActive
-        ]}>
-          {option.label}
-        </Text>
-      </TouchableOpacity>
+        option={option}
+        isSelected={isSelected}
+        onPress={handleTabPress}
+        colors={colors}
+      />
     );
   };
 
@@ -532,16 +517,14 @@ export default function CalendarEnhanced() {
     );
   }
 
-  // Dynamic gradient colors based on theme
-  const backgroundGradient = colors.cardBackground === 'rgba(255, 255, 255, 0.95)'
-    ? ['#F0F9FF', '#E0F2FE', '#BAE6FD'] as const // Light blue gradient for light mode
-    : ['#0F172A', '#1E293B', '#334155'] as const; // Dark gradient for dark mode
-
   return (
-    <LinearGradient
-      colors={backgroundGradient}
-      style={styles.gradientBackground}
+    <ImageBackground
+      source={require('../assets/snooker_background.jpg')}
+      style={styles.backgroundImage}
+      resizeMode="cover"
     >
+      {/* Semi-transparent overlay for readability */}
+      <View style={styles.overlay} />
       <SafeAreaView style={styles.container}>
       {/* Header */}
       <Text style={styles.title}>Tournament Calendar</Text>
@@ -559,76 +542,37 @@ export default function CalendarEnhanced() {
           />
         </View>
 
-        {/* Tab Buttons */}
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.filtersContainer}
-          style={styles.filtersScrollView}
-          scrollEventThrottle={16}
-          decelerationRate="fast"
-          bounces={false}
-        >
-          {tabOptions.map(renderTabButton)}
-        </ScrollView>
+        {/* Tab Buttons - Device Aware */}
+        <DeviceAwareFilterScrollView
+          options={tabOptions.map(option => ({
+            id: option.id,
+            label: option.label,
+            icon: option.icon
+          }))}
+          selectedValue={selectedTab}
+          onSelectionChange={(value) => {
+            console.log(`[CalendarFilter] Device-Aware Tab: ${value}`);
+            handleTabPress(value);
+          }}
+          colors={colors}
+        />
 
-        {/* Status Filter Buttons - SAME simple approach as home screen */}
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.filtersContainer}
-          style={[styles.filtersScrollView, { marginTop: 4 }]}
-          scrollEventThrottle={16}
-          decelerationRate="fast"
-          bounces={false}
-        >
-          {statusOptions.map(option => {
-            const isSelected = selectedStatus === option.id;
-            return (
-              <TouchableOpacity
-                key={`status-${option.id}`}
-                style={[
-                  styles.filterButton,
-                  isSelected && styles.filterButtonActive
-                ]}
-                onPress={() => {
-                  console.log(`[CalendarStatusFilter] Pressed: ${option.id}`);
-                  handleStatusPress(option.id);
-                }}
-                activeOpacity={0.6}
-                hitSlop={{ top: 35, bottom: 35, left: 35, right: 35 }}
-                delayPressIn={0}
-                delayPressOut={0}
-                pressRetentionOffset={{ top: 40, bottom: 40, left: 40, right: 40 }}
-              >
-                <Ionicons 
-                  name={option.icon} 
-                  size={14} 
-                  color={isSelected ? '#FFFFFF' : colors.textSecondary} 
-                />
-                <Text style={[
-                  styles.filterText,
-                  isSelected && styles.filterTextActive
-                ]}>
-                  {option.label}
-                </Text>
-                {option.count !== undefined && (
-                  <View style={[
-                    styles.countBadge,
-                    { backgroundColor: isSelected ? 'rgba(255,255,255,0.2)' : colors.primary }
-                  ]}>
-                    <Text style={[
-                      styles.countText,
-                      { color: isSelected ? '#FFFFFF' : '#FFFFFF' }
-                    ]}>
-                      {option.count}
-                    </Text>
-                  </View>
-                )}
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
+        {/* Status Filter Buttons - Device Aware */}
+        <DeviceAwareFilterScrollView
+          options={statusOptions.map(option => ({
+            id: option.id,
+            label: option.label,
+            icon: option.icon,
+            count: option.count
+          }))}
+          selectedValue={selectedStatus}
+          onSelectionChange={(value) => {
+            console.log(`[CalendarStatusFilter] Device-Aware: ${value}`);
+            handleStatusPress(value);
+          }}
+          colors={colors}
+          containerStyle={{ marginTop: 4 }}
+        />
 
         {/* Results Count */}
         <Text style={styles.resultsText}>
@@ -664,14 +608,20 @@ export default function CalendarEnhanced() {
         )}
       </View>
     </SafeAreaView>
-    </LinearGradient>
+    </ImageBackground>
   );
 }
 
 // Dynamic styles function
 const createCalendarStyles = (colors: any) => StyleSheet.create({
-  gradientBackground: {
+  backgroundImage: {
     flex: 1,
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: colors.cardBackground === 'rgba(255, 255, 255, 0.95)'
+      ? 'rgba(255, 255, 255, 0.75)' // Light semi-transparent overlay
+      : 'rgba(0, 0, 0, 0.6)', // Dark semi-transparent overlay
   },
   container: {
     flex: 1,
