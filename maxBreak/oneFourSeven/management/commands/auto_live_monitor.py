@@ -1,12 +1,14 @@
 # management/commands/auto_live_monitor.py
 """
 AUTOMATIC LIVE MATCH MONITOR
-This is the ULTIMATE solution for automatic live match updates.
+This is the ULTIMATE solution for automatic live match updates and tournament management.
 
 WHAT IT SOLVES:
 - Matches not updating automatically during tournaments
 - Users having to manually run update commands
 - Live scores not being available in real-time
+- Rankings not updating after tournaments end
+- Players not being updated after tournaments
 
 HOW IT WORKS:
 1. Runs continuously in background
@@ -14,6 +16,14 @@ HOW IT WORKS:
 3. Updates every 2 minutes during active matches
 4. Smart scheduling - sleeps when no active tournaments
 5. Auto-restart on errors with exponential backoff
+6. TOURNAMENT END DETECTION: Automatically updates all ranking types and players when tournaments finish
+7. Prevents duplicate updates with smart tracking
+
+NEW FEATURES:
+- Automatic ranking updates when tournaments end (all types: MoneyRankings, WorldRankings, etc.)
+- Automatic player updates when tournaments end
+- Tour-specific updates (women's rankings for women's tours, amateur for amateur tours)
+- Smart duplicate prevention with cleanup
 
 DEPLOYMENT:
 Add to Procfile: live_monitor: cd maxBreak && python manage.py auto_live_monitor
@@ -39,6 +49,7 @@ class Command(BaseCommand):
         self.should_stop = False
         self.error_count = 0
         self.max_errors = 10
+        self.processed_tournament_ends = set()  # Track processed tournament end updates
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -94,6 +105,10 @@ class Command(BaseCommand):
                     # Check for upcoming tournaments needing match data (every 4 hours)
                     if self._check_upcoming_tournament_updates():
                         self.stdout.write('[AUTOMATION] Upcoming tournament updates completed')
+                    
+                    # Check for recently finished tournaments needing final updates
+                    if self._check_tournament_end_updates():
+                        self.stdout.write('[AUTOMATION] Tournament end updates completed')
                     
                     next_check = sleep_interval
                     self.stdout.write(f'[TIMER] Next check in {next_check//60} minutes')
@@ -345,3 +360,116 @@ class Command(BaseCommand):
         except Exception as e:
             logger.error(f'Upcoming tournament updates failed: {str(e)}')
             self.stdout.write(f'[FAILED] Upcoming tournament updates failed: {str(e)}')
+    
+    def _check_tournament_end_updates(self):
+        """Check for recently finished tournaments that need ranking and player updates."""
+        current_time = timezone.now()
+        
+        # Find tournaments that ended in the last 48 hours
+        end_cutoff = current_time - timedelta(hours=48)
+        recently_ended = Event.objects.filter(
+            EndDate__gte=end_cutoff,
+            EndDate__lt=current_time
+        )
+        
+        # Clean up old processed tournament IDs (older than 7 days)
+        old_cutoff = current_time - timedelta(days=7)
+        old_tournaments = Event.objects.filter(
+            EndDate__lt=old_cutoff,
+            ID__in=list(self.processed_tournament_ends)
+        ).values_list('ID', flat=True)
+        
+        for old_id in old_tournaments:
+            self.processed_tournament_ends.discard(old_id)
+        
+        # Check if we have tournaments that ended and might need final updates
+        tournaments_needing_final_updates = []
+        for tournament in recently_ended:
+            # Skip if already processed
+            if tournament.ID in self.processed_tournament_ends:
+                continue
+                
+            # Check if this tournament has finished matches (status 3)
+            finished_matches = MatchesOfAnEvent.objects.filter(
+                Event=tournament,
+                Status=3  # Finished
+            ).count()
+            
+            # If tournament has finished matches, it probably ended
+            if finished_matches > 0:
+                tournaments_needing_final_updates.append(tournament)
+        
+        if tournaments_needing_final_updates:
+            self.stdout.write(f'[TOUR_END] Found {len(tournaments_needing_final_updates)} recently ended tournaments')
+            self._run_tournament_end_updates(tournaments_needing_final_updates)
+            return True
+        
+        return False
+    
+    def _run_tournament_end_updates(self, tournaments):
+        """Run comprehensive updates after tournament ends - rankings and players."""
+        try:
+            for tournament in tournaments:
+                self.stdout.write(f'[TOUR_END] Processing end updates for {tournament.Name} (ID: {tournament.ID})')
+                
+                # Update all ranking types after tournament ends
+                ranking_types = [
+                    'MoneyRankings',
+                    'WorldRankings', 
+                    'OneYearRanking',
+                    'OneYearMoneyRankings',
+                    'MoneySeedings',
+                    'QTRankings'
+                ]
+                
+                # Add women's rankings if applicable
+                if tournament.Tour in ['womens', 'main']:
+                    ranking_types.append('WomensRankings')
+                
+                # Add amateur rankings if applicable  
+                if tournament.Tour in ['amateur', 'other']:
+                    ranking_types.append('AmateurRankings')
+                
+                # Update each ranking type
+                for ranking_type in ranking_types:
+                    try:
+                        self.stdout.write(f'[RANKINGS] Updating {ranking_type} after {tournament.Name}')
+                        call_command('update_rankings', '--ranking-type', ranking_type, '--current-season-only')
+                        self.stdout.write(f'[SUCCESS] Updated {ranking_type}')
+                        
+                        # Small delay between ranking updates
+                        import time
+                        time.sleep(3)
+                        
+                    except Exception as e:
+                        self.stdout.write(f'[WARNING] Failed to update {ranking_type}: {str(e)}')
+                        # Continue with other ranking types
+                
+                # Update players (might have new data after tournament)
+                try:
+                    self.stdout.write(f'[PLAYERS] Updating players after {tournament.Name}')
+                    
+                    # Update different player categories based on tournament type
+                    if tournament.Tour == 'womens':
+                        call_command('update_players', '--status', 'pro', '--sex', 'women')
+                    elif tournament.Tour == 'amateur':
+                        call_command('update_players', '--status', 'amateur')
+                    else:
+                        # Main tour - update professional men
+                        call_command('update_players', '--status', 'pro', '--sex', 'men')
+                    
+                    self.stdout.write(f'[SUCCESS] Updated players after {tournament.Name}')
+                    
+                except Exception as e:
+                    self.stdout.write(f'[WARNING] Failed to update players: {str(e)}')
+                
+                # Mark tournament as processed to avoid duplicate updates
+                self.processed_tournament_ends.add(tournament.ID)
+                
+                # Delay between tournaments to respect API limits
+                import time
+                time.sleep(5)
+                
+        except Exception as e:
+            logger.error(f'Tournament end updates failed: {str(e)}')
+            self.stdout.write(f'[FAILED] Tournament end updates failed: {str(e)}')

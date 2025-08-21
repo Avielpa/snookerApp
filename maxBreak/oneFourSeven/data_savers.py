@@ -224,63 +224,24 @@ class DatabaseSaver:
                 continue
             
             player = players_map[player_id]
-            defaults['Player'] = player
             
-            # Store the API ID for the ranking
-            ranking_api_id = ranking_data.get('ID')
-            if ranking_api_id:
-                try:
-                    defaults['ID'] = int(ranking_api_id)
-                except (ValueError, TypeError):
-                    logger.warning(f"Invalid ranking API ID: {ranking_api_id}")
-                    stats["skipped"] += 1
-                    continue
-            
-            # Use logical key to check for existing rankings and prevent duplicates
+            # Use logical key for lookup
             lookup = {
                 'Player': player,
                 'Season': defaults.get('Season'),
                 'Type': defaults.get('Type')
             }
+
+            # The `update_or_create_item` method handles filtering valid fields,
+            # so we can pass the `defaults` dictionary directly.
             
-            # Check if a ranking with this API ID already exists
-            existing_by_id = None
-            if 'ID' in defaults:
-                try:
-                    existing_by_id = Ranking.objects.get(ID=defaults['ID'])
-                except Ranking.DoesNotExist:
-                    pass
-                except Exception as e:
-                    logger.warning(f"Error checking for existing ranking by ID: {e}")
-            
-            # Check if a ranking with this logical key already exists  
-            existing_by_logical_key = Ranking.objects.filter(**lookup).first()
-            
-            if existing_by_id:
-                # Update existing ranking found by API ID
-                for key, value in defaults.items():
-                    if key not in ['Player', 'ID']:  # Don't update the Player FK or ID
-                        setattr(existing_by_id, key, value)
-                existing_by_id.save()
-                stats["updated"] += 1
-                logger.debug(f"Updated existing ranking by API ID for {player}")
-            elif existing_by_logical_key:
-                # Update existing ranking found by logical key
-                for key, value in defaults.items():
-                    if key not in ['Player']:  # Don't update the Player FK
-                        setattr(existing_by_logical_key, key, value)
-                existing_by_logical_key.save()
-                stats["updated"] += 1
-                logger.debug(f"Updated existing ranking by logical key for {player}")
+            # Use the class's own robust update_or_create_item method
+            instance, created = self.update_or_create_item(Ranking, lookup, defaults)
+
+            if instance:
+                stats["created" if created else "updated"] += 1
             else:
-                # Create new ranking
-                try:
-                    new_ranking = Ranking.objects.create(**defaults)
-                    stats["created"] += 1
-                    logger.debug(f"Created new ranking for {player} Season {defaults.get('Season')} Type {defaults.get('Type')}")
-                except Exception as e:
-                    logger.error(f"Error creating ranking: {e}")
-                    stats["failed"] += 1
+                stats["failed"] += 1
         
         logger.info(f"Ranking save summary: {stats}")
         return stats
