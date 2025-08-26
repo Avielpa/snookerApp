@@ -258,7 +258,9 @@
       "Bash(npx expo:*)",
       "Bash(npm ls:*)",
       "Bash(gradlew.bat assembleDebug:*)",
-      "Bash(.gradlew.bat assembleDebug --no-daemon)"
+      "Bash(.gradlew.bat assembleDebug --no-daemon)",
+      "Bash(git checkout:*)",
+      "Bash(git remote set-url:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits",

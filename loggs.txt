@@ -1,101 +1,111 @@
+Starting rankings update...
+Fetching current season...
+Updating MoneyRankings for season 2025...
 
- (NOBRIDGE) ERROR  Warning: A props object containing a "key" prop is being spread into JSX:
-  let props = {key: someKey, onPress: ..., hitSlop: ..., pressRetentionOffset: ..., delayPressIn: ..., delayPressOut: ..., accessibilityRole: ..., accessible: ..., style: ..., android_ripple: ..., children: ...};
-  <CssInterop.Pressable {...props} />
-React keys must be passed directly to JSX without using spread:
-  let props = {onPress: ..., hitSlop: ..., pressRetentionOffset: ..., delayPressIn: ..., delayPressOut: ..., accessibilityRole: ..., accessible: ..., style: ..., android_ripple: ..., children: ...};
-  <CssInterop.Pressable key={someKey} {...props} />
-    in DeviceAwareFilterButton (created by DeviceAwareFilterScrollView)
-    in AndroidHorizontalScrollContentView (created by ScrollView)
-    in AndroidHorizontalScrollView
-    in HScrollViewNativeComponent (created by ScrollView)
-    in ScrollView (created by ScrollView)
-    in Wrapper (created by CssInterop.ScrollView)
-    in CssInterop.ScrollView (created by DeviceAwareFilterScrollView)
-    in RCTView (created by View)
-    in View (created by CssInterop.View)
-    in CssInterop.View (created by DeviceAwareFilterScrollView)
-    in DeviceAwareFilterScrollView (created by HomeScreen)
-    in RNCSafeAreaView
-    in Unknown (created by CssInterop.unknown)
-    in CssInterop.unknown (created by HomeScreen)
-    in RCTView (created by View)
-    in View (created by CssInterop.View)
-    in CssInterop.View (created by ImageBackground)
-    in ImageBackground
-    in RemapPropsComponent (created by HomeScreen)
-    in HomeScreen
-    in Unknown (created by Route(index))
-    in Suspense (created by Route(index))
-    in Route (created by Route(index))
-    in Route(index) (created by SceneView)
-    in StaticContainer
-    in EnsureSingleNavigator (created by SceneView)
-    in SceneView (created by NativeStackNavigator)
-    in RNSScreenContentWrapper (created by ScreenContentWrapper)
-    in ScreenContentWrapper (created by DebugContainer)
-    in DebugContainer
-    in RNSScreen (created by Animated(Anonymous))
-    in Animated(Anonymous)
-    in Suspender (created by Freeze)
-    in Suspense (created by Freeze)
-    in Freeze (created by DelayedFreeze)
-    in DelayedFreeze
-    in InnerScreen (created by Screen)
-    in Screen
-    in ScreenStackItem (created by SceneView)
-    in SceneView (created by NativeStackView)
-    in RNSScreenStack (created by ScreenStack)
-    in Unknown (created by ScreenStack)
-    in ScreenStack (created by NativeStackView)
-    in RCTView (created by View)
-    in View (created by SafeAreaProviderCompat)
-    in SafeAreaProviderCompat (created by NativeStackView)
-    in NativeStackView (created by NativeStackNavigator)
-    in PreventRemoveProvider (created by NavigationContent)
-    in NavigationContent
-    in Unknown (created by NativeStackNavigator)
-    in NativeStackNavigator
-    in Unknown (created by ThemedLayout)
-    in RCTView (created by View)
-    in View (created by CssInterop.View)
-    in CssInterop.View (created by ThemedLayout)
-    in RCTView (created by View)
-    in View (created by CssInterop.View)
-    in CssInterop.View (created by ImageBackground)
-    in ImageBackground
-    in RemapPropsComponent (created by ThemedLayout)
-    in SafeAreaEnv (created by SafeAreaProviderShim)
-    in RNCSafeAreaProvider (created by SafeAreaProvider)
-    in SafeAreaProvider (created by SafeAreaProviderShim)
-    in SafeAreaProviderShim (created by ThemedLayout)
-    in ThemedLayout (created by RootLayout)
-    in ThemeProvider (created by RootLayout)
-    in RootLayout
-    in Unknown (created by Route())
-    in Suspense (created by Route())
-    in Route (created by Route())
-    in Route() (created by ContextNavigator)
-    in SafeAreaEnv (created by SafeAreaProviderShim)
-    in RNCSafeAreaProvider (created by SafeAreaProvider)
-    in SafeAreaProvider (created by SafeAreaProviderShim)
-    in SafeAreaProviderShim (created by wrapper)
-    in wrapper (created by ContextNavigator)
-    in ThemeProvider
-    in EnsureSingleNavigator
-    in BaseNavigationContainer
-    in NavigationContainerInner (created by ContextNavigator)
-    in ContextNavigator (created by ExpoRoot)
-    in ExpoRoot (created by App)
-    in App (created by ErrorOverlay)
-    in ErrorToastContainer (created by ErrorOverlay)
-    in ErrorOverlay (created by withDevTools(ErrorOverlay))
-    in withDevTools(ErrorOverlay)
-    in RCTView (created by View)
-    in View (created by CssInterop.View)
-    in CssInterop.View (created by AppContainer)
-    in RCTView (created by View)
-    in View (created by CssInterop.View)
-    in CssInterop.View (created by AppContainer)
-    in AppContainer
-    in main(RootComponent)
+[1/1] Processing MoneyRankings...
+Fetching MoneyRankings data from API...
+Fetched 129 MoneyRankings records
+Saving MoneyRankings to database...
+Failed to update MoneyRankings: duplicate key value violates unique constraint "oneFourSeven_ranking_Player_id_Season_Type_cdead264_uniq"
+DETAIL:  Key ("Player_id", "Season", "Type")=(12, 2025, MoneyRankings) already exists.
+
+Error updating MoneyRankings: duplicate key value violates unique constraint "oneFourSeven_ranking_Player_id_Season_Type_cdead264_uniq"
+DETAIL:  Key ("Player_id", "Season", "Type")=(12, 2025, MoneyRankings) already exists.
+Traceback (most recent call last):
+  File "C:\Users\Aviel\vsprojects\snookerApp\venv\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute  
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.errors.UniqueViolation: duplicate key value violates unique constraint "oneFourSeven_ranking_Player_id_Season_Type_cdead264_uniq"
+DETAIL:  Key ("Player_id", "Season", "Type")=(12, 2025, MoneyRankings) already exists.
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\Aviel\vsprojects\snookerApp\maxbreak\oneFourSeven\management\commands\update_rankings.py", line 122, in handle
+    save_rankings(rankings_data)
+  File "C:\Users\Aviel\vsprojects\snookerApp\maxbreak\oneFourSeven\data_savers.py", line 272, in save_rankings
+    existing_by_logical_key.save()
+  File "C:\Users\Aviel\vsprojects\snookerApp\venv\Lib\site-packages\django\db\models\base.py", line 892, in save
+    self.save_base(
+  File "C:\Users\Aviel\vsprojects\snookerApp\venv\Lib\site-packages\django\db\models\base.py", line 998, in save_base    
+    updated = self._save_table(
+              ^^^^^^^^^^^^^^^^^
+  File "C:\Users\Aviel\vsprojects\snookerApp\venv\Lib\site-packages\django\db\models\base.py", line 1161, in _save_table 
+    results = self._do_insert(
+              ^^^^^^^^^^^^^^^^
+  File "C:\Users\Aviel\vsprojects\snookerApp\venv\Lib\site-packages\django\db\models\base.py", line 1202, in _do_insert  
+    return manager._insert(
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\Aviel\vsprojects\snookerApp\venv\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Aviel\vsprojects\snookerApp\venv\Lib\site-packages\django\db\models\query.py", line 1847, in _insert    
+    return query.get_compiler(using=using).execute_sql(returning_fields)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Aviel\vsprojects\snookerApp\venv\Lib\site-packages\django\db\models\sql\compiler.py", line 1836, in execute_sql
+    cursor.execute(sql, params)
+  File "C:\Users\Aviel\vsprojects\snookerApp\venv\Lib\site-packages\django\db\backends\utils.py", line 122, in execute   
+    return super().execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Aviel\vsprojects\snookerApp\venv\Lib\site-packages\django\db\backends\utils.py", line 79, in execute    
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Aviel\vsprojects\snookerApp\venv\Lib\site-packages\django\db\backends\utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Aviel\vsprojects\snookerApp\venv\Lib\site-packages\django\db\backends\utils.py", line 100, in _execute  
+    with self.db.wrap_database_errors:
+  File "C:\Users\Aviel\vsprojects\snookerApp\venv\Lib\site-packages\django\db\utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "C:\Users\Aviel\vsprojects\snookerApp\venv\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute  
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+django.db.utils.IntegrityError: duplicate key value violates unique constraint "oneFourSeven_ranking_Player_id_Season_Type_cdead264_uniq"
+DETAIL:  Key ("Player_id", "Season", "Type")=(12, 2025, MoneyRankings) already exists.
+
+
+=== UPDATE SUMMARY ===
+Total records updated: 0
+Duration: 2.43 seconds
+Failed to update 1 ranking type(s):
+  File "C:\Users\Aviel\vsprojects\snookerApp\venv\Lib\site-packages\django\db\backends\utils.py", line 100, in _execute  
+    with self.db.wrap_database_errors:
+  File "C:\Users\Aviel\vsprojects\snookerApp\venv\Lib\site-packages\django\db\utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "C:\Users\Aviel\vsprojects\snookerApp\venv\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute  
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+django.db.utils.IntegrityError: duplicate key value violates unique constraint "oneFourSeven_ranking_Player_id_Season_Type_cdead264_uniq"
+DETAIL:  Key ("Player_id", "Season", "Type")=(12, 2025, MoneyRankings) already exists.
+
+
+=== UPDATE SUMMARY ===
+Total records updated: 0
+Duration: 2.43 seconds
+Failed to update 1 ranking type(s):
+  File "C:\Users\Aviel\vsprojects\snookerApp\venv\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute  
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+django.db.utils.IntegrityError: duplicate key value violates unique constraint "oneFourSeven_ranking_Player_id_Season_Type_cdead264_uniq"
+DETAIL:  Key ("Player_id", "Season", "Type")=(12, 2025, MoneyRankings) already exists.
+
+
+=== UPDATE SUMMARY ===
+Total records updated: 0
+Duration: 2.43 seconds
+Failed to update 1 ranking type(s):
+DETAIL:  Key ("Player_id", "Season", "Type")=(12, 2025, MoneyRankings) already exists.
+
+
+=== UPDATE SUMMARY ===
+Total records updated: 0
+Duration: 2.43 seconds
+Failed to update 1 ranking type(s):
+  - MoneyRankings
+Error updating rankings: No ranking types were updated successfully
+Traceback (most recent call last):
+  File "C:\Users\Aviel\vsprojects\snookerApp\maxbreak\oneFourSeven\management\commands\update_rankings.py", line 161, in handle
+    raise CommandError('No ranking types were updated successfully')
+django.core.management.base.CommandError: No ranking types were updated successfully
+❌ MONTHLY UPDATE FAILED: Rankings update failed: No ranking types were updated successfully
