@@ -260,7 +260,10 @@
       "Bash(gradlew.bat assembleDebug:*)",
       "Bash(.gradlew.bat assembleDebug --no-daemon)",
       "Bash(git checkout:*)",
-      "Bash(git remote set-url:*)"
+      "Bash(git remote set-url:*)",
+      "Bash(taskkill:*)",
+      "Bash(adb:*)",
+      "Bash(eas update:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits",
