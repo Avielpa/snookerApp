@@ -263,7 +263,17 @@
       "Bash(git remote set-url:*)",
       "Bash(taskkill:*)",
       "Bash(adb:*)",
-      "Bash(eas update:*)"
+      "Bash(eas update:*)",
+      "WebFetch(domain:expo.dev)",
+      "Bash(eas channel:list:*)",
+      "Bash(eas channel:edit:*)",
+      "Read(c:\\Users\\Aviel\\vsprojects\\snookerApp/**)",
+      "Read(c:\\Users\\Aviel\\vsprojects\\snookerApp/**)",
+      "Read(c:\\Users\\Aviel\\vsprojects\\snookerApp/**)",
+      "Read(c:\\Users\\Aviel\\vsprojects\\snookerApp/**)",
+      "Read(c:\\Users\\Aviel\\vsprojects\\snookerApp/**)",
+      "Read(c:\\Users\\Aviel\\vsprojects\\snookerApp/**)",
+      "Read(c:\\Users\\Aviel\\vsprojects\\snookerApp/**)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits",
