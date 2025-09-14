@@ -301,16 +301,16 @@ class Command(BaseCommand):
         """Check if upcoming tournaments need match/round data updates (every 4 hours)."""
         current_time = timezone.now()
         
-        # Only run every 4 hours (check if current hour is divisible by 4)
-        if current_time.hour % 4 != 0:
+        # Only run every 2 hours (check if current hour is divisible by 2) - more frequent updates
+        if current_time.hour % 2 != 0:
             return False
         
         # Check if we already ran this hour
         from oneFourSeven.models import Event, MatchesOfAnEvent, RoundDetails
         
-        # Find upcoming tournaments in next 2-3 days without match data
-        upcoming_start = current_time.date() + timedelta(days=2)
-        upcoming_end = current_time.date() + timedelta(days=3)
+        # Find upcoming tournaments in next 1-7 days without match data
+        upcoming_start = current_time.date() + timedelta(days=1)
+        upcoming_end = current_time.date() + timedelta(days=7)
         
         upcoming_tournaments = Event.objects.filter(
             StartDate__gte=upcoming_start,
@@ -322,8 +322,8 @@ class Command(BaseCommand):
             match_count = MatchesOfAnEvent.objects.filter(Event=tournament).count()
             round_count = RoundDetails.objects.filter(Event=tournament).count()
             
-            # Tournament needs update if it has no matches AND no rounds
-            if match_count == 0 and round_count == 0:
+            # Tournament needs update if it has no matches (regardless of rounds)
+            if match_count == 0:
                 tournaments_needing_update.append(tournament)
         
         if tournaments_needing_update:
@@ -352,6 +352,13 @@ class Command(BaseCommand):
                     self.stdout.write(f'[SUCCESS] Updated round details for {tournament.Name}')
                 except Exception as e:
                     self.stdout.write(f'[INFO] No round details yet for {tournament.Name}: {str(e)}')
+                
+                # Try to update prize money
+                try:
+                    call_command('update_prize_money', '--event-id', str(tournament.ID))
+                    self.stdout.write(f'[SUCCESS] Updated prize money for {tournament.Name}')
+                except Exception as e:
+                    self.stdout.write(f'[INFO] No prize money yet for {tournament.Name}: {str(e)}')
                 
                 # Small delay between tournaments to respect API limits
                 import time

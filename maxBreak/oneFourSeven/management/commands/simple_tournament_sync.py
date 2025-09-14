@@ -45,9 +45,9 @@ class Command(BaseCommand):
             current_time = timezone.now()
             today = current_time.date()
             
-            # Check tournaments in a WIDER range - from yesterday to 14 days ahead
+            # Check tournaments in a WIDER range - from yesterday to 21 days ahead (3 weeks)
             start_range = today - timedelta(days=1)
-            end_range = today + timedelta(days=14)
+            end_range = today + timedelta(days=21)
             
             self.stdout.write(f'[RANGE] Checking tournaments from {start_range} to {end_range}')
             
@@ -86,9 +86,9 @@ class Command(BaseCommand):
                     if not check_only:
                         self._update_live_matches(tournament)
                 
-                # Always try to update players for tournaments starting soon
+                # Always try to update players for tournaments starting soon (within 10 days)
                 days_until_start = (tournament.StartDate - today).days
-                if days_until_start <= 7 and not check_only:
+                if days_until_start <= 10 and not check_only:
                     self._update_tournament_players(tournament, players_updated)
             
             # Summary
