@@ -148,6 +148,12 @@ class Command(BaseCommand):
                 call_command('update_players', '--status', 'amateur')
                 players_updated.add('amateur')
                 
+            elif 'amateur' not in players_updated:
+                # For any tournament (especially qualifiers), also sync amateur players
+                self.stdout.write('[PLAYERS] Updating amateur players for qualifiers...')
+                call_command('update_players', '--status', 'amateur')
+                players_updated.add('amateur')
+                
             elif 'men' not in players_updated:
                 # Main tour - update professional men
                 self.stdout.write('[PLAYERS] Updating men players...')
