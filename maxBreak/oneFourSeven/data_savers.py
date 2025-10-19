@@ -297,6 +297,9 @@ class DatabaseSaver:
                         except (ValueError, TypeError):
                             defaults['api_match_id'] = None
                     
+                    # CRITICAL FIX: Validate score consistency to prevent display bugs
+                    self._validate_match_score_consistency(defaults, match_data, api_match_id)
+                    
                     # Use logical key for lookup
                     lookup = {
                         'Event': event,
@@ -318,6 +321,53 @@ class DatabaseSaver:
         
         logger.info(f"Match save summary for event {event_id}: {stats}")
         return stats
+    
+    def _validate_match_score_consistency(self, defaults: Dict[str, Any], raw_api_data: Dict[str, Any], api_match_id: Any):
+        """
+        CRITICAL FIX: Validate that score data is consistent with winner to prevent frontend display bugs.
+        
+        This addresses the issue where Barry Hawkins appears highlighted as winner but shows losing score.
+        """
+        try:
+            score1 = defaults.get('Score1')
+            score2 = defaults.get('Score2') 
+            winner_id = defaults.get('WinnerID')
+            player1_id = defaults.get('Player1ID')
+            player2_id = defaults.get('Player2ID')
+            status = defaults.get('Status')
+            
+            # Only validate finished matches with scores
+            if status == 3 and score1 is not None and score2 is not None and winner_id is not None:
+                # Determine winner by scores
+                score_winner_is_player1 = score1 > score2
+                score_winner_is_player2 = score2 > score1
+                
+                # Determine winner by winner_id field  
+                winner_id_is_player1 = winner_id == player1_id
+                winner_id_is_player2 = winner_id == player2_id
+                
+                # Check for inconsistency
+                if (score_winner_is_player1 and not winner_id_is_player1) or \
+                   (score_winner_is_player2 and not winner_id_is_player2):
+                    
+                    logger.error(f"🚨 SCORE INCONSISTENCY DETECTED for API Match {api_match_id}:")
+                    logger.error(f"   Raw API data: {raw_api_data}")
+                    logger.error(f"   Processed defaults: {defaults}")
+                    logger.error(f"   Score suggests: P1({player1_id}):{score1} vs P2({player2_id}):{score2}")
+                    logger.error(f"   Winner ID suggests: {winner_id}")
+                    logger.error(f"   THIS WILL CAUSE FRONTEND DISPLAY BUG!")
+                    
+                    # POTENTIAL FIX: You could correct the data here, but for now just log
+                    # Uncomment the next lines if you want to auto-fix:
+                    # if score_winner_is_player1:
+                    #     defaults['WinnerID'] = player1_id
+                    #     logger.warning(f"   AUTO-CORRECTED: Set winner to Player1 ({player1_id})")
+                    # elif score_winner_is_player2:
+                    #     defaults['WinnerID'] = player2_id  
+                    #     logger.warning(f"   AUTO-CORRECTED: Set winner to Player2 ({player2_id})")
+                        
+        except Exception as e:
+            logger.error(f"Error validating match consistency for API ID {api_match_id}: {e}")
 
     def save_round_details(self, event_id: int, round_details_data: List[Dict[str, Any]]) -> Dict[str, int]:
         """

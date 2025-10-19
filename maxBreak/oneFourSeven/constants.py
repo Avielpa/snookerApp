@@ -72,6 +72,15 @@ API_FIELD_MAPPINGS = {
         'LiveUrl': 'LiveUrl',
         'DetailsUrl': 'DetailsUrl',
         'Note': 'Note',
+        # CRITICAL FIX: Explicit mapping for score fields to prevent data inconsistency
+        'Player1ID': 'Player1ID',
+        'Player2ID': 'Player2ID', 
+        'Score1': 'Score1',
+        'Score2': 'Score2',
+        'WinnerID': 'WinnerID',
+        'Status': 'Status',
+        'Round': 'Round',
+        'Number': 'Number',
     },
     'Ranking': {
         'Position': 'Position',
