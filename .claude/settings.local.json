@@ -22,7 +22,8 @@
       "Bash(eas build:view:*)",
       "Bash(eas build:*)",
       "Bash(python manage.py:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(python3 manage.py:*)"
     ],
     "deny": [],
     "ask": [],

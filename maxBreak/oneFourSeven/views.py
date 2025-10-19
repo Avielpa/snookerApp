@@ -204,10 +204,10 @@ def _build_match_dict(match: MatchesOfAnEvent, player_names_map: Dict[int, str])
         "number": match.Number,
         "player1_id": p1_id,
         "player1_name": p1_name,          # Added player name
-        "score1": match.Score1,
+        "score1": match.Score2,  # CRITICAL FIX: Swap scores to match correct display
         "player2_id": p2_id,
         "player2_name": p2_name,          # Added player name
-        "score2": match.Score2,
+        "score2": match.Score1,  # CRITICAL FIX: Swap scores to match correct display
         "winner_id": match.WinnerID,
         "status_code": match.Status,             # Raw status code from model
         "status_display": match.get_Status_display(), # Human-readable status
