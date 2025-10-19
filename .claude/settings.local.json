@@ -23,7 +23,8 @@
       "Bash(eas build:*)",
       "Bash(python manage.py:*)",
       "Bash(rm:*)",
-      "Bash(python3 manage.py:*)"
+      "Bash(python3 manage.py:*)",
+      "WebFetch(domain:api.snooker.org)"
     ],
     "deny": [],
     "ask": [],
