@@ -183,8 +183,9 @@ def _build_match_dict(match: MatchesOfAnEvent, player_names_map: Dict[int, str])
     Returns:
         A dictionary containing formatted match data.
     """
-    p1_id = match.Player1ID
-    p2_id = match.Player2ID
+    # CRITICAL FIX: Swap player assignments to match correct winner/score alignment
+    p1_id = match.Player2ID  # Swap: Player1 gets Player2's data
+    p2_id = match.Player1ID  # Swap: Player2 gets Player1's data
 
     # Get names from the pre-fetched map, with fallbacks
     p1_name = "TBD"
@@ -204,10 +205,10 @@ def _build_match_dict(match: MatchesOfAnEvent, player_names_map: Dict[int, str])
         "number": match.Number,
         "player1_id": p1_id,
         "player1_name": p1_name,          # Added player name
-        "score1": match.Score2,  # CRITICAL FIX: Swap scores to match correct display
+        "score1": match.Score2,  # Swap: Score1 gets Player2's score to match swapped players
         "player2_id": p2_id,
         "player2_name": p2_name,          # Added player name
-        "score2": match.Score1,  # CRITICAL FIX: Swap scores to match correct display
+        "score2": match.Score1,  # Swap: Score2 gets Player1's score to match swapped players
         "winner_id": match.WinnerID,
         "status_code": match.Status,             # Raw status code from model
         "status_display": match.get_Status_display(), # Human-readable status
