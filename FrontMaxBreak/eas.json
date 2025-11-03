@@ -1,0 +1,86 @@
+{
+  "cli": {
+    "version": ">= 15.0.12",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "channel": "development",
+      "env": {
+        "NODE_ENV": "development",
+        "API_BASE_URL": "http://10.0.2.2:8000/oneFourSeven/",
+        "DEBUG_LOGGING": "true"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "channel": "preview",
+      "env": {
+        "NODE_ENV": "production",
+        "EXPO_PUBLIC_API_URL": "https://snookerapp.up.railway.app/oneFourSeven/",
+        "DEBUG_LOGGING": "false"
+      }
+    },
+    "beta": {
+      "distribution": "internal",
+      "channel": "beta",
+      "env": {
+        "NODE_ENV": "production",
+        "EXPO_PUBLIC_API_URL": "https://snookerapp.up.railway.app/oneFourSeven/",
+        "EXPO_PUBLIC_FORCE_DEBUG_LOGGING": "true"
+      },
+      "android": {
+        "buildType": "apk",
+        "autoIncrement": true,
+        "gradleCommand": ":app:assembleRelease"
+      },
+      "ios": {
+        "buildConfiguration": "Release"
+      }
+    },
+    "production": {
+      "autoIncrement": true,
+      "channel": "production",
+      "env": {
+        "NODE_ENV": "production",
+        "EXPO_PUBLIC_API_URL": "https://snookerapp.up.railway.app/oneFourSeven/",
+        "DEBUG_LOGGING": "false",
+        "ENABLE_SSL_PINNING": "true"
+      },
+      "ios": {
+        "buildConfiguration": "Release"
+      },
+      "android": {
+        "buildType": "app-bundle"
+      }
+    },
+    "production-apk": {
+      "extends": "production",
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "NODE_ENV": "production",
+        "EXPO_PUBLIC_API_URL": "https://snookerapp.up.railway.app/oneFourSeven/",
+        "DEBUG_LOGGING": "true",
+        "ENABLE_SSL_PINNING": "true"
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "appleId": "avielpahima@gmail.com",
+        "ascAppId": "TO_BE_SET_AFTER_APP_STORE_CONNECT_SETUP",
+        "appleTeamId": "TO_BE_SET_AFTER_APPLE_DEVELOPER_ENROLLMENT"
+      },
+      "android": {
+        "serviceAccountKeyPath": "./google-play-service-account.json",
+        "track": "internal"
+      }
+    }
+  }
+}

@@ -1,22 +1,11 @@
-def twoSum(numbers, target):
-    """
-    :type numbers: List[int]
-    :type target: int
-    :rtype: List[int]
-    """
-    left = 0
-    right = left +1
+amount = float(input("Please enter your expected amount: "))
+i = float(input("Please enter the yearly interest rate in percent: "))
+n = int(input("Please enter the number of years: "))
+
+
+def calculate(amount, i, n):
+    res = amount / (1 + (i/100))**n
     
-    while right < len(numbers)-1:
-        if numbers[left] + numbers[right] < target:
-            left +=1  
+    return res
 
-        elif numbers[left] + numbers[right] > target:
-            right += 1
-
-        else:
-            return [left +1, right +1]
-        
-        
-        
-print(twoSum([2,7,11,15], 9))
+print(calculate(amount, i, n))
