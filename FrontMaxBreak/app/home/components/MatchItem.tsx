@@ -6,7 +6,7 @@ import { logger } from '../../../utils/logger';
 import { TOUCH_SLOP, MATCH_CONSTANTS } from '../../../utils/constants';
 import { getMatchPlayerNames, areScoresValid, normalizeScore } from '../../../utils/playerUtils';
 import { clearMatchCache } from '../../../services/matchServices';
-import { GlassCard } from '../../components/modern/GlassCard';
+import { ModernGlassCard } from '../../components/modern/ModernGlassCard';  // MODERN CARD
 import { LiveIndicator } from '../../components/modern/LiveIndicator';
 import { MatchListItem } from '../types';
 import { formatDate } from '../utils/dateFormatting';
@@ -106,12 +106,12 @@ export const MatchItem = ({
     };
 
     return (
-        <TouchableOpacity 
-            onPress={() => handleMatchPress(item.api_match_id)} 
-            disabled={!item.api_match_id || typeof item.api_match_id !== 'number' || item.api_match_id <= 0} 
+        <TouchableOpacity
+            onPress={() => handleMatchPress(item.api_match_id)}
+            disabled={!item.api_match_id || typeof item.api_match_id !== 'number' || item.api_match_id <= 0}
             activeOpacity={0.6}
         >
-            <GlassCard style={styles.matchItemContainer}>
+            <ModernGlassCard style={styles.matchItemContainer}>
                 {item.matchCategory === 'livePlaying' && <LiveIndicator />}
                 <View style={styles.playerRow}>
                     <Text 
@@ -153,7 +153,7 @@ export const MatchItem = ({
                         </View>
                     )}
                 </View>
-            </GlassCard>
+            </ModernGlassCard>
         </TouchableOpacity>
     );
 };
