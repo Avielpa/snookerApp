@@ -19,7 +19,7 @@ const Header = () => {
         <View style={styles.placeholderLeft} />
         
         <Text style={[styles.title, { color: colors.textHeader }]}>
-          MaxBreak
+          MaxBreak147
         </Text>
         
         <View style={styles.rightSection}>
