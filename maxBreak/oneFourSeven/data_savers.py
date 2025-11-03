@@ -299,14 +299,21 @@ class DatabaseSaver:
                     
                     # CRITICAL FIX: Validate score consistency to prevent display bugs
                     self._validate_match_score_consistency(defaults, match_data, api_match_id)
-                    
+
                     # Use logical key for lookup
                     lookup = {
                         'Event': event,
                         'Round': round_int,
                         'Number': number_int
                     }
-                    
+
+                    # CRITICAL FIX: Check if we should skip this update to prevent data downgrade
+                    # Don't overwrite real player data with TBD, or finished matches with upcoming
+                    existing_match = MatchesOfAnEvent.objects.filter(**lookup).first()
+                    if existing_match and self._should_skip_match_update(existing_match, defaults, api_match_id):
+                        stats["skipped"] += 1
+                        continue
+
                     instance, created = self.update_or_create_item(MatchesOfAnEvent, lookup, defaults)
                     if instance:
                         stats["created" if created else "updated"] += 1
@@ -368,6 +375,88 @@ class DatabaseSaver:
                         
         except Exception as e:
             logger.error(f"Error validating match consistency for API ID {api_match_id}: {e}")
+
+    def _should_skip_match_update(self, existing_match, new_defaults: Dict[str, Any], api_match_id: Any) -> bool:
+        """
+        CRITICAL FIX: Determine if we should skip updating a match to prevent data downgrade.
+
+        ROOT CAUSE: The Snooker API sometimes returns duplicate matches:
+        - Tournament draw with TBD players (Status=0, Player IDs=376)
+        - Actual finished matches with real players (Status=3, real Player IDs)
+
+        This causes the frontend to show old TBD matches in the Upcoming section.
+
+        SAFE RULE: Don't overwrite if it would LOSE data:
+        1. Existing has REAL players, new has TBD → SKIP
+        2. Existing is FINISHED, new is UPCOMING → SKIP
+        3. Otherwise → ALLOW UPDATE (normal progression)
+
+        Returns:
+            True if update should be skipped, False if update should proceed
+        """
+        try:
+            # Get existing match data
+            existing_player1_id = existing_match.Player1ID
+            existing_player2_id = existing_match.Player2ID
+            existing_status = existing_match.Status
+
+            # Get new match data
+            new_player1_id = new_defaults.get('Player1ID')
+            new_player2_id = new_defaults.get('Player2ID')
+            new_status = new_defaults.get('Status')
+
+            # RULE 1: Don't replace REAL players with TBD (player ID 376)
+            # If existing has real players and new has TBD, skip
+            existing_has_real_players = (
+                existing_player1_id is not None and existing_player1_id != 376 and
+                existing_player2_id is not None and existing_player2_id != 376
+            )
+            new_has_tbd = (new_player1_id == 376 or new_player2_id == 376)
+
+            if existing_has_real_players and new_has_tbd:
+                logger.warning(
+                    f"⚠️  SKIPPING match update for API ID {api_match_id}: "
+                    f"Would replace real players ({existing_player1_id} vs {existing_player2_id}) "
+                    f"with TBD players ({new_player1_id} vs {new_player2_id})"
+                )
+                return True  # SKIP
+
+            # RULE 2: Don't replace FINISHED matches with UPCOMING status
+            # Status codes: 0=upcoming, 1=live, 2=on break, 3=finished
+            if existing_status == 3 and new_status == 0:
+                logger.warning(
+                    f"⚠️  SKIPPING match update for API ID {api_match_id}: "
+                    f"Would replace finished match (status=3) with upcoming (status=0)"
+                )
+                return True  # SKIP
+
+            # RULE 3: Don't replace match with scores with 0-0 or None scores
+            existing_has_scores = (
+                existing_match.Score1 is not None and existing_match.Score2 is not None and
+                (existing_match.Score1 > 0 or existing_match.Score2 > 0)
+            )
+            new_score1 = new_defaults.get('Score1')
+            new_score2 = new_defaults.get('Score2')
+            new_has_no_scores = (
+                new_score1 is None or new_score2 is None or
+                (new_score1 == 0 and new_score2 == 0)
+            )
+
+            if existing_has_scores and new_has_no_scores:
+                logger.warning(
+                    f"⚠️  SKIPPING match update for API ID {api_match_id}: "
+                    f"Would replace real scores ({existing_match.Score1}-{existing_match.Score2}) "
+                    f"with empty scores ({new_score1}-{new_score2})"
+                )
+                return True  # SKIP
+
+            # All checks passed - ALLOW UPDATE (normal progression)
+            return False
+
+        except Exception as e:
+            logger.error(f"Error checking if should skip match update for API ID {api_match_id}: {e}")
+            # On error, allow update to proceed (fail-safe)
+            return False
 
     def save_round_details(self, event_id: int, round_details_data: List[Dict[str, Any]]) -> Dict[str, int]:
         """
