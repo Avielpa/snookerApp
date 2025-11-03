@@ -10,6 +10,7 @@ import { api } from '../services/api';
 // --- Component Imports ---
 import Header from './components/Header';
 import BottomBar from './components/BottomBar';
+import ErrorBoundary from '../components/ErrorBoundary';
 
 // Main Layout Component - wraps everything in ThemeProvider
 const ThemedLayout = () => {
@@ -75,9 +76,11 @@ const ThemedLayout = () => {
 
 export default function RootLayout() {
     return (
-        <ThemeProvider>
-            <ThemedLayout />
-        </ThemeProvider>
+        <ErrorBoundary>
+            <ThemeProvider>
+                <ThemedLayout />
+            </ThemeProvider>
+        </ErrorBoundary>
     );
 }
 
