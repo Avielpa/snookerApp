@@ -41,7 +41,8 @@
       "Bash(powershell:*)",
       "Bash(git submodule status:*)",
       "WebFetch(domain:github.com)",
-      "Bash(git rm:*)"
+      "Bash(git rm:*)",
+      "Bash(npx tsc:*)"
     ],
     "deny": [],
     "ask": [],
