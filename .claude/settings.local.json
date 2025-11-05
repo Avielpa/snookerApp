@@ -51,7 +51,8 @@
       "Bash(python -m json.tool:*)",
       "Bash(find:*)",
       "Bash(python:*)",
-      "Bash(railway --version:*)"
+      "Bash(railway --version:*)",
+      "WebFetch(domain:railway.app)"
     ],
     "deny": [],
     "ask": [],
