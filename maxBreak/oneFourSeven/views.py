@@ -1424,9 +1424,20 @@ def player_match_history(request, player_id):
         if status_filter:
             matches = matches.filter(status=status_filter)
 
-        # Order by date: live matches first, then latest to oldest
-        matches = matches.order_by(
-            '-status',  # Running matches (1) first
+        # Order by date: live/break matches first (status 1 or 2), then latest to oldest
+        # Use Case/When to prioritize live matches (status 1,2) over finished (3) and scheduled (0)
+        from django.db.models import Case, When, IntegerField
+        matches = matches.annotate(
+            priority=Case(
+                When(status=1, then=0),  # Running - highest priority
+                When(status=2, then=1),  # On Break - second priority
+                When(status=0, then=2),  # Scheduled - third priority
+                When(status=3, then=3),  # Finished - lowest priority
+                default=4,
+                output_field=IntegerField()
+            )
+        ).order_by(
+            'priority',  # Live matches first
             '-scheduled_date',
             '-start_date'
         )
