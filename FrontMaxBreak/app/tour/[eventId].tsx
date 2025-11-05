@@ -122,31 +122,31 @@ const TournamentHeader = ({ tournament, matchCount, prizeData }: { tournament: E
                 {/* Info Row */}
                 <View style={tournamentHeaderStyles.infoRow}>
                     <View style={tournamentHeaderStyles.infoItem}>
-                        <Ionicons name="calendar-outline" size={14} color={colors.primary} />
+                        <Ionicons name="calendar-outline" size={11} color={colors.primary} />
                         <Text style={[tournamentHeaderStyles.infoText, { color: colors.textSecondary }]}>
                             {formatDate(tournament.StartDate ?? null)} - {formatDate(tournament.EndDate ?? null)}
                         </Text>
                     </View>
-                    
+
                     {(tournament.City || tournament.Country) && (
                         <View style={tournamentHeaderStyles.infoItem}>
-                            <Ionicons name="location-outline" size={14} color={colors.success} />
+                            <Ionicons name="location-outline" size={11} color={colors.success} />
                             <Text style={[tournamentHeaderStyles.infoText, { color: colors.textSecondary }]} numberOfLines={1}>
                                 {[tournament.City, tournament.Country].filter(Boolean).join(', ')}
                             </Text>
                         </View>
                     )}
-                    
+
                     <View style={tournamentHeaderStyles.infoItem}>
-                        <Ionicons name="trophy-outline" size={14} color={colors.warning} />
+                        <Ionicons name="trophy-outline" size={11} color={colors.warning} />
                         <Text style={[tournamentHeaderStyles.infoText, { color: colors.textSecondary }]}>
                             {matchCount} matches
                         </Text>
                     </View>
-                    
+
                     {prizeData?.winner?.formatted && (
                         <View style={tournamentHeaderStyles.infoItem}>
-                            <Ionicons name="diamond-outline" size={14} color={colors.warning} />
+                            <Ionicons name="diamond-outline" size={11} color={colors.warning} />
                             <Text style={[tournamentHeaderStyles.infoText, { color: colors.warning }]} numberOfLines={1}>
                                 Winner: {prizeData.winner.formatted}
                             </Text>
@@ -564,61 +564,61 @@ const TournamentDetailsScreen = () => {
 // --- Compact Tournament Header Styles ---
 const tournamentHeaderStyles = StyleSheet.create({
     compactHeader: {
-        marginHorizontal: 12,
-        marginVertical: 8,
-        borderRadius: 12,
+        marginHorizontal: 10,
+        marginVertical: 4,
+        borderRadius: 8,
         overflow: 'hidden',
-        elevation: 2,
+        elevation: 1,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
-        shadowRadius: 4,
+        shadowOpacity: 0.03,
+        shadowRadius: 2,
     },
     compactGradient: {
-        paddingHorizontal: 16,
-        paddingVertical: 12,
+        paddingHorizontal: 12,
+        paddingVertical: 8,
     },
     titleRow: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        marginBottom: 8,
+        marginBottom: 5,
     },
     compactTitle: {
-        fontSize: 18,
+        fontSize: 14,
         fontFamily: 'PoppinsBold',
         flex: 1,
-        marginRight: 12,
-        lineHeight: 22,
+        marginRight: 8,
+        lineHeight: 18,
     },
     compactBadge: {
-        paddingHorizontal: 8,
-        paddingVertical: 4,
-        borderRadius: 8,
+        paddingHorizontal: 6,
+        paddingVertical: 2,
+        borderRadius: 4,
     },
     compactBadgeText: {
         color: '#FFFFFF',
-        fontSize: 10,
+        fontSize: 8,
         fontFamily: 'PoppinsBold',
-        letterSpacing: 0.5,
+        letterSpacing: 0.3,
     },
     infoRow: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
         flexWrap: 'wrap',
-        gap: 8,
+        gap: 4,
     },
     infoItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 4,
+        gap: 3,
         flex: 1,
-        minWidth: 80,
+        minWidth: 70,
     },
     infoText: {
-        fontSize: 11,
-        fontFamily: 'PoppinsMedium',
+        fontSize: 9,
+        fontFamily: 'PoppinsRegular',
         flexShrink: 1,
     },
 });
@@ -633,78 +633,78 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingTop: Platform.OS === 'android' ? 15 : 10,
-        paddingHorizontal: 5,
-        paddingBottom: 8,
+        paddingTop: Platform.OS === 'android' ? 12 : 8,
+        paddingHorizontal: 4,
+        paddingBottom: 6,
         borderBottomColor: COLORS.cardBorder,
         borderBottomWidth: 1,
         backgroundColor: 'transparent',
     },
     backButton: {
-        padding: 10,
+        padding: 8,
     },
     customHeaderTitle: {
         flex: 1,
-        fontSize: 19,
+        fontSize: 16,
         fontFamily: 'PoppinsSemiBold',
         color: COLORS.textHeader,
         textAlign: 'center',
-        marginHorizontal: 5,
+        marginHorizontal: 4,
     },
     headerPlaceholder: {
-        width: 44,
+        width: 36,
     },
     integratedListArea: {
         flex: 1,
-        marginTop: 4,
+        marginTop: 2,
     },
     stickyFilterContainer: {
         backgroundColor: COLORS.cardBackground,
         borderBottomColor: COLORS.cardBorder,
         borderBottomWidth: 1,
-        paddingVertical: 10,
-        marginBottom: 8,
+        paddingVertical: 6,
+        marginBottom: 4,
     },
     stickyFilterScrollView: {
-        paddingHorizontal: 12,
-        paddingRight: 20,
+        paddingHorizontal: 10,
+        paddingRight: 16,
     },
-    stickyFilterButton: { 
-        flexDirection: 'row', 
-        alignItems: 'center', 
-        backgroundColor: COLORS.filterButton, 
-        paddingVertical: 6, 
-        paddingHorizontal: 10, 
-        borderRadius: 16, 
-        marginRight: 6,
+    stickyFilterButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: COLORS.filterButton,
+        paddingVertical: 4,
+        paddingHorizontal: 8,
+        borderRadius: 12,
+        marginRight: 4,
         borderWidth: 1,
-        borderColor: 'rgba(255, 167, 38, 0.25)',
+        borderColor: 'rgba(255, 167, 38, 0.2)',
         elevation: 1,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.1,
-        shadowRadius: 2,
+        shadowOpacity: 0.05,
+        shadowRadius: 1,
     },
-    stickyFilterButtonActive: { 
+    stickyFilterButtonActive: {
         backgroundColor: COLORS.filterButtonActive,
         borderColor: COLORS.filterButtonActive,
-        elevation: 2,
-        shadowOpacity: 0.15,
+        elevation: 1,
+        shadowOpacity: 0.08,
     },
-    stickyFilterText: { 
-        color: COLORS.filterText, 
-        fontSize: 12, 
-        fontFamily: 'PoppinsMedium', 
-        marginLeft: 4,
-        letterSpacing: 0.1,
+    stickyFilterText: {
+        color: COLORS.filterText,
+        fontSize: 10,
+        fontFamily: 'PoppinsMedium',
+        marginLeft: 3,
+        letterSpacing: 0,
     },
-    stickyFilterTextActive: { 
-        color: COLORS.filterTextActive, 
-        fontFamily: 'PoppinsBold',
+    stickyFilterTextActive: {
+        color: COLORS.filterTextActive,
+        fontFamily: 'PoppinsSemiBold',
     },
     integratedListContentContainer: {
-        paddingHorizontal: 12,
-        paddingBottom: 20,
+        paddingHorizontal: 10,
+        paddingBottom: 16,
     },
     centerContent: {
         flex: 1,
@@ -744,89 +744,89 @@ const styles = StyleSheet.create({
     statusHeaderItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: 12,
-        paddingHorizontal: 5,
-        marginTop: 12,
-        marginBottom: 6,
+        paddingVertical: 8,
+        paddingHorizontal: 4,
+        marginTop: 8,
+        marginBottom: 4,
     },
     statusHeaderText: {
-        fontSize: 16,
+        fontSize: 13,
         fontFamily: 'PoppinsSemiBold',
         color: COLORS.textHeader,
-        marginLeft: 10,
+        marginLeft: 8,
         textTransform: 'uppercase',
-        letterSpacing: 0.5,
+        letterSpacing: 0.3,
     },
     roundHeaderItem: {
-        paddingVertical: 6,
-        paddingHorizontal: 5,
-        marginTop: 4,
-        marginBottom: 4,
+        paddingVertical: 4,
+        paddingHorizontal: 4,
+        marginTop: 2,
+        marginBottom: 2,
     },
     roundHeaderContent: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        marginLeft: 10,
-        marginRight: 5,
+        marginLeft: 8,
+        marginRight: 4,
     },
     roundHeaderText: {
-        fontSize: 13,
+        fontSize: 11,
         fontFamily: 'PoppinsSemiBold',
         color: COLORS.textSecondary,
         flex: 1,
     },
     prizeText: {
-        fontSize: 11,
+        fontSize: 9,
         fontFamily: 'PoppinsMedium',
         color: COLORS.accent,
-        marginLeft: 10,
+        marginLeft: 8,
     },
     matchItemContainer: {
-        marginVertical: 6,
-        borderRadius: 12,
+        marginVertical: 3,
+        borderRadius: 8,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.08,
-        shadowRadius: 4,
-        elevation: 2,
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 2,
+        elevation: 1,
     },
     matchItemContent: {
         backgroundColor: COLORS.cardBackground,
-        paddingVertical: 12,
-        paddingHorizontal: 16,
-        borderRadius: 12,
+        paddingVertical: 8,
+        paddingHorizontal: 10,
+        borderRadius: 8,
         borderWidth: 1,
         borderColor: COLORS.cardBorder,
         overflow: 'hidden',
     },
     statusIndicatorWrapper: {
         position: 'absolute',
-        top: 8,
-        right: 8,
+        top: 6,
+        right: 6,
         zIndex: 1,
     },
     statusIndicator: {
         flexDirection: 'row',
         alignItems: 'center',
-        borderRadius: 6,
-        paddingVertical: 3,
-        paddingHorizontal: 8,
+        borderRadius: 4,
+        paddingVertical: 2,
+        paddingHorizontal: 6,
     },
     statusIndicatorText: {
         color: COLORS.white,
-        fontSize: 10,
+        fontSize: 8,
         fontFamily: 'PoppinsBold',
     },
     playerRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 8,
-        marginTop: 4,
+        marginBottom: 5,
+        marginTop: 2,
     },
     playerName: {
-        fontSize: 15,
+        fontSize: 12,
         fontFamily: 'PoppinsMedium',
         color: COLORS.textPrimary,
         flexShrink: 1,
@@ -834,30 +834,30 @@ const styles = StyleSheet.create({
     },
     playerLeft: {
         textAlign: 'left',
-        marginRight: 5,
+        marginRight: 4,
     },
     playerRight: {
         textAlign: 'right',
-        marginLeft: 5,
-        paddingRight: 50,
+        marginLeft: 4,
+        paddingRight: 40,
     },
     winnerText: {
         fontFamily: 'PoppinsBold',
         color: COLORS.score,
     },
     score: {
-        fontSize: 17,
+        fontSize: 14,
         fontFamily: 'PoppinsBold',
         color: COLORS.score,
         textAlign: 'center',
-        paddingHorizontal: 5,
+        paddingHorizontal: 4,
     },
     detailsRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginTop: 8,
-        paddingTop: 8,
+        marginTop: 5,
+        paddingTop: 5,
         borderTopColor: COLORS.cardBorder,
         borderTopWidth: 1,
     },
@@ -865,13 +865,13 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         flexShrink: 1,
-        paddingRight: 5,
+        paddingRight: 4,
     },
     detailText: {
-        fontSize: 12,
+        fontSize: 10,
         fontFamily: 'PoppinsRegular',
         color: COLORS.textSecondary,
-        marginLeft: 6,
+        marginLeft: 4,
         flexShrink: 1,
     },
 });
