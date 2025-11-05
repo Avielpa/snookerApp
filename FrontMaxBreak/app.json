@@ -31,7 +31,7 @@
         "backgroundColor": "#0f172a"
       },
       "package": "com.avielpahima.maxbreaksnooker",
-      "versionCode": 25,
+      "versionCode": 26,
       "permissions": [
         "INTERNET",
         "ACCESS_NETWORK_STATE",
