@@ -376,13 +376,13 @@ export default function RankingEnhanced() {
             <View style={styles.positionContainer}>
               <Text style={styles.position}>{item.Position}</Text>
               {positionChange !== undefined && positionChange !== 0 && (
-                <View style={[styles.changeIndicator, 
+                <View style={[styles.changeIndicator,
                   { backgroundColor: isRising ? colors.success : isFalling ? colors.error : colors.textSecondary }
                 ]}>
-                  <Ionicons 
-                    name={isRising ? 'arrow-up' : isFalling ? 'arrow-down' : 'remove'} 
-                    size={12} 
-                    color={colors.textPrimary} 
+                  <Ionicons
+                    name={isRising ? 'arrow-up' : isFalling ? 'arrow-down' : 'remove'}
+                    size={8}
+                    color={colors.textPrimary}
                   />
                   <Text style={styles.changeText}>
                     {Math.abs(positionChange || 0)}
@@ -581,25 +581,25 @@ const createRankingStyles = (colors: any) => StyleSheet.create({
     backgroundColor: 'transparent',
   },
   title: {
-    fontSize: 28,
+    fontSize: 20,
     fontFamily: 'PoppinsBold',
     textAlign: 'center',
-    marginVertical: 16,
+    marginVertical: 10,
     color: colors.textHeader,
   },
   headerContainer: {
-    paddingHorizontal: 16,
-    marginBottom: 8,
+    paddingHorizontal: 12,
+    marginBottom: 5,
   },
   searchContainer: {
-    marginBottom: 12,
+    marginBottom: 8,
   },
   searchInput: {
-    height: 44,
+    height: 36,
     backgroundColor: colors.cardBackground,
-    borderRadius: 22,
-    paddingHorizontal: 16,
-    fontSize: 16,
+    borderRadius: 18,
+    paddingHorizontal: 12,
+    fontSize: 13,
     color: colors.textPrimary,
     borderWidth: 1,
     borderColor: colors.cardBorder,
@@ -657,17 +657,17 @@ const createRankingStyles = (colors: any) => StyleSheet.create({
     paddingBottom: 20,
   },
   rankingCard: {
-    marginVertical: 6,
-    marginHorizontal: 16,
-    borderRadius: 16,
-    padding: 18,
-    borderWidth: 1,
+    marginVertical: 2,
+    marginHorizontal: 10,
+    borderRadius: 6,
+    padding: 8,
+    borderWidth: 0.5,
     borderColor: colors.cardBorder,
     shadowColor: colors.black,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 2,
+    elevation: 1,
   },
   rankingContent: {
     flexDirection: 'row',
@@ -675,67 +675,67 @@ const createRankingStyles = (colors: any) => StyleSheet.create({
   },
   positionContainer: {
     alignItems: 'center',
-    minWidth: 60,
+    minWidth: 38,
   },
   position: {
-    fontSize: 18,
+    fontSize: 13,
     fontFamily: 'PoppinsBold',
     color: colors.primary,
   },
   changeIndicator: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 10,
-    marginTop: 4,
+    paddingHorizontal: 3,
+    paddingVertical: 1,
+    borderRadius: 4,
+    marginTop: 2,
   },
   changeText: {
-    fontSize: 10,
+    fontSize: 7,
     fontFamily: 'PoppinsBold',
     color: colors.textPrimary,
-    marginLeft: 2,
+    marginLeft: 1,
   },
   playerInfo: {
     flex: 1,
-    marginLeft: 16,
+    marginLeft: 10,
   },
   playerHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   playerName: {
-    fontSize: 16,
+    fontSize: 12,
     fontFamily: 'PoppinsSemiBold',
     color: colors.textPrimary,
     flex: 1,
   },
   country: {
-    fontSize: 12,
+    fontSize: 9,
     fontFamily: 'PoppinsRegular',
     color: colors.textSecondary,
   },
   prize: {
-    fontSize: 14,
+    fontSize: 10,
     fontFamily: 'PoppinsBold',
     color: colors.success,
-    marginBottom: 8,
+    marginBottom: 3,
   },
   miniProgressTrack: {
     width: '100%',
-    height: 4,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 2,
+    height: 2,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: 1,
     overflow: 'hidden',
   },
   miniProgressFill: {
     height: '100%',
-    borderRadius: 2,
+    borderRadius: 1,
   },
   actionArrow: {
-    marginLeft: 12,
+    marginLeft: 8,
   },
   centerContent: {
     flex: 1,
