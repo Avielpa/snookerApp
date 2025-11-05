@@ -312,9 +312,13 @@ export const useHomeData = () => {
     }, []);
 
     useEffect(() => {
+        // CRITICAL FIX: Clear cache on app startup to prevent stale data display
+        logger.log('[HomeScreen] 🔄 Initial load - clearing cache to ensure fresh data');
+        forceCacheRefresh();
+
         // Log environment configuration for debugging
         logEnvironmentConfig();
-        
+
         // Run emulator diagnostics if on Android emulator
         if (isAndroidEmulator()) {
             logger.log('[HomeScreen] 📱 Android emulator detected - running diagnostics...');
@@ -329,7 +333,7 @@ export const useHomeData = () => {
                 logger.warn('[HomeScreen] Emulator diagnostics failed:', error);
             });
         }
-        
+
         // Request notification permissions on first load
         notificationManager.requestPermissions();
         loadTournamentInfo();

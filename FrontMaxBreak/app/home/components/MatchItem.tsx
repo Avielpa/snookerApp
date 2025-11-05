@@ -31,17 +31,15 @@ export const MatchItem = ({
     // Debug counter for force refresh on multiple taps
     const [debugTapCount, setDebugTapCount] = React.useState(0);
     
-    // Get formatted player names using utility function
-    const { player1Name, player2Name } = getMatchPlayerNames(item);
-    
-    // DEBUGGING APPROACH: Let's see what data we're actually getting
+    // Get formatted player names - DIRECT from backend JSON
+    const { player1Name, player2Name} = getMatchPlayerNames(item);
+
+    // Get and normalize scores - DIRECT from backend JSON
     const hasValidScores = areScoresValid(item.score1, item.score2);
     let score1 = normalizeScore(item.score1);
     let score2 = normalizeScore(item.score2);
-    
-    
-    // CORRECT WORKING LOGIC: Use the order that shows correct scores initially
-    const scoreDisplay = hasValidScores ? `${score2} - ${score1}` : 'vs';
+    const scoreDisplay = hasValidScores ? `${score1} - ${score2}` : 'vs';
+
     const scheduledDate = formatDate(item.scheduled_date);
     
     
@@ -52,27 +50,20 @@ export const MatchItem = ({
     let isPlayer1Winner = false;
     let isPlayer2Winner = false;
     
+    // Winner detection - SIMPLE and DIRECT like match details screen
     if (isMatchFinished && hasValidScores) {
-        // FIXED: Ensure type-safe winner detection with explicit boolean conversion
         const winnerId = item.winner_id;
         const player1Id = item.player1_id;
         const player2Id = item.player2_id;
-        
+
         if (winnerId && player1Id && player2Id) {
-            // Use winner_id from backend with explicit boolean conversion
-            isPlayer1Winner = Boolean(winnerId === player1Id);
-            isPlayer2Winner = Boolean(winnerId === player2Id);
+            // Use winner_id from backend
+            isPlayer1Winner = (winnerId === player1Id);
+            isPlayer2Winner = (winnerId === player2Id);
         } else {
-            // Fallback to score-based detection with explicit boolean conversion  
-            isPlayer1Winner = Boolean(score1 > score2);
-            isPlayer2Winner = Boolean(score2 > score1);
-        }
-        
-        // Additional safety check - ensure mutual exclusivity
-        if (isPlayer1Winner && isPlayer2Winner) {
-            // Reset to score-based detection as fallback
-            isPlayer1Winner = Boolean(score1 > score2);
-            isPlayer2Winner = Boolean(score2 > score1);
+            // Fallback to score comparison
+            isPlayer1Winner = (score1 > score2);
+            isPlayer2Winner = (score2 > score1);
         }
     }
     
@@ -113,29 +104,41 @@ export const MatchItem = ({
         >
             <ModernGlassCard style={styles.matchItemContainer}>
                 {item.matchCategory === 'livePlaying' && <LiveIndicator />}
-                <View style={styles.playerRow}>
-                    <Text 
-                        style={[styles.playerName, styles.playerLeft, isPlayer1Winner && styles.winnerText]} 
-                        onPress={() => handlePlayerPress(item.player1_id)} 
-                        disabled={!item.player1_id || item.player1_id === 376} 
-                        numberOfLines={1}
-                    >
-                        {player1Name}
-                    </Text>
-                    
-                    <Text style={styles.score}>
-                        {scoreDisplay}
-                        {/* Clean display - remove diagnostic after fix */}
-                    </Text>
-                    
-                    <Text 
-                        style={[styles.playerName, styles.playerRight, isPlayer2Winner && styles.winnerText]} 
-                        onPress={() => handlePlayerPress(item.player2_id)} 
-                        disabled={!item.player2_id || item.player2_id === 376} 
-                        numberOfLines={1}
-                    >
-                        {player2Name}
-                    </Text>
+
+                {/* FIXED: Same pattern as match details - separate containers */}
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
+                    {/* PLAYER 1 CONTAINER */}
+                    <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <Text
+                            style={[styles.playerName, isPlayer1Winner && styles.winnerText]}
+                            onPress={() => handlePlayerPress(item.player1_id)}
+                            disabled={!item.player1_id || item.player1_id === 376}
+                            numberOfLines={1}
+                        >
+                            {player1Name}
+                        </Text>
+                        <Text style={[styles.playerScore, isPlayer1Winner && styles.winnerText]}>
+                            {score1}
+                        </Text>
+                    </View>
+
+                    {/* VS SEPARATOR */}
+                    <Text style={styles.vsSeparator}>VS</Text>
+
+                    {/* PLAYER 2 CONTAINER */}
+                    <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <Text style={[styles.playerScore, isPlayer2Winner && styles.winnerText]}>
+                            {score2}
+                        </Text>
+                        <Text
+                            style={[styles.playerName, { textAlign: 'right' }, isPlayer2Winner && styles.winnerText]}
+                            onPress={() => handlePlayerPress(item.player2_id)}
+                            disabled={!item.player2_id || item.player2_id === 376}
+                            numberOfLines={1}
+                        >
+                            {player2Name}
+                        </Text>
+                    </View>
                 </View>
                 
                 <View style={styles.detailsRow}>
@@ -143,7 +146,7 @@ export const MatchItem = ({
                         <Ionicons name={ICONS.calendar} size={11} color={COLORS.textSecondary} />
                         <Text style={styles.detailText}>{scheduledDate}</Text>
                     </View>
-                    
+
                     {tourName && (
                         <View style={[styles.detailItem, { justifyContent: 'flex-end' }]}>
                             <Ionicons name={ICONS.trophy} size={11} color={COLORS.textSecondary} />
@@ -153,6 +156,8 @@ export const MatchItem = ({
                         </View>
                     )}
                 </View>
+
+
             </ModernGlassCard>
         </TouchableOpacity>
     );

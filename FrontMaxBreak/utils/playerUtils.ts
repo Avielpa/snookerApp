@@ -8,16 +8,21 @@ import { MATCH_CONSTANTS } from './constants';
  * @returns Formatted player name string
  */
 export function formatPlayerName(playerName: string | null | undefined, playerId: number | null | undefined): string {
+  // If player ID is 376 (TBD), always return "TBD" regardless of name
+  if (playerId === MATCH_CONSTANTS.UNKNOWN_PLAYER_ID) {
+    return MATCH_CONSTANTS.PLAYER_NAME_FALLBACK; // "TBD"
+  }
+
   // If we have a player name, use it
   if (playerName?.trim()) {
     return playerName.trim();
   }
-  
-  // If no name but valid player ID (not the unknown player ID), show player ID
-  if (playerId && playerId !== MATCH_CONSTANTS.UNKNOWN_PLAYER_ID) {
+
+  // If no name but valid player ID, show player ID
+  if (playerId) {
     return `P${playerId}`;
   }
-  
+
   // Fallback for unknown/missing players
   return MATCH_CONSTANTS.PLAYER_NAME_FALLBACK;
 }

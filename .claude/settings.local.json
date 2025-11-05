@@ -42,7 +42,16 @@
       "Bash(git submodule status:*)",
       "WebFetch(domain:github.com)",
       "Bash(git rm:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(python -m py_compile:*)",
+      "WebFetch(domain:www.iihglobal.com)",
+      "WebFetch(domain:www.designrush.com)",
+      "Bash(npx eas-cli:*)",
+      "Bash(git log:*)",
+      "Bash(python -m json.tool:*)",
+      "Bash(find:*)",
+      "Bash(python:*)",
+      "Bash(railway --version:*)"
     ],
     "deny": [],
     "ask": [],

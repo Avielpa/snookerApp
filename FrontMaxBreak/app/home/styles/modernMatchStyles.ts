@@ -1,134 +1,130 @@
 // app/home/styles/modernMatchStyles.ts
-// MODERN HOME SCREEN STYLES - Smaller, readable, snooker-themed
+// COMPACT & COLORFUL - Small cards, white/orange text for background readability
 // NO LOGIC CHANGES - ONLY VISUAL IMPROVEMENTS
 
 import { StyleSheet } from 'react-native';
 
 export const createModernMatchStyles = (COLORS: any) => StyleSheet.create({
     // STATUS HEADER - "Playing Now", "Upcoming", "Results"
-    // Made more attractive with snooker green accent
+    // Compact with white text
     statusHeaderItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: 8,              // Reduced from 10 (smaller)
-        paddingHorizontal: 12,           // Reduced from 14 (tighter)
-        marginTop: 10,                   // Reduced from 12 (less space)
-        marginBottom: 6,
-        marginHorizontal: 12,            // Reduced from 14 (more screen space)
-        backgroundColor: 'rgba(26, 115, 58, 0.12)',  // Snooker green tint
-        borderRadius: 12,                // More rounded (modern)
-        borderLeftWidth: 4,              // Thicker for emphasis
-        borderLeftColor: '#1A733A',      // Snooker table green
+        paddingVertical: 6,              // SMALLER (was 10)
+        paddingHorizontal: 12,           // SMALLER (was 16)
+        marginTop: 8,                    // SMALLER (was 14)
+        marginBottom: 4,                 // SMALLER (was 8)
+        marginHorizontal: 8,             // SMALLER (was 10)
+        backgroundColor: '#1A733A',      // Snooker green
+        borderRadius: 10,                // SMALLER (was 16)
         elevation: 2,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.08,
-        shadowRadius: 4,
+        shadowColor: '#1A733A',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.2,
+        shadowRadius: 3,
     },
     statusHeaderText: {
-        fontSize: 13,                    // Reduced from 14 (smaller)
+        fontSize: 11,                    // SMALLER (was 14)
         fontFamily: 'PoppinsBold',
-        color: '#1A733A',                // Snooker green for headers
-        marginLeft: 8,
+        color: '#FFFFFF',                // WHITE for readability
+        marginLeft: 6,
         textTransform: 'uppercase',
-        letterSpacing: 0.8,              // More spacing for readability
+        letterSpacing: 0.8,
     },
 
     // ROUND HEADER - "Quarter-Finals", "Round 7"
-    // Subtle but clear separation
+    // Compact with white/orange text
     roundHeaderItem: {
-        paddingVertical: 6,              // Slightly more padding
-        paddingHorizontal: 12,           // Reduced from 14
-        marginTop: 8,                    // Slightly more space
-        marginBottom: 4,                 // Slightly more space
-        marginHorizontal: 12,
-        backgroundColor: 'rgba(218, 165, 32, 0.08)',  // Gold/yellow tint (snooker ball)
+        paddingVertical: 5,              // SMALLER (was 8)
+        paddingHorizontal: 10,           // SMALLER (was 14)
+        marginTop: 6,                    // SMALLER (was 12)
+        marginBottom: 3,                 // SMALLER (was 6)
+        marginHorizontal: 8,             // SMALLER (was 10)
+        backgroundColor: 'rgba(255, 143, 0, 0.15)',  // Orange tint instead of green
         borderRadius: 8,
-        borderLeftWidth: 2,
-        borderLeftColor: 'rgba(218, 165, 32, 0.5)',   // Gold accent
+        borderLeftWidth: 3,
+        borderLeftColor: '#FF8F00',      // Orange accent
     },
     roundHeaderText: {
-        fontSize: 12,                    // Reduced from 13 (smaller)
-        fontFamily: 'PoppinsSemiBold',   // Changed from Medium to SemiBold (more readable)
-        color: COLORS.textSecondary,
-        marginLeft: 4,
-        letterSpacing: 0.3,
-        opacity: 0.9,
+        fontSize: 11,                    // SMALLER (was 13)
+        fontFamily: 'PoppinsSemiBold',
+        color: '#FFFFFF',                // WHITE text (not dark!)
+        marginLeft: 5,
+        letterSpacing: 0.4,
     },
 
-    // MATCH CARD CONTAINER - Smaller with better spacing
+    // MATCH CARD CONTAINER - MUCH smaller margins
     matchItemContainer: {
-        marginVertical: 4,               // Slightly increased from 3 (breathing room)
-        marginHorizontal: 12,            // Reduced from 14 (more screen space)
+        marginVertical: 3,               // SMALLER (was 6)
+        marginHorizontal: 8,             // SMALLER (was 10)
     },
 
-    // PLAYER ROW - Cleaner, more readable
+    // PLAYER ROW - Compact
     playerRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 8,                 // Increased from 6 (better separation)
-        marginTop: 4,                    // Increased from 2 (breathing room)
+        marginBottom: 6,                 // SMALLER (was 10)
+        marginTop: 2,                    // SMALLER (was 4)
+        direction: 'ltr',                // FORCE LEFT-TO-RIGHT
     },
 
-    // PLAYER NAMES - Slightly smaller but VERY readable
+    // PLAYER NAMES - Clean, readable
     playerName: {
-        fontSize: 13,                    // Reduced from 14 (smaller but still readable)
+        fontSize: 13,
         fontFamily: 'PoppinsSemiBold',
-        color: COLORS.textPrimary,
+        color: '#FFFFFF',
         flexShrink: 1,
-        flexBasis: '40%',                // Slightly wider from 38% (more space for names)
-        lineHeight: 17,                  // Reduced from 18 (tighter)
-    },
-    playerLeft: {
-        textAlign: 'left',
-        marginRight: 6
-    },
-    playerRight: {
-        textAlign: 'right',
-        marginLeft: 6,
+        maxWidth: '70%',
     },
 
-    // WINNER - Bright snooker green
+    // PLAYER SCORE - Bold and prominent, clearly separated
+    playerScore: {
+        fontSize: 18,
+        fontFamily: 'PoppinsBold',
+        color: '#FF8F00',
+        minWidth: 28,
+        textAlign: 'center',
+    },
+
+    // WINNER - BRIGHT ORANGE for both name and score
     winnerText: {
         fontFamily: 'PoppinsBold',
-        color: '#1A733A',                // Snooker green instead of generic green
+        color: '#FF8F00',
     },
 
-    // SCORE - Clear and prominent
-    score: {
-        fontSize: 18,                    // Increased from 16 (more prominent)
-        fontFamily: 'PoppinsBold',
-        color: COLORS.score,
-        textAlign: 'center',
-        paddingHorizontal: 8,            // Increased from 6 (more breathing room)
-        minWidth: 50,                    // Increased from 45 (better alignment)
+    // VS SEPARATOR - Small and subtle
+    vsSeparator: {
+        fontSize: 11,
+        fontFamily: 'PoppinsSemiBold',
+        color: 'rgba(255, 255, 255, 0.4)',
+        marginHorizontal: 12,
     },
 
-    // DETAILS ROW - Cleaner separator, smaller text
+    // DETAILS ROW - Compact with subtle separator
     detailsRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginTop: 8,                    // Increased from 6 (more separation)
-        paddingTop: 8,                   // Increased from 6 (clearer boundary)
-        borderTopColor: 'rgba(218, 165, 32, 0.15)',  // Gold tint separator
-        borderTopWidth: 1,               // Increased from 0.5 (more visible)
+        marginTop: 6,                    // SMALLER (was 10)
+        paddingTop: 6,                   // SMALLER (was 10)
+        borderTopColor: 'rgba(255, 255, 255, 0.15)',  // White separator (not black!)
+        borderTopWidth: 1,
     },
     detailItem: {
         flexDirection: 'row',
         alignItems: 'center',
         flexShrink: 1,
-        paddingRight: 6,                 // Increased from 4 (better spacing)
+        paddingRight: 6,
     },
 
-    // DETAIL TEXT - Smaller but very readable
+    // DETAIL TEXT - SMALLER, WHITE color (no grey!)
     detailText: {
-        fontSize: 11,                    // Reduced from 12 (smaller)
-        fontFamily: 'PoppinsRegular',    // Changed from SemiBold (lighter weight)
-        color: COLORS.textSecondary,     // Changed from textPrimary (softer)
+        fontSize: 10,                    // SMALLER (was 11.5)
+        fontFamily: 'PoppinsRegular',
+        color: '#FFFFFF',                // WHITE (not grey!) for readability
         marginLeft: 4,
         flexShrink: 1,
-        opacity: 0.85,                   // Reduced from 0.9 (softer)
+        opacity: 0.8,                    // Slightly transparent for hierarchy
     },
 });

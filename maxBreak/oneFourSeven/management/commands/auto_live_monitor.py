@@ -455,7 +455,7 @@ class Command(BaseCommand):
                 # Update players (might have new data after tournament)
                 try:
                     self.stdout.write(f'[PLAYERS] Updating players after {tournament.Name}')
-                    
+
                     # Update different player categories based on tournament type
                     if tournament.Tour == 'womens':
                         call_command('update_players', '--status', 'pro', '--sex', 'women')
@@ -464,12 +464,20 @@ class Command(BaseCommand):
                     else:
                         # Main tour - update professional men
                         call_command('update_players', '--status', 'pro', '--sex', 'men')
-                    
+
                     self.stdout.write(f'[SUCCESS] Updated players after {tournament.Name}')
-                    
+
                 except Exception as e:
                     self.stdout.write(f'[WARNING] Failed to update players: {str(e)}')
-                
+
+                # Update player details (photos and match history) for top players
+                try:
+                    self.stdout.write(f'[PLAYER_DETAILS] Updating top 50 player photos and match history')
+                    call_command('update_player_details', '--top', '50', '--seasons', '2')
+                    self.stdout.write(f'[SUCCESS] Updated player details')
+                except Exception as e:
+                    self.stdout.write(f'[WARNING] Failed to update player details: {str(e)}')
+
                 # Mark tournament as processed to avoid duplicate updates
                 self.processed_tournament_ends.add(tournament.ID)
                 

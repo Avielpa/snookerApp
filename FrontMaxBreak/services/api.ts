@@ -70,6 +70,8 @@ class APICache {
     
     // Sync match data between different endpoints to ensure consistency
     private syncMatchData(key: string, data: any) {
+        // DISABLED - causes score swapping issues
+        return;
         try {
             // If caching individual match details (REVERSE SYNC: individual → tournament)
             if (key.startsWith('get:matches/') && data && typeof data === 'object' && data.api_match_id) {
@@ -94,19 +96,16 @@ class APICache {
                                 const oldScores = `${tournamentMatches[i].score1}-${tournamentMatches[i].score2}`;
                                 const newScores = `${data.score1}-${data.score2}`;
                                 
-                                // TEMPORARY: Re-enable cache sync to understand original issue
-                                if (oldScores !== newScores || tournamentMatches[i].status_code !== data.status_code) {
-                                    const isDevice = typeof navigator !== 'undefined' && /Mobile|Android|iPhone|iPad/.test(navigator.userAgent);
-                                    const deviceType = isDevice ? 'DEVICE' : 'EMULATOR';
-                                    
-                                    logger.log(`[${deviceType} Cache] 🔄 REVERSE SYNC: Match ${data.api_match_id} - ${oldScores} → ${newScores}`);
-                                    
-                                    // SCORE PRESERVATION FIX: Sync everything EXCEPT scores
-                                    // Display logic works with original score order, so preserve it
-                                    const { score1, score2, ...dataWithoutScores } = data;
-                                    tournamentMatches[i] = { ...tournamentMatches[i], ...dataWithoutScores };
-                                    wasUpdated = true;
-                                }
+                                // CACHE SYNC: ALWAYS update with fresh individual match data
+                                // Don't merge - REPLACE completely to avoid stale data
+                                const isDevice = typeof navigator !== 'undefined' && /Mobile|Android|iPhone|iPad/.test(navigator.userAgent);
+                                const deviceType = isDevice ? 'DEVICE' : 'EMULATOR';
+
+                                logger.log(`[${deviceType} Cache] 🔄 REVERSE SYNC: Match ${data.api_match_id} - Replacing with fresh data`);
+
+                                // REPLACE the entire match with fresh data from individual match endpoint
+                                tournamentMatches[i] = data;
+                                wasUpdated = true;
                                 break;
                             }
                         }
@@ -250,12 +249,12 @@ const api: AxiosInstance = axios.create({
 api.interceptors.request.use(async (config) => {
     logger.debug(`[API Request] ${config.method?.toUpperCase()} ${config.url}`);
     logger.debug(`[API Request] Base URL: ${config.baseURL}`);
-    
-    // Check cache for GET requests only
-    if (config.method?.toLowerCase() === 'get' && config.url) {
+
+    // Check cache for GET requests only (UNLESS skipCache is set)
+    if (config.method?.toLowerCase() === 'get' && config.url && !(config as any).skipCache) {
         const cacheKey = `${config.method}:${config.url}`;
         const cachedData = apiCache.get(cacheKey);
-        
+
         if (cachedData) {
             logger.debug(`[API Cache] Cache HIT for ${cacheKey}`);
             // Return cached response by creating a fake response object
@@ -269,8 +268,10 @@ api.interceptors.request.use(async (config) => {
         } else {
             logger.debug(`[API Cache] Cache MISS for ${cacheKey}`);
         }
+    } else if ((config as any).skipCache) {
+        logger.log(`[API Cache] SKIPPING cache for ${config.url} (skipCache=true)`);
     }
-    
+
     return config;
 }, (error) => {
     logger.error("[API Request Error]:", error);
@@ -281,14 +282,14 @@ api.interceptors.response.use(
     (response) => {
         logger.debug(`[API Response] ${response.status} ${response.config.url}`);
         logger.debug(`[API Response] Data length: ${JSON.stringify(response.data).length} characters`);
-        
-        // Cache GET responses for future use
-        if (response.config.method?.toLowerCase() === 'get' && response.config.url) {
+
+        // Cache GET responses for future use (UNLESS skipCache is set)
+        if (response.config.method?.toLowerCase() === 'get' && response.config.url && !(response.config as any).skipCache) {
             const cacheKey = `${response.config.method}:${response.config.url}`;
-            
+
             // Use different TTL based on endpoint type
             let ttl = 30000; // Default 30 seconds
-            
+
             if (response.config.url.includes('/events/')) {
                 ttl = 45000; // Tournament details: 45 seconds (slightly shorter for better consistency)
             } else if (response.config.url.includes('/matches/')) {
@@ -296,11 +297,13 @@ api.interceptors.response.use(
             } else if (response.config.url.includes('/rankings/')) {
                 ttl = 300000; // Rankings: 5 minutes (unchanged)
             }
-            
+
             apiCache.set(cacheKey, response.data, ttl);
             logger.debug(`[API Cache] Cached response for ${cacheKey} (TTL: ${ttl}ms)`);
+        } else if ((response.config as any).skipCache) {
+            logger.log(`[API Cache] NOT caching response for ${response.config.url} (skipCache=true)`);
         }
-        
+
         return response;
     },
     (error) => {

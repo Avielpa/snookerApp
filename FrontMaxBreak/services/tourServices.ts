@@ -437,9 +437,10 @@ export const getTournamentMatches = async (eventId: number | string | undefined 
     
     const urlPath = `events/${numericEventId}/matches/`;
     logger.debug(`[TourService] Fetching tournament matches from: ${urlPath} (attempt ${retryAttempts + 1}/${maxRetries + 1})`);
-    
+
     try {
-        const response = await api.get<Match[]>(urlPath);
+        // FORCE FRESH DATA - skip cache to prevent stale data display
+        const response = await api.get<Match[]>(urlPath, { skipCache: true });
         
         if (Array.isArray(response.data)) {
             logger.debug(`[TourService] Successfully fetched ${response.data.length} matches for event ${numericEventId}.`);

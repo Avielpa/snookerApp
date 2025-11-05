@@ -30,7 +30,7 @@ import {
   StatsTab, 
   H2HTab 
 } from './components';
-import { createMatchStyles } from './styles';
+import { createMatchStyles } from './styles-modern';
 import { parseFrameScoresString } from './utils/frameScoreParser';
 
 

@@ -40,17 +40,17 @@ export const ModernGlassCard: React.FC<ModernGlassCardProps> = ({ children, styl
 
 const styles = StyleSheet.create({
   outerContainer: {
-    borderRadius: 14,              // Slightly reduced from 16 (tighter)
+    borderRadius: 12,              // Smaller, tighter radius
     overflow: 'hidden',
     borderWidth: 1,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },  // Reduced from 4 (subtler)
-    shadowOpacity: 0.08,           // Reduced from 0.1 (lighter shadow)
-    shadowRadius: 8,               // Reduced from 12 (tighter)
-    elevation: 3,                  // Reduced from 5 (less prominent)
+    shadowOffset: { width: 0, height: 2 },  // Subtle shadow
+    shadowOpacity: 0.1,            // Lighter shadow
+    shadowRadius: 6,               // Tighter
+    elevation: 3,                  // Less elevated (smaller cards)
   },
   gradient: {
-    padding: 12,                   // Reduced from 16 (SMALLER CARDS!)
+    padding: 10,                   // MUCH SMALLER padding (was 14)
   },
 });
 
