@@ -249,18 +249,22 @@ export default function PlayerDetailsScreen(): React.ReactElement {
 
     // Fetch player match history
     const fetchPlayerMatches = useCallback(async () => {
-        if (!playerId) return;
+        if (!playerId) {
+            setMatches([]);
+            setMatchesLoading(false);
+            return;
+        }
 
         setMatchesLoading(true);
         setMatchesError(null);
 
-        // Add a safety timeout to prevent infinite loading
+        // Add a safety timeout to prevent infinite loading/freezing
         const timeoutId = setTimeout(() => {
             logger.error(`[PlayerProfile] Match history fetch timed out for player ${playerId}`);
             setMatchesLoading(false);
-            setMatchesError('Request timed out. Please check your connection and try again.');
-            setMatches([]);
-        }, 35000); // 35 second timeout (slightly longer than API timeout)
+            setMatchesError(null); // Don't show error
+            setMatches([]); // Show empty state instead
+        }, 20000); // 20 second timeout
 
         try {
             logger.log(`[PlayerProfile] Fetching match history for player ${playerId}`);
@@ -268,7 +272,7 @@ export default function PlayerDetailsScreen(): React.ReactElement {
 
             clearTimeout(timeoutId); // Clear timeout if request completes
 
-            // matchData will always be an object with matches array, never null
+            // Always handle as safe - matchData should never be null from service
             if (matchData && matchData.matches && Array.isArray(matchData.matches)) {
                 setMatches(matchData.matches);
                 setMatchesError(null);

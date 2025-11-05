@@ -52,7 +52,8 @@
       "Bash(find:*)",
       "Bash(python:*)",
       "Bash(railway --version:*)",
-      "WebFetch(domain:railway.app)"
+      "WebFetch(domain:railway.app)",
+      "Bash(git checkout:*)"
     ],
     "deny": [],
     "ask": [],
