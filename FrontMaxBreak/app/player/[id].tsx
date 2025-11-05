@@ -479,17 +479,8 @@ export default function PlayerDetailsScreen(): React.ReactElement {
                     <Text style={styles.emptySubtext}>Match history will appear here</Text>
                 </View>
             ) : (
-                // Sort matches: Live/On Break first, then by date
-                [...matches].sort((a, b) => {
-                    // Live (1) and On Break (2) matches first
-                    if ((a.status === 1 || a.status === 2) && b.status !== 1 && b.status !== 2) return -1;
-                    if ((b.status === 1 || b.status === 2) && a.status !== 1 && a.status !== 2) return 1;
-
-                    // Then sort by date (newest first)
-                    const dateA = a.scheduled_date || a.start_date || '';
-                    const dateB = b.scheduled_date || b.start_date || '';
-                    return dateB.localeCompare(dateA);
-                }).map((match, index) => {
+                // Backend returns only finished matches (status=3), already sorted by date
+                matches.map((match, index) => {
                     const isPlayerOne = match.player1_id === playerId;
                     const playerScore = isPlayerOne ? match.score1 : match.score2;
                     const opponentScore = isPlayerOne ? match.score2 : match.score1;

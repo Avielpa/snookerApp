@@ -1412,32 +1412,25 @@ def player_match_history(request, player_id):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        # Base query
-        matches = PlayerMatchHistory.objects.filter(player_id=player_id)
+        # Base query - ONLY FINISHED MATCHES to avoid garbage data
+        # Live/upcoming matches should come from home screen API, not history
+        matches = PlayerMatchHistory.objects.filter(
+            player_id=player_id,
+            status=3  # Only finished matches
+        )
 
         # Apply filters
         season_filter = request.query_params.get('season')
         if season_filter:
             matches = matches.filter(season=season_filter)
 
+        # Status filter (but we already filter to status=3)
         status_filter = request.query_params.get('status')
         if status_filter:
             matches = matches.filter(status=status_filter)
 
-        # Order by date: live/break matches first (status 1 or 2), then latest to oldest
-        # Use Case/When to prioritize live matches (status 1,2) over finished (3) and scheduled (0)
-        from django.db.models import Case, When, IntegerField
-        matches = matches.annotate(
-            priority=Case(
-                When(status=1, then=0),  # Running - highest priority
-                When(status=2, then=1),  # On Break - second priority
-                When(status=0, then=2),  # Scheduled - third priority
-                When(status=3, then=3),  # Finished - lowest priority
-                default=4,
-                output_field=IntegerField()
-            )
-        ).order_by(
-            'priority',  # Live matches first
+        # Order by date: latest finished matches first
+        matches = matches.order_by(
             '-scheduled_date',
             '-start_date'
         )
