@@ -498,90 +498,109 @@ export default function PlayerDetailsScreen(): React.ReactElement {
                     const isFinished = match.status === 3;
                     const isLive = match.status === 1 || match.status === 2;
 
+                    // Get round name or number
+                    const getRoundDisplay = () => {
+                        if (match.round_name) return match.round_name;
+                        if (match.round_number) {
+                            const roundNames: { [key: number]: string } = {
+                                1: 'Qualifiers', 2: 'Qualifiers', 3: 'Qualifiers', 4: 'Qualifiers',
+                                5: 'Last 128', 6: 'Last 64', 7: 'Last 32', 8: 'Last 16',
+                                9: 'Quarter-Final', 10: 'Semi-Final', 11: 'Final'
+                            };
+                            return roundNames[match.round_number] || `Round ${match.round_number}`;
+                        }
+                        return null;
+                    };
+
                     return (
                         <GlassCard key={`${match.api_match_id}-${index}`} style={{
-                            marginBottom: 12,
-                            borderLeftWidth: isLive ? 3 : 0,
+                            marginBottom: 10,
+                            paddingVertical: 10,
+                            paddingHorizontal: 12,
+                            borderLeftWidth: isLive ? 4 : 0,
                             borderLeftColor: isLive ? '#FF3B30' : 'transparent'
                         }}>
-                            {/* Event Name with Live Badge */}
-                            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-                                {isLive && (
-                                    <View style={{
-                                        backgroundColor: '#FF3B30',
-                                        paddingHorizontal: 6,
-                                        paddingVertical: 2,
-                                        borderRadius: 4,
-                                        marginRight: 8
-                                    }}>
-                                        <Text style={{ color: '#FFF', fontSize: 9, fontWeight: 'bold' }}>LIVE</Text>
-                                    </View>
+                            {/* Header: Event + Live Badge + Round */}
+                            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                                    {isLive && (
+                                        <View style={{
+                                            backgroundColor: '#FF3B30',
+                                            paddingHorizontal: 5,
+                                            paddingVertical: 2,
+                                            borderRadius: 3,
+                                            marginRight: 6
+                                        }}>
+                                            <Text style={{ color: '#FFF', fontSize: 8, fontWeight: 'bold', letterSpacing: 0.5 }}>LIVE</Text>
+                                        </View>
+                                    )}
+                                    <Text style={{ fontSize: 11, color: COLORS.textSecondary, fontWeight: '600', flex: 1 }} numberOfLines={1}>
+                                        {match.event_name || 'Unknown Event'}
+                                    </Text>
+                                </View>
+                                {getRoundDisplay() && (
+                                    <Text style={{ fontSize: 9, color: COLORS.textMuted, marginLeft: 8 }}>
+                                        {getRoundDisplay()}
+                                    </Text>
                                 )}
-                                <Text style={[styles.sectionTitle, { fontSize: 12, marginBottom: 0, flex: 1 }]} numberOfLines={1}>
-                                    {match.event_name || 'Unknown Event'}
-                                </Text>
                             </View>
 
-                            {/* Opponent Name */}
-                            <Text style={{ fontSize: 13, color: COLORS.textSecondary, marginBottom: 8 }}>
-                                vs {opponentName || 'Unknown'}
-                            </Text>
+                            {/* Opponent + Score in one line */}
+                            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                                <Text style={{ fontSize: 13, color: COLORS.textPrimary, flex: 1, fontWeight: '500' }} numberOfLines={1}>
+                                    vs {opponentName || 'Unknown'}
+                                </Text>
 
-                            {/* Score Display */}
-                            <View style={{
-                                flexDirection: 'row',
-                                alignItems: 'center',
-                                justifyContent: 'space-between',
-                                backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                                padding: 12,
-                                borderRadius: 8,
-                                marginBottom: 8
-                            }}>
-                                <Text style={[
-                                    styles.statValue,
-                                    { fontSize: 24, fontWeight: 'bold' },
-                                    isFinished && isWinner && { color: COLORS.success },
-                                    isLive && { color: '#FF3B30' }
-                                ]}>
-                                    {playerScore ?? '-'}
-                                </Text>
-                                <Text style={{ fontSize: 16, color: COLORS.textMuted, fontWeight: 'bold' }}>-</Text>
-                                <Text style={[
-                                    styles.statValue,
-                                    { fontSize: 24, fontWeight: 'bold' },
-                                    isFinished && !isWinner && { color: COLORS.textMuted }
-                                ]}>
-                                    {opponentScore ?? '-'}
-                                </Text>
+                                {/* Compact Score */}
+                                <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 8 }}>
+                                    <Text style={[
+                                        { fontSize: 20, fontWeight: 'bold' },
+                                        isFinished && isWinner && { color: COLORS.success },
+                                        isLive && { color: '#FF3B30' },
+                                        !isFinished && !isLive && { color: COLORS.textPrimary }
+                                    ]}>
+                                        {playerScore ?? '0'}
+                                    </Text>
+                                    <Text style={{ fontSize: 14, color: COLORS.textMuted, marginHorizontal: 4, fontWeight: '600' }}>-</Text>
+                                    <Text style={[
+                                        { fontSize: 20, fontWeight: 'bold' },
+                                        isFinished && !isWinner && { color: COLORS.textMuted },
+                                        !isFinished && { color: COLORS.textPrimary }
+                                    ]}>
+                                        {opponentScore ?? '0'}
+                                    </Text>
+                                </View>
                             </View>
 
-                            {/* Match Info */}
+                            {/* Footer: Status + Date */}
                             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <View style={{
                                     backgroundColor: match.status === 1 ? '#FF3B30' :
                                                    match.status === 2 ? '#FF9500' :
                                                    match.status === 0 ? COLORS.primary :
-                                                   'rgba(255, 255, 255, 0.1)',
-                                    paddingHorizontal: 8,
-                                    paddingVertical: 4,
-                                    borderRadius: 4
+                                                   isWinner ? COLORS.success : 'rgba(255, 255, 255, 0.1)',
+                                    paddingHorizontal: 6,
+                                    paddingVertical: 3,
+                                    borderRadius: 3
                                 }}>
                                     <Text style={{
                                         color: '#FFF',
-                                        fontSize: 10,
-                                        fontWeight: '600'
+                                        fontSize: 9,
+                                        fontWeight: '700',
+                                        letterSpacing: 0.3
                                     }}>
-                                        {match.status === 0 ? 'Scheduled' :
-                                         match.status === 1 ? 'LIVE' :
-                                         match.status === 2 ? 'On Break' :
-                                         isWinner ? 'Won' : 'Lost'}
+                                        {match.status === 0 ? 'SCHEDULED' :
+                                         match.status === 1 ? 'LIVE NOW' :
+                                         match.status === 2 ? 'ON BREAK' :
+                                         isWinner ? 'WON' : 'LOST'}
                                     </Text>
                                 </View>
                                 {match.scheduled_date && (
-                                    <Text style={{ fontSize: 11, color: COLORS.textMuted }}>
+                                    <Text style={{ fontSize: 10, color: COLORS.textMuted }}>
                                         {new Date(match.scheduled_date).toLocaleDateString('en-GB', {
                                             day: 'numeric',
-                                            month: 'short'
+                                            month: 'short',
+                                            year: '2-digit'
                                         })}
                                     </Text>
                                 )}
