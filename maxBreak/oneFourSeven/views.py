@@ -22,10 +22,10 @@ from rest_framework.response import Response # Use DRF Response
 from rest_framework_simplejwt.tokens import RefreshToken
 
 # Local Imports
-from .models import MatchesOfAnEvent, Player, Ranking, Event, RoundDetails, UpcomingMatch
+from .models import MatchesOfAnEvent, Player, Ranking, Event, RoundDetails, UpcomingMatch, PlayerMatchHistory
 from .serializers import (
     EventSerializer, MatchesOfAnEventSerializer, PlayerSerializer,
-    RankingSerializer, UserSerializer
+    RankingSerializer, UserSerializer, PlayerMatchHistorySerializer
 )
 # Import specific fetch functions from the refactored scraper
 from .scraper import (
@@ -617,11 +617,37 @@ def match_detail_view(request, api_match_id):
 def player_by_id_view(request, player_id):
     """
     API endpoint that returns details for a single player, looked up by their ID.
+    Includes current season ranking position and prize money earned this year.
     """
     logger.debug(f"Request received for player ID: {player_id}")
     player_instance = get_object_or_404(Player, ID=player_id)
     serializer = PlayerSerializer(player_instance)
-    return Response(serializer.data)
+    player_data = serializer.data
+
+    # Add current season ranking information
+    current_season = datetime.now().year
+
+    # Get current ranking position (MoneyRankings type)
+    try:
+        current_ranking = Ranking.objects.filter(
+            Player_id=player_id,
+            Season=current_season,
+            Type='MoneyRankings'
+        ).first()
+
+        if current_ranking:
+            player_data['current_ranking_position'] = current_ranking.Position
+            player_data['prize_money_this_year'] = current_ranking.Sum
+        else:
+            player_data['current_ranking_position'] = None
+            player_data['prize_money_this_year'] = None
+
+    except Exception as e:
+        logger.error(f"Error fetching ranking data for player {player_id}: {e}")
+        player_data['current_ranking_position'] = None
+        player_data['prize_money_this_year'] = None
+
+    return Response(player_data)
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
@@ -1364,3 +1390,63 @@ class UserViewSet(viewsets.ModelViewSet):
     #     else:
     #          raise PermissionDenied("You do not have permission to access this user.")
 
+
+# ================== Player Match History API View ==================
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def player_match_history(request, player_id):
+    """
+    Get match history for a specific player.
+    Query parameters:
+    - limit: Number of matches to return (default: 20)
+    - season: Filter by specific season (optional)
+    - status: Filter by status (0=Scheduled, 1=Running, 2=OnBreak, 3=Finished)
+    """
+    try:
+        # Get player to ensure it exists
+        try:
+            player = Player.objects.get(ID=player_id)
+        except Player.DoesNotExist:
+            return Response(
+                {'error': f'Player {player_id} not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # Base query
+        matches = PlayerMatchHistory.objects.filter(player_id=player_id)
+
+        # Apply filters
+        season_filter = request.query_params.get('season')
+        if season_filter:
+            matches = matches.filter(season=season_filter)
+
+        status_filter = request.query_params.get('status')
+        if status_filter:
+            matches = matches.filter(status=status_filter)
+
+        # Order by date: live matches first, then latest to oldest
+        matches = matches.order_by(
+            '-status',  # Running matches (1) first
+            '-scheduled_date',
+            '-start_date'
+        )
+
+        # Apply limit
+        limit = int(request.query_params.get('limit', 20))
+        matches = matches[:limit]
+
+        # Serialize
+        serializer = PlayerMatchHistorySerializer(matches, many=True)
+
+        return Response({
+            'player_id': player_id,
+            'player_name': str(player),
+            'matches': serializer.data
+        })
+
+    except Exception as e:
+        logger.error(f'Error fetching match history for player {player_id}: {str(e)}')
+        return Response(
+            {'error': 'Failed to fetch match history'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )

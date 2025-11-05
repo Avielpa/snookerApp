@@ -16,6 +16,9 @@ export interface Player {
     LastSeasonAsPro?: number | null;
     NumRankingTitles?: number | null;
     NumMaximums?: number | null;
+    Photo?: string | null;
+    current_ranking_position?: number | null;
+    prize_money_this_year?: number | null;
 }
 
 export interface Ranking {
@@ -581,6 +584,110 @@ export const getHeadToHead = async (player1Id: number | string | undefined | nul
         } else {
              logger.error(`[MatchService] Error fetching H2H for ${p1Numeric} vs ${p2Numeric} (Status: ${status}):`, errorData || error.message);
              return null; // Return null on other errors
+        }
+    }
+};
+
+// ===================== PLAYER MATCH HISTORY =====================
+
+export interface PlayerMatchHistoryItem {
+    api_match_id: number;
+    event_id?: number | null;
+    event_name?: string | null;
+    round_number?: number | null;
+    round_name?: string | null;
+    player1_id?: number | null;
+    player1_name?: string | null;
+    score1?: number | null;
+    player2_id?: number | null;
+    player2_name?: string | null;
+    score2?: number | null;
+    winner_id?: number | null;
+    status: number;
+    scheduled_date?: string | null;
+    start_date?: string | null;
+    end_date?: string | null;
+    season?: number | null;
+}
+
+export interface PlayerMatchHistoryResponse {
+    player_id: number;
+    player_name: string;
+    matches: PlayerMatchHistoryItem[];
+}
+
+/**
+ * Fetches match history for a specific player
+ * @param playerId - The ID of the player
+ * @param limit - Number of matches to return (default: 20)
+ * @returns Player match history response or null if error
+ */
+export const getPlayerMatchHistory = async (
+    playerId: number | string,
+    limit: number = 20
+): Promise<PlayerMatchHistoryResponse | null> => {
+    try {
+        const playerIdNum = typeof playerId === 'string' ? parseInt(playerId, 10) : playerId;
+
+        if (isNaN(playerIdNum) || playerIdNum <= 0) {
+            logger.error(`[MatchService] Invalid player ID for match history: ${playerId}`);
+            return {
+                player_id: playerIdNum,
+                player_name: 'Unknown',
+                matches: []
+            };
+        }
+
+        logger.log(`[MatchService] Fetching match history for player ${playerIdNum}, limit=${limit}`);
+
+        const response = await api.get<PlayerMatchHistoryResponse>(
+            `/players/${playerIdNum}/matches/`,
+            {
+                params: { limit },
+                timeout: 15000 // 15 second timeout for match history
+            }
+        );
+
+        if (response.data && Array.isArray(response.data.matches)) {
+            logger.log(`[MatchService] Successfully fetched ${response.data.matches.length} matches for player ${playerIdNum}`);
+            return response.data;
+        } else {
+            logger.warn(`[MatchService] Unexpected data format for player ${playerIdNum} match history:`, response.data);
+            // Return empty instead of null to prevent crash
+            return {
+                player_id: playerIdNum,
+                player_name: 'Unknown',
+                matches: []
+            };
+        }
+    } catch (error: any) {
+        const status = error.response?.status;
+        const errorData = error.response?.data;
+        const isTimeout = error.code === 'ECONNABORTED' || error.message?.includes('timeout');
+
+        // Handle all error cases gracefully - return empty matches instead of null
+        if (status === 404 || !status) {
+            logger.log(`[MatchService] Match history endpoint not available or player ${playerId} not found (404/Network error). Returning empty matches.`);
+            return {
+                player_id: typeof playerId === 'number' ? playerId : parseInt(playerId, 10),
+                player_name: 'Unknown',
+                matches: []
+            };
+        } else if (isTimeout) {
+            logger.error(`[MatchService] Timeout fetching match history for player ${playerId}`);
+            return {
+                player_id: typeof playerId === 'number' ? playerId : parseInt(playerId, 10),
+                player_name: 'Unknown',
+                matches: []
+            };
+        } else {
+            logger.error(`[MatchService] Error fetching match history for player ${playerId} (Status: ${status}):`, errorData || error.message);
+            // Still return empty matches to prevent crash
+            return {
+                player_id: typeof playerId === 'number' ? playerId : parseInt(playerId, 10),
+                player_name: 'Unknown',
+                matches: []
+            };
         }
     }
 };

@@ -3,7 +3,7 @@ from rest_framework import serializers
 from django.contrib.auth.models import User # Default Django user model
 
 # Import your application's models
-from .models import Event, Player, Ranking, MatchesOfAnEvent
+from .models import Event, Player, Ranking, MatchesOfAnEvent, PlayerMatchHistory
 
 class PlayerSerializer(serializers.ModelSerializer):
     """
@@ -142,6 +142,34 @@ class UserSerializer(serializers.ModelSerializer):
         # Ensure sensitive fields are never included
         # exclude = ['password', 'user_permissions', 'groups', 'is_superuser'] # Alternative to 'fields'
 
+
+class PlayerMatchHistorySerializer(serializers.ModelSerializer):
+    """
+    Serializes PlayerMatchHistory model instances.
+    Used for displaying player match history on player profile screen.
+    """
+    class Meta:
+        model = PlayerMatchHistory
+        fields = [
+            'api_match_id',
+            'event_id',
+            'event_name',
+            'round_number',
+            'round_name',
+            'player1_id',
+            'player1_name',
+            'score1',
+            'player2_id',
+            'player2_name',
+            'score2',
+            'winner_id',
+            'status',
+            'scheduled_date',
+            'start_date',
+            'end_date',
+            'season',
+        ]
+        read_only_fields = ['api_match_id', 'event_id', 'event_name']
 
 
 

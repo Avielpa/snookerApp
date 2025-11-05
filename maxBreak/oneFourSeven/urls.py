@@ -18,6 +18,7 @@ from .views import (
     match_detail_view, # Uses api_match_id
     h2h_view,          # Head-to-head view
     tour_details_view, # External API proxy for event details
+    player_match_history,  # Player match history
     # Debug Views
     debug_status_view,
     tours_by_status_view,
@@ -59,6 +60,8 @@ urlpatterns = [
     path('players/<str:sex>/', PlayerList.as_view(), name='player-list-by-sex'),
     # Get details for a specific player by their ID
     path('players/detail/<int:player_id>/', player_by_id_view, name='player-detail'),
+    # Get match history for a specific player
+    path('players/<int:player_id>/matches/', player_match_history, name='player-match-history'),
 
     # --- Event & Match URLs ---
     # List all events

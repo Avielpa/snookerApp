@@ -63,6 +63,10 @@ class Player(models.Model):
         null=True, blank=True,
         help_text="Number of official 147 breaks"
     )
+    Photo = models.URLField(
+        max_length=500, null=True, blank=True,
+        help_text="Player photo URL from snooker.org"
+    )
 
     def __str__(self) -> str:
         """String representation of the Player object, typically the full name."""
@@ -761,3 +765,84 @@ class UpcomingMatch(models.Model):
             models.Index(fields=['event_id', 'round_number']),
             models.Index(fields=['created_at']),
         ]
+
+
+# ================== Player Match History Model ==================
+class PlayerMatchHistory(models.Model):
+    """
+    Stores match history for players (API t=8).
+    Lightweight model optimized for player profile display.
+    Separate from MatchesOfAnEvent to avoid interfering with event pipelines.
+    """
+    # Match identification
+    api_match_id = models.BigIntegerField(
+        help_text="Match ID from API"
+    )
+    player_id = models.IntegerField(
+        db_index=True,
+        help_text="Player ID this match belongs to"
+    )
+
+    # Event info
+    event_id = models.IntegerField(
+        null=True, blank=True,
+        help_text="Tournament/Event ID"
+    )
+    event_name = models.CharField(
+        max_length=255, null=True, blank=True,
+        help_text="Tournament name (denormalized for faster display)"
+    )
+
+    # Match details
+    round_number = models.IntegerField(null=True, blank=True)
+    round_name = models.CharField(
+        max_length=100, null=True, blank=True,
+        help_text="Round name like 'Final', 'Semi-Final'"
+    )
+
+    # Players
+    player1_id = models.IntegerField(null=True, blank=True)
+    player1_name = models.CharField(max_length=255, null=True, blank=True)
+    score1 = models.IntegerField(null=True, blank=True)
+
+    player2_id = models.IntegerField(null=True, blank=True)
+    player2_name = models.CharField(max_length=255, null=True, blank=True)
+    score2 = models.IntegerField(null=True, blank=True)
+
+    # Result
+    winner_id = models.IntegerField(null=True, blank=True)
+    status = models.IntegerField(
+        default=0,
+        help_text="0=Scheduled, 1=Running, 2=OnBreak, 3=Finished"
+    )
+
+    # Dates
+    scheduled_date = models.DateTimeField(null=True, blank=True)
+    start_date = models.DateTimeField(null=True, blank=True)
+    end_date = models.DateTimeField(null=True, blank=True)
+
+    # Season
+    season = models.IntegerField(
+        null=True, blank=True,
+        help_text="Season year (e.g. 2024 for 2024/2025 season)"
+    )
+
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.player1_name} vs {self.player2_name} - {self.event_name}"
+
+    class Meta:
+        verbose_name = "Player Match History"
+        verbose_name_plural = "Player Match Histories"
+        ordering = ['-scheduled_date', '-start_date']
+        indexes = [
+            models.Index(fields=['player_id', '-scheduled_date']),
+            models.Index(fields=['player_id', 'season']),
+            models.Index(fields=['status', 'scheduled_date']),
+            models.Index(fields=['api_match_id']),
+        ]
+        # Ensure unique matches per player
+        unique_together = [['api_match_id', 'player_id']]

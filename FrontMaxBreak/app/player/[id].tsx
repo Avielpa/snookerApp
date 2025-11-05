@@ -3,18 +3,18 @@ import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import {
     View,
     Text,
-    StyleSheet,
     ScrollView,
     TouchableOpacity,
     RefreshControl,
 } from 'react-native';
 import { useLocalSearchParams, Stack } from 'expo-router';
-import { getPlayerDetails } from '../../services/matchServices';
+import { getPlayerDetails, getPlayerMatchHistory, PlayerMatchHistoryItem, PlayerMatchHistoryResponse } from '../../services/matchServices';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { logger } from '../../utils/logger';
 import { useColors } from '../../contexts/ThemeContext';
+import { createPlayerStyles } from './styles-modern';
 
 
 // Enhanced interfaces
@@ -31,6 +31,8 @@ interface PlayerData {
     LastSeasonAsPro?: number | null;
     NumRankingTitles?: number | null;
     NumMaximums?: number | null;
+    current_ranking_position?: number | null;
+    prize_money_this_year?: number | null;
 }
 
 interface TabConfig {
@@ -64,6 +66,7 @@ const usePlayerColors = () => {
 // Tab configuration
 const TABS: TabConfig[] = [
     { id: 'overview', title: 'Overview', icon: 'person-outline' },
+    { id: 'matches', title: 'Matches', icon: 'tennisball-outline' },
     { id: 'stats', title: 'Statistics', icon: 'stats-chart-outline' },
     { id: 'career', title: 'Career', icon: 'trophy-outline' },
 ];
@@ -90,6 +93,9 @@ export default function PlayerDetailsScreen(): React.ReactElement {
     const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<string>('overview');
+    const [matches, setMatches] = useState<PlayerMatchHistoryItem[]>([]);
+    const [matchesLoading, setMatchesLoading] = useState(false);
+    const [matchesError, setMatchesError] = useState<string | null>(null);
     const COLORS = usePlayerColors();
 
     // Create styles with dynamic colors
@@ -241,6 +247,56 @@ export default function PlayerDetailsScreen(): React.ReactElement {
         fetchPlayerData();
     }, [fetchPlayerData]);
 
+    // Fetch player match history
+    const fetchPlayerMatches = useCallback(async () => {
+        if (!playerId) return;
+
+        setMatchesLoading(true);
+        setMatchesError(null);
+
+        // Add a safety timeout to prevent infinite loading
+        const timeoutId = setTimeout(() => {
+            logger.error(`[PlayerProfile] Match history fetch timed out for player ${playerId}`);
+            setMatchesLoading(false);
+            setMatchesError('Request timed out. Please check your connection and try again.');
+            setMatches([]);
+        }, 35000); // 35 second timeout (slightly longer than API timeout)
+
+        try {
+            logger.log(`[PlayerProfile] Fetching match history for player ${playerId}`);
+            const matchData = await getPlayerMatchHistory(playerId, 20);
+
+            clearTimeout(timeoutId); // Clear timeout if request completes
+
+            // matchData will always be an object with matches array, never null
+            if (matchData && matchData.matches && Array.isArray(matchData.matches)) {
+                setMatches(matchData.matches);
+                setMatchesError(null);
+                logger.log(`[PlayerProfile] Successfully loaded ${matchData.matches.length} matches`);
+            } else {
+                // Fallback to empty if something unexpected happens
+                logger.warn(`[PlayerProfile] Unexpected match data format for player ${playerId}`);
+                setMatches([]);
+                setMatchesError(null);
+            }
+        } catch (err: any) {
+            // This should rarely happen now since getPlayerMatchHistory handles errors
+            clearTimeout(timeoutId);
+            logger.error(`[PlayerProfile] Unexpected error loading matches for player ${playerId}:`, err);
+            setMatches([]);
+            setMatchesError(null); // Don't show error, just show empty state
+        } finally {
+            setMatchesLoading(false);
+        }
+    }, [playerId]);
+
+    // Fetch matches when matches tab is active
+    useEffect(() => {
+        if (activeTab === 'matches' && matches.length === 0 && !matchesLoading) {
+            fetchPlayerMatches();
+        }
+    }, [activeTab, fetchPlayerMatches, matches.length, matchesLoading]);
+
     // Tab content renderers
     const renderOverviewContent = () => (
         <View style={styles.tabContent}>
@@ -256,6 +312,22 @@ export default function PlayerDetailsScreen(): React.ReactElement {
                     title="Maximum Breaks"
                     value={player?.NumMaximums || 0}
                     subtitle="147 breaks"
+                />
+            </View>
+
+            {/* Ranking & Money Cards */}
+            <View style={styles.statsGrid}>
+                <StatCard
+                    icon="podium-outline"
+                    title="World Ranking"
+                    value={player?.current_ranking_position ? `#${player.current_ranking_position}` : 'N/A'}
+                    subtitle="Current season"
+                />
+                <StatCard
+                    icon="cash-outline"
+                    title="Prize Money"
+                    value={player?.prize_money_this_year ? `£${(player.prize_money_this_year / 1000).toFixed(0)}k` : 'N/A'}
+                    subtitle="This season"
                 />
             </View>
 
@@ -382,10 +454,96 @@ export default function PlayerDetailsScreen(): React.ReactElement {
         </View>
     );
 
+    const renderMatchesContent = () => (
+        <View style={styles.tabContent}>
+            {matchesLoading ? (
+                <View style={styles.emptyState}>
+                    <Text style={styles.emptyText}>Loading matches...</Text>
+                </View>
+            ) : matchesError ? (
+                <View style={styles.emptyState}>
+                    <Ionicons name="alert-circle-outline" size={40} color={COLORS.error} />
+                    <Text style={styles.emptyText}>Failed to load matches</Text>
+                    <Text style={styles.emptySubtext}>{matchesError}</Text>
+                    <TouchableOpacity
+                        onPress={() => fetchPlayerMatches()}
+                        style={{ marginTop: 12, padding: 8, backgroundColor: COLORS.primary, borderRadius: 8 }}
+                    >
+                        <Text style={{ color: COLORS.textPrimary }}>Retry</Text>
+                    </TouchableOpacity>
+                </View>
+            ) : matches.length === 0 ? (
+                <View style={styles.emptyState}>
+                    <Ionicons name="calendar-outline" size={40} color="rgba(255, 255, 255, 0.5)" />
+                    <Text style={styles.emptyText}>No recent matches found</Text>
+                    <Text style={styles.emptySubtext}>Match history will appear here</Text>
+                </View>
+            ) : (
+                matches.map((match, index) => {
+                    const isPlayerOne = match.player1_id === playerId;
+                    const playerScore = isPlayerOne ? match.score1 : match.score2;
+                    const opponentScore = isPlayerOne ? match.score2 : match.score1;
+                    const opponentName = isPlayerOne ? match.player2_name : match.player1_name;
+                    const isWinner = match.winner_id === playerId;
+                    const isFinished = match.status === 3;
+
+                    return (
+                        <GlassCard key={`${match.api_match_id}-${index}`} style={{ marginBottom: 8 }}>
+                            {/* Event Name */}
+                            <Text style={[styles.sectionTitle, { fontSize: 10, marginBottom: 6, paddingBottom: 4 }]}>
+                                {match.event_name || 'Unknown Event'}
+                            </Text>
+
+                            {/* Score Display */}
+                            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                                <View style={{ flex: 1 }}>
+                                    <Text style={[styles.infoValue, { fontSize: 10, color: 'rgba(255, 255, 255, 0.7)' }]}>
+                                        vs {opponentName || 'Unknown'}
+                                    </Text>
+                                </View>
+                                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                    <Text style={[
+                                        styles.statValue,
+                                        { fontSize: 16, marginRight: 5 },
+                                        isFinished && isWinner && { color: '#FF8F00' }
+                                    ]}>
+                                        {playerScore ?? '-'}
+                                    </Text>
+                                    <Text style={{ fontSize: 12, color: 'rgba(255, 255, 255, 0.4)', marginHorizontal: 4 }}>-</Text>
+                                    <Text style={[
+                                        styles.statValue,
+                                        { fontSize: 16, marginLeft: 5 },
+                                        isFinished && !isWinner && { color: 'rgba(255, 255, 255, 0.5)' }
+                                    ]}>
+                                        {opponentScore ?? '-'}
+                                    </Text>
+                                </View>
+                            </View>
+
+                            {/* Match Info */}
+                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 }}>
+                                <Text style={[styles.statSubtitle, { fontSize: 9 }]}>
+                                    {match.status === 0 ? 'Scheduled' : match.status === 1 ? 'Live' : match.status === 2 ? 'On Break' : 'Finished'}
+                                </Text>
+                                {match.scheduled_date && (
+                                    <Text style={[styles.statSubtitle, { fontSize: 9 }]}>
+                                        {new Date(match.scheduled_date).toLocaleDateString()}
+                                    </Text>
+                                )}
+                            </View>
+                        </GlassCard>
+                    );
+                })
+            )}
+        </View>
+    );
+
     const renderTabContent = () => {
         switch (activeTab) {
             case 'overview':
                 return renderOverviewContent();
+            case 'matches':
+                return renderMatchesContent();
             case 'stats':
                 return renderStatsContent();
             case 'career':
@@ -521,357 +679,3 @@ export default function PlayerDetailsScreen(): React.ReactElement {
         </SafeAreaView>
     );
 }
-
-// Dynamic styles function
-const createPlayerStyles = (COLORS: any) => StyleSheet.create({
-    safeArea: {
-        flex: 1,
-        backgroundColor: COLORS.background,
-    },
-    container: {
-        flex: 1,
-    },
-    heroSection: {
-        paddingHorizontal: 20,
-        paddingVertical: 24,
-        borderBottomWidth: 1,
-        borderBottomColor: COLORS.cardBorder,
-    },
-    heroContent: {
-        alignItems: 'center',
-    },
-    heroTitle: {
-        fontSize: 28,
-        fontFamily: 'PoppinsBold',
-        color: COLORS.textPrimary,
-        textAlign: 'center',
-        marginBottom: 8,
-        textShadowColor: 'rgba(255, 167, 38, 0.3)',
-        textShadowOffset: { width: 0, height: 2 },
-        textShadowRadius: 4,
-    },
-    heroSubtitle: {
-        fontSize: 16,
-        fontFamily: 'PoppinsRegular',
-        color: COLORS.textSecondary,
-        textAlign: 'center',
-    },
-    tabContainer: {
-        flexDirection: 'row',
-        backgroundColor: COLORS.tabBackground,
-        paddingHorizontal: 16,
-        paddingVertical: 12,
-        borderBottomWidth: 1,
-        borderBottomColor: COLORS.cardBorder,
-    },
-    tabButton: {
-        flex: 1,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingVertical: 12,
-        paddingHorizontal: 16,
-        marginHorizontal: 4,
-        borderRadius: 20,
-        backgroundColor: 'transparent',
-    },
-    tabButtonActive: {
-        backgroundColor: COLORS.cardBackground,
-        borderWidth: 1,
-        borderColor: COLORS.cardBorder,
-    },
-    tabText: {
-        fontSize: 14,
-        fontFamily: 'PoppinsMedium',
-        color: COLORS.tabInactive,
-        marginLeft: 6,
-    },
-    tabTextActive: {
-        color: COLORS.tabActive,
-        fontFamily: 'PoppinsBold',
-    },
-    scrollContainer: {
-        flex: 1,
-    },
-    tabContent: {
-        padding: 16,
-    },
-    glassCard: {
-        backgroundColor: COLORS.cardBackground,
-        borderRadius: 16,
-        borderWidth: 1,
-        borderColor: COLORS.cardBorder,
-        padding: 20,
-        marginBottom: 16,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
-        elevation: 3,
-    },
-    statsGrid: {
-        flexDirection: 'row',
-        marginBottom: 16,
-        gap: 12,
-    },
-    statCard: {
-        flex: 1,
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: 16,
-    },
-    statIconContainer: {
-        width: 48,
-        height: 48,
-        borderRadius: 24,
-        backgroundColor: COLORS.primary + '20',
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginRight: 12,
-    },
-    statContent: {
-        flex: 1,
-    },
-    statTitle: {
-        fontSize: 12,
-        fontFamily: 'PoppinsMedium',
-        color: COLORS.textSecondary,
-        textTransform: 'uppercase',
-        letterSpacing: 0.5,
-    },
-    statValue: {
-        fontSize: 24,
-        fontFamily: 'PoppinsBold',
-        color: COLORS.textPrimary,
-        marginVertical: 2,
-    },
-    statSubtitle: {
-        fontSize: 11,
-        fontFamily: 'PoppinsRegular',
-        color: COLORS.textMuted,
-    },
-    infoCard: {
-        marginBottom: 16,
-    },
-    sectionTitle: {
-        fontSize: 18,
-        fontFamily: 'PoppinsBold',
-        color: COLORS.textPrimary,
-        marginBottom: 16,
-        paddingBottom: 8,
-        borderBottomWidth: 1,
-        borderBottomColor: COLORS.cardBorder,
-    },
-    infoRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingVertical: 12,
-        borderBottomWidth: 1,
-        borderBottomColor: COLORS.cardBorder + '50',
-    },
-    infoIconContainer: {
-        width: 32,
-        height: 32,
-        borderRadius: 16,
-        backgroundColor: COLORS.secondary + '20',
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginRight: 12,
-    },
-    infoContent: {
-        flex: 1,
-    },
-    infoLabel: {
-        fontSize: 14,
-        fontFamily: 'PoppinsMedium',
-        color: COLORS.textSecondary,
-        marginBottom: 2,
-    },
-    infoValue: {
-        fontSize: 16,
-        fontFamily: 'PoppinsRegular',
-        color: COLORS.textPrimary,
-    },
-    achievementCard: {
-        marginBottom: 16,
-    },
-    badgeContainer: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        gap: 8,
-    },
-    achievementBadge: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: COLORS.cardBackground,
-        paddingHorizontal: 12,
-        paddingVertical: 8,
-        borderRadius: 20,
-        borderWidth: 1,
-        borderColor: COLORS.cardBorder,
-    },
-    badgeText: {
-        fontSize: 12,
-        fontFamily: 'PoppinsMedium',
-        color: COLORS.textSecondary,
-        marginLeft: 6,
-    },
-    timelineCard: {
-        marginBottom: 16,
-    },
-    timelineItem: {
-        flexDirection: 'row',
-        alignItems: 'flex-start',
-        marginBottom: 16,
-    },
-    timelineDot: {
-        width: 12,
-        height: 12,
-        borderRadius: 6,
-        backgroundColor: COLORS.primary,
-        marginRight: 12,
-        marginTop: 4,
-    },
-    timelineContent: {
-        flex: 1,
-    },
-    timelineYear: {
-        fontSize: 14,
-        fontFamily: 'PoppinsBold',
-        color: COLORS.primary,
-    },
-    timelineEvent: {
-        fontSize: 14,
-        fontFamily: 'PoppinsRegular',
-        color: COLORS.textSecondary,
-        marginTop: 2,
-    },
-    centerContent: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: 32,
-    },
-    errorTitle: {
-        fontSize: 20,
-        fontFamily: 'PoppinsBold',
-        color: COLORS.textPrimary,
-        textAlign: 'center',
-        marginTop: 16,
-        marginBottom: 8,
-    },
-    errorText: {
-        fontSize: 16,
-        fontFamily: 'PoppinsRegular',
-        color: COLORS.textSecondary,
-        textAlign: 'center',
-        marginBottom: 24,
-        lineHeight: 24,
-    },
-    retryButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: COLORS.primary,
-        paddingVertical: 12,
-        paddingHorizontal: 24,
-        borderRadius: 25,
-    },
-    retryButtonText: {
-        fontSize: 16,
-        fontFamily: 'PoppinsSemiBold',
-        color: COLORS.textPrimary,
-        marginLeft: 8,
-    },
-    // Skeleton styles
-    skeletonCard: {
-        backgroundColor: COLORS.cardBackground,
-        borderRadius: 16,
-        borderWidth: 1,
-        borderColor: COLORS.cardBorder,
-        padding: 16,
-        flexDirection: 'row',
-        alignItems: 'center',
-        flex: 1,
-    },
-    skeletonIcon: {
-        width: 24,
-        height: 24,
-        borderRadius: 12,
-        backgroundColor: COLORS.skeleton,
-        marginRight: 12,
-    },
-    skeletonContent: {
-        flex: 1,
-    },
-    skeletonTitle: {
-        height: 12,
-        backgroundColor: COLORS.skeleton,
-        borderRadius: 6,
-        marginBottom: 6,
-        width: '60%',
-    },
-    skeletonValue: {
-        height: 20,
-        backgroundColor: COLORS.skeleton,
-        borderRadius: 6,
-        width: '40%',
-    },
-    skeletonHeroTitle: {
-        height: 28,
-        backgroundColor: COLORS.skeleton,
-        borderRadius: 14,
-        width: 200,
-        marginBottom: 8,
-    },
-    skeletonHeroSubtitle: {
-        height: 16,
-        backgroundColor: COLORS.skeleton,
-        borderRadius: 8,
-        width: 150,
-    },
-    skeletonTab: {
-        flex: 1,
-        height: 36,
-        backgroundColor: COLORS.skeleton,
-        borderRadius: 18,
-        marginHorizontal: 4,
-    },
-    skeletonInfoCard: {
-        backgroundColor: COLORS.cardBackground,
-        borderRadius: 16,
-        borderWidth: 1,
-        borderColor: COLORS.cardBorder,
-        padding: 20,
-        marginHorizontal: 16,
-        marginTop: 16,
-    },
-    skeletonSectionTitle: {
-        height: 18,
-        backgroundColor: COLORS.skeleton,
-        borderRadius: 9,
-        width: '50%',
-        marginBottom: 16,
-    },
-    skeletonInfoRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingVertical: 12,
-        marginBottom: 8,
-    },
-    skeletonInfoContent: {
-        flex: 1,
-    },
-    skeletonInfoLabel: {
-        height: 14,
-        backgroundColor: COLORS.skeleton,
-        borderRadius: 7,
-        width: '40%',
-        marginBottom: 6,
-    },
-    skeletonInfoValue: {
-        height: 16,
-        backgroundColor: COLORS.skeleton,
-        borderRadius: 8,
-        width: '60%',
-    },
-});
