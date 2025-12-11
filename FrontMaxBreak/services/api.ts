@@ -47,9 +47,6 @@ class APICache {
             timestamp: Date.now(),
             ttl: ttlMs
         });
-        
-        // Sync related match data between endpoints
-        this.syncMatchData(key, data);
     }
     
     get(key: string): any | null {
@@ -67,97 +64,7 @@ class APICache {
     clear() {
         this.cache.clear();
     }
-    
-    // Sync match data between different endpoints to ensure consistency
-    private syncMatchData(key: string, data: any) {
-        // DISABLED - causes score swapping issues
-        return;
-        try {
-            // If caching individual match details (REVERSE SYNC: individual → tournament)
-            if (key.startsWith('get:matches/') && data && typeof data === 'object' && data.api_match_id) {
-                logger.debug(`[Cache Sync] Individual match data received for API ID ${data.api_match_id}`);
-                
-                // Store a reference for tournament matches to use
-                this.cache.set(`match_sync:${data.api_match_id}`, {
-                    data: data,
-                    timestamp: Date.now(),
-                    ttl: 30000 // 30 second sync cache
-                });
-                
-                // REVERSE SYNC: Update tournament match lists with newer individual match data
-                for (const [cacheKey, cacheEntry] of this.cache.entries()) {
-                    if (cacheKey.includes('/events/') && cacheKey.includes('/matches/') && Array.isArray(cacheEntry.data)) {
-                        const tournamentMatches = cacheEntry.data;
-                        let wasUpdated = false;
-                        
-                        for (let i = 0; i < tournamentMatches.length; i++) {
-                            if (tournamentMatches[i] && tournamentMatches[i].api_match_id === data.api_match_id) {
-                                // Check if individual match data is newer or has different scores
-                                const oldScores = `${tournamentMatches[i].score1}-${tournamentMatches[i].score2}`;
-                                const newScores = `${data.score1}-${data.score2}`;
-                                
-                                // CACHE SYNC: ALWAYS update with fresh individual match data
-                                // Don't merge - REPLACE completely to avoid stale data
-                                const isDevice = typeof navigator !== 'undefined' && /Mobile|Android|iPhone|iPad/.test(navigator.userAgent);
-                                const deviceType = isDevice ? 'DEVICE' : 'EMULATOR';
 
-                                logger.log(`[${deviceType} Cache] 🔄 REVERSE SYNC: Match ${data.api_match_id} - Replacing with fresh data`);
-
-                                // REPLACE the entire match with fresh data from individual match endpoint
-                                tournamentMatches[i] = data;
-                                wasUpdated = true;
-                                break;
-                            }
-                        }
-                        
-                        if (wasUpdated) {
-                            // Update the tournament matches cache with corrected data
-                            this.cache.set(cacheKey, {
-                                data: tournamentMatches,
-                                timestamp: Date.now(),
-                                ttl: cacheEntry.ttl
-                            });
-                            logger.log(`[Cache Sync] ✅ Updated tournament matches cache: ${cacheKey}`);
-                        }
-                    }
-                }
-            }
-            
-            // If caching tournament matches, sync individual matches (FORWARD SYNC: tournament → individual)
-            if (key.includes('/matches/') && Array.isArray(data)) {
-                const liveCount = data.filter(m => m && (m.status_code === 1 || m.status_code === 2)).length;
-                logger.debug(`[Cache Sync] Forward syncing ${data.length} tournament matches (${liveCount} live)`);
-                
-                data.forEach((match: any) => {
-                    if (match && match.api_match_id) {
-                        // Update the individual match cache with tournament data only if no newer individual data exists
-                        const matchKey = `get:matches/${match.api_match_id}/`;
-                        const existingMatch = this.cache.get(matchKey);
-                        const syncedMatch = this.cache.get(`match_sync:${match.api_match_id}`);
-                        
-                        // UPDATED: Allow sync but ensure data consistency from backend
-                        // The real fix is in backend data validation to prevent inconsistent data
-                        const shouldUpdate = !existingMatch;
-                        
-                        if (shouldUpdate) {
-                            this.cache.set(matchKey, {
-                                data: match,
-                                timestamp: Date.now(),
-                                ttl: 15000 // Short TTL for sync data
-                            });
-                            
-                            if (match.status_code === 1 || match.status_code === 2) {
-                                logger.debug(`[Cache Sync] Forward synced LIVE match cache for API ID ${match.api_match_id}`);
-                            }
-                        }
-                    }
-                });
-            }
-        } catch (error) {
-            logger.warn('[Cache Sync] Error syncing match data:', error);
-        }
-    }
-    
     // Clear cache entries older than their TTL
     cleanup() {
         const now = Date.now();
@@ -181,11 +88,7 @@ class APICache {
         
         keysToInvalidate.forEach(key => {
             this.cache.delete(key);
-            logger.debug(`[Cache Invalidate] Cleared cache for ${key}`);
         });
-
-        // Skip match service cache clearing to avoid circular dependency during EAS updates
-        logger.debug(`[Cache Invalidate] Match service cache clearing skipped for EAS update compatibility`);
     }
 
     // Clear all tournament match caches to prevent stale score displays in production builds
@@ -199,10 +102,7 @@ class APICache {
         
         keysToInvalidate.forEach(key => {
             this.cache.delete(key);
-            logger.debug(`[Cache Clear Tournament] Cleared cache for ${key}`);
         });
-        
-        logger.log(`[Cache Clear Tournament] Cleared ${keysToInvalidate.length} tournament match cache entries`);
     }
 }
 
@@ -211,37 +111,17 @@ const apiCache = new APICache();
 // Clean up cache every 5 minutes
 setInterval(() => apiCache.cleanup(), 300000);
 
-// : string = process.env.EXPO_PUBLIC_API_URL || 
-//   (process.env.NODE_ENV === 'production' 
-//     ? 'https://snookerapp.up.railway.app/oneFourSeven/'
-//     : 'http://10.0.2.2:8000/oneFourSeven/');
-
-// BACKUP URLs for debugging
-/*
-// Force production URL: 'https://snookerapp.up.railway.app/oneFourSeven/'
-// Force local URL: 'http://10.0.2.2:8000/oneFourSeven/'
-*/
-
 logger.log(`[API Setup] Using API Base URL: ${API_BASE_URL}`);
-logger.log(`[API Setup] Environment Variables:`, {
-  EXPO_PUBLIC_API_URL: process.env.EXPO_PUBLIC_API_URL,
-  NODE_ENV: process.env.NODE_ENV,
-  __DEV__: __DEV__
-});
 
 // --- Create a single Axios instance ---
 const api: AxiosInstance = axios.create({
     baseURL: API_BASE_URL,
-    timeout: 30000, // Increased to 30 seconds for slow mobile networks
+    timeout: 30000,
     headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
-        'Cache-Control': 'no-cache', // Prevent mobile browser caching issues
+        'Cache-Control': 'no-cache',
         'Pragma': 'no-cache',
-    },
-    // Add retry configuration
-    validateStatus: function (status) {
-        return status >= 200 && status < 300; // default
     },
 });
 
@@ -265,11 +145,7 @@ api.interceptors.request.use(async (config) => {
                 statusText: 'OK (Cached)',
                 config
             });
-        } else {
-            logger.debug(`[API Cache] Cache MISS for ${cacheKey}`);
         }
-    } else if ((config as any).skipCache) {
-        logger.log(`[API Cache] SKIPPING cache for ${config.url} (skipCache=true)`);
     }
 
     return config;
@@ -299,9 +175,6 @@ api.interceptors.response.use(
             }
 
             apiCache.set(cacheKey, response.data, ttl);
-            logger.debug(`[API Cache] Cached response for ${cacheKey} (TTL: ${ttl}ms)`);
-        } else if ((response.config as any).skipCache) {
-            logger.log(`[API Cache] NOT caching response for ${response.config.url} (skipCache=true)`);
         }
 
         return response;
@@ -356,12 +229,7 @@ api.interceptors.response.use(
     }
 );
 
-// Cache management functions for live match updates
-export const clearLiveMatchCache = () => {
-    logger.log('[API Cache] Clearing live match cache for real-time updates');
-    apiCache.clear();
-};
-
+// Cache management functions
 export const forceCacheRefresh = (tournamentId?: number) => {
     logger.log(`[API Cache] Force refreshing cache for tournament ${tournamentId || 'all'}`);
     
@@ -381,11 +249,10 @@ export const forceCacheRefresh = (tournamentId?: number) => {
 };
 
 // Trigger cache sync when returning from match details to ensure score consistency
+// NOTE: This function is now a no-op because the syncMatchData method was disabled due to score swapping issues
+// The caller immediately clears tournament caches after this call anyway, so no sync is needed
 export const syncMatchDataToTournamentCache = (matchData: any) => {
-    if (matchData && matchData.api_match_id) {
-        logger.log(`[API Cache] Manual sync triggered for match ${matchData.api_match_id}`);
-        (apiCache as any).syncMatchData(`get:matches/${matchData.api_match_id}/`, matchData);
-    }
+    // No-op: sync was causing issues and cache is cleared by caller anyway
 };
 
 // Enhanced API wrapper with mobile-optimized retry logic

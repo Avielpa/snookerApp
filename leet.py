@@ -1,65 +1,65 @@
-password = input("choose a password: ")
-pass_length = True
-contain_dig = True
-forbidde_seq = True
-start_lower = True
-end_upper = True
-necc_char = True
-dig0 = "0" 
-dig1 = "1" 
-dig2 = "2" 
-dig3 = "3" 
-dig4 = "4" 
-dig5 = "5" 
-dig6 = "6" 
-dig7 = "7" 
-dig8 = "8" 
-dig9 = "9" 
-sec_req = False
- 
+#Calculate the distance between 2 lists of numbers.
+def euclidean_distance(num_list1, num_list2):
+    lists_len = len(num_list1) - 1 #It dosnt metter which list, we alredy checked the lists are with the same length
+    dis = 0 
+    while lists_len > 0:
+        dis += (float(num_list1[0]) - float(num_list2[0]))**2
+        num_list1 = num_list1[1:]#cut the first plcae in the list
+        num_list2 = num_list2[1:]
+        lists_len = len(num_list1)
+        
+    return round(dis**0.5,2)
 
-
-if len(password) < 8 or len(password) > 10:
-    pass_length = False
+#verify user in put is numeric
+def is_number(usr_input):
     
-if (dig0 not in password and 
-    dig1 not in password and
-    dig2 not in password and
-    dig3 not in password and
-    dig4 not in password and
-    dig5 not in password and
-    dig6 not in password and
-    dig7 not in password and
-    dig8 not in password and
-    dig9 not in password):
-    
-    contain_dig = False
+    for dig in usr_input:
+        
+        if dig == "+" or dig == "-":
+            continue
+        
+        elif "." in dig:
+            dig = dig.replace(".","")
+            
+        elif dig.isdigit():
+            continue
+        
+        else:
+            return False
+    return True
         
         
-if  "123" in password or "321" in password or "abc" in password or "qwe" in password:
-    forbidde_seq = False
-    
-if password[0].islower():
-    start_lower = False
-    
-if password[len(password) - 1].isupper():
-    print(len(password)-1)
-    end_upper = False
-    
-    
-if  "#" not in password and "+" not in password and "!" not in password and "&" not in password and "@" not in password:
-    necc_char = False
-    
-print("Your password is of proper length (8-10): ", pass_length)
-print("Your password contains a digit: ", contain_dig)
-print("Your password doesn’t contain trivial sequences: ", forbidde_seq)
-print("Your password starts with an uppercase letter: ", start_lower)
-print("Your password ends with a lowercase letter: ", end_upper)
-print("Your password contains a special character: ", necc_char)
+
+#Fix user input
+def user_input_rep(string_rep):
+    string_rep = string_rep.replace(" ", "")
+    string_rep = string_rep.split(",")
+    return string_rep
 
 
-if pass_length and contain_dig and forbidde_seq and start_lower and end_upper  and necc_char :
-    sec_req = True
-    
 
-print("Your password meets security requirements: ", sec_req)
+def main_program():
+    
+    dis = 0
+    
+    #assume that the user input is something like that "1 , 2 , 3 , 4 , 7"
+    usr_in1 = input("Enter list1 (coordinates of point X): ")
+    usr_in2 = input("Enter list2 (coordinates of point Y): ")
+    
+    usr_in1 = user_input_rep(usr_in1)
+    usr_in2 = user_input_rep(usr_in2)
+    
+    #verify the length is equal
+    if len(usr_in1) == len(usr_in2):
+        #check both inputs are numeric
+        if is_number(usr_in1) and is_number(usr_in2):
+            #calc the distance
+            dis = euclidean_distance(usr_in1,usr_in2)
+            return f"The Euclidean distance between the points is: {dis}"
+        else:
+            return "Sorry - was not able to calculate the distance"
+    else:
+        return "Sorry - was not able to calculate the distance"
+    
+    
+print(main_program())
