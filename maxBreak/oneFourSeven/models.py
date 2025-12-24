@@ -70,21 +70,11 @@ class Player(models.Model):
 
     def __str__(self) -> str:
         """String representation of the Player object, typically the full name."""
-        name_parts = []
-        if self.FirstName:
-            name_parts.append(self.FirstName)
-        if self.MiddleName:
-            name_parts.append(self.MiddleName)
-        if self.LastName:
-            name_parts.append(self.LastName)
-            
-        full_name = " ".join(name_parts)
-        
-        # Use ID as fallback if no name parts are available
-        if full_name:
-            return full_name
-        else:
-            return f"Player {self.ID}"
+        # Combine all name parts, filtering out None/empty values
+        name_parts = [self.FirstName, self.MiddleName, self.LastName]
+        full_name = " ".join(filter(None, name_parts))
+        # Use meaningful fallback if no name available
+        return full_name or f"Player ID {self.ID or 'Unavailable'}"
 
     class Meta:
         verbose_name = "Player"
@@ -132,17 +122,11 @@ class Ranking(models.Model):
 
     def __str__(self) -> str:
         """String representation showing player, rank, type, and season."""
-        player_info = "Unknown Player"
-        if self.Player:
-            player_info = str(self.Player) # Use Player's __str__
-        else:
-            # Check if FK ID exists even if object is null
-            has_player_id_attr = hasattr(self, 'Player_id')
-            if has_player_id_attr and self.Player_id:
-                player_info = f"Player ID {self.Player_id}"
-
-        return (f"{player_info} - Rank {self.Position or '?'} "
-                f"({self.Type or 'N/A'} - Season {self.Season or '?'})")
+        # Use ternary for concise player info with meaningful fallback
+        player_info = str(self.Player) if self.Player else f"Player ID {getattr(self, 'Player_id', None) or 'Unavailable'}"
+        # Use meaningful names instead of '?' for better readability
+        return (f"{player_info} - Rank {self.Position or 'Not Ranked'} "
+                f"({self.Type or 'N/A'} - Season {self.Season or 'Unknown Season'})")
 
     class Meta:
         verbose_name = "Ranking Entry"
@@ -272,58 +256,55 @@ class Event(models.Model):
         max_length=50, null=True, blank=True, db_index=True,
         help_text="Tour identifier (e.g., 'main', 'seniors', 'womens')"
     )
+    
+    def _format_prize_money(self, round_obj):
+      """Helper to format prize money dict."""
+      if not round_obj or not round_obj.Money:
+          return None
+
+      money_amount = round_obj.Money
+      currency = round_obj.Currency or 'GBP'
+      formatted_string = f"{currency} {money_amount:,.0f}"
+
+      return {
+          'amount': float(money_amount),
+          'currency': currency,
+          'formatted': formatted_string
+      }
+
+    #get_winner_prize_money (SIMPLIFIED):
 
     def get_winner_prize_money(self):
         """Get the winner's prize money from round details."""
-        from .models import RoundDetails
-        
-        # Find the final round (usually has NumLeft=2 or is the highest round)
-        final_round = RoundDetails.objects.filter(
-            Event=self
-        ).order_by('-Round').first()
-        
-        if final_round and final_round.Money:
-            return {
-                'amount': float(final_round.Money),
-                'currency': final_round.Currency or 'GBP',
-                'formatted': f"{final_round.Currency or 'GBP'} {final_round.Money:,.0f}" if final_round.Money else None
-            }
-        return None
+        breakdown = self.get_prize_money_breakdown()
+        return breakdown.get('winner') if breakdown else None
+
+    #get_prize_money_breakdown (REFACTORED):
 
     def get_prize_money_breakdown(self):
-        """Get both winner and runner-up prize money from round details."""
-        from .models import RoundDetails
-        
-        # Get final and semi-final rounds to calculate winner/runner-up prizes
-        rounds = RoundDetails.objects.filter(
-            Event=self,
-            Money__isnull=False,
-            Money__gt=0
-        ).order_by('-Round')[:2]
-        
-        if not rounds:
-            return None
-            
-        winner_round = rounds[0] if rounds else None
-        runner_up_round = rounds[1] if len(rounds) > 1 else None
-        
-        result = {}
-        
-        if winner_round and winner_round.Money:
-            result['winner'] = {
-                'amount': float(winner_round.Money),
-                'currency': winner_round.Currency or 'GBP',
-                'formatted': f"{winner_round.Currency or 'GBP'} {winner_round.Money:,.0f}"
-            }
-        
-        if runner_up_round and runner_up_round.Money:
-            result['runner_up'] = {
-                'amount': float(runner_up_round.Money), 
-                'currency': runner_up_round.Currency or 'GBP',
-                'formatted': f"{runner_up_round.Currency or 'GBP'} {runner_up_round.Money:,.0f}"
-            }
-            
-        return result if result else None
+      """Get both winner and runner-up prize money from round details."""
+      rounds = RoundDetails.objects.filter(
+          Event=self,
+          Money__isnull=False,
+          Money__gt=0
+      ).order_by('-Round')[:2]
+
+      if not rounds:
+          return None
+
+      result = {}
+
+      winner_prize = self._format_prize_money(rounds[0])
+      if winner_prize:
+          result['winner'] = winner_prize
+
+      if len(rounds) > 1:
+          runner_up_prize = self._format_prize_money(rounds[1])
+          if runner_up_prize:
+              result['runner_up'] = runner_up_prize
+
+      return result if result else None
+    
 
     def __str__(self) -> str:
         """String representation including name and season."""
@@ -846,3 +827,7 @@ class PlayerMatchHistory(models.Model):
         ]
         # Ensure unique matches per player
         unique_together = [['api_match_id', 'player_id']]
+
+
+
+

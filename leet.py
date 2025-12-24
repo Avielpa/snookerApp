@@ -1,65 +1,43 @@
-#Calculate the distance between 2 lists of numbers.
-def euclidean_distance(num_list1, num_list2):
-    lists_len = len(num_list1) - 1 #It dosnt metter which list, we alredy checked the lists are with the same length
-    dis = 0 
-    while lists_len > 0:
-        dis += (float(num_list1[0]) - float(num_list2[0]))**2
-        num_list1 = num_list1[1:]#cut the first plcae in the list
-        num_list2 = num_list2[1:]
-        lists_len = len(num_list1)
-        
-    return round(dis**0.5,2)
+import numpy as np
+import matplotlib.pyplot as plt
+import numpy_financial as npf
 
-#verify user in put is numeric
-def is_number(usr_input):
-    
-    for dig in usr_input:
-        
-        if dig == "+" or dig == "-":
-            continue
-        
-        elif "." in dig:
-            dig = dig.replace(".","")
-            
-        elif dig.isdigit():
-            continue
-        
-        else:
-            return False
-    return True
-        
-        
+# נתוני הפרויקטים
+# פרויקט א: השקעה 51,000, תזרים 18,000 למשך 5 שנים
+cf_a = [-51000] + [18000] * 5
 
-#Fix user input
-def user_input_rep(string_rep):
-    string_rep = string_rep.replace(" ", "")
-    string_rep = string_rep.split(",")
-    return string_rep
+# פרויקט ב: השקעה 30,000, תזרים 11,500 למשך 5 שנים
+cf_b = [-30000] + [11500] * 5
 
+# טווח ריביות לגרף (0% עד 30%)
+rates = np.linspace(0, 0.30, 100)
 
+# חישוב הענ"נ לכל ריבית
+npv_a = [npf.npv(r, cf_a) for r in rates]
+npv_b = [npf.npv(r, cf_b) for r in rates]
 
-def main_program():
-    
-    dis = 0
-    
-    #assume that the user input is something like that "1 , 2 , 3 , 4 , 7"
-    usr_in1 = input("Enter list1 (coordinates of point X): ")
-    usr_in2 = input("Enter list2 (coordinates of point Y): ")
-    
-    usr_in1 = user_input_rep(usr_in1)
-    usr_in2 = user_input_rep(usr_in2)
-    
-    #verify the length is equal
-    if len(usr_in1) == len(usr_in2):
-        #check both inputs are numeric
-        if is_number(usr_in1) and is_number(usr_in2):
-            #calc the distance
-            dis = euclidean_distance(usr_in1,usr_in2)
-            return f"The Euclidean distance between the points is: {dis}"
-        else:
-            return "Sorry - was not able to calculate the distance"
-    else:
-        return "Sorry - was not able to calculate the distance"
-    
-    
-print(main_program())
+# מציאת נקודת החיתוך (בקירוב)
+# אנו יודעים שהיא באזור 16.6% מהחישוב הקודם
+crossover_rate = 0.1658
+crossover_npv = npf.npv(crossover_rate, cf_a)
+
+# שרטוט הגרף
+plt.figure(figsize=(10, 6))
+plt.plot(rates * 100, npv_a, label='Project A', color='blue', linewidth=2)
+plt.plot(rates * 100, npv_b, label='Project B', color='orange', linewidth=2)
+
+# הוספת קו האפס
+plt.axhline(0, color='black', linewidth=0.8, linestyle='--')
+
+# סימון נקודת החיתוך
+plt.plot(crossover_rate * 100, crossover_npv, 'ro', label=f'Crossover: {crossover_rate:.1%}')
+
+# עיצוב הגרף
+plt.title('NPV Profile: Project A vs Project B')
+plt.xlabel('Discount Rate (%)')
+plt.ylabel('Net Present Value (NPV)')
+plt.legend()
+plt.grid(True, alpha=0.3)
+
+# הצגת הגרף
+plt.show()
