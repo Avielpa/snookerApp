@@ -625,15 +625,24 @@ def player_by_id_view(request, player_id):
     player_data = serializer.data
 
     # Add current season ranking information
-    current_season = datetime.now().year
+    # Snooker seasons span two years (e.g., 2025/2026) and are stored by start year
+    current_year = datetime.now().year
+    season_candidates = [current_year, current_year - 1]
+    ranking_type_candidates = ['MoneyRankings', 'MoneySeedings']
 
-    # Get current ranking position (MoneyRankings type)
     try:
-        current_ranking = Ranking.objects.filter(
-            Player_id=player_id,
-            Season=current_season,
-            Type='MoneyRankings'
-        ).first()
+        current_ranking = None
+        for season in season_candidates:
+            for rtype in ranking_type_candidates:
+                current_ranking = Ranking.objects.filter(
+                    Player_id=player_id,
+                    Season=season,
+                    Type=rtype
+                ).first()
+                if current_ranking:
+                    break
+            if current_ranking:
+                break
 
         if current_ranking:
             player_data['current_ranking_position'] = current_ranking.Position

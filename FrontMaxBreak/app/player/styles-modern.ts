@@ -371,4 +371,26 @@ export const createPlayerStyles = (COLORS: any) => StyleSheet.create({
         borderRadius: 5,
         width: '60%',
     },
+
+    // EMPTY STATES
+    emptyState: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 40,
+        paddingHorizontal: 20,
+    },
+    emptyText: {
+        fontSize: 13,
+        fontFamily: 'PoppinsSemiBold',
+        color: 'rgba(255, 255, 255, 0.7)',
+        textAlign: 'center',
+        marginTop: 10,
+    },
+    emptySubtext: {
+        fontSize: 11,
+        fontFamily: 'PoppinsRegular',
+        color: 'rgba(255, 255, 255, 0.45)',
+        textAlign: 'center',
+        marginTop: 4,
+    },
 });

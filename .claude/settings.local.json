@@ -55,7 +55,8 @@
       "WebFetch(domain:railway.app)",
       "Bash(git checkout:*)",
       "Bash(python3:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "mcp__ide__getDiagnostics"
     ],
     "deny": [],
     "ask": [],
