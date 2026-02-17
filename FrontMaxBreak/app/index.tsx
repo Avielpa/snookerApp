@@ -142,7 +142,7 @@ const HomeScreen = (): React.ReactElement | null => {
                     }))}
                     selectedValue={activeFilter}
                     onSelectionChange={(value) => {
-                        console.log(`[HomeFilter] Device-Aware Pressed: ${value}`);
+                        logger.debug(`[HomeFilter] Device-Aware Pressed: ${value}`);
                         setActiveFilter(value as ActiveFilterType);
                     }}
                     colors={COLORS}
@@ -162,7 +162,7 @@ const HomeScreen = (): React.ReactElement | null => {
                                         selectedOtherTour === tour.ID && styles.otherTourChipActive
                                     ]}
                                     onPress={() => {
-                                        console.log(`[OtherTour] Pressed: ${tour.ID}`);
+                                        logger.debug(`[OtherTour] Pressed: ${tour.ID}`);
                                         handleOtherTourSelection(tour.ID);
                                     }}
                                     activeOpacity={0.6}

@@ -1,6 +1,7 @@
 // config/deviceTabConfig.ts
 import { Platform, Dimensions, StyleSheet } from 'react-native';
 import * as Device from 'expo-device';
+import { logger } from '../utils/logger';
 
 /**
  * Comprehensive Device-Aware Tab/Filter Configuration System
@@ -179,7 +180,7 @@ class DeviceDetector {
   }
 
   public logDeviceInfo() {
-    console.log('[DeviceTabConfig] Device Detection Results:', {
+    logger.log('[DeviceTabConfig] Device Detection Results:', {
       profile: this.getDeviceProfile(),
       info: this.deviceInfo,
       timestamp: new Date().toISOString(),
@@ -658,7 +659,7 @@ export class DeviceTabConfigManager {
     
     // Log device detection results
     this.detector.logDeviceInfo();
-    console.log('[DeviceTabConfig] Selected Profile:', this.currentProfile.name);
+    logger.log('[DeviceTabConfig] Selected Profile:', this.currentProfile.name);
   }
 
   public static getInstance(): DeviceTabConfigManager {

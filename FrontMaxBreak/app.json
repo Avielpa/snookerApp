@@ -37,11 +37,6 @@
         "ACCESS_NETWORK_STATE",
         "RECEIVE_BOOT_COMPLETED",
         "VIBRATE",
-        "WAKE_LOCK",
-        "INTERNET",
-        "ACCESS_NETWORK_STATE",
-        "RECEIVE_BOOT_COMPLETED",
-        "VIBRATE",
         "WAKE_LOCK"
       ]
     },

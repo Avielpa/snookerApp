@@ -10,6 +10,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { logger } from '../utils/logger';
 
 interface SamsungCompatibleButtonProps {
   onPress: () => void;
@@ -43,7 +44,7 @@ export const SamsungCompatibleButton: React.FC<SamsungCompatibleButtonProps> = (
 }) => {
   // Enhanced press handler with Samsung-specific optimizations
   const handlePress = React.useCallback(() => {
-    console.log(`[SamsungButton] Button pressed: ${label}`);
+    logger.debug(`[SamsungButton] Button pressed: ${label}`);
     
     // Add small delay for Samsung devices to prevent touch conflicts
     if (Platform.OS === 'android') {

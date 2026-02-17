@@ -56,7 +56,10 @@
       "Bash(git checkout:*)",
       "Bash(python3:*)",
       "Bash(ls:*)",
-      "mcp__ide__getDiagnostics"
+      "mcp__ide__getDiagnostics",
+      "Bash(del \"C:\\\\Users\\\\Aviel\\\\vsprojects\\\\snookerApp\\\\FrontMaxBreak\\\\testDeviceSystem.js\")",
+      "Bash(del \"C:\\\\Users\\\\Aviel\\\\vsprojects\\\\snookerApp\\\\FrontMaxBreak\\\\services\\\\api.ts.backup\")",
+      "Bash(del \"C:\\\\Users\\\\Aviel\\\\vsprojects\\\\snookerApp\\\\FrontMaxBreak\\\\utils\\\\deviceCompatibilityTest.ts\")"
     ],
     "deny": [],
     "ask": [],

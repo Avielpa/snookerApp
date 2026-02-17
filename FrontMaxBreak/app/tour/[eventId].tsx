@@ -608,7 +608,7 @@ const TournamentDetailsScreen = () => {
                                     }))}
                                     selectedValue={activeFilter}
                                     onSelectionChange={(value) => {
-                                        console.log(`[TourFilter] Device-Aware: ${value}`);
+                                        logger.debug(`[TourFilter] Device-Aware: ${value}`);
                                         setActiveFilter(value as ActiveFilterType);
                                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                                     }}

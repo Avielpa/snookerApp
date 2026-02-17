@@ -551,7 +551,7 @@ export default function CalendarEnhanced() {
           }))}
           selectedValue={selectedTab}
           onSelectionChange={(value) => {
-            console.log(`[CalendarFilter] Device-Aware Tab: ${value}`);
+            logger.debug(`[CalendarFilter] Device-Aware Tab: ${value}`);
             handleTabPress(value);
           }}
           colors={colors}
@@ -567,7 +567,7 @@ export default function CalendarEnhanced() {
           }))}
           selectedValue={selectedStatus}
           onSelectionChange={(value) => {
-            console.log(`[CalendarStatusFilter] Device-Aware: ${value}`);
+            logger.debug(`[CalendarStatusFilter] Device-Aware: ${value}`);
             handleStatusPress(value);
           }}
           colors={colors}

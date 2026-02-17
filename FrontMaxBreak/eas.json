@@ -19,7 +19,7 @@
       "channel": "preview",
       "env": {
         "NODE_ENV": "production",
-        "EXPO_PUBLIC_API_URL": "https://snookerapp.up.railway.app/oneFourSeven/",
+        "EXPO_PUBLIC_API_BASE_URL": "https://snookerapp.up.railway.app/oneFourSeven/",
         "DEBUG_LOGGING": "false"
       }
     },
@@ -28,7 +28,7 @@
       "channel": "beta",
       "env": {
         "NODE_ENV": "production",
-        "EXPO_PUBLIC_API_URL": "https://snookerapp.up.railway.app/oneFourSeven/",
+        "EXPO_PUBLIC_API_BASE_URL": "https://snookerapp.up.railway.app/oneFourSeven/",
         "EXPO_PUBLIC_FORCE_DEBUG_LOGGING": "true"
       },
       "android": {
@@ -45,7 +45,7 @@
       "channel": "production",
       "env": {
         "NODE_ENV": "production",
-        "EXPO_PUBLIC_API_URL": "https://snookerapp.up.railway.app/oneFourSeven/",
+        "EXPO_PUBLIC_API_BASE_URL": "https://snookerapp.up.railway.app/oneFourSeven/",
         "DEBUG_LOGGING": "false",
         "ENABLE_SSL_PINNING": "true"
       },
@@ -64,7 +64,7 @@
       },
       "env": {
         "NODE_ENV": "production",
-        "EXPO_PUBLIC_API_URL": "https://snookerapp.up.railway.app/oneFourSeven/",
+        "EXPO_PUBLIC_API_BASE_URL": "https://snookerapp.up.railway.app/oneFourSeven/",
         "DEBUG_LOGGING": "true",
         "ENABLE_SSL_PINNING": "true"
       }

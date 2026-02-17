@@ -2,6 +2,7 @@
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { logger } from '../utils/logger';
 
 interface FilterOption {
   id: string;
@@ -32,7 +33,7 @@ export const UnifiedFilterButton: React.FC<UnifiedFilterButtonProps> = ({
         isSelected && styles.filterButtonActive
       ]}
       onPress={() => {
-        console.log(`[UnifiedFilter] Pressed: ${option.id}`);
+        logger.debug(`[UnifiedFilter] Pressed: ${option.id}`);
         onPress(option.id);
       }}
       activeOpacity={0.6}

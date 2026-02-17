@@ -197,8 +197,8 @@ export type RankingType = typeof RANKING_TYPES[keyof typeof RANKING_TYPES];
  * @returns {Promise<{ rankings: Ranking[], tab_name?: string, summary?: any, season?: number }>} Ranking data with tab info
  */
 export const getRanking = async (rankingType?: string): Promise<{ rankings: Ranking[], tab_name?: string, summary?: any, season?: number }> => {
-    console.log(`[MatchService] === getRanking CALLED ===`);
-    console.log(`[MatchService] rankingType: ${rankingType}`);
+    logger.log(`[MatchService] === getRanking CALLED ===`);
+    logger.log(`[MatchService] rankingType: ${rankingType}`);
     
     // Use the backend database endpoints directly - no complex API logic needed
     const isRankingTypeEndpoint = Object.values(RANKING_TYPES).includes(rankingType as RankingType);
@@ -213,14 +213,14 @@ export const getRanking = async (rankingType?: string): Promise<{ rankings: Rank
         urlPath = `rankings/${rankingType || 'mens'}/`;
     }
     
-    console.log(`[MatchService] isRankingTypeEndpoint: ${isRankingTypeEndpoint}`);
-    console.log(`[MatchService] urlPath: ${urlPath}`);
+    logger.log(`[MatchService] isRankingTypeEndpoint: ${isRankingTypeEndpoint}`);
+    logger.log(`[MatchService] urlPath: ${urlPath}`);
     logger.debug(`[MatchService] Fetching rankings from backend database: ${urlPath}`);
     
     try {
-        console.log(`[MatchService] Making API call to: ${urlPath}`);
+        logger.log(`[MatchService] Making API call to: ${urlPath}`);
         const response = await api.get<any>(urlPath);
-        console.log(`[MatchService] API response received:`, {
+        logger.log(`[MatchService] API response received:`, {
             hasResponse: !!response,
             status: response?.status,
             hasData: !!response?.data,
@@ -228,7 +228,7 @@ export const getRanking = async (rankingType?: string): Promise<{ rankings: Rank
         });
         
         if (response.data) {
-            console.log(`[MatchService] Response data structure:`, {
+            logger.log(`[MatchService] Response data structure:`, {
                 hasRankings: !!response.data.rankings,
                 rankingsLength: response.data.rankings?.length || 0,
                 rankingsIsArray: Array.isArray(response.data.rankings),
@@ -238,7 +238,7 @@ export const getRanking = async (rankingType?: string): Promise<{ rankings: Rank
             if (isRankingTypeEndpoint) {
                 // Backend ranking-types endpoint response format
                 if (response.data.rankings && Array.isArray(response.data.rankings)) {
-                    console.log(`[MatchService] SUCCESS: ${response.data.rankings.length} rankings from ranking-types endpoint`);
+                    logger.log(`[MatchService] SUCCESS: ${response.data.rankings.length} rankings from ranking-types endpoint`);
                     logger.debug(`[MatchService] Successfully fetched ${response.data.rankings.length} ${rankingType} rankings from database.`);
                     return {
                         rankings: response.data.rankings,
@@ -247,14 +247,14 @@ export const getRanking = async (rankingType?: string): Promise<{ rankings: Rank
                         season: response.data.season
                     };
                 } else {
-                    console.log(`[MatchService] WARNING: No rankings in ranking-types response`, response.data);
+                    logger.warn(`[MatchService] WARNING: No rankings in ranking-types response`, response.data);
                     logger.warn(`[MatchService] No rankings data in response for ${rankingType}:`, response.data);
                     return { rankings: [], tab_name: rankingType };
                 }
             } else {
                 // Legacy tab endpoint response format
                 if (response.data.rankings && Array.isArray(response.data.rankings)) {
-                    console.log(`[MatchService] SUCCESS: ${response.data.rankings.length} rankings from legacy endpoint`);
+                    logger.log(`[MatchService] SUCCESS: ${response.data.rankings.length} rankings from legacy endpoint`);
                     logger.debug(`[MatchService] Successfully fetched ${response.data.rankings.length} ${rankingType} rankings from database.`);
                     return {
                         rankings: response.data.rankings,
@@ -263,13 +263,13 @@ export const getRanking = async (rankingType?: string): Promise<{ rankings: Rank
                         season: response.data.season
                     };
                 } else {
-                    console.log(`[MatchService] WARNING: No rankings in legacy response`, response.data);
+                    logger.warn(`[MatchService] WARNING: No rankings in legacy response`, response.data);
                     logger.warn(`[MatchService] No rankings data in legacy response for ${rankingType}:`, response.data);
                     return { rankings: [], tab_name: rankingType };
                 }
             }
         } else {
-            console.log(`[MatchService] WARNING: Empty response data`);
+            logger.warn(`[MatchService] WARNING: Empty response data`);
             logger.warn(`[MatchService] Empty response for ${rankingType} rankings`);
             return { rankings: [], tab_name: rankingType };
         }
@@ -277,7 +277,7 @@ export const getRanking = async (rankingType?: string): Promise<{ rankings: Rank
         const status = error.response?.status;
         const errorData = error.response?.data;
         
-        console.error(`[MatchService] ERROR in getRanking:`, {
+        logger.error(`[MatchService] ERROR in getRanking:`, {
             status,
             errorData,
             errorMessage: error.message,
@@ -288,7 +288,7 @@ export const getRanking = async (rankingType?: string): Promise<{ rankings: Rank
         logger.error(`[MatchService] Error fetching ${rankingType} rankings from database (Status: ${status}):`, errorData || error.message);
         
         // Return empty rankings instead of throwing to prevent UI crashes
-        console.error(`[MatchService] Failed to load ${rankingType} rankings:`, error.message);
+        logger.error(`[MatchService] Failed to load ${rankingType} rankings:`, error.message);
         return { 
             rankings: [], 
             tab_name: rankingType

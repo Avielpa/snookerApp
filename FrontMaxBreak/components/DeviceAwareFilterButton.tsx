@@ -4,6 +4,7 @@ import { TouchableOpacity, Pressable, Text, View, Platform } from 'react-native'
 import { Ionicons } from '@expo/vector-icons';
 import { getDeviceTabConfig } from '../config/deviceTabConfig';
 import { createEnhancedTabStyles, premiumColors } from './EnhancedTabStyles';
+import { logger } from '../utils/logger';
 
 interface FilterOption {
   id: string;
@@ -36,12 +37,12 @@ export const DeviceAwareFilterButton: React.FC<DeviceAwareFilterButtonProps> = (
 
   // Enhanced press handler with device-specific timing and better debugging
   const handlePress = () => {
-    console.log(`[DeviceAwareFilter] ${profile.name} - Button "${option.label}" (${option.id}) pressed`);
+    logger.debug(`[DeviceAwareFilter] ${profile.name} - Button "${option.label}" (${option.id}) pressed`);
     
     // Samsung devices need small delay to prevent conflicts
     if (profile.manufacturer === 'Samsung' && Platform.OS === 'android') {
       setTimeout(() => {
-        console.log(`[DeviceAwareFilter] Executing delayed press for: ${option.label}`);
+        logger.debug(`[DeviceAwareFilter] Executing delayed press for: ${option.label}`);
         onPress(option.id);
       }, 25);
     } else {

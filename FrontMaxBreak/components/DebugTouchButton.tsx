@@ -2,6 +2,7 @@
 import React from 'react';
 import { TouchableOpacity, Text, View, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { logger } from '../utils/logger';
 
 interface DebugTouchButtonProps {
   option: {
@@ -25,17 +26,17 @@ export const DebugTouchButton: React.FC<DebugTouchButtonProps> = ({
 }) => {
   const handlePress = () => {
     // Debug logging for mobile
-    console.log(`[MOBILE DEBUG] Button pressed: ${option.id}`);
+    logger.debug(`[MOBILE DEBUG] Button pressed: ${option.id}`);
     Alert.alert('Debug', `Pressed: ${option.label}`);
     onPress(option.id);
   };
 
   const handlePressIn = () => {
-    console.log(`[MOBILE DEBUG] Press IN: ${option.id}`);
+    logger.debug(`[MOBILE DEBUG] Press IN: ${option.id}`);
   };
 
   const handlePressOut = () => {
-    console.log(`[MOBILE DEBUG] Press OUT: ${option.id}`);
+    logger.debug(`[MOBILE DEBUG] Press OUT: ${option.id}`);
   };
 
   return (

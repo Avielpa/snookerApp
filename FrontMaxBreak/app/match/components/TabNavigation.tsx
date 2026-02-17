@@ -4,6 +4,7 @@ import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { TabType } from '../types';
+import { logger } from '../../../utils/logger';
 
 interface TabNavigationProps {
   selectedTab: TabType;
@@ -79,7 +80,7 @@ export function TabNavigation({ selectedTab, onTabChange, colors, styles }: TabN
           isSelected && tabStyles.filterButtonActive
         ]}
         onPress={() => {
-          console.log(`[MatchTabFilter] Pressed: ${tab.id}`);
+          logger.debug(`[MatchTabFilter] Pressed: ${tab.id}`);
           handleTabPress(tab.id);
         }}
         activeOpacity={0.6}
