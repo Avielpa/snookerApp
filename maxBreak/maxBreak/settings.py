@@ -36,7 +36,7 @@ if not SECRET_KEY:
 DEBUG = os.getenv('DEBUG', 'False').lower() in ['true', '1', 't', 'y', 'yes']
 
 # SECURITY FIX: Remove wildcard '*' - be explicit about allowed hosts
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '10.0.2.2,127.0.0.1,localhost,*.railway.app,*.up.railway.app').split(',')
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '10.0.2.2,127.0.0.1,localhost,.railway.app,.up.railway.app').split(',')
 
 # Application definition
 
