@@ -26,12 +26,17 @@ load_dotenv()
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-^@u^8k181ex3h!gya)hkn60w)%-5m#0ipf&e^pzy2*^qdop&g*')
+# SECURITY FIX: No fallback - force .env file to exist
+SECRET_KEY = os.getenv('SECRET_KEY')
+if not SECRET_KEY:
+    raise ValueError("SECRET_KEY environment variable is required! Set it in .env file.")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DEBUG', 'True').lower() in ['true', '1', 't', 'y', 'yes']
+# SECURITY FIX: Default to False for production safety
+DEBUG = os.getenv('DEBUG', 'False').lower() in ['true', '1', 't', 'y', 'yes']
 
-ALLOWED_HOSTS = ['10.0.2.2', '127.0.0.1', 'localhost', '*.railway.app', '*.up.railway.app', '*']
+# SECURITY FIX: Remove wildcard '*' - be explicit about allowed hosts
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '10.0.2.2,127.0.0.1,localhost,*.railway.app,*.up.railway.app').split(',')
 
 # Application definition
 
@@ -60,10 +65,11 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-CORS_ALLOW_ALL_ORIGINS = True
+# SECURITY FIX: Disable allow all - only use explicit list
+CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
-    "http://127.0.0.1:3000", 
+    "http://127.0.0.1:3000",
     "http://localhost:19006",
     "http://127.0.0.1:19006",
     "http://10.0.2.2:19006",
@@ -101,11 +107,12 @@ WSGI_APPLICATION = 'maxBreak.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
-DATABASE_URL = "postgresql://postgres:JWlAisDwPVMDLSPdOTmMXpcbeAnrrADQ@metro.proxy.rlwy.net:59673/railway"
-
+# SECURITY FIX: REMOVED hardcoded database password!
+# Database credentials MUST be in .env file or environment variables
 DATABASES = {
     'default': dj_database_url.config(
-        default=os.environ.get('DATABASE_URL', DATABASE_URL),
+        default=os.environ.get('DATABASE_URL'),
+        conn_max_age=600,  # Connection pooling for better performance
     )
 }
 

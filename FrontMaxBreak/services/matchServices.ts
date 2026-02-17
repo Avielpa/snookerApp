@@ -19,6 +19,7 @@ export interface Player {
     Photo?: string | null;
     current_ranking_position?: number | null;
     prize_money_this_year?: number | null;
+    Active: boolean | null
 }
 
 export interface Ranking {
@@ -160,17 +161,8 @@ export const getPlayerDetails = async (playerId: number | string | undefined | n
                     MiddleName: '',
                     Nationality: 'Unknown',
                     Sex: 'M',
-                    BirthDate: null,
                     Photo: '',
-                    SurnameFirst: false,
-                    License: '',
-                    Club: '',
-                    SponsorshipDeals: '',
-                    Twitter: '',
                     ShortName: `P${numericPlayerId}`,
-                    CommonName: `Player ${numericPlayerId}`,
-                    TeamName: '',
-                    WST: '',
                     Active: true,
                 };
                 
