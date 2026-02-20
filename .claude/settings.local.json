@@ -59,7 +59,8 @@
       "mcp__ide__getDiagnostics",
       "Bash(del \"C:\\\\Users\\\\Aviel\\\\vsprojects\\\\snookerApp\\\\FrontMaxBreak\\\\testDeviceSystem.js\")",
       "Bash(del \"C:\\\\Users\\\\Aviel\\\\vsprojects\\\\snookerApp\\\\FrontMaxBreak\\\\services\\\\api.ts.backup\")",
-      "Bash(del \"C:\\\\Users\\\\Aviel\\\\vsprojects\\\\snookerApp\\\\FrontMaxBreak\\\\utils\\\\deviceCompatibilityTest.ts\")"
+      "Bash(del \"C:\\\\Users\\\\Aviel\\\\vsprojects\\\\snookerApp\\\\FrontMaxBreak\\\\utils\\\\deviceCompatibilityTest.ts\")",
+      "Bash(powershell.exe -Command \"Get-ChildItem ''C:\\\\Users\\\\Aviel\\\\AppData\\\\Local\\\\Android'' -ErrorAction SilentlyContinue | Select-Object Name\")"
     ],
     "deny": [],
     "ask": [],
