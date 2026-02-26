@@ -3,6 +3,11 @@
 Django management command to update player photos and match history.
 Fetches data from API t=4 (player details with photos) and t=8 (match history).
 
+Rate limit: snooker.org allows ~10 requests/minute.
+All API calls go through _api_get() which enforces a 6-second delay before
+each call, keeping us safely under the limit regardless of how many players
+or seasons are being fetched.
+
 Usage:
   python manage.py update_player_details --player-id 1
   python manage.py update_player_details --all-active  # All active players
@@ -21,6 +26,9 @@ from oneFourSeven.models import Player, PlayerMatchHistory, Event, Ranking
 from oneFourSeven.constants import API_BASE_URL, HEADERS
 
 logger = logging.getLogger(__name__)
+
+# 6 seconds between calls = 10 calls/minute, safely within the snooker.org limit
+API_CALL_DELAY = 6
 
 
 class Command(BaseCommand):
@@ -45,8 +53,8 @@ class Command(BaseCommand):
         parser.add_argument(
             '--seasons',
             type=int,
-            default=2,
-            help='Number of seasons to fetch match history (default: 2)',
+            default=1,
+            help='Number of seasons to fetch match history (default: 1 = current season only)',
         )
 
     def handle(self, *args, **options):
@@ -55,7 +63,7 @@ class Command(BaseCommand):
         player_id = options.get('player_id')
         all_active = options.get('all_active')
         top_n = options.get('top')
-        seasons_count = options.get('seasons', 2)
+        seasons_count = options.get('seasons', 1)
 
         # Determine which players to update
         players = []
@@ -70,15 +78,12 @@ class Command(BaseCommand):
                 return
 
         elif all_active:
-            # Active players = LastSeasonAsPro is 0 or null
             players = Player.objects.filter(
                 Q(LastSeasonAsPro=0) | Q(LastSeasonAsPro__isnull=True)
             ).order_by('ID')
             self.stdout.write(f'[PLAYERS] Updating {players.count()} active players')
 
         elif top_n:
-            # Get top N ranked players from latest season rankings
-            from datetime import datetime
             current_year = datetime.now().year
             top_player_ids = Ranking.objects.filter(
                 Type='MoneyRankings',
@@ -92,7 +97,6 @@ class Command(BaseCommand):
             self.stdout.write(self.style.ERROR('Please specify --player-id, --all-active, or --top N'))
             return
 
-        # Update each player
         success_count = 0
         error_count = 0
 
@@ -100,19 +104,12 @@ class Command(BaseCommand):
             try:
                 self.stdout.write(f'\n[UPDATING] Player: {player.ID} - {player}')
 
-                # Update player photo (API t=4)
                 photo_updated = self._update_player_photo(player)
-
-                # Update match history (API t=8)
                 matches_updated = self._update_player_matches(player, seasons_count)
 
                 if photo_updated or matches_updated:
                     success_count += 1
                     self.stdout.write(self.style.SUCCESS(f'[OK] Updated {player}'))
-
-                # Delay to respect API rate limits (~10 req/min)
-                # Each player makes ~3 API calls, so 3s between players = ~1 req/sec
-                time.sleep(3)
 
             except Exception as e:
                 error_count += 1
@@ -121,22 +118,27 @@ class Command(BaseCommand):
 
         self.stdout.write(f'\n[SUMMARY] Success: {success_count}, Errors: {error_count}')
 
+    def _api_get(self, url):
+        """
+        Make a rate-limited GET request to snooker.org.
+        Sleeps BEFORE every call so back-to-back calls are always spaced out,
+        regardless of how many calls happen per player or per loop iteration.
+        """
+        time.sleep(API_CALL_DELAY)
+        return requests.get(url, headers=HEADERS, timeout=15)
+
     def _update_player_photo(self, player):
         """Fetch and update player photo from API t=4"""
         try:
-            # API t=4 returns detailed player info including photo
             url = f"{API_BASE_URL}?t=4&p={player.ID}"
-            response = requests.get(url, headers=HEADERS, timeout=10)
-            if response.status_code == 403:
+            response = self._api_get(url)
+            if response.status_code in (403, 404):
                 return False
             response.raise_for_status()
 
             data = response.json()
             if data and len(data) > 0:
-                player_data = data[0]
-                photo_url = player_data.get('Photo')
-
-                # Only update if photo exists and is a real URL
+                photo_url = data[0].get('Photo')
                 if photo_url and photo_url.startswith('http'):
                     if player.Photo != photo_url:
                         player.Photo = photo_url
@@ -157,31 +159,30 @@ class Command(BaseCommand):
     def _update_player_matches(self, player, seasons_count):
         """Fetch and update player match history from API t=8"""
         try:
+            # The snooker.org API uses the season start year.
+            # Season "2025" covers the entire 2025/26 season (including early 2026 matches).
+            # We start from current_year - 1 to always land on the active season year.
             current_year = datetime.now().year
-            seasons_to_fetch = [current_year - i for i in range(seasons_count)]
+            seasons_to_fetch = [current_year - 1 - i for i in range(seasons_count)]
 
             total_matches = 0
 
             for season in seasons_to_fetch:
-                # API t=8 returns all matches for a player in a season
                 url = f"{API_BASE_URL}?t=8&p={player.ID}&s={season}"
-                response = requests.get(url, headers=HEADERS, timeout=15)
-                if response.status_code == 403:
-                    self.stdout.write(f'  [SKIP] Player {player.ID} season {season}: API access denied (403)')
+                response = self._api_get(url)  # rate-limited
+                if response.status_code in (403, 404):
+                    self.stdout.write(f'  [SKIP] Player {player.ID} season {season}: {response.status_code}')
                     continue
                 response.raise_for_status()
 
                 matches_data = response.json()
-
                 if not matches_data:
                     self.stdout.write(f'  [MATCHES] No matches for season {season}')
                     continue
 
                 matches_saved = 0
-
                 for match_data in matches_data:
                     try:
-                        # Get event name if we have it
                         event_name = None
                         event_id = match_data.get('EventID')
                         if event_id:
@@ -191,16 +192,6 @@ class Command(BaseCommand):
                             except Event.DoesNotExist:
                                 pass
 
-                        # Parse dates
-                        scheduled_date = self._parse_date(match_data.get('ScheduledDate'))
-                        start_date = self._parse_date(match_data.get('StartDate'))
-                        end_date = self._parse_date(match_data.get('EndDate'))
-
-                        # Get player names (we'll need to look them up)
-                        player1_name = self._get_player_name(match_data.get('Player1ID'))
-                        player2_name = self._get_player_name(match_data.get('Player2ID'))
-
-                        # Create or update match history
                         PlayerMatchHistory.objects.update_or_create(
                             api_match_id=match_data.get('ID'),
                             player_id=player.ID,
@@ -208,18 +199,18 @@ class Command(BaseCommand):
                                 'event_id': event_id,
                                 'event_name': event_name,
                                 'round_number': match_data.get('Round'),
-                                'round_name': None,  # We can enhance this later
+                                'round_name': None,
                                 'player1_id': match_data.get('Player1ID'),
-                                'player1_name': player1_name,
+                                'player1_name': self._get_player_name(match_data.get('Player1ID')),
                                 'score1': match_data.get('Score1'),
                                 'player2_id': match_data.get('Player2ID'),
-                                'player2_name': player2_name,
+                                'player2_name': self._get_player_name(match_data.get('Player2ID')),
                                 'score2': match_data.get('Score2'),
                                 'winner_id': match_data.get('WinnerID'),
                                 'status': match_data.get('Status', 0),
-                                'scheduled_date': scheduled_date,
-                                'start_date': start_date,
-                                'end_date': end_date,
+                                'scheduled_date': self._parse_date(match_data.get('ScheduledDate')),
+                                'start_date': self._parse_date(match_data.get('StartDate')),
+                                'end_date': self._parse_date(match_data.get('EndDate')),
                                 'season': season,
                             }
                         )
@@ -231,9 +222,6 @@ class Command(BaseCommand):
 
                 self.stdout.write(f'  [MATCHES] Season {season}: {matches_saved} matches saved')
                 total_matches += matches_saved
-
-                # Delay between seasons
-                time.sleep(1)
 
             if total_matches > 0:
                 self.stdout.write(f'  [MATCHES] Total: {total_matches} matches updated')
@@ -249,9 +237,7 @@ class Command(BaseCommand):
         """Parse date string from API"""
         if not date_string:
             return None
-
         try:
-            # API returns dates in ISO format: "2025-06-22T18:00:00Z"
             dt = datetime.fromisoformat(date_string.replace('Z', '+00:00'))
             return timezone.make_aware(dt) if timezone.is_naive(dt) else dt
         except Exception:
@@ -261,7 +247,6 @@ class Command(BaseCommand):
         """Get player name from database"""
         if not player_id:
             return "Unknown"
-
         try:
             player = Player.objects.get(ID=player_id)
             return str(player)

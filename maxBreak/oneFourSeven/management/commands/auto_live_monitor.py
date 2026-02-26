@@ -247,7 +247,7 @@ class Command(BaseCommand):
             self.stdout.write('[SUCCESS] Daily round details updated')
 
             # Update player match history daily so profiles stay current
-            call_command('update_player_details', '--top', '128', '--seasons', '2')
+            call_command('update_player_details', '--top', '128')
             self.stdout.write('[SUCCESS] Daily player details updated')
 
         except Exception as e:
@@ -469,7 +469,7 @@ class Command(BaseCommand):
                 # Update player details (photos and match history) for top players
                 try:
                     self.stdout.write(f'[PLAYER_DETAILS] Updating top 128 player photos and match history')
-                    call_command('update_player_details', '--top', '128', '--seasons', '2')
+                    call_command('update_player_details', '--top', '128')
                     self.stdout.write(f'[SUCCESS] Updated player details')
                 except Exception as e:
                     self.stdout.write(f'[WARNING] Failed to update player details: {str(e)}')
