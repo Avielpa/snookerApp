@@ -7,6 +7,7 @@ from typing import List, Dict, Optional, Set, Any, Union
 # Django Imports
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
+from django.db.models import F
 from django.db.models.query import QuerySet
 from django.http import Http404
 from django.shortcuts import get_object_or_404
@@ -1439,9 +1440,10 @@ def player_match_history(request, player_id):
             matches = matches.filter(status=status_filter)
 
         # Order by date: latest finished matches first
+        # Use nulls_last so rows with NULL scheduled_date don't float to the top
         matches = matches.order_by(
-            '-scheduled_date',
-            '-start_date'
+            F('scheduled_date').desc(nulls_last=True),
+            F('start_date').desc(nulls_last=True)
         )
 
         # Apply limit

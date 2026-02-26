@@ -50,6 +50,8 @@ class Command(BaseCommand):
         self.error_count = 0
         self.max_errors = 10
         self.processed_tournament_ends = set()  # Track processed tournament end updates
+        self.last_daily_run = None    # Track last date daily updates ran (date object)
+        self.last_monthly_run = None  # Track last month monthly updates ran (YYYY-MM string)
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -217,23 +219,18 @@ class Command(BaseCommand):
     def _check_daily_updates(self):
         """Check if daily updates should run (3am UTC)."""
         current_time = timezone.now()
-        
+
         # Check if it's around 3am UTC (within 1 hour window)
         if 2 <= current_time.hour <= 4:
-            # Check if we already ran today
             today = current_time.date()
-            from oneFourSeven.models import Event
-            
-            # Use a simple flag - check if any event was updated today
-            recent_update = Event.objects.filter(
-                created_at__date=today
-            ).exists()
-            
-            if not recent_update:
+
+            # Use instance variable to track last run - avoids querying missing fields
+            if self.last_daily_run != today:
                 self.stdout.write('[DAILY] Running daily updates at 3am...')
                 self._run_daily_updates()
+                self.last_daily_run = today
                 return True
-        
+
         return False
     
     def _run_daily_updates(self):
@@ -260,23 +257,18 @@ class Command(BaseCommand):
     def _check_monthly_updates(self):
         """Check if monthly updates should run (1st of month)."""
         current_time = timezone.now()
-        
+
         # Check if it's the 1st day of the month and early morning
         if current_time.day == 1 and 2 <= current_time.hour <= 4:
-            # Check if we already ran this month
-            from oneFourSeven.models import Player
-            
-            # Check if any player was updated this month
-            this_month = current_time.replace(day=1).date()
-            recent_update = Player.objects.filter(
-                created_at__date__gte=this_month
-            ).exists()
-            
-            if not recent_update:
+            # Use YYYY-MM string to track which month we last ran
+            this_month = current_time.strftime('%Y-%m')
+
+            if self.last_monthly_run != this_month:
                 self.stdout.write('[MONTHLY] Running monthly full updates...')
                 self._run_monthly_updates()
+                self.last_monthly_run = this_month
                 return True
-        
+
         return False
     
     def _run_monthly_updates(self):
