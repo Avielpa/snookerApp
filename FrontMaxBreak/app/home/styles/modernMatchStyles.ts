@@ -48,7 +48,7 @@ export const createModernMatchStyles = (COLORS: any) => StyleSheet.create({
     roundHeaderText: {
         fontSize: 11,                    // SMALLER (was 13)
         fontFamily: 'PoppinsSemiBold',
-        color: '#FFFFFF',                // WHITE text (not dark!)
+        color: COLORS.textPrimary,
         marginLeft: 5,
         letterSpacing: 0.4,
     },
@@ -73,7 +73,7 @@ export const createModernMatchStyles = (COLORS: any) => StyleSheet.create({
     playerName: {
         fontSize: 13,
         fontFamily: 'PoppinsSemiBold',
-        color: '#FFFFFF',
+        color: COLORS.textPrimary,
         flexShrink: 1,
         maxWidth: '70%',
     },
@@ -97,7 +97,7 @@ export const createModernMatchStyles = (COLORS: any) => StyleSheet.create({
     vsSeparator: {
         fontSize: 11,
         fontFamily: 'PoppinsSemiBold',
-        color: 'rgba(255, 255, 255, 0.4)',
+        color: COLORS.textMuted,
         marginHorizontal: 12,
     },
 
@@ -108,7 +108,7 @@ export const createModernMatchStyles = (COLORS: any) => StyleSheet.create({
         alignItems: 'center',
         marginTop: 6,                    // SMALLER (was 10)
         paddingTop: 6,                   // SMALLER (was 10)
-        borderTopColor: 'rgba(255, 255, 255, 0.15)',  // White separator (not black!)
+        borderTopColor: COLORS.cardBorder,
         borderTopWidth: 1,
     },
     detailItem: {
@@ -122,9 +122,9 @@ export const createModernMatchStyles = (COLORS: any) => StyleSheet.create({
     detailText: {
         fontSize: 10,                    // SMALLER (was 11.5)
         fontFamily: 'PoppinsRegular',
-        color: '#FFFFFF',                // WHITE (not grey!) for readability
+        color: COLORS.textSecondary,
         marginLeft: 4,
         flexShrink: 1,
-        opacity: 0.8,                    // Slightly transparent for hierarchy
+        opacity: 0.8,
     },
 });

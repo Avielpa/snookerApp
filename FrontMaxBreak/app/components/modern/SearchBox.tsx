@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import { useColors } from '../../../contexts/ThemeContext';
 
 interface SearchBoxProps {
   placeholder?: string;
@@ -32,6 +33,7 @@ export const SearchBox: React.FC<SearchBoxProps> = ({
   autoFocus = false,
   editable = true,
 }) => {
+  const colors = useColors();
   const [isFocused, setIsFocused] = useState(false);
   const [searchText, setSearchText] = useState(value);
   const focusAnim = useMemo(() => new Animated.Value(0), []);
@@ -109,7 +111,7 @@ export const SearchBox: React.FC<SearchBoxProps> = ({
 
       {/* Text Input */}
       <TextInput
-        style={styles.input}
+        style={[styles.input, { color: colors.textPrimary }]}
         placeholder={placeholder}
         placeholderTextColor="#9CA3AF"
         value={searchText}
@@ -162,7 +164,6 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     fontFamily: 'PoppinsRegular',
-    color: '#FFFFFF',
     includeFontPadding: false,
     textAlignVertical: 'center',
   },
