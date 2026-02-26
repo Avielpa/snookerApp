@@ -77,9 +77,12 @@ class Command(BaseCommand):
             self.stdout.write(f'[PLAYERS] Updating {players.count()} active players')
 
         elif top_n:
-            # Get top N ranked players from latest rankings
+            # Get top N ranked players from latest season rankings
+            from datetime import datetime
+            current_year = datetime.now().year
             top_player_ids = Ranking.objects.filter(
-                Type='MoneyRankings'
+                Type='MoneyRankings',
+                Season__in=[current_year, current_year - 1]
             ).order_by('Position').values_list('Player_id', flat=True)[:top_n]
 
             players = Player.objects.filter(ID__in=top_player_ids)

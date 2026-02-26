@@ -250,7 +250,7 @@ class Command(BaseCommand):
             self.stdout.write('[SUCCESS] Daily round details updated')
 
             # Update player match history daily so profiles stay current
-            call_command('update_player_details', '--top', '50', '--seasons', '2')
+            call_command('update_player_details', '--top', '100', '--seasons', '2')
             self.stdout.write('[SUCCESS] Daily player details updated')
 
         except Exception as e:
