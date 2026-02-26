@@ -240,15 +240,19 @@ class Command(BaseCommand):
         """Run daily maintenance updates."""
         try:
             self.stdout.write('[DAILY] Starting daily matches and round updates...')
-            
+
             # Update active tournaments
             call_command('update_matches', '--active-only')
             self.stdout.write('[SUCCESS] Daily matches updated')
-            
+
             # Update upcoming tournaments round details (next 30 days)
             call_command('update_round_details', '--upcoming-only', '--days', '30')
             self.stdout.write('[SUCCESS] Daily round details updated')
-            
+
+            # Update player match history daily so profiles stay current
+            call_command('update_player_details', '--top', '50', '--seasons', '2')
+            self.stdout.write('[SUCCESS] Daily player details updated')
+
         except Exception as e:
             logger.error(f'Daily updates failed: {str(e)}')
             self.stdout.write(f'[FAILED] Daily updates failed: {str(e)}')
