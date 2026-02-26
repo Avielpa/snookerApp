@@ -110,8 +110,9 @@ class Command(BaseCommand):
                     success_count += 1
                     self.stdout.write(self.style.SUCCESS(f'[OK] Updated {player}'))
 
-                # Small delay to respect API limits
-                time.sleep(0.5)
+                # Delay to respect API rate limits (~10 req/min)
+                # Each player makes ~3 API calls, so 3s between players = ~1 req/sec
+                time.sleep(3)
 
             except Exception as e:
                 error_count += 1
@@ -126,6 +127,8 @@ class Command(BaseCommand):
             # API t=4 returns detailed player info including photo
             url = f"{API_BASE_URL}?t=4&p={player.ID}"
             response = requests.get(url, headers=HEADERS, timeout=10)
+            if response.status_code == 403:
+                return False
             response.raise_for_status()
 
             data = response.json()
@@ -163,6 +166,9 @@ class Command(BaseCommand):
                 # API t=8 returns all matches for a player in a season
                 url = f"{API_BASE_URL}?t=8&p={player.ID}&s={season}"
                 response = requests.get(url, headers=HEADERS, timeout=15)
+                if response.status_code == 403:
+                    self.stdout.write(f'  [SKIP] Player {player.ID} season {season}: API access denied (403)')
+                    continue
                 response.raise_for_status()
 
                 matches_data = response.json()
@@ -226,8 +232,8 @@ class Command(BaseCommand):
                 self.stdout.write(f'  [MATCHES] Season {season}: {matches_saved} matches saved')
                 total_matches += matches_saved
 
-                # Small delay between seasons
-                time.sleep(0.3)
+                # Delay between seasons
+                time.sleep(1)
 
             if total_matches > 0:
                 self.stdout.write(f'  [MATCHES] Total: {total_matches} matches updated')
