@@ -2,7 +2,6 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../contexts/ThemeContext';
-import { ThemeToggle } from '../../components/ThemeToggle';
 
 const Header = () => {  
   const insets = useSafeAreaInsets();
@@ -22,9 +21,7 @@ const Header = () => {
           MaxBreak147
         </Text>
         
-        <View style={styles.rightSection}>
-          <ThemeToggle size="small" />
-        </View>
+        <View style={styles.rightSection} />
       </View>
     </View>
   );
