@@ -217,14 +217,14 @@ class DatabaseSaver:
         for ranking_data in valid_rankings:
             defaults, fk_ids = prepare_data_for_model(Ranking, ranking_data)
             player_id = fk_ids.get('_PlayerID_from_api')
-            
+
             if not player_id or player_id not in players_map:
                 logger.warning(f"Player {player_id} not found for ranking {ranking_data.get('ID')}")
                 stats["skipped"] += 1
                 continue
-            
+
             player = players_map[player_id]
-            
+
             # Use logical key for lookup
             lookup = {
                 'Player': player,
@@ -232,15 +232,32 @@ class DatabaseSaver:
                 'Type': defaults.get('Type')
             }
 
-            # The `update_or_create_item` method handles filtering valid fields,
-            # so we can pass the `defaults` dictionary directly.
-            
-            # Use the class's own robust update_or_create_item method
-            instance, created = self.update_or_create_item(Ranking, lookup, defaults)
-
-            if instance:
-                stats["created" if created else "updated"] += 1
-            else:
+            # Ranking.ID is a BigIntegerField primary key (not AutoField), so Django
+            # won't generate it. prepare_data_for_model strips primary keys from defaults,
+            # causing IntegrityError on CREATE. Handle get-or-create manually so the
+            # API ID is passed explicitly only when creating a new row.
+            try:
+                existing = Ranking.objects.filter(**lookup).first()
+                if existing:
+                    for key, value in defaults.items():
+                        if hasattr(existing, key):
+                            setattr(existing, key, value)
+                    existing.save()
+                    stats["updated"] += 1
+                else:
+                    api_id = ranking_data.get('ID')
+                    if not api_id:
+                        logger.warning(f"Cannot create ranking without API ID: {lookup}")
+                        stats["failed"] += 1
+                        continue
+                    Ranking.objects.create(
+                        ID=int(api_id),
+                        Player=player,
+                        **{k: v for k, v in defaults.items() if k != 'ID'}
+                    )
+                    stats["created"] += 1
+            except IntegrityError as e:
+                logger.error(f"IntegrityError saving Ranking with lookup {lookup}: {e}")
                 stats["failed"] += 1
         
         logger.info(f"Ranking save summary: {stats}")
