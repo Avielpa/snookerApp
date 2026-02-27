@@ -115,13 +115,6 @@ export default function RankingEnhanced() {
       icon: 'ribbon-outline',
       color: '#E91E63',
     },
-    {
-      id: 'AmateurRankings',
-      label: 'Amateur',
-      value: 'AmateurRankings',
-      icon: 'people-outline',
-      color: '#795548',
-    },
   ], [colors]);
 
   // Load ranking data with caching to prevent unnecessary reloads

@@ -285,9 +285,9 @@ class Command(BaseCommand):
             call_command('update_players', '--status', 'pro', '--sex', 'women')
             self.stdout.write('[SUCCESS] Monthly players updated')
             
-            # Update rankings
-            call_command('update_rankings', '--current-season-only')
-            self.stdout.write('[SUCCESS] Monthly rankings updated')
+            # Update all ranking types (MoneyRankings, QTRankings, WomensRankings, etc.)
+            call_command('update_rankings', '--ranking-type', 'all')
+            self.stdout.write('[SUCCESS] Monthly rankings updated (all types)')
             
         except Exception as e:
             logger.error(f'Monthly updates failed: {str(e)}')
