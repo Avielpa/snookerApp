@@ -1,12 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import {
-    View, 
-    Text, 
-    FlatList, 
+    View,
+    Text,
+    FlatList,
     TouchableOpacity,
-    RefreshControl, 
+    RefreshControl,
     ScrollView,
-    ImageBackground
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -121,7 +120,7 @@ const HomeScreen = (): React.ReactElement | null => {
 
     // Main Render structure
     return (
-        <ImageBackground source={require('../assets/snooker_background.jpg')} style={styles.backgroundImage}>
+        <View style={styles.backgroundImage}>
             <SafeAreaView style={styles.container}>
                 <View style={styles.headerContainer}>
                     <Text style={styles.screenTitle}>Snooker.org</Text>
@@ -229,7 +228,7 @@ const HomeScreen = (): React.ReactElement | null => {
                     )}
                 </View>
             </SafeAreaView>
-        </ImageBackground>
+        </View>
     );
 };
 

@@ -1,99 +1,117 @@
 // app/home/styles/modernMatchStyles.ts
-// COMPACT & COLORFUL - Small cards, white/orange text for background readability
-// NO LOGIC CHANGES - ONLY VISUAL IMPROVEMENTS
+// Score-centered layout — NO LOGIC CHANGES
 
 import { StyleSheet } from 'react-native';
 
 export const createModernMatchStyles = (COLORS: any) => StyleSheet.create({
-    // STATUS HEADER - "Playing Now", "Upcoming", "Results"
-    // Compact with white text
+    // STATUS HEADER — subtle section label, not a big pill
     statusHeaderItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: 6,              // SMALLER (was 10)
-        paddingHorizontal: 12,           // SMALLER (was 16)
-        marginTop: 8,                    // SMALLER (was 14)
-        marginBottom: 4,                 // SMALLER (was 8)
-        marginHorizontal: 8,             // SMALLER (was 10)
-        backgroundColor: '#1A733A',      // Snooker green
-        borderRadius: 10,                // SMALLER (was 16)
-        elevation: 2,
-        shadowColor: '#1A733A',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.2,
-        shadowRadius: 3,
+        paddingVertical: 8,
+        paddingHorizontal: 16,
+        marginTop: 12,
+        marginBottom: 2,
+        borderLeftWidth: 3,
+        borderLeftColor: '#1A733A',
+        marginHorizontal: 8,
     },
     statusHeaderText: {
-        fontSize: 11,                    // SMALLER (was 14)
+        fontSize: 11,
         fontFamily: 'PoppinsBold',
-        color: '#FFFFFF',                // WHITE for readability
-        marginLeft: 6,
+        color: COLORS.textSecondary,
+        marginLeft: 8,
         textTransform: 'uppercase',
-        letterSpacing: 0.8,
+        letterSpacing: 1.2,
     },
 
-    // ROUND HEADER - "Quarter-Finals", "Round 7"
-    // Compact with white/orange text
+    // ROUND HEADER — minimal divider
     roundHeaderItem: {
-        paddingVertical: 5,              // SMALLER (was 8)
-        paddingHorizontal: 10,           // SMALLER (was 14)
-        marginTop: 6,                    // SMALLER (was 12)
-        marginBottom: 3,                 // SMALLER (was 6)
-        marginHorizontal: 8,             // SMALLER (was 10)
-        backgroundColor: 'rgba(255, 143, 0, 0.15)',  // Orange tint instead of green
-        borderRadius: 8,
-        borderLeftWidth: 3,
-        borderLeftColor: '#FF8F00',      // Orange accent
+        paddingVertical: 4,
+        paddingHorizontal: 16,
+        marginTop: 4,
+        marginBottom: 2,
+        marginHorizontal: 8,
     },
     roundHeaderText: {
-        fontSize: 11,                    // SMALLER (was 13)
-        fontFamily: 'PoppinsSemiBold',
-        color: COLORS.textPrimary,
-        marginLeft: 5,
+        fontSize: 10,
+        fontFamily: 'PoppinsMedium',
+        color: COLORS.textMuted,
         letterSpacing: 0.4,
     },
 
-    // MATCH CARD CONTAINER - MUCH smaller margins
+    // MATCH CARD CONTAINER
     matchItemContainer: {
-        marginVertical: 3,               // SMALLER (was 6)
-        marginHorizontal: 8,             // SMALLER (was 10)
+        marginVertical: 4,
+        marginHorizontal: 8,
     },
 
-    // PLAYER ROW - Compact
+    // BADGE ROW — live/break badge at top of card
+    badgeRow: {
+        alignItems: 'flex-start',
+        marginBottom: 8,
+    },
+
+    // SCORE ROW — player name | center score | player name
+    scoreRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+    },
+
+    // PLAYER NAMES — flex 1 to take available space
     playerRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 6,                 // SMALLER (was 10)
-        marginTop: 2,                    // SMALLER (was 4)
-        direction: 'ltr',                // FORCE LEFT-TO-RIGHT
+        marginBottom: 6,
+        marginTop: 2,
+        direction: 'ltr',
     },
-
-    // PLAYER NAMES - Clean, readable
     playerName: {
+        flex: 1,
         fontSize: 13,
         fontFamily: 'PoppinsSemiBold',
         color: COLORS.textPrimary,
         flexShrink: 1,
-        maxWidth: '70%',
     },
 
-    // PLAYER SCORE - Bold and prominent, clearly separated
+    // CENTER SCORE CONTAINER
+    centerScore: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: 10,
+        minWidth: 90,
+    },
+
+    // INDIVIDUAL SCORE NUMBERS — big and bold
+    scoreNumber: {
+        fontSize: 24,
+        fontFamily: 'PoppinsBold',
+        color: '#FFB74D',
+        minWidth: 28,
+        textAlign: 'center',
+    },
+
+    // PLAYER SCORE — kept for compatibility (not used in new layout)
     playerScore: {
-        fontSize: 18,
+        fontSize: 22,
         fontFamily: 'PoppinsBold',
         color: '#FF8F00',
         minWidth: 28,
         textAlign: 'center',
     },
 
-    // WINNER - BRIGHT ORANGE for both name and score
-    winnerText: {
-        fontFamily: 'PoppinsBold',
-        color: '#FF8F00',
+    // SCORE DASH / VS separator
+    scoreDash: {
+        fontSize: 16,
+        fontFamily: 'PoppinsRegular',
+        color: COLORS.textMuted,
+        marginHorizontal: 6,
     },
 
-    // VS SEPARATOR - Small and subtle
+    // VS SEPARATOR — kept for compatibility
     vsSeparator: {
         fontSize: 11,
         fontFamily: 'PoppinsSemiBold',
@@ -101,14 +119,22 @@ export const createModernMatchStyles = (COLORS: any) => StyleSheet.create({
         marginHorizontal: 12,
     },
 
-    // DETAILS ROW - Compact with subtle separator
+    // WINNER — bright amber for both name and score
+    winnerText: {
+        fontFamily: 'PoppinsBold',
+        color: '#FFB74D',
+    },
+    winnerScore: {
+        color: '#FFB74D',
+    },
+
+    // DETAILS ROW — compact footer
     detailsRow: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
         alignItems: 'center',
-        marginTop: 6,                    // SMALLER (was 10)
-        paddingTop: 6,                   // SMALLER (was 10)
-        borderTopColor: COLORS.cardBorder,
+        marginTop: 8,
+        paddingTop: 6,
+        borderTopColor: 'rgba(26, 115, 58, 0.25)',
         borderTopWidth: 1,
     },
     detailItem: {
@@ -117,10 +143,8 @@ export const createModernMatchStyles = (COLORS: any) => StyleSheet.create({
         flexShrink: 1,
         paddingRight: 6,
     },
-
-    // DETAIL TEXT - SMALLER, WHITE color (no grey!)
     detailText: {
-        fontSize: 10,                    // SMALLER (was 11.5)
+        fontSize: 10,
         fontFamily: 'PoppinsRegular',
         color: COLORS.textSecondary,
         marginLeft: 4,

@@ -7,6 +7,7 @@ export const createLayoutStyles = (COLORS: any) => StyleSheet.create({
     },
     backgroundImage: {
         flex: 1,
+        backgroundColor: '#0D1A0F',
     },
     headerContainer: { 
         paddingBottom: 2, 

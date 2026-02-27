@@ -103,61 +103,60 @@ export const MatchItem = ({
             activeOpacity={0.6}
         >
             <ModernGlassCard style={styles.matchItemContainer}>
-                {item.matchCategory === 'livePlaying' && <LiveIndicator />}
+                {/* Live / Break badge */}
+                {(item.matchCategory === 'livePlaying' || item.matchCategory === 'onBreak') && (
+                    <View style={styles.badgeRow}>
+                        <LiveIndicator
+                            isLive={item.matchCategory === 'livePlaying'}
+                            onBreak={item.matchCategory === 'onBreak'}
+                        />
+                    </View>
+                )}
 
-                {/* FIXED: Same pattern as match details - separate containers */}
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
-                    {/* PLAYER 1 CONTAINER */}
-                    <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <Text
-                            style={[styles.playerName, isPlayer1Winner && styles.winnerText]}
-                            onPress={() => handlePlayerPress(item.player1_id)}
-                            disabled={!item.player1_id || item.player1_id === 376}
-                            numberOfLines={1}
-                        >
-                            {player1Name}
-                        </Text>
-                        <Text style={[styles.playerScore, isPlayer1Winner && styles.winnerText]}>
-                            {score1}
-                        </Text>
+                {/* Score-centered row: Name | Score — Score | Name */}
+                <View style={styles.scoreRow}>
+                    <Text
+                        style={[styles.playerName, isPlayer1Winner && styles.winnerText]}
+                        onPress={() => handlePlayerPress(item.player1_id)}
+                        disabled={!item.player1_id || item.player1_id === 376}
+                        numberOfLines={1}
+                    >
+                        {player1Name}
+                    </Text>
+
+                    <View style={styles.centerScore}>
+                        {hasValidScores ? (
+                            <>
+                                <Text style={[styles.scoreNumber, isPlayer1Winner && styles.winnerScore]}>
+                                    {score1}
+                                </Text>
+                                <Text style={styles.scoreDash}>—</Text>
+                                <Text style={[styles.scoreNumber, isPlayer2Winner && styles.winnerScore]}>
+                                    {score2}
+                                </Text>
+                            </>
+                        ) : (
+                            <Text style={styles.scoreDash}>vs</Text>
+                        )}
                     </View>
 
-                    {/* VS SEPARATOR */}
-                    <Text style={styles.vsSeparator}>VS</Text>
-
-                    {/* PLAYER 2 CONTAINER */}
-                    <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <Text style={[styles.playerScore, isPlayer2Winner && styles.winnerText]}>
-                            {score2}
-                        </Text>
-                        <Text
-                            style={[styles.playerName, { textAlign: 'right' }, isPlayer2Winner && styles.winnerText]}
-                            onPress={() => handlePlayerPress(item.player2_id)}
-                            disabled={!item.player2_id || item.player2_id === 376}
-                            numberOfLines={1}
-                        >
-                            {player2Name}
-                        </Text>
-                    </View>
+                    <Text
+                        style={[styles.playerName, { textAlign: 'right' }, isPlayer2Winner && styles.winnerText]}
+                        onPress={() => handlePlayerPress(item.player2_id)}
+                        disabled={!item.player2_id || item.player2_id === 376}
+                        numberOfLines={1}
+                    >
+                        {player2Name}
+                    </Text>
                 </View>
-                
+
+                {/* Footer: date only */}
                 <View style={styles.detailsRow}>
                     <View style={styles.detailItem}>
                         <Ionicons name={ICONS.calendar} size={11} color={COLORS.textSecondary} />
                         <Text style={styles.detailText}>{scheduledDate}</Text>
                     </View>
-
-                    {tourName && (
-                        <View style={[styles.detailItem, { justifyContent: 'flex-end' }]}>
-                            <Ionicons name={ICONS.trophy} size={11} color={COLORS.textSecondary} />
-                            <Text style={[styles.detailText, { textAlign: 'right' }]} numberOfLines={1}>
-                                {tourName}
-                            </Text>
-                        </View>
-                    )}
                 </View>
-
-
             </ModernGlassCard>
         </TouchableOpacity>
     );
