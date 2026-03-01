@@ -64,6 +64,14 @@
           "color": "#ffffff",
           "defaultChannel": "default"
         }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "ndkVersion": "28.2.13676358"
+          }
+        }
       ]
     ],
     "experiments": {
