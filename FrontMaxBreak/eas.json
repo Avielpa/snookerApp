@@ -57,8 +57,7 @@
         "buildConfiguration": "Release"
       },
       "android": {
-        "ndk": "27.0.12077973",
-        "gradleCommand": ":app:bundleRelease -Pandroid.targetSdkVersion=35 -Pandroid.compileSdkVersion=35"
+        "ndk": "27.0.12077973"
       }
     },
     "production-apk": {
