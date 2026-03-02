@@ -6,8 +6,7 @@ import { logger } from '../../../utils/logger';
 import { TOUCH_SLOP, MATCH_CONSTANTS } from '../../../utils/constants';
 import { getMatchPlayerNames, areScoresValid, normalizeScore } from '../../../utils/playerUtils';
 import { clearMatchCache } from '../../../services/matchServices';
-import { ModernGlassCard } from '../../components/modern/ModernGlassCard';  // MODERN CARD
-import { LiveIndicator } from '../../components/modern/LiveIndicator';
+import { ModernGlassCard } from '../../components/modern/ModernGlassCard';
 import { MatchListItem } from '../types';
 import { formatDate } from '../utils/dateFormatting';
 import { ICONS } from '../utils/icons';
@@ -96,22 +95,18 @@ export const MatchItem = ({
         }
     };
 
+    const accentColor =
+        item.matchCategory === 'livePlaying' ? '#22C55E' :
+        item.matchCategory === 'onBreak' ? '#F59E0B' :
+        undefined;
+
     return (
         <TouchableOpacity
             onPress={() => handleMatchPress(item.api_match_id)}
             disabled={!item.api_match_id || typeof item.api_match_id !== 'number' || item.api_match_id <= 0}
             activeOpacity={0.6}
         >
-            <ModernGlassCard style={styles.matchItemContainer}>
-                {/* Live / Break badge */}
-                {(item.matchCategory === 'livePlaying' || item.matchCategory === 'onBreak') && (
-                    <View style={styles.badgeRow}>
-                        <LiveIndicator
-                            isLive={item.matchCategory === 'livePlaying'}
-                            onBreak={item.matchCategory === 'onBreak'}
-                        />
-                    </View>
-                )}
+            <ModernGlassCard style={styles.matchItemContainer} accentColor={accentColor}>
 
                 {/* Score-centered row: Name | Score — Score | Name */}
                 <View style={styles.scoreRow}>

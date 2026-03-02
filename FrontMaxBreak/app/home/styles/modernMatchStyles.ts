@@ -4,7 +4,7 @@
 import { StyleSheet } from 'react-native';
 
 export const createModernMatchStyles = (COLORS: any) => StyleSheet.create({
-    // STATUS HEADER — subtle section label, not a big pill
+    // STATUS HEADER — tappable section label with count + chevron
     statusHeaderItem: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -24,32 +24,44 @@ export const createModernMatchStyles = (COLORS: any) => StyleSheet.create({
         textTransform: 'uppercase',
         letterSpacing: 1.2,
     },
+    statusHeaderCount: {
+        backgroundColor: 'rgba(26, 115, 58, 0.3)',
+        borderRadius: 10,
+        paddingHorizontal: 7,
+        paddingVertical: 2,
+    },
+    statusHeaderCountText: {
+        fontSize: 10,
+        fontFamily: 'PoppinsBold',
+        color: COLORS.textSecondary,
+    },
 
-    // ROUND HEADER — minimal divider
+    // ROUND HEADER — centered divider  ─── Final ───
     roundHeaderItem: {
-        paddingVertical: 4,
+        flexDirection: 'row',
+        alignItems: 'center',
         paddingHorizontal: 16,
-        marginTop: 4,
-        marginBottom: 2,
-        marginHorizontal: 8,
+        marginTop: 8,
+        marginBottom: 4,
+    },
+    roundHeaderLine: {
+        flex: 1,
+        height: StyleSheet.hairlineWidth,
+        backgroundColor: 'rgba(26, 115, 58, 0.35)',
     },
     roundHeaderText: {
-        fontSize: 10,
+        fontSize: 9,
         fontFamily: 'PoppinsMedium',
         color: COLORS.textMuted,
-        letterSpacing: 0.4,
+        letterSpacing: 1.5,
+        marginHorizontal: 10,
+        textTransform: 'uppercase',
     },
 
     // MATCH CARD CONTAINER
     matchItemContainer: {
         marginVertical: 4,
         marginHorizontal: 8,
-    },
-
-    // BADGE ROW — live/break badge at top of card
-    badgeRow: {
-        alignItems: 'flex-start',
-        marginBottom: 8,
     },
 
     // SCORE ROW — player name | center score | player name
@@ -94,29 +106,12 @@ export const createModernMatchStyles = (COLORS: any) => StyleSheet.create({
         textAlign: 'center',
     },
 
-    // PLAYER SCORE — kept for compatibility (not used in new layout)
-    playerScore: {
-        fontSize: 22,
-        fontFamily: 'PoppinsBold',
-        color: '#FF8F00',
-        minWidth: 28,
-        textAlign: 'center',
-    },
-
     // SCORE DASH / VS separator
     scoreDash: {
         fontSize: 16,
         fontFamily: 'PoppinsRegular',
         color: COLORS.textMuted,
         marginHorizontal: 6,
-    },
-
-    // VS SEPARATOR — kept for compatibility
-    vsSeparator: {
-        fontSize: 11,
-        fontFamily: 'PoppinsSemiBold',
-        color: COLORS.textMuted,
-        marginHorizontal: 12,
     },
 
     // WINNER — bright amber for both name and score

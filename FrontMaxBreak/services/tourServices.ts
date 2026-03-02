@@ -367,6 +367,28 @@ export const getUpcomingMatchesFallback = async (tour: string = 'main', days: nu
 };
 
 /**
+ * Fetches recent finished matches from the most recently completed tournament.
+ * Used as home screen fallback during a gap between active tournaments.
+ * @param limit Max matches to return (default 15)
+ */
+export const getRecentMatches = async (limit: number = 15): Promise<{
+    success: boolean;
+    event_id: number | null;
+    event_name: string | null;
+    matches: any[];
+    total: number;
+} | null> => {
+    logger.debug(`[TourService] Fetching recent matches fallback (limit=${limit})...`);
+    try {
+        const response = await api.get<any>(`recent-matches/?limit=${limit}`);
+        return response.data ?? null;
+    } catch (error: any) {
+        logger.error(`[TourService] Error fetching recent matches:`, error.message);
+        return null;
+    }
+};
+
+/**
  * Fetches details for a specific event (tournament) from the internal backend API with retry logic.
  * @param {number | string | undefined | null} eventId - The ID (PK) of the event.
  * @param {number} retryAttempts - Number of retry attempts (for internal use)

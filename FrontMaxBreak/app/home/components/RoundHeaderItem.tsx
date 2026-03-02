@@ -9,7 +9,9 @@ interface RoundHeaderItemProps {
 
 export const RoundHeaderItem = ({ roundName, styles }: RoundHeaderItemProps) => (
     <View style={styles.roundHeaderItem}>
+        <View style={styles.roundHeaderLine} />
         <Text style={styles.roundHeaderText}>{roundName}</Text>
+        <View style={styles.roundHeaderLine} />
     </View>
 );
 
