@@ -117,14 +117,17 @@ export const useHomeData = () => {
             setActiveOtherTours(otherTours);
             logger.log(`[HomeScreen] Found ${otherTours.length} active other tours`);
             
+            // PRIORITY 1: Active tournament with matches
+            let matchesLoaded = false;
+
             if (targetTournamentId) {
                 logger.log(`[HomeScreen] Fetching details and matches for tournament ${targetTournamentId}`);
-                
+
                 const [detailsData, matchesResult] = await Promise.all([
                     getTournamentDetails(targetTournamentId),
                     getTournamentMatches(targetTournamentId)
                 ]);
-                
+
                 // Also fetch prize money data
                 try {
                     const prizeResponse = await fetch(`${process.env.EXPO_PUBLIC_API_BASE_URL || 'https://snookerapp.up.railway.app'}/oneFourSeven/prize-money/${targetTournamentId}/`);
@@ -140,7 +143,7 @@ export const useHomeData = () => {
                     logger.warn('[HomeScreen] Failed to fetch prize data:', prizeError);
                     setTournamentPrize(null);
                 }
-                
+
                 logger.log(`[HomeScreen] Tournament details:`, detailsData);
                 logger.log(`[HomeScreen] Raw matches received:`, {
                     type: typeof matchesResult,
@@ -148,125 +151,89 @@ export const useHomeData = () => {
                     length: Array.isArray(matchesResult) ? matchesResult.length : 'N/A',
                     sample: Array.isArray(matchesResult) ? matchesResult.slice(0, 2) : matchesResult
                 });
-                
+
                 const eventDetails = detailsData as EventDetails | null;
                 const tourDisplayName = eventDetails?.Name ?? 'Tournament';
-                
+
                 // Add tour type indicator for non-main tours
                 const tourType = (detailsData as Event)?.Tour;
-                const displayName = tourType && tourType !== 'main' 
+                const displayName = tourType && tourType !== 'main'
                     ? `${tourDisplayName} (${tourType.toUpperCase()})`
                     : tourDisplayName;
-                
-                setTourName(displayName);
-                
+
                 const currentMatches = Array.isArray(matchesResult) ? matchesResult as Match[] : [];
-                
-                // Data consistency validation for finished matches
+
                 if (currentMatches.length > 0) {
+                    // Data consistency validation for finished matches
                     const inconsistentMatches = currentMatches.filter(match => {
-                        if (match.status_code === 3 && // Finished match
-                            match.score1 != null && match.score2 != null && 
+                        if (match.status_code === 3 &&
+                            match.score1 != null && match.score2 != null &&
                             match.winner_id != null) {
                             const scoreWinner1 = match.score1 > match.score2;
                             const scoreWinner2 = match.score2 > match.score1;
                             const winnerIdWinner1 = match.winner_id === match.player1_id;
                             const winnerIdWinner2 = match.winner_id === match.player2_id;
-                            
-                            // Inconsistent if winner_id doesn't match scores
                             return (scoreWinner1 && !winnerIdWinner1) || (scoreWinner2 && !winnerIdWinner2);
                         }
                         return false;
                     });
-                    
                     if (inconsistentMatches.length > 0) {
-                        logger.error(`[HomeScreen] 🚨 ${inconsistentMatches.length} matches have inconsistent winner data (${isRefresh ? 'REFRESH' : 'INITIAL LOAD'}):`, 
+                        logger.error(`[HomeScreen] 🚨 ${inconsistentMatches.length} matches have inconsistent winner data:`,
                             inconsistentMatches.map(m => ({
                                 api_match_id: m.api_match_id,
                                 score: `${m.score1}-${m.score2}`,
                                 winner_id: m.winner_id,
                                 player1_id: m.player1_id,
                                 player2_id: m.player2_id,
-                                loadType: isRefresh ? 'REFRESH' : 'INITIAL'
                             }))
                         );
                     }
-                }
-                
-                logger.log(`[HomeScreen] Processing ${currentMatches.length} matches...`);
-                const processedData = processMatchesForList(currentMatches);
-                logger.log(`[HomeScreen] Processed data:`, {
-                    totalItems: processedData.length,
-                    types: processedData.reduce((acc, item) => {
-                        acc[item.type] = (acc[item.type] || 0) + 1;
-                        return acc;
-                    }, {} as Record<string, number>)
-                });
-                
-                setCurrentMatches(currentMatches);
-                setProcessedListData(processedData);
-                
-                logger.log(`[HomeScreen] ✅ Data set complete (${isRefresh ? 'REFRESH' : 'INITIAL LOAD'}):`, {
-                    matchCount: currentMatches.length,
-                    processedItemCount: processedData.length,
-                    timestamp: Date.now(),
-                    loadType: isRefresh ? 'REFRESH' : 'INITIAL'
-                });
 
-                // Emergency sync detection for missing tournament data
+                    logger.log(`[HomeScreen] Processing ${currentMatches.length} matches...`);
+                    const processedData = processMatchesForList(currentMatches);
+
+                    setTourName(displayName);
+                    setCurrentMatches(currentMatches);
+                    setProcessedListData(processedData);
+                    matchesLoaded = true;
+
+                    logger.log(`[HomeScreen] ✅ Active tournament data set (${isRefresh ? 'REFRESH' : 'INITIAL LOAD'}): ${currentMatches.length} matches`);
+                } else {
+                    logger.warn(`[HomeScreen] Active tournament "${displayName}" has 0 matches - falling through to upcoming/recent`);
+                }
+
+                // Emergency sync detection (only on initial load, only when 0 matches)
                 if (currentMatches.length === 0 && !isRefresh) {
-                    logger.warn('[HomeScreen] 🚨 No matches found - checking for missing sync data');
-                    
-                    // Run quick status check for critical tournaments
                     quickStatusCheck().then(status => {
                         const missingTournaments = Object.entries(status).filter(
                             ([name, data]: [string, any]) => data.shouldHave && !data.hasData
                         );
-                        
                         if (missingTournaments.length > 0) {
-                            logger.warn(`[HomeScreen] Found ${missingTournaments.length} tournaments missing data:`, 
-                                missingTournaments.map(([name, data]) => `${name} (${data.status})`));
-                            
-                            // Trigger emergency sync for critical tournaments
                             triggerEmergencySync().then(syncResults => {
-                                logger.log('[HomeScreen] Emergency sync completed:', syncResults);
-                                
-                                // If sync was successful, refresh data
                                 const successfulSyncs = syncResults.filter(r => r.success);
                                 if (successfulSyncs.length > 0) {
-                                    logger.log(`[HomeScreen] ${successfulSyncs.length} tournaments synced successfully - refreshing data`);
-                                    setTimeout(() => {
-                                        loadTournamentInfo(true, specificTournamentId);
-                                    }, 3000); // Wait 3 seconds then refresh
+                                    setTimeout(() => loadTournamentInfo(true, specificTournamentId), 3000);
                                 }
-                            }).catch(error => {
-                                logger.error('[HomeScreen] Emergency sync failed:', error);
-                            });
+                            }).catch(error => logger.error('[HomeScreen] Emergency sync failed:', error));
                         }
-                    }).catch(error => {
-                        logger.error('[HomeScreen] Status check failed:', error);
-                    });
+                    }).catch(error => logger.error('[HomeScreen] Status check failed:', error));
                 }
-            } else if (isRefresh) {
-                // On refresh, if active tournament can't be determined (e.g. network hiccup after cache clear),
-                // keep current data rather than replacing with fallback content
-                logger.warn(`[HomeScreen] Refresh: could not determine active tournament - keeping current data`);
-            } else {
-                logger.warn(`[HomeScreen] No active tournament ID found - trying fallback upcoming matches`);
+            }
 
-                // Try fallback upcoming matches when no active tournament exists
+            // PRIORITY 2: Upcoming matches (no active tour, or active tour has 0 matches)
+            if (!matchesLoaded) {
+                logger.warn(`[HomeScreen] No active matches - trying upcoming matches fallback`);
                 try {
                     const fallbackData = await getUpcomingMatchesFallback('main', 7);
-                    
+
                     if (fallbackData && fallbackData.success && fallbackData.total_matches > 0) {
-                        logger.log(`[HomeScreen] Using fallback data: ${fallbackData.total_matches} upcoming matches`);
-                        
-                        // Convert fallback matches to our expected format
+                        logger.log(`[HomeScreen] Using upcoming fallback: ${fallbackData.total_matches} matches`);
+
                         const allFallbackMatches = [
                             ...fallbackData.today_matches,
                             ...fallbackData.upcoming_matches
                         ];
-                        
+
                         const convertedMatches: Match[] = allFallbackMatches.map((match: any) => ({
                             id: match.id,
                             api_match_id: match.api_match_id,
@@ -293,23 +260,24 @@ export const useHomeData = () => {
                             details_url: null,
                             note: null
                         }));
-                        
+
                         setTourName("Upcoming Matches");
                         setTournamentPrize(null);
                         setCurrentMatches(convertedMatches);
-                        
-                        const processedData = processMatchesForList(convertedMatches);
-                        setProcessedListData(processedData);
-                        
-                        logger.log(`[HomeScreen] Fallback: Processed ${processedData.length} items from ${convertedMatches.length} upcoming matches`);
-                    } else {
-                        logger.warn(`[HomeScreen] Upcoming fallback empty - trying recent matches`);
-                        await loadRecentMatchesFallback();
+                        setProcessedListData(processMatchesForList(convertedMatches));
+                        matchesLoaded = true;
+
+                        logger.log(`[HomeScreen] Upcoming fallback loaded: ${convertedMatches.length} matches`);
                     }
                 } catch (fallbackError: any) {
-                    logger.error(`[HomeScreen] Fallback fetch failed:`, fallbackError);
-                    await loadRecentMatchesFallback();
+                    logger.error(`[HomeScreen] Upcoming fallback fetch failed:`, fallbackError);
                 }
+            }
+
+            // PRIORITY 3: Recent 15 matches from last completed tournament
+            if (!matchesLoaded) {
+                logger.warn(`[HomeScreen] No upcoming matches - loading recent matches fallback`);
+                await loadRecentMatchesFallback();
             }
         } catch (err: any) {
             logger.error(`[HomeScreen] Error loading tournament info:`, err);
