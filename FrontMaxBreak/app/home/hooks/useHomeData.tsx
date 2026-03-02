@@ -213,12 +213,6 @@ export const useHomeData = () => {
                     loadType: isRefresh ? 'REFRESH' : 'INITIAL'
                 });
 
-                // If tournament has no matches at all, fall back to recent results
-                if (currentMatches.length === 0 && !isRefresh) {
-                    logger.warn('[HomeScreen] Tournament has no matches - loading recent results fallback');
-                    await loadRecentMatchesFallback();
-                }
-
                 // Emergency sync detection for missing tournament data
                 if (currentMatches.length === 0 && !isRefresh) {
                     logger.warn('[HomeScreen] 🚨 No matches found - checking for missing sync data');
