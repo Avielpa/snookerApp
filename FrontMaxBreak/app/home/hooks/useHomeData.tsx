@@ -1,6 +1,6 @@
 // app/home/hooks/useHomeData.tsx
 import { useState, useEffect, useCallback } from 'react';
-import { getActiveTournamentId, getTournamentDetails, getTournamentMatches, getActiveOtherTours, getUpcomingMatchesFallback, Event } from '../../../services/tourServices';
+import { getActiveTournamentId, getTournamentDetails, getTournamentMatches, getActiveOtherTours, getUpcomingMatchesFallback, getRecentMatches, Event } from '../../../services/tourServices';
 import { logger } from '../../../utils/logger';
 import { forceCacheRefresh } from '../../../services/api';
 import { Match, EventDetails, ListItem } from '../types';
@@ -38,6 +38,65 @@ export const useHomeData = () => {
             userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'Unknown'
         });
         
+        // Fallback: load most recent completed tournament's matches when home screen would be empty
+        const loadRecentMatchesFallback = async () => {
+            try {
+                logger.log('[HomeScreen] Loading recent matches fallback...');
+                const recentData = await getRecentMatches(15);
+
+                if (recentData && recentData.success && recentData.matches.length > 0) {
+                    const convertedMatches: Match[] = recentData.matches.map((match: any) => ({
+                        id: match.id,
+                        api_match_id: match.api_match_id,
+                        event_id: match.event_id,
+                        round: match.round,
+                        number: match.match_number,
+                        player1_id: match.player1_id,
+                        player2_id: match.player2_id,
+                        player1_name: match.player1_name,
+                        player2_name: match.player2_name,
+                        score1: match.score1,
+                        score2: match.score2,
+                        winner_id: match.winner_id,
+                        status_code: match.status_code,
+                        status_display: match.status_display,
+                        scheduled_date: match.scheduled_date,
+                        start_date: match.scheduled_date,
+                        end_date: null,
+                        frame_scores: null,
+                        sessions_str: null,
+                        on_break: false,
+                        unfinished: false,
+                        live_url: null,
+                        details_url: null,
+                        note: null
+                    }));
+
+                    const eventLabel = recentData.event_name
+                        ? `Recent: ${recentData.event_name}`
+                        : 'Recent Results';
+                    setTourName(eventLabel);
+                    setTournamentPrize(null);
+                    setCurrentMatches(convertedMatches);
+                    setProcessedListData(processMatchesForList(convertedMatches));
+
+                    logger.log(`[HomeScreen] Recent fallback: ${convertedMatches.length} matches from "${recentData.event_name}"`);
+                } else {
+                    logger.warn('[HomeScreen] No recent matches available');
+                    setTourName(null);
+                    setTournamentPrize(null);
+                    setCurrentMatches([]);
+                    setProcessedListData([]);
+                }
+            } catch (recentErr: any) {
+                logger.error('[HomeScreen] Recent matches fallback failed:', recentErr);
+                setTourName(null);
+                setTournamentPrize(null);
+                setCurrentMatches([]);
+                setProcessedListData([]);
+            }
+        };
+
         try {
             // If a specific tournament is selected, use it; otherwise get the main active tournament
             let targetTournamentId = specificTournamentId;
@@ -154,6 +213,12 @@ export const useHomeData = () => {
                     loadType: isRefresh ? 'REFRESH' : 'INITIAL'
                 });
 
+                // If tournament has no matches at all, fall back to recent results
+                if (currentMatches.length === 0 && !isRefresh) {
+                    logger.warn('[HomeScreen] Tournament has no matches - loading recent results fallback');
+                    await loadRecentMatchesFallback();
+                }
+
                 // Emergency sync detection for missing tournament data
                 if (currentMatches.length === 0 && !isRefresh) {
                     logger.warn('[HomeScreen] 🚨 No matches found - checking for missing sync data');
@@ -240,16 +305,12 @@ export const useHomeData = () => {
                         
                         logger.log(`[HomeScreen] Fallback: Processed ${processedData.length} items from ${convertedMatches.length} upcoming matches`);
                     } else {
-                        logger.warn(`[HomeScreen] Fallback data unavailable or empty`);
-                        setTourName(null);
-                        setTournamentPrize(null);
-                        setProcessedListData([]);
+                        logger.warn(`[HomeScreen] Upcoming fallback empty - trying recent matches`);
+                        await loadRecentMatchesFallback();
                     }
                 } catch (fallbackError: any) {
                     logger.error(`[HomeScreen] Fallback fetch failed:`, fallbackError);
-                    setTourName(null);
-                    setTournamentPrize(null);
-                    setProcessedListData([]);
+                    await loadRecentMatchesFallback();
                 }
             }
         } catch (err: any) {

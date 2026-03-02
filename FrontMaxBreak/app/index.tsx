@@ -29,7 +29,17 @@ import { DeviceAwareFilterScrollView } from '../components/DeviceAwareFilterScro
 
 const HomeScreen = (): React.ReactElement | null => {
     const [activeFilter, setActiveFilter] = useState<ActiveFilterType>('all');
+    const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
     const navigation = useRouter();
+
+    const toggleSection = React.useCallback((sectionId: string) => {
+        setCollapsedSections(prev => {
+            const next = new Set(prev);
+            if (next.has(sectionId)) next.delete(sectionId);
+            else next.add(sectionId);
+            return next;
+        });
+    }, []);
     const COLORS = useHomeColors();
     
     // Use the extracted hook for data management
@@ -46,6 +56,16 @@ const HomeScreen = (): React.ReactElement | null => {
         handleOtherTourSelection
     } = useHomeData();
     
+    // Auto-collapse Results only when there are live/upcoming matches
+    // During tournament gaps (only finished matches), keep Results expanded
+    React.useEffect(() => {
+        const hasLiveOrUpcoming = processedListData.some(
+            item => item.type === 'match' &&
+                (item.matchCategory === 'livePlaying' || item.matchCategory === 'onBreak' || item.matchCategory === 'upcoming')
+        );
+        setCollapsedSections(hasLiveOrUpcoming ? new Set(['finished']) : new Set());
+    }, [processedListData]);
+
     // AGGRESSIVE DEVICE FIX: Always refresh data when screen regains focus
     // This ensures scores are correct when returning from match details
     useFocusEffect(
@@ -65,31 +85,62 @@ const HomeScreen = (): React.ReactElement | null => {
 
 
 
-    // Filtering logic
-    const filteredListData = useMemo(() => {
-        if (activeFilter === 'all') return processedListData;
-        
-        const filtered: ListItem[] = [];
-        let includeItems = false;
-        let currentStatusHeader: ListItem | null = null;
-        
+    // Count matches per section for the count badge
+    const sectionCounts = useMemo(() => {
+        const counts: Record<string, number> = {};
+        let currentSection: string | null = null;
         for (const item of processedListData) {
             if (item.type === 'statusHeader') {
-                includeItems = (item.id === `statusHeader-${activeFilter}`);
-                
-                if (includeItems) {
-                    currentStatusHeader = item;
-                    filtered.push(item);
-                } else {
-                    currentStatusHeader = null;
-                }
-            } else if (includeItems && currentStatusHeader) {
-                filtered.push(item);
+                currentSection = item.id.replace('statusHeader-', '');
+                counts[currentSection] = 0;
+            } else if (item.type === 'match' && currentSection) {
+                counts[currentSection]++;
             }
         }
-        
-        return filtered;
-    }, [processedListData, activeFilter]);
+        return counts;
+    }, [processedListData]);
+
+    // Filtering logic — applies activeFilter then collapsed sections
+    const filteredListData = useMemo(() => {
+        // Step 1: filter by active tab
+        let data: ListItem[];
+        if (activeFilter === 'all') {
+            data = processedListData;
+        } else {
+            const filtered: ListItem[] = [];
+            let includeItems = false;
+            let currentStatusHeader: ListItem | null = null;
+            for (const item of processedListData) {
+                if (item.type === 'statusHeader') {
+                    includeItems = (item.id === `statusHeader-${activeFilter}`);
+                    if (includeItems) {
+                        currentStatusHeader = item;
+                        filtered.push(item);
+                    } else {
+                        currentStatusHeader = null;
+                    }
+                } else if (includeItems && currentStatusHeader) {
+                    filtered.push(item);
+                }
+            }
+            data = filtered;
+        }
+
+        // Step 2: hide content of collapsed sections (only in 'all' view)
+        if (activeFilter !== 'all' || collapsedSections.size === 0) return data;
+
+        const result: ListItem[] = [];
+        let currentSectionCollapsed = false;
+        for (const item of data) {
+            if (item.type === 'statusHeader') {
+                currentSectionCollapsed = collapsedSections.has(item.id.replace('statusHeader-', ''));
+                result.push(item);
+            } else if (!currentSectionCollapsed) {
+                result.push(item);
+            }
+        }
+        return result;
+    }, [processedListData, activeFilter, collapsedSections]);
 
     // Create styles with dynamic colors
     const styles = createStyles(COLORS);
@@ -99,7 +150,18 @@ const HomeScreen = (): React.ReactElement | null => {
     // Render list item function
     const renderListItem = ({ item }: { item: ListItem }): React.ReactElement | null => {
         if (item.type === 'statusHeader') {
-            return <StatusHeaderItem title={item.title} iconName={item.iconName} colors={COLORS} styles={styles} />;
+            const sectionId = item.id.replace('statusHeader-', '');
+            return (
+                <StatusHeaderItem
+                    title={item.title}
+                    iconName={item.iconName}
+                    colors={COLORS}
+                    styles={styles}
+                    count={sectionCounts[sectionId]}
+                    isCollapsed={activeFilter === 'all' ? collapsedSections.has(sectionId) : undefined}
+                    onToggle={activeFilter === 'all' ? () => toggleSection(sectionId) : undefined}
+                />
+            );
         }
         if (item.type === 'roundHeader') {
             return <RoundHeaderItem roundName={item.roundName} styles={styles} />;

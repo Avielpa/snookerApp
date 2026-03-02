@@ -10,9 +10,10 @@ import { useColors } from '../../../contexts/ThemeContext';
 interface ModernGlassCardProps {
   children: React.ReactNode;
   style?: ViewStyle;
+  accentColor?: string;
 }
 
-export const ModernGlassCard: React.FC<ModernGlassCardProps> = ({ children, style }) => {
+export const ModernGlassCard: React.FC<ModernGlassCardProps> = ({ children, style, accentColor }) => {
   const colors = useColors();
 
   // Dynamic gradient colors based on theme
@@ -24,8 +25,12 @@ export const ModernGlassCard: React.FC<ModernGlassCardProps> = ({ children, styl
     ? 'rgba(26, 115, 58, 0.12)' // Light mode - subtle snooker green
     : 'rgba(26, 115, 58, 0.3)'; // Dark mode - snooker green accent
 
+  const topBorderStyle = accentColor
+    ? { borderTopColor: accentColor, borderTopWidth: 3 }
+    : {};
+
   return (
-    <View style={[styles.outerContainer, { borderColor }, style]}>
+    <View style={[styles.outerContainer, { borderColor }, topBorderStyle, style]}>
       <LinearGradient
         colors={gradientColors}
         start={{ x: 0, y: 0 }}
