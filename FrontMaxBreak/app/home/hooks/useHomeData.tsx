@@ -247,9 +247,13 @@ export const useHomeData = () => {
                         logger.error('[HomeScreen] Status check failed:', error);
                     });
                 }
+            } else if (isRefresh) {
+                // On refresh, if active tournament can't be determined (e.g. network hiccup after cache clear),
+                // keep current data rather than replacing with fallback content
+                logger.warn(`[HomeScreen] Refresh: could not determine active tournament - keeping current data`);
             } else {
                 logger.warn(`[HomeScreen] No active tournament ID found - trying fallback upcoming matches`);
-                
+
                 // Try fallback upcoming matches when no active tournament exists
                 try {
                     const fallbackData = await getUpcomingMatchesFallback('main', 7);
