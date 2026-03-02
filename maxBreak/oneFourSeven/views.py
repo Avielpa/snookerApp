@@ -1344,6 +1344,80 @@ def upcoming_matches_fallback_view(request):
         return Response({"error": "Internal server error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def recent_matches_view(request):
+    """
+    Returns finished matches from the most recently completed main tour tournament.
+    Used as fallback on the home screen during a gap between active tournaments.
+    Query params:
+        limit (int): max matches to return, default 15, max 30
+    """
+    try:
+        limit = min(int(request.GET.get('limit', 15)), 30)
+    except (ValueError, TypeError):
+        limit = 15
+
+    today = django_timezone.now().date()
+
+    # Find most recently completed main tour event
+    recent_event = Event.objects.filter(
+        EndDate__lte=today,
+        Tour='main'
+    ).order_by('-EndDate', '-StartDate').first()
+
+    # Fallback to any tour if no main tour found
+    if not recent_event:
+        recent_event = Event.objects.filter(
+            EndDate__lte=today
+        ).order_by('-EndDate', '-StartDate').first()
+
+    if not recent_event:
+        return Response({
+            'success': False,
+            'message': 'No recent events found',
+            'event_id': None,
+            'event_name': None,
+            'matches': [],
+            'total': 0
+        })
+
+    # Get finished matches from that event, most recent first
+    matches_qs = MatchesOfAnEvent.objects.filter(
+        Event=recent_event,
+        Status=3
+    ).order_by('-EndDate', '-ScheduledDate')[:limit]
+
+    matches_list = list(matches_qs)
+
+    if not matches_list:
+        return Response({
+            'success': False,
+            'message': f'No finished matches found for {recent_event.Name}',
+            'event_id': recent_event.ID,
+            'event_name': recent_event.Name,
+            'matches': [],
+            'total': 0
+        })
+
+    player_ids: Set[Optional[int]] = set()
+    for m in matches_list:
+        player_ids.add(m.Player1ID)
+        player_ids.add(m.Player2ID)
+    player_names_map = get_player_names(player_ids)
+
+    matches_data = [_build_match_dict(m, player_names_map) for m in matches_list]
+
+    logger.debug(f"[recent_matches_view] Returning {len(matches_data)} matches from '{recent_event.Name}'")
+    return Response({
+        'success': True,
+        'event_id': recent_event.ID,
+        'event_name': recent_event.Name,
+        'matches': matches_data,
+        'total': len(matches_data)
+    })
+
+
 # --- User ViewSet (for CRUD operations on Users if needed) ---
 
 class UserViewSet(viewsets.ModelViewSet):
