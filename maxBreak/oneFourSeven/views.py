@@ -1539,3 +1539,27 @@ def player_match_history(request, player_id):
             {'error': 'Failed to fetch match history'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def news_view(request):
+    """Return cached news articles fetched from RSS feeds by auto_live_monitor."""
+    try:
+        from .models import NewsArticle
+        articles = NewsArticle.objects.order_by('-published_at')[:15]
+        data = [
+            {
+                'id': a.id,
+                'title': a.title,
+                'url': a.url,
+                'image_url': a.image_url,
+                'source_name': a.source_name,
+                'published_at': a.published_at.isoformat(),
+            }
+            for a in articles
+        ]
+        return Response(data)
+    except Exception as e:
+        logger.error(f'Error in news_view: {e}')
+        return Response([], status=status.HTTP_200_OK)

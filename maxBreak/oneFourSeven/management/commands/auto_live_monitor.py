@@ -52,6 +52,7 @@ class Command(BaseCommand):
         self.processed_tournament_ends = set()  # Track processed tournament end updates
         self.last_daily_run = None    # Track last date daily updates ran (date object)
         self.last_monthly_run = None  # Track last month monthly updates ran (YYYY-MM string)
+        self.last_news_fetch = None   # Track last news RSS fetch time
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -115,9 +116,12 @@ class Command(BaseCommand):
                     next_check = sleep_interval
                     self.stdout.write(f'[TIMER] Next check in {next_check//60} minutes')
                 
+                # Fetch news every 2 hours regardless of tournament state
+                self._check_news_fetch()
+
                 # Reset error count on successful run
                 self.error_count = 0
-                
+
                 # Sleep until next check
                 time.sleep(next_check)
                 
@@ -484,3 +488,105 @@ class Command(BaseCommand):
         except Exception as e:
             logger.error(f'Tournament end updates failed: {str(e)}')
             self.stdout.write(f'[FAILED] Tournament end updates failed: {str(e)}')
+
+    def _check_news_fetch(self):
+        """Fetch news from RSS feeds every 2 hours."""
+        current_time = timezone.now()
+        if (self.last_news_fetch is None or
+                (current_time - self.last_news_fetch).total_seconds() >= 7200):
+            self.stdout.write('[NEWS] Fetching news from RSS feeds...')
+            try:
+                self._fetch_news()
+                self.last_news_fetch = current_time
+            except Exception as e:
+                self.stdout.write(f'[NEWS] News fetch error: {str(e)}')
+
+    def _fetch_news(self):
+        """Fetch RSS feeds and cache articles in the NewsArticle table."""
+        import re
+        import urllib.request
+        from email.utils import parsedate_to_datetime
+        from oneFourSeven.models import NewsArticle
+
+        RSS_FEEDS = [
+            ('https://feeds.bbci.co.uk/sport/snooker/rss.xml', 'BBC Sport'),
+            ('https://wpbsa.com/feed', 'WPBSA'),
+            ('https://snookerhq.com/feed', 'SnookerHQ'),
+        ]
+
+        def extract_text(xml, tag):
+            m = re.search(rf'<{tag}[^>]*><!\[CDATA\[([\s\S]*?)\]\]><\/{tag}>', xml)
+            if m:
+                return m.group(1).strip()
+            m = re.search(rf'<{tag}[^>]*>([\s\S]*?)<\/{tag}>', xml)
+            if m:
+                return m.group(1).strip()
+            return ''
+
+        def extract_link(item_xml):
+            link = extract_text(item_xml, 'link')
+            if link.startswith('http'):
+                return link
+            guid = extract_text(item_xml, 'guid')
+            if guid.startswith('http'):
+                return guid
+            return ''
+
+        def extract_image(item_xml):
+            for pattern in [
+                r'media:thumbnail[^>]*url="([^"]+)"',
+                r'enclosure[^>]*url="([^"]+\.(jpg|jpeg|png|webp)[^"]*)"',
+                r'media:content[^>]*url="([^"]+)"',
+            ]:
+                m = re.search(pattern, item_xml)
+                if m:
+                    return m.group(1)
+            return None
+
+        new_count = 0
+        for feed_url, source_name in RSS_FEEDS:
+            try:
+                req = urllib.request.Request(
+                    feed_url,
+                    headers={'User-Agent': 'Mozilla/5.0 (compatible; snooker-app/1.0)'}
+                )
+                with urllib.request.urlopen(req, timeout=10) as response:
+                    xml = response.read().decode('utf-8', errors='ignore')
+
+                items = re.findall(r'<item[\s>][\s\S]*?<\/item>', xml)
+                for item_xml in items[:5]:
+                    title = extract_text(item_xml, 'title')
+                    url = extract_link(item_xml)
+                    if not title or not url:
+                        continue
+
+                    raw_date = extract_text(item_xml, 'pubDate')
+                    try:
+                        pub_date = parsedate_to_datetime(raw_date) if raw_date else timezone.now()
+                    except Exception:
+                        pub_date = timezone.now()
+
+                    _, created = NewsArticle.objects.get_or_create(
+                        url=url,
+                        defaults={
+                            'title': title,
+                            'image_url': extract_image(item_xml),
+                            'source_name': source_name,
+                            'published_at': pub_date,
+                        }
+                    )
+                    if created:
+                        new_count += 1
+
+            except Exception as e:
+                self.stdout.write(f'[NEWS] Failed to fetch {source_name}: {str(e)}')
+
+        # Keep only the latest 30 articles to prevent unbounded growth
+        total = NewsArticle.objects.count()
+        if total > 30:
+            oldest_ids = list(
+                NewsArticle.objects.order_by('published_at').values_list('id', flat=True)[:total - 30]
+            )
+            NewsArticle.objects.filter(id__in=oldest_ids).delete()
+
+        self.stdout.write(f'[NEWS] Done: {new_count} new articles saved')

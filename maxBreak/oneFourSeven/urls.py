@@ -33,7 +33,8 @@ from .views import (
     round_prizes_view,
     # Fallback Views
     upcoming_matches_fallback_view,
-    recent_matches_view
+    recent_matches_view,
+    news_view,
 )
 
 # --- DRF Router Setup ---
@@ -112,6 +113,7 @@ urlpatterns = [
     # Upcoming matches fallback endpoint when no active tournaments
     path('upcoming-matches/', upcoming_matches_fallback_view, name='upcoming-matches-fallback'),
     path('recent-matches/', recent_matches_view, name='recent-matches'),
+    path('news/', news_view, name='news'),
     
     # --- Debug URL ---
     # Debug endpoint for checking system status

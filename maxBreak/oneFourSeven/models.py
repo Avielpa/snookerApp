@@ -829,5 +829,28 @@ class PlayerMatchHistory(models.Model):
         unique_together = [['api_match_id', 'player_id']]
 
 
+# ================== News Article Model ==================
+class NewsArticle(models.Model):
+    """
+    Cached news articles fetched from RSS feeds (BBC Sport, WPBSA, SnookerHQ).
+    Populated by auto_live_monitor every 2 hours. Frontend reads from here instead
+    of hitting third-party RSS feeds directly.
+    """
+    title = models.CharField(max_length=500)
+    url = models.URLField(max_length=500, unique=True)  # unique prevents duplicates
+    image_url = models.URLField(max_length=500, null=True, blank=True)
+    source_name = models.CharField(max_length=100)
+    published_at = models.DateTimeField()
+    fetched_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"[{self.source_name}] {self.title[:60]}"
+
+    class Meta:
+        verbose_name = "News Article"
+        verbose_name_plural = "News Articles"
+        ordering = ['-published_at']
+
+
 
 
