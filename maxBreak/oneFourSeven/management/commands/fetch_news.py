@@ -42,22 +42,54 @@ def extract_link(item_xml):
 
 
 def extract_image(item_xml):
-    for pattern in [
-        r'media:thumbnail[^>]*url="([^"]+)"',
-        r'enclosure[^>]*url="([^"]+\.(jpg|jpeg|png|webp)[^"]*)"',
-        r'media:content[^>]*url="([^"]+)"',
-    ]:
-        m = re.search(pattern, item_xml)
+    # BBC Sport: <media:thumbnail url="..." />
+    m = re.search(r'media:thumbnail[^>]*url="([^"]+)"', item_xml)
+    if m:
+        return m.group(1)
+
+    # WordPress enclosure: <enclosure url="..." type="image/..." />
+    m = re.search(r'<enclosure[^>]+url="([^"]+\.(jpg|jpeg|png|webp)[^"]*)"', item_xml)
+    if m:
+        return m.group(1)
+
+    # media:content with medium="image" (either attribute order)
+    m = re.search(r'<media:content[^>]+medium="image"[^>]*url="([^"]+)"', item_xml)
+    if m:
+        return m.group(1)
+    m = re.search(r'<media:content[^>]+url="([^"]+)"[^>]*medium="image"', item_xml)
+    if m:
+        return m.group(1)
+
+    # Any media:content with a URL
+    m = re.search(r'media:content[^>]*url="([^"]+)"', item_xml)
+    if m:
+        return m.group(1)
+
+    # Last resort: first <img src> inside content:encoded HTML body (WordPress)
+    content = extract_text(item_xml, 'content:encoded')
+    if content:
+        m = re.search(r'<img[^>]+src=["\']([^"\']+\.(jpg|jpeg|png|webp)[^"\']*)["\']', content)
         if m:
             return m.group(1)
+
     return None
 
 
 class Command(BaseCommand):
-    help = 'Fetch latest news from RSS feeds and save to DB (run once to seed, auto_live_monitor keeps it updated)'
+    help = 'Fetch latest news from RSS feeds and save to DB'
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--force',
+            action='store_true',
+            help='Re-fetch and update image_url for existing articles too',
+        )
 
     def handle(self, *args, **options):
+        force = options['force']
         new_count = 0
+        updated_count = 0
+
         for feed_url, source_name in RSS_FEEDS:
             self.stdout.write(f'Fetching {source_name}...')
             try:
@@ -81,20 +113,28 @@ class Command(BaseCommand):
                     except Exception:
                         pub_date = timezone.now()
 
-                    _, created = NewsArticle.objects.get_or_create(
+                    image_url = extract_image(item_xml)
+
+                    obj, created = NewsArticle.objects.get_or_create(
                         url=url,
                         defaults={
                             'title': title,
-                            'image_url': extract_image(item_xml),
+                            'image_url': image_url,
                             'source_name': source_name,
                             'published_at': pub_date,
                         }
                     )
                     if created:
                         new_count += 1
+                    elif force and image_url and not obj.image_url:
+                        obj.image_url = image_url
+                        obj.save(update_fields=['image_url'])
+                        updated_count += 1
 
                 self.stdout.write(self.style.SUCCESS(f'  {source_name}: OK'))
             except Exception as e:
                 self.stdout.write(self.style.ERROR(f'  {source_name}: FAILED - {e}'))
 
-        self.stdout.write(self.style.SUCCESS(f'Done: {new_count} new articles saved ({NewsArticle.objects.count()} total)'))
+        self.stdout.write(self.style.SUCCESS(
+            f'Done: {new_count} new, {updated_count} images updated ({NewsArticle.objects.count()} total)'
+        ))
