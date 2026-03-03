@@ -32,11 +32,17 @@ const BottomBar = () => {
             iconOutline: 'calendar-outline', 
             label: 'Calendar' 
         },
-        { 
-            path: '/RankingEnhanced', 
-            icon: 'trophy', 
-            iconOutline: 'trophy-outline', 
-            label: 'Rankings' 
+        {
+            path: '/RankingEnhanced',
+            icon: 'trophy',
+            iconOutline: 'trophy-outline',
+            label: 'Rankings'
+        },
+        {
+            path: '/NewsScreen',
+            icon: 'newspaper',
+            iconOutline: 'newspaper-outline',
+            label: 'News',
         },
     ];
 
@@ -86,10 +92,10 @@ const createBottomBarStyles = (colors: any) => StyleSheet.create({
     bottomBarItem: {
         flexDirection: 'column',
         alignItems: 'center',
-        paddingVertical: 12,
-        paddingHorizontal: 20,
+        paddingVertical: 10,
+        paddingHorizontal: 12,
         borderRadius: 12,
-        minWidth: 90,
+        minWidth: 72,
         minHeight: 64,
         justifyContent: 'center',
     },
