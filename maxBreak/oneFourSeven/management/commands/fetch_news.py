@@ -52,24 +52,23 @@ def extract_image(item_xml):
     if m:
         return m.group(1)
 
-    # media:content with medium="image" (either attribute order)
-    m = re.search(r'<media:content[^>]+medium="image"[^>]*url="([^"]+)"', item_xml)
-    if m:
-        return m.group(1)
-    m = re.search(r'<media:content[^>]+url="([^"]+)"[^>]*medium="image"', item_xml)
-    if m:
-        return m.group(1)
-
-    # Any media:content with a URL
+    # media:content (any attribute order)
     m = re.search(r'media:content[^>]*url="([^"]+)"', item_xml)
     if m:
         return m.group(1)
 
-    # Last resort: first <img src> inside content:encoded HTML body (WordPress)
+    # SnookerHQ: featured image is first <img src> inside <description> CDATA
+    description = extract_text(item_xml, 'description')
+    if description:
+        m = re.search(r'<img[^>]+src=["\']([^"\']+)["\']', description)
+        if m and m.group(1).startswith('http'):
+            return m.group(1)
+
+    # WPBSA: featured image is first <img src> inside <content:encoded> CDATA
     content = extract_text(item_xml, 'content:encoded')
     if content:
-        m = re.search(r'<img[^>]+src=["\']([^"\']+\.(jpg|jpeg|png|webp)[^"\']*)["\']', content)
-        if m:
+        m = re.search(r'<img[^>]+src=["\']([^"\']+)["\']', content)
+        if m and m.group(1).startswith('http'):
             return m.group(1)
 
     return None
