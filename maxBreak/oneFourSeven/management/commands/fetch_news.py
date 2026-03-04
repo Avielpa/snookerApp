@@ -100,7 +100,7 @@ class Command(BaseCommand):
                     xml = response.read().decode('utf-8', errors='ignore')
 
                 items = re.findall(r'<item[\s>][\s\S]*?<\/item>', xml)
-                for item_xml in items[:5]:
+                for item_xml in items[:10]:
                     title = extract_text(item_xml, 'title')
                     url = extract_link(item_xml)
                     if not title or not url:

@@ -1547,7 +1547,7 @@ def news_view(request):
     """Return cached news articles fetched from RSS feeds by auto_live_monitor."""
     try:
         from .models import NewsArticle
-        articles = NewsArticle.objects.order_by('-published_at')[:15]
+        articles = NewsArticle.objects.order_by('-published_at')[:30]
         data = [
             {
                 'id': a.id,
