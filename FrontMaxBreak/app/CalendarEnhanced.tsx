@@ -6,30 +6,19 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  ScrollView,
   ActivityIndicator,
   RefreshControl,
   FlatList,
-  ImageBackground,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 
-// Import services
 import { getCalendarByTab } from '../services/matchServices';
 import { logger } from '../utils/logger';
 import { useColors } from '../contexts/ThemeContext';
-import { logDeviceCompatibility } from '../utils/deviceCompatibility';
-import { getDeviceTabConfig } from '../config/deviceTabConfig';
-import { DeviceAwareFilterScrollView } from '../components/DeviceAwareFilterScrollView';
-import { DeviceAwareFilterButton } from '../components/DeviceAwareFilterButton';
 
-// Removed all modern component imports to prevent crashes
-
-// Enhanced interface with additional computed fields
 interface Tournament {
   ID: number;
   Name: string;
@@ -39,10 +28,8 @@ interface Tournament {
   City?: string | null;
   Country?: string | null;
   Type?: string | null;
-  // Prize money fields (API might return either format)
   prizeMoney?: string;
   prize_money?: any;
-  // Computed fields
   status?: 'active' | 'upcoming' | 'past';
   daysRemaining?: number;
   duration?: number;
@@ -54,27 +41,216 @@ interface FilterOption {
   id: string;
   label: string;
   icon: keyof typeof Ionicons.glyphMap;
-  color: string;
   count?: number;
 }
 
-// Removed unused width variable
+// ─── Tournament card (extracted to avoid re-creation on every render) ───────
 
-/**
- * Enhanced Calendar/Tournament Screen with modern UI and interactive features
- * Features:
- * - Live tournament indicators
- * - Interactive timeline view
- * - Smart filtering with haptic feedback
- * - Modern card design with glassmorphism
- * - Progress indicators for ongoing tournaments
- * - Real-time search functionality
- */
+const formatDateRange = (start: string | null, end: string | null): string => {
+  if (!start || !end) return 'Dates TBD';
+  try {
+    const s = new Date(start).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+    const e = new Date(end).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+    return `${s} – ${e}`;
+  } catch { return 'TBD'; }
+};
+
+const getPrizeDisplay = (item: Tournament): string | null => {
+  const prize = item.prizeMoney || item.prize_money;
+  if (!prize) return null;
+  if (typeof prize === 'string' && prize.trim()) return prize;
+  if (typeof prize === 'object' && prize !== null) {
+    if (prize.winner?.formatted) return prize.winner.formatted;
+    if (prize.winner?.amount) {
+      return `${prize.winner.currency || 'GBP'} ${prize.winner.amount.toLocaleString()}`;
+    }
+  }
+  return null;
+};
+
+const TournamentCard = React.memo(({
+  item,
+  onPress,
+  colors,
+}: {
+  item: Tournament;
+  onPress: () => void;
+  colors: any;
+}) => {
+  const isLive = item.status === 'active';
+  const isPast = item.status === 'past';
+  const accentColor = isLive ? colors.success : isPast ? colors.textMuted : colors.primary;
+
+  const statusLabel = isLive
+    ? 'LIVE'
+    : isPast
+    ? 'Done'
+    : item.daysRemaining === 1
+    ? 'Tomorrow'
+    : item.daysRemaining
+    ? `in ${item.daysRemaining}d`
+    : '';
+
+  const prizeDisplay = getPrizeDisplay(item);
+  const location = [item.City, item.Country].filter(Boolean).join(', ');
+
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.72}
+      style={[
+        cardStyles.container,
+        { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder },
+      ]}
+    >
+      {/* Left accent bar — color signals status at a glance */}
+      <View style={[cardStyles.accentBar, { backgroundColor: accentColor }]} />
+
+      <View style={cardStyles.body}>
+        {/* Name + status pill */}
+        <View style={cardStyles.nameRow}>
+          <Text style={[cardStyles.name, { color: colors.textPrimary }]} numberOfLines={2}>
+            {item.Name}
+          </Text>
+          {statusLabel !== '' && (
+            <View style={[cardStyles.statusPill, { borderColor: accentColor + '55' }]}>
+              {isLive && <View style={[cardStyles.liveDot, { backgroundColor: accentColor }]} />}
+              <Text style={[cardStyles.statusText, { color: accentColor }]}>{statusLabel}</Text>
+            </View>
+          )}
+        </View>
+
+        {/* Dates */}
+        <View style={cardStyles.metaRow}>
+          <Ionicons name="calendar-outline" size={12} color={colors.textMuted} />
+          <Text style={[cardStyles.metaText, { color: colors.textSecondary }]}>
+            {formatDateRange(item.StartDate, item.EndDate)}
+          </Text>
+        </View>
+
+        {/* Location */}
+        {location.length > 0 && (
+          <View style={cardStyles.metaRow}>
+            <Ionicons name="location-outline" size={12} color={colors.textMuted} />
+            <Text style={[cardStyles.metaText, { color: colors.textMuted }]} numberOfLines={1}>
+              {location}
+            </Text>
+          </View>
+        )}
+
+        {/* Prize */}
+        {prizeDisplay && (
+          <View style={cardStyles.metaRow}>
+            <Ionicons name="trophy-outline" size={12} color={colors.warning} />
+            <Text style={[cardStyles.metaText, { color: colors.warning }]}>
+              {prizeDisplay} winner
+            </Text>
+          </View>
+        )}
+
+        {/* Progress bar — only shown during active tournament */}
+        {isLive && item.progress !== undefined && item.progress > 0 && (
+          <View style={[cardStyles.progressTrack, { backgroundColor: colors.cardBorder }]}>
+            <View
+              style={[
+                cardStyles.progressFill,
+                { width: `${Math.round(item.progress * 100)}%`, backgroundColor: accentColor },
+              ]}
+            />
+          </View>
+        )}
+      </View>
+
+      <Ionicons name="chevron-forward" size={16} color={colors.textMuted} style={cardStyles.chevron} />
+    </TouchableOpacity>
+  );
+});
+TournamentCard.displayName = 'TournamentCard';
+
+const cardStyles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    marginHorizontal: 16,
+    marginVertical: 5,
+    borderRadius: 12,
+    borderWidth: StyleSheet.hairlineWidth,
+    overflow: 'hidden',
+  },
+  accentBar: {
+    width: 4,
+  },
+  body: {
+    flex: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    gap: 5,
+  },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: 8,
+    marginBottom: 2,
+  },
+  name: {
+    fontSize: 14,
+    fontFamily: 'PoppinsSemiBold',
+    flex: 1,
+    lineHeight: 20,
+  },
+  statusPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 20,
+    borderWidth: 1,
+    gap: 4,
+    flexShrink: 0,
+  },
+  liveDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 3,
+  },
+  statusText: {
+    fontSize: 10,
+    fontFamily: 'PoppinsBold',
+    letterSpacing: 0.3,
+  },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  metaText: {
+    fontSize: 12,
+    fontFamily: 'PoppinsRegular',
+    flex: 1,
+  },
+  progressTrack: {
+    height: 3,
+    borderRadius: 2,
+    marginTop: 4,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: 2,
+  },
+  chevron: {
+    alignSelf: 'center',
+    marginRight: 10,
+  },
+});
+
+// ─── Main screen ─────────────────────────────────────────────────────────────
+
 export default function CalendarEnhanced() {
-  // State management
   const [allTournaments, setAllTournaments] = useState<Tournament[]>([]);
   const [filteredTournaments, setFilteredTournaments] = useState<Tournament[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchVisible, setSearchVisible] = useState(false);
   const [selectedTab, setSelectedTab] = useState<string>('main');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [loading, setLoading] = useState<boolean>(true);
@@ -84,12 +260,6 @@ export default function CalendarEnhanced() {
   const router = useRouter();
   const colors = useColors();
 
-  // Create styles with dynamic colors
-  const styles = useMemo(() => createCalendarStyles(colors), [colors]);
-  const deviceConfig = useMemo(() => getDeviceTabConfig(), []);
-  const deviceStyles = useMemo(() => deviceConfig.createDynamicStyles(colors), [colors, deviceConfig]);
-
-  // Enhanced tournament processing with computed fields
   const enhanceTournamentData = useCallback((tournaments: Tournament[]): Tournament[] => {
     const now = new Date();
     now.setHours(0, 0, 0, 0);
@@ -106,7 +276,6 @@ export default function CalendarEnhanced() {
         const end = new Date(tournament.EndDate);
         start.setHours(0, 0, 0, 0);
         end.setHours(23, 59, 59, 999);
-
         duration = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
 
         if (end < now) {
@@ -123,77 +292,45 @@ export default function CalendarEnhanced() {
         }
       }
 
-      return {
-        ...tournament,
-        status,
-        daysRemaining,
-        duration,
-        progress,
-        isLive,
-      };
+      return { ...tournament, status, daysRemaining, duration, progress, isLive };
     });
   }, []);
 
-
-
-  // Fetch tournaments by tab
   const fetchTournaments = useCallback(async (tabType: string = 'main', isRefresh = false) => {
-    logger.log(`[CalendarEnhanced] Fetching ${tabType} tournaments...`);
-    
     if (!isRefresh) setLoading(true);
     setRefreshing(isRefresh);
     setError(null);
 
     try {
       const response = await getCalendarByTab(tabType);
-      if (!response) {
-        throw new Error(`Failed to load ${tabType} tournaments`);
-      }
+      if (!response) throw new Error(`Failed to load ${tabType} tournaments`);
 
-      // Combine all tournament statuses into one array and normalize field names
-      const allTournaments = [
+      const combined = [
         ...(response.active || []),
         ...(response.upcoming || []),
-        ...(response.recent || [])
-      ].map(tournament => ({
-        ...tournament,
-        ID: tournament.id,
-        Name: tournament.name,
-        StartDate: tournament.start_date,
-        EndDate: tournament.end_date,
-        Venue: tournament.venue,
-        City: tournament.city,
-        Country: tournament.country,
-        prize_money: tournament.prize_money
+        ...(response.recent || []),
+      ].map(t => ({
+        ...t,
+        ID: t.id,
+        Name: t.name,
+        StartDate: t.start_date,
+        EndDate: t.end_date,
+        Venue: t.venue,
+        City: t.city,
+        Country: t.country,
+        prize_money: t.prize_money,
       }));
 
-      // Sort tournaments by start date descending
-      const sortedData = allTournaments.sort((a, b) => {
+      const sorted = combined.sort((a, b) => {
         const dateA = a.StartDate ? new Date(a.StartDate).getTime() : 0;
         const dateB = b.StartDate ? new Date(b.StartDate).getTime() : 0;
         return dateB - dateA;
       });
 
-      const enhancedData = enhanceTournamentData(sortedData);
-      setAllTournaments(enhancedData);
-      logger.log(`[CalendarEnhanced] Loaded ${enhancedData.length} ${tabType} tournaments`);
+      setAllTournaments(enhanceTournamentData(sorted));
     } catch (err: any) {
-      logger.error(`[CalendarEnhanced] Error fetching ${tabType} tournaments:`, err);
-      
-      // Enhanced error handling with network-specific messages
-      let errorMessage = `Failed to load ${tabType} tournaments`;
-      
-      if (err.message.includes('Network Error') || err.message.includes('ERR_NETWORK')) {
-        errorMessage = 'Network connection failed. Please check your internet connection and try again.';
-      } else if (err.message.includes('timeout')) {
-        errorMessage = 'Request timed out. Please check your connection and try again.';
-      } else if (err.message.includes('Server')) {
-        errorMessage = 'Server is temporarily unavailable. Please try again in a moment.';
-      } else if (err.message) {
-        errorMessage = err.message;
-      }
-      
-      setError(errorMessage);
+      logger.error(`[Calendar] Error: ${err.message}`);
+      setError(err.message || 'Failed to load tournaments');
       setAllTournaments([]);
     } finally {
       setLoading(false);
@@ -201,315 +338,93 @@ export default function CalendarEnhanced() {
     }
   }, [enhanceTournamentData]);
 
-  useEffect(() => {
-    // Log device compatibility info for debugging tab issues
-    logDeviceCompatibility();
-    fetchTournaments(selectedTab);
-  }, [selectedTab, fetchTournaments]);
+  useEffect(() => { fetchTournaments(selectedTab); }, [selectedTab, fetchTournaments]);
 
-  // Tab options for tour type separation
   const tabOptions: FilterOption[] = useMemo(() => [
     { id: 'main', label: 'Main Tours', icon: 'trophy-outline', color: colors.primary },
-    { id: 'others', label: 'Others', icon: 'star-outline', color: colors.secondary },
+    { id: 'others', label: 'Others', icon: 'star-outline', color: colors.primary },
   ], [colors]);
 
-  // Status filter options
   const statusOptions: FilterOption[] = useMemo(() => {
     const live = allTournaments.filter(t => t.isLive).length;
     const upcoming = allTournaments.filter(t => t.status === 'upcoming').length;
     const past = allTournaments.filter(t => t.status === 'past').length;
     const all = allTournaments.length;
-
     return [
-      { id: 'all', label: 'All', icon: 'apps-outline', color: colors.primary, count: all },
-      { id: 'active', label: 'Live', icon: 'radio-outline', color: colors.success, count: live },
-      { id: 'upcoming', label: 'Upcoming', icon: 'calendar-outline', color: colors.primary, count: upcoming },
-      { id: 'past', label: 'Past', icon: 'checkmark-done-outline', color: colors.textSecondary, count: past },
+      { id: 'all', label: 'All', icon: 'apps-outline', count: all },
+      { id: 'active', label: 'Live', icon: 'radio-outline', count: live },
+      { id: 'upcoming', label: 'Upcoming', icon: 'calendar-outline', count: upcoming },
+      { id: 'past', label: 'Past', icon: 'checkmark-done-outline', count: past },
     ];
-  }, [allTournaments, colors]);
+  }, [allTournaments]);
 
-  // Apply status and search filters (tab filtering is done server-side)
   useEffect(() => {
     let filtered = [...allTournaments];
 
-    // Apply status filter
     if (selectedStatus !== 'all') {
-      if (selectedStatus === 'active') {
-        filtered = filtered.filter(t => t.isLive);
-      } else {
-        filtered = filtered.filter(t => t.status === selectedStatus);
-      }
+      filtered = selectedStatus === 'active'
+        ? filtered.filter(t => t.isLive)
+        : filtered.filter(t => t.status === selectedStatus);
     }
 
-    // Apply search filter
     if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase().trim();
+      const q = searchQuery.toLowerCase().trim();
       filtered = filtered.filter(t =>
-        t.Name?.toLowerCase().includes(query) ||
-        t.Venue?.toLowerCase().includes(query) ||
-        t.City?.toLowerCase().includes(query) ||
-        t.Country?.toLowerCase().includes(query)
+        t.Name?.toLowerCase().includes(q) ||
+        t.Venue?.toLowerCase().includes(q) ||
+        t.City?.toLowerCase().includes(q) ||
+        t.Country?.toLowerCase().includes(q)
       );
     }
 
-    // Sort: active tournaments first, then upcoming by date, then past
     filtered.sort((a, b) => {
-      // Priority order: active > upcoming > past
-      const statusPriority = { active: 0, upcoming: 1, past: 2 };
-      const aPriority = statusPriority[a.status || 'past'];
-      const bPriority = statusPriority[b.status || 'past'];
-      
-      if (aPriority !== bPriority) {
-        return aPriority - bPriority;
-      }
-      
-      // Within same status, sort by date
+      const priority = { active: 0, upcoming: 1, past: 2 };
+      const ap = priority[a.status || 'past'];
+      const bp = priority[b.status || 'past'];
+      if (ap !== bp) return ap - bp;
       const aDate = a.StartDate ? new Date(a.StartDate).getTime() : 0;
       const bDate = b.StartDate ? new Date(b.StartDate).getTime() : 0;
-      
-      if (a.status === 'upcoming') {
-        return aDate - bDate; // Upcoming: earliest first
-      } else {
-        return bDate - aDate; // Active/Past: latest first
-      }
+      return a.status === 'upcoming' ? aDate - bDate : bDate - aDate;
     });
 
     setFilteredTournaments(filtered);
   }, [allTournaments, selectedStatus, searchQuery]);
 
-  // Handle tab selection with enhanced logging
   const handleTabPress = (tabId: string) => {
-    logger.log(`[CalendarEnhanced] Tab pressed: ${tabId}, current: ${selectedTab}`);
-    if (tabId !== selectedTab) {
-      logger.log(`[CalendarEnhanced] Changing tab from ${selectedTab} to ${tabId}`);
-      setSelectedTab(tabId);
-      setError(null); // Clear any previous errors
-    } else {
-      logger.log(`[CalendarEnhanced] Tab already selected: ${tabId}`);
-    }
+    if (tabId !== selectedTab) setSelectedTab(tabId);
   };
 
-  // Handle status filter selection with enhanced logging
   const handleStatusPress = (statusId: string) => {
-    logger.log(`[CalendarEnhanced] Status pressed: ${statusId}, current: ${selectedStatus}`);
-    if (statusId !== selectedStatus) {
-      logger.log(`[CalendarEnhanced] Changing status from ${selectedStatus} to ${statusId}`);
-      setSelectedStatus(statusId);
-    } else {
-      logger.log(`[CalendarEnhanced] Status already selected: ${statusId}`);
-    }
+    if (statusId !== selectedStatus) setSelectedStatus(statusId);
   };
 
-  // Handle tournament press
   const handleTournamentPress = (tournament: Tournament) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     router.push(`/tour/${tournament.ID}`);
   };
 
-  // Use device-aware filter button component for consistency
-  const renderTabButton = (option: FilterOption) => {
-    const isSelected = selectedTab === option.id;
-    
-    return (
-      <DeviceAwareFilterButton
-        key={option.id}
-        option={option}
-        isSelected={isSelected}
-        onPress={handleTabPress}
-        colors={colors}
-      />
-    );
-  };
-
-  // Render tournament card
-  const renderTournamentCard = ({ item }: { item: Tournament }): React.JSX.Element => {
-    const formatDate = (dateString: string | null): string => {
-      if (!dateString) return 'TBD';
-      try {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-GB', { 
-          day: 'numeric', 
-          month: 'short', 
-          year: 'numeric' 
-        });
-      } catch {
-        return 'Invalid Date';
-      }
-    };
-
-    const getStatusIcon = () => {
-      switch (item.status) {
-        case 'active': return '●'; // Bullet point
-        case 'upcoming': return '○'; // Hollow bullet
-        case 'past': return '✓'; // Checkmark
-        default: return '★'; // Star
-      }
-    };
-
-    const getStatusColor = () => {
-      switch (item.status) {
-        case 'active': return colors.warning;
-        case 'upcoming': return colors.primary;
-        case 'past': return colors.textSecondary;
-        default: return colors.primary;
-      }
-    };
-
-    return (
-      <TouchableOpacity
-        onPress={() => handleTournamentPress(item)}
-        activeOpacity={0.8}
-        style={styles.tournamentCard}
-        hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
-        delayPressIn={0}
-      >
-        <LinearGradient
-          colors={colors.cardBackground === 'rgba(255, 255, 255, 0.95)'
-            ? ['rgba(255, 255, 255, 0.98)', 'rgba(248, 250, 252, 0.95)'] // Light mode
-            : ['rgba(30, 41, 59, 0.9)', 'rgba(15, 23, 42, 0.8)']} // Dark mode
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.cardContent}
-        >
-
-          {/* Tournament Header */}
-          <View style={styles.tournamentHeader}>
-            <View style={styles.tournamentTitle}>
-              <Text style={styles.statusIcon}>{getStatusIcon()}</Text>
-              <Text style={styles.tournamentName} numberOfLines={2}>
-                {item.Name || 'Tournament'}
-              </Text>
-              {/* Simple Live Indicator */}
-              {item.isLive && (
-                <View style={styles.liveIndicatorInline}>
-                  <Text style={{ color: '#4CAF50', fontSize: 10, fontFamily: 'PoppinsBold' }}>● LIVE</Text>
-                </View>
-              )}
-            </View>
-            
-            {/* Prize Money - Safe rendering */}
-            {(() => {
-              const prizeData = item.prizeMoney || item.prize_money;
-              if (!prizeData) return null;
-              
-              let displayText = 'Prize Money';
-              if (typeof prizeData === 'string' && prizeData.trim()) {
-                displayText = prizeData;
-              } else if (typeof prizeData === 'object' && prizeData !== null) {
-                if (prizeData.winner && prizeData.winner.formatted) {
-                  displayText = prizeData.winner.formatted;
-                } else if (prizeData.winner && prizeData.winner.amount) {
-                  const currency = prizeData.winner.currency || 'GBP';
-                  const amount = prizeData.winner.amount;
-                  displayText = `${currency} ${amount.toLocaleString()}`;
-                } else {
-                  displayText = 'Prize Money';
-                }
-              }
-              
-              return (
-                <View style={styles.prizeContainer}>
-                  <Text style={styles.prizeMoney}>
-                    {displayText}
-                  </Text>
-                </View>
-              );
-            })()}
-          </View>
-
-          {/* Tournament Dates */}
-          <View style={styles.datesContainer}>
-            <View style={styles.dateItem}>
-              <Ionicons name="calendar-outline" size={14} color="#9CA3AF" />
-              <Text style={styles.dateText}>
-                {formatDate(item.StartDate)} - {formatDate(item.EndDate)}
-              </Text>
-            </View>
-            
-            {(item.daysRemaining && item.daysRemaining > 0) ? (
-              <Text style={styles.daysRemaining}>
-                {`in ${item.daysRemaining} ${item.daysRemaining === 1 ? 'day' : 'days'}`}
-              </Text>
-            ) : null}
-          </View>
-
-          {/* Venue Information */}
-          {(item.Venue || item.City) ? (
-            <View style={styles.venueContainer}>
-              <Ionicons name="location-outline" size={14} color="#9CA3AF" />
-              <Text style={styles.venueText} numberOfLines={1}>
-                {(() => {
-                  const venue = typeof item.Venue === 'string' ? item.Venue : '';
-                  const city = typeof item.City === 'string' ? item.City : '';
-                  const country = typeof item.Country === 'string' ? item.Country : '';
-                  return `${venue}${city ? `, ${city}` : ''}${country ? ` (${country})` : ''}`.trim() || 'Venue TBD';
-                })()}
-              </Text>
-            </View>
-          ) : null}
-
-          {/* Progress Bar for Active Tournaments - Simplified to prevent crashes */}
-          {(item.status === 'active' && item.progress !== undefined) ? (
-            <View style={styles.progressContainer}>
-              <View style={[styles.simpleProgressTrack]}>
-                <View style={[
-                  styles.simpleProgressFill, 
-                  { 
-                    width: `${Math.round(item.progress * 100)}%`,
-                    backgroundColor: getStatusColor()
-                  }
-                ]} />
-              </View>
-              <Text style={styles.progressText}>
-                Tournament Progress: {Math.round(item.progress * 100)}%
-              </Text>
-            </View>
-          ) : null}
-
-          {/* Tournament Stats */}
-          <View style={styles.statsContainer}>
-            <View style={styles.statItem}>
-              <Ionicons name="time-outline" size={16} color="#9CA3AF" />
-              <Text style={styles.statText}>
-                {(() => {
-                  const duration = typeof item.duration === 'number' ? item.duration : 0;
-                  return `${duration} ${duration === 1 ? 'day' : 'days'}`;
-                })()}
-              </Text>
-            </View>
-            
-            <View style={styles.statItem}>
-              <Ionicons name="trophy-outline" size={16} color="#FFA726" />
-              <Text style={styles.statText}>{item.Type || 'Tournament'}</Text>
-            </View>
-          </View>
-        </LinearGradient>
-      </TouchableOpacity>
-    );
-  };
-
-  // Loading state
+  // ─── Loading ───────────────────────────────────────────────────────────────
   if (loading && !refreshing) {
     return (
-      <SafeAreaView style={styles.container}>
-        <Text style={styles.title}>Tournament Calendar</Text>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.centerContent}>
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.loadingText}>Loading Tournaments...</Text>
         </View>
       </SafeAreaView>
     );
   }
 
-  // Error state
+  // ─── Error ─────────────────────────────────────────────────────────────────
   if (error && !refreshing) {
     return (
-      <SafeAreaView style={styles.container}>
-        <Text style={styles.title}>Tournament Calendar</Text>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.centerContent}>
           <Ionicons name="alert-circle-outline" size={48} color="#F87171" />
           <Text style={styles.errorText}>{error}</Text>
-          <TouchableOpacity style={styles.retryButton} onPress={() => fetchTournaments()}>
+          <TouchableOpacity
+            style={[styles.retryButton, { backgroundColor: colors.primary }]}
+            onPress={() => fetchTournaments(selectedTab)}
+          >
             <Text style={styles.retryText}>Try Again</Text>
           </TouchableOpacity>
         </View>
@@ -517,381 +432,259 @@ export default function CalendarEnhanced() {
     );
   }
 
+  // ─── Main render ───────────────────────────────────────────────────────────
   return (
-    <ImageBackground
-      source={require('../assets/snooker_background.jpg')}
-      style={styles.backgroundImage}
-      resizeMode="cover"
-    >
-      {/* Semi-transparent overlay for readability */}
-      <View style={styles.overlay} />
-      <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+
       {/* Header */}
-      <Text style={styles.title}>Tournament Calendar</Text>
-      
-      {/* Search and Filters Container */}
-      <View style={styles.headerContainer}>
-        {/* Simple search input to avoid crashes */}
-        <View style={styles.searchContainer}>
+      <View style={styles.header}>
+        <Text style={[styles.screenTitle, { color: colors.textHeader }]}>Calendar</Text>
+        <TouchableOpacity
+          onPress={() => {
+            setSearchVisible(v => !v);
+            if (searchVisible) setSearchQuery('');
+          }}
+          style={styles.searchToggle}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          <Ionicons
+            name={searchVisible ? 'close-outline' : 'search-outline'}
+            size={22}
+            color={colors.textPrimary}
+          />
+        </TouchableOpacity>
+      </View>
+
+      {/* Collapsible search bar */}
+      {searchVisible && (
+        <View style={[styles.searchRow, { backgroundColor: colors.backgroundSecondary, borderBottomColor: colors.cardBorder }]}>
+          <Ionicons name="search-outline" size={15} color={colors.textMuted} />
           <TextInput
-            style={styles.searchInput}
-            placeholder="Search tournaments, venues..."
+            style={[styles.searchInput, { color: colors.textPrimary }]}
+            placeholder="Search tournaments, venues, countries..."
+            placeholderTextColor={colors.textMuted}
             value={searchQuery}
             onChangeText={setSearchQuery}
-            placeholderTextColor={colors.textSecondary}
+            autoFocus
           />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={() => setSearchQuery('')}>
+              <Ionicons name="close-circle" size={16} color={colors.textMuted} />
+            </TouchableOpacity>
+          )}
         </View>
+      )}
 
-        {/* Tab Buttons - Device Aware */}
-        <DeviceAwareFilterScrollView
-          options={tabOptions.map(option => ({
-            id: option.id,
-            label: option.label,
-            icon: option.icon
-          }))}
-          selectedValue={selectedTab}
-          onSelectionChange={(value) => {
-            logger.debug(`[CalendarFilter] Device-Aware Tab: ${value}`);
-            handleTabPress(value);
-          }}
-          colors={colors}
-        />
-
-        {/* Status Filter Buttons - Device Aware */}
-        <DeviceAwareFilterScrollView
-          options={statusOptions.map(option => ({
-            id: option.id,
-            label: option.label,
-            icon: option.icon,
-            count: option.count
-          }))}
-          selectedValue={selectedStatus}
-          onSelectionChange={(value) => {
-            logger.debug(`[CalendarStatusFilter] Device-Aware: ${value}`);
-            handleStatusPress(value);
-          }}
-          colors={colors}
-          containerStyle={{ marginTop: 4 }}
-        />
-
-        {/* Results Count */}
-        <Text style={styles.resultsText}>
-          {`${filteredTournaments.length} ${filteredTournaments.length === 1 ? 'tournament' : 'tournaments'}`}
-        </Text>
+      {/* Tour type segment: MAIN TOURS | OTHERS */}
+      <View style={[styles.segmentRow, { backgroundColor: colors.backgroundSecondary, borderBottomColor: colors.cardBorder }]}>
+        {tabOptions.map(tab => {
+          const isSelected = selectedTab === tab.id;
+          return (
+            <TouchableOpacity
+              key={tab.id}
+              style={[styles.segmentBtn, isSelected && { borderBottomColor: colors.primary }]}
+              onPress={() => handleTabPress(tab.id)}
+              activeOpacity={0.7}
+            >
+              <Text style={[
+                styles.segmentText,
+                { color: isSelected ? colors.primary : colors.textMuted },
+                isSelected && styles.segmentTextActive,
+              ]}>
+                {tab.label.toUpperCase()}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
 
-      {/* Tournaments List */}
-      <View style={styles.listContainer}>
-        {filteredTournaments.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <Ionicons name="calendar-outline" size={48} color="#9CA3AF" />
-            <Text style={styles.emptyText}>
-              {searchQuery ? 'No tournaments match your search.' : 'No tournaments available.'}
-            </Text>
-          </View>
-        ) : (
-          <FlatList
-            data={filteredTournaments}
-            renderItem={renderTournamentCard}
-            keyExtractor={(item, index) => `tournament-${item.ID}-${index}`}
-            refreshControl={
-              <RefreshControl
-                refreshing={refreshing}
-                onRefresh={() => fetchTournaments(selectedTab, true)}
-                tintColor={colors.primary}
-                colors={[colors.primary]}
-              />
-            }
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.listContent}
-          />
-        )}
+      {/* Status filter pills */}
+      <View style={[styles.pillRow, { borderBottomColor: colors.cardBorder }]}>
+        {statusOptions.map(opt => {
+          const isSelected = selectedStatus === opt.id;
+          return (
+            <TouchableOpacity
+              key={opt.id}
+              onPress={() => handleStatusPress(opt.id)}
+              activeOpacity={0.7}
+              style={[
+                styles.pill,
+                { borderColor: isSelected ? colors.primary : colors.cardBorder },
+                isSelected && { backgroundColor: colors.primary },
+              ]}
+            >
+              {opt.id === 'active' && (
+                <View style={[styles.liveDot, { backgroundColor: isSelected ? '#fff' : colors.success }]} />
+              )}
+              <Text style={[styles.pillText, { color: isSelected ? '#fff' : colors.textMuted }]}>
+                {opt.label}
+              </Text>
+              {opt.count !== undefined && opt.count > 0 && (
+                <Text style={[styles.pillCount, { color: isSelected ? 'rgba(255,255,255,0.75)' : colors.textMuted }]}>
+                  {opt.count}
+                </Text>
+              )}
+            </TouchableOpacity>
+          );
+        })}
       </View>
+
+      {/* Tournament list */}
+      {filteredTournaments.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <Ionicons name="calendar-outline" size={48} color={colors.textMuted} />
+          <Text style={[styles.emptyText, { color: colors.textMuted }]}>
+            {searchQuery ? 'No tournaments match your search.' : 'No tournaments available.'}
+          </Text>
+        </View>
+      ) : (
+        <FlatList
+          data={filteredTournaments}
+          renderItem={({ item }) => (
+            <TournamentCard
+              item={item}
+              onPress={() => handleTournamentPress(item)}
+              colors={colors}
+            />
+          )}
+          keyExtractor={(item, index) => `tournament-${item.ID}-${index}`}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() => fetchTournaments(selectedTab, true)}
+              tintColor={colors.primary}
+              colors={[colors.primary]}
+            />
+          }
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.listContent}
+        />
+      )}
     </SafeAreaView>
-    </ImageBackground>
   );
 }
 
-// Dynamic styles function
-const createCalendarStyles = (colors: any) => StyleSheet.create({
-  backgroundImage: {
-    flex: 1,
-  },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: colors.cardBackground === 'rgba(255, 255, 255, 0.95)'
-      ? 'rgba(255, 255, 255, 0.75)' // Light semi-transparent overlay
-      : 'rgba(0, 0, 0, 0.6)', // Dark semi-transparent overlay
-  },
+const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'transparent',
-  },
-  title: {
-    fontSize: 20,
-    fontFamily: 'PoppinsBold',
-    textAlign: 'center',
-    marginVertical: 10,
-    color: colors.textHeader,
-  },
-  headerContainer: {
-    paddingHorizontal: 12,
-    marginBottom: 5,
-  },
-  searchContainer: {
-    marginBottom: 8,
-  },
-  searchInput: {
-    height: 36,
-    backgroundColor: colors.cardBackground,
-    borderRadius: 18,
-    paddingHorizontal: 12,
-    fontSize: 13,
-    color: colors.text,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  filtersScrollView: {
-    marginVertical: 4,
-  },
-  filtersContainer: {
-    paddingRight: 12,
-  },
-  filterButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.cardBackground,
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: 12,
-    marginRight: 4,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 167, 38, 0.2)',
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 1,
-  },
-  filterButtonActive: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-    elevation: 1,
-    shadowOpacity: 0.08,
-  },
-  filterText: {
-    color: colors.textSecondary,
-    fontSize: 10,
-    fontFamily: 'PoppinsMedium',
-    marginLeft: 3,
-    letterSpacing: 0,
-  },
-  filterTextActive: {
-    color: '#FFFFFF',
-    fontFamily: 'PoppinsSemiBold',
-  },
-  countBadge: {
-    marginLeft: 4,
-    paddingHorizontal: 5,
-    paddingVertical: 1,
-    borderRadius: 8,
-  },
-  countText: {
-    fontSize: 9,
-    fontFamily: 'PoppinsSemiBold',
-  },
-  resultsText: {
-    fontSize: 10,
-    fontFamily: 'PoppinsRegular',
-    color: colors.textSecondary,
-    marginTop: 4,
-    textAlign: 'center',
-  },
-  listContainer: {
-    flex: 1,
-  },
-  listContent: {
-    paddingBottom: 16,
-  },
-  tournamentCard: {
-    marginVertical: 4,
-    marginHorizontal: 12,
-    borderRadius: 8,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 3,
-    elevation: 2,
-  },
-  cardContent: {
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    borderRadius: 8,
-    padding: 10,
-    position: 'relative',
-  },
-  tournamentHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 6,
-  },
-  tournamentTitle: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    flex: 1,
-    marginRight: 8,
-  },
-  statusIcon: {
-    fontSize: 14,
-    marginRight: 6,
-  },
-  tournamentName: {
-    fontSize: 13,
-    fontFamily: 'PoppinsSemiBold',
-    color: colors.textPrimary,
-    flex: 1,
-    lineHeight: 17,
-  },
-  prizeContainer: {
-    alignItems: 'flex-end',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(255, 215, 0, 0.08)',
-    paddingHorizontal: 6,
-    paddingVertical: 3,
-    borderRadius: 4,
-  },
-  prizeMoney: {
-    fontSize: 10,
-    fontFamily: 'PoppinsSemiBold',
-    color: '#FFD700',
-    textAlign: 'right',
-  },
-  runnerUpPrize: {
-    fontSize: 10,
-    fontFamily: 'PoppinsMedium',
-    color: colors.textSecondary,
-    textAlign: 'right',
-    marginTop: 2,
-  },
-  liveIndicatorInline: {
-    marginLeft: 8,
-    alignSelf: 'flex-start',
-  },
-  datesContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 5,
-  },
-  dateItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  dateText: {
-    fontSize: 11,
-    fontFamily: 'PoppinsRegular',
-    color: colors.textSecondary,
-    marginLeft: 4,
-  },
-  daysRemaining: {
-    fontSize: 9,
-    fontFamily: 'PoppinsSemiBold',
-    color: '#FFFFFF',
-    backgroundColor: '#2196F3',
-    paddingHorizontal: 5,
-    paddingVertical: 2,
-    borderRadius: 3,
-  },
-  venueContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 5,
-  },
-  venueText: {
-    fontSize: 10,
-    fontFamily: 'PoppinsRegular',
-    color: '#999',
-    marginLeft: 4,
-    flex: 1,
-  },
-  progressContainer: {
-    marginBottom: 5,
-  },
-  simpleProgressTrack: {
-    width: '100%',
-    height: 3,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    borderRadius: 2,
-    overflow: 'hidden',
-    marginBottom: 2,
-  },
-  simpleProgressFill: {
-    height: '100%',
-    borderRadius: 2,
-  },
-  progressText: {
-    fontSize: 9,
-    fontFamily: 'PoppinsRegular',
-    color: colors.textSecondary,
-  },
-  statsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  statItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  statText: {
-    fontSize: 10,
-    fontFamily: 'PoppinsRegular',
-    color: colors.textSecondary,
-    marginLeft: 4,
   },
   centerContent: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 16,
+    padding: 24,
   },
-  loadingText: {
-    marginTop: 10,
-    fontSize: 15,
-    fontFamily: 'PoppinsRegular',
-    color: '#9CA3AF',
-  },
-  errorText: {
-    marginTop: 10,
-    fontSize: 15,
-    fontFamily: 'PoppinsRegular',
-    color: '#F87171',
-    textAlign: 'center',
-  },
-  retryButton: {
-    marginTop: 14,
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingVertical: 10,
-    backgroundColor: '#FFA726',
-    borderRadius: 8,
+    paddingVertical: 14,
   },
-  retryText: {
+  screenTitle: {
+    fontSize: 22,
+    fontFamily: 'PoppinsBold',
+  },
+  searchToggle: {
+    padding: 4,
+  },
+  searchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    gap: 10,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 14,
+    fontFamily: 'PoppinsRegular',
+    paddingVertical: 0,
+  },
+  segmentRow: {
+    flexDirection: 'row',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  segmentBtn: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 13,
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
+  },
+  segmentText: {
+    fontSize: 12,
+    fontFamily: 'PoppinsMedium',
+    letterSpacing: 0.8,
+  },
+  segmentTextActive: {
+    fontFamily: 'PoppinsBold',
+  },
+  pillRow: {
+    flexDirection: 'row',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    gap: 8,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  pill: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 7,
+    borderRadius: 20,
+    borderWidth: 1,
+    gap: 6,
+  },
+  liveDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  pillText: {
     fontSize: 13,
-    fontFamily: 'PoppinsSemiBold',
-    color: '#FFFFFF',
+    fontFamily: 'PoppinsMedium',
+  },
+  pillCount: {
+    fontSize: 11,
+    fontFamily: 'PoppinsMedium',
+    opacity: 0.7,
+  },
+  listContent: {
+    paddingTop: 8,
+    paddingBottom: 16,
   },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 50,
+    paddingVertical: 60,
+    gap: 12,
   },
   emptyText: {
-    marginTop: 10,
-    fontSize: 15,
+    fontSize: 14,
     fontFamily: 'PoppinsRegular',
-    color: '#9CA3AF',
     textAlign: 'center',
+    paddingHorizontal: 32,
+  },
+  errorText: {
+    marginTop: 12,
+    fontSize: 14,
+    fontFamily: 'PoppinsRegular',
+    color: '#F87171',
+    textAlign: 'center',
+  },
+  retryButton: {
+    marginTop: 20,
+    paddingHorizontal: 24,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  retryText: {
+    fontSize: 14,
+    fontFamily: 'PoppinsSemiBold',
+    color: '#fff',
   },
 });
