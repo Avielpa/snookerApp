@@ -185,7 +185,7 @@ const HomeScreen = (): React.ReactElement | null => {
         <View style={styles.backgroundImage}>
             <SafeAreaView style={styles.container}>
                 <View style={styles.headerContainer}>
-                    <Text style={styles.screenTitle}>Snooker.org</Text>
+                    <Text style={styles.screenTitle}>Data source: Snooker.org</Text>
                     {tourName && <Text style={styles.tourTitle}>{tourName}</Text>}
                     {tournamentPrize && (
                         <View style={styles.prizeContainer}>
