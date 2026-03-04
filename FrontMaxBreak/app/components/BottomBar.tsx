@@ -40,9 +40,9 @@ const BottomBar = () => {
         },
         {
             path: '/NewsScreen',
-            icon: 'newspaper',
-            iconOutline: 'newspaper-outline',
-            label: 'News',
+            icon: 'film',
+            iconOutline: 'film-outline',
+            label: 'Media',
         },
     ];
 
