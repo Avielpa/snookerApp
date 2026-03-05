@@ -657,6 +657,17 @@ def player_by_id_view(request, player_id):
         player_data['current_ranking_position'] = None
         player_data['prize_money_this_year'] = None
 
+    # Career W/L from match history (finished matches only, status=3)
+    try:
+        total = PlayerMatchHistory.objects.filter(player_id=player_id, status=3).count()
+        wins = PlayerMatchHistory.objects.filter(player_id=player_id, winner_id=player_id, status=3).count()
+        player_data['career_wins'] = wins
+        player_data['career_losses'] = total - wins
+    except Exception as e:
+        logger.error(f"Error fetching career stats for player {player_id}: {e}")
+        player_data['career_wins'] = None
+        player_data['career_losses'] = None
+
     return Response(player_data)
 
 @api_view(['GET'])
