@@ -15,6 +15,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { logger } from '../../utils/logger';
 import { useColors } from '../../contexts/ThemeContext';
 import { createPlayerStyles } from './styles-modern';
+import { getNationalityFlag } from '../../utils/nationalityFlag';
 
 
 // Enhanced interfaces
@@ -33,6 +34,8 @@ interface PlayerData {
     NumMaximums?: number | null;
     current_ranking_position?: number | null;
     prize_money_this_year?: number | null;
+    career_wins?: number | null;
+    career_losses?: number | null;
 }
 
 interface TabConfig {
@@ -182,6 +185,13 @@ export default function PlayerDetailsScreen(): React.ReactElement {
         if (!playerData) return 'Unknown Player';
         const fullName = `${playerData.FirstName || ''} ${playerData.LastName || ''}`.trim();
         return fullName || playerData.ShortName || `Player ${playerData.ID}`;
+    };
+
+    const calculateAge = (born: string | null | undefined): string => {
+        if (!born) return 'N/A';
+        const diff = Date.now() - new Date(born).getTime();
+        const age = Math.floor(diff / (1000 * 60 * 60 * 24 * 365.25));
+        return isNaN(age) || age < 1 ? 'N/A' : `${age} years old`;
     };
 
     const formatValue = (value: any, type?: string): string => {
@@ -349,6 +359,11 @@ export default function PlayerDetailsScreen(): React.ReactElement {
                     value={formatValue(player?.Born, 'date')}
                 />
                 <InfoRow
+                    icon="time-outline"
+                    label="Age"
+                    value={calculateAge(player?.Born)}
+                />
+                <InfoRow
                     icon="male-female-outline"
                     label="Gender"
                     value={player?.Sex === 'M' ? 'Male' : player?.Sex === 'F' ? 'Female' : 'Not specified'}
@@ -382,6 +397,33 @@ export default function PlayerDetailsScreen(): React.ReactElement {
                     value={formatValue(player?.LastSeasonAsPro) || 'Current'}
                 />
             </GlassCard>
+
+            {/* Career W/L — only shown if match history data exists */}
+            {((player?.career_wins ?? 0) + (player?.career_losses ?? 0)) > 0 && (
+                <GlassCard style={styles.infoCard}>
+                    <Text style={styles.sectionTitle}>W/L Record (since 2024)</Text>
+                    <InfoRow
+                        icon="checkmark-circle-outline"
+                        label="Wins"
+                        value={String(player?.career_wins ?? 0)}
+                    />
+                    <InfoRow
+                        icon="close-circle-outline"
+                        label="Losses"
+                        value={String(player?.career_losses ?? 0)}
+                    />
+                    <InfoRow
+                        icon="stats-chart-outline"
+                        label="Win Rate"
+                        value={(() => {
+                            const w = player?.career_wins ?? 0;
+                            const l = player?.career_losses ?? 0;
+                            const total = w + l;
+                            return total > 0 ? `${Math.round((w / total) * 100)}%` : 'N/A';
+                        })()}
+                    />
+                </GlassCard>
+            )}
 
             {/* Achievement Badges */}
             <GlassCard style={styles.achievementCard}>
@@ -698,7 +740,7 @@ export default function PlayerDetailsScreen(): React.ReactElement {
                     <View style={styles.heroContent}>
                         <Text style={styles.heroTitle}>{formatPlayerName(player)}</Text>
                         <Text style={styles.heroSubtitle}>
-                            {player.Nationality && `${player.Nationality} • `}
+                            {player.Nationality && `${getNationalityFlag(player.Nationality)} ${player.Nationality} • `}
                             Professional Snooker Player
                         </Text>
                     </View>

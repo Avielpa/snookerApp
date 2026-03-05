@@ -48,19 +48,27 @@ interface Match {
     details_url?: string | null;
 }
 interface EventDetails {
-    ID: number; 
-    Name: string; 
-    StartDate?: string | null; 
+    ID: number;
+    Name: string;
+    StartDate?: string | null;
     EndDate?: string | null;
-    Venue?: string | null; 
-    City?: string | null; 
+    Venue?: string | null;
+    City?: string | null;
     Country?: string | null;
-    Note?: string | null; 
+    Note?: string | null;
     CommonNote?: string | null;
     Season?: number | null;
     Type?: string | null;
     Tour?: string | null;
     Sponsor?: string | null;
+    NumCompetitors?: number | null;
+    // Augmented by backend
+    defending_champion_name?: string | null;
+    winner_name?: string | null;
+    winner_id?: number | null;
+    winner_prize?: number | null;
+    winner_prize_currency?: string | null;
+    round_names?: Record<number, string>;
 }
 // --- List Item Types ---
 type MatchCategory = 'livePlaying' | 'onBreak' | 'upcoming' | 'finished';
@@ -76,83 +84,109 @@ type IoniconName = keyof typeof Ionicons.glyphMap; // Defined type alias
 const { width: screenWidth } = Dimensions.get('window');
 
 // Compact Tournament Header Component
-const TournamentHeader = ({ tournament, matchCount, prizeData }: { tournament: EventDetails; matchCount: number; prizeData?: any }) => {
+const TournamentHeader = ({ tournament, matchCount }: { tournament: EventDetails; matchCount: number }) => {
     const colors = useColors();
-    
-    const formatDate = (dateString: string | null) => {
+
+    const formatDate = (dateString: string | null | undefined) => {
         if (!dateString) return 'TBD';
         try {
-            return new Date(dateString).toLocaleDateString('en-GB', { 
-                day: 'numeric', 
-                month: 'short'
-            });
-        } catch {
-            return 'Invalid';
+            return new Date(dateString).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+        } catch { return 'TBD'; }
+    };
+
+    const formatPrize = (amount: number | null | undefined, currency: string | null | undefined) => {
+        if (!amount) return null;
+        const sym = currency === 'GBP' ? '£' : (currency ?? '');
+        if (amount >= 1000000) return `${sym}${(amount / 1000000).toFixed(1)}m`;
+        if (amount >= 1000) return `${sym}${Math.round(amount / 1000)}k`;
+        return `${sym}${amount}`;
+    };
+
+    const tourBadgeColor = () => {
+        switch (tournament.Tour) {
+            case 'main': return COLORS.accent;
+            case 'seniors': return '#FF9800';
+            case 'womens': return '#4CAF50';
+            default: return COLORS.textSecondary;
         }
     };
 
-    const getTourBadgeColor = (tour: string | null) => {
-        switch (tour) {
-            case 'main': return colors.primary;
-            case 'seniors': return colors.warning;
-            case 'womens': return colors.success;
-            case 'other': return colors.info;
-            default: return colors.textSecondary;
-        }
-    };
+    const prizeFormatted = formatPrize(tournament.winner_prize, tournament.winner_prize_currency);
+    const location = [tournament.City, tournament.Country].filter(Boolean).join(', ');
+
+    // Info rows: each row is icon + text
+    const InfoLine = ({ icon, text, color }: { icon: keyof typeof Ionicons.glyphMap; text: string; color?: string }) => (
+        <View style={tournamentHeaderStyles.infoItem}>
+            <Ionicons name={icon} size={12} color={color ?? COLORS.textSecondary} />
+            <Text style={[tournamentHeaderStyles.infoText, { color: color ?? COLORS.textSecondary }]} numberOfLines={1}>
+                {text}
+            </Text>
+        </View>
+    );
 
     return (
-        <View style={[tournamentHeaderStyles.compactHeader, { backgroundColor: colors.cardBackground }]}>
+        <View style={[tournamentHeaderStyles.compactHeader, { backgroundColor: COLORS.cardBackground }]}>
             <LinearGradient
-                colors={[colors.primary + '15', colors.cardBackground]}
+                colors={[COLORS.accent + '18', COLORS.cardBackground]}
                 style={tournamentHeaderStyles.compactGradient}
             >
-                {/* Title Row */}
+                {/* Title + badges row */}
                 <View style={tournamentHeaderStyles.titleRow}>
-                    <Text style={[tournamentHeaderStyles.compactTitle, { color: colors.textHeader }]} numberOfLines={2}>
+                    <Text style={[tournamentHeaderStyles.compactTitle, { color: COLORS.textHeader }]} numberOfLines={2}>
                         {tournament.Name}
                     </Text>
-                    {tournament.Tour && (
-                        <View style={[tournamentHeaderStyles.compactBadge, { backgroundColor: getTourBadgeColor(tournament.Tour) }]}>
-                            <Text style={tournamentHeaderStyles.compactBadgeText}>{tournament.Tour.toUpperCase()}</Text>
-                        </View>
+                    <View style={tournamentHeaderStyles.badgeGroup}>
+                        {tournament.Type && (
+                            <View style={[tournamentHeaderStyles.compactBadge, { backgroundColor: tourBadgeColor() + 'CC' }]}>
+                                <Text style={tournamentHeaderStyles.compactBadgeText}>{tournament.Type.toUpperCase()}</Text>
+                            </View>
+                        )}
+                    </View>
+                </View>
+
+                {/* Sponsor */}
+                {tournament.Sponsor && (
+                    <Text style={tournamentHeaderStyles.sponsorText}>Sponsored by {tournament.Sponsor}</Text>
+                )}
+
+                {/* Info lines */}
+                <View style={tournamentHeaderStyles.infoGrid}>
+                    <InfoLine
+                        icon="calendar-outline"
+                        text={`${formatDate(tournament.StartDate)} – ${formatDate(tournament.EndDate)}`}
+                    />
+                    {location.length > 0 && (
+                        <InfoLine icon="location-outline" text={location} />
+                    )}
+                    {tournament.NumCompetitors && (
+                        <InfoLine icon="people-outline" text={`${tournament.NumCompetitors} players`} />
+                    )}
+                    {prizeFormatted && (
+                        <InfoLine icon="cash-outline" text={`Winner: ${prizeFormatted}`} color={COLORS.accent} />
                     )}
                 </View>
-                
-                {/* Info Row */}
-                <View style={tournamentHeaderStyles.infoRow}>
-                    <View style={tournamentHeaderStyles.infoItem}>
-                        <Ionicons name="calendar-outline" size={11} color={colors.primary} />
-                        <Text style={[tournamentHeaderStyles.infoText, { color: colors.textSecondary }]}>
-                            {formatDate(tournament.StartDate ?? null)} - {formatDate(tournament.EndDate ?? null)}
-                        </Text>
+
+                {/* Winner / Defending champ — only show when we have the data */}
+                {(tournament.winner_name || tournament.defending_champion_name) && (
+                    <View style={tournamentHeaderStyles.champRow}>
+                        {tournament.winner_name && (
+                            <View style={tournamentHeaderStyles.champItem}>
+                                <Ionicons name="trophy" size={13} color={COLORS.accent} />
+                                <Text style={[tournamentHeaderStyles.champText, { color: COLORS.textPrimary }]} numberOfLines={1}>
+                                    {tournament.winner_name}
+                                </Text>
+                            </View>
+                        )}
+                        {tournament.defending_champion_name && !tournament.winner_name && (
+                            <View style={tournamentHeaderStyles.champItem}>
+                                <Ionicons name="shield-outline" size={13} color={COLORS.textSecondary} />
+                                <Text style={[tournamentHeaderStyles.champText, { color: COLORS.textSecondary }]} numberOfLines={1}>
+                                    Defending: {tournament.defending_champion_name}
+                                </Text>
+                            </View>
+                        )}
                     </View>
-
-                    {(tournament.City || tournament.Country) && (
-                        <View style={tournamentHeaderStyles.infoItem}>
-                            <Ionicons name="location-outline" size={11} color={colors.success} />
-                            <Text style={[tournamentHeaderStyles.infoText, { color: colors.textSecondary }]} numberOfLines={1}>
-                                {[tournament.City, tournament.Country].filter(Boolean).join(', ')}
-                            </Text>
-                        </View>
-                    )}
-
-                    <View style={tournamentHeaderStyles.infoItem}>
-                        <Ionicons name="trophy-outline" size={11} color={colors.warning} />
-                        <Text style={[tournamentHeaderStyles.infoText, { color: colors.textSecondary }]}>
-                            {matchCount} matches
-                        </Text>
-                    </View>
-
-                    {prizeData?.winner?.formatted && (
-                        <View style={tournamentHeaderStyles.infoItem}>
-                            <Ionicons name="diamond-outline" size={11} color={colors.warning} />
-                            <Text style={[tournamentHeaderStyles.infoText, { color: colors.warning }]} numberOfLines={1}>
-                                Winner: {prizeData.winner.formatted}
-                            </Text>
-                        </View>
-                    )}
-                </View>
+                )}
             </LinearGradient>
         </View>
     );
@@ -258,36 +292,27 @@ const TournamentDetailsScreen = () => {
     const [loading, setLoading] = useState<boolean>(true);
     const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
-    const [prizeData, setPrizeData] = useState<any>(null);
     const [roundPrizes, setRoundPrizes] = useState<Record<number, string>>({});
 
     const checkLoginStatus = useCallback(async () => { 
         // Empty function - no login check needed for now
     }, []);
 
-    // Fetch prize money data
-    const fetchPrizeData = useCallback(async (eventId: number) => {
+    // Fetch round prizes for round header display
+    const fetchRoundPrizes = useCallback(async (eventId: number) => {
         try {
-            // Fetch tournament prize breakdown
-            const response = await fetch(`${process.env.EXPO_PUBLIC_API_BASE_URL || 'https://snookerapp.up.railway.app'}/oneFourSeven/prize-money/${eventId}/`);
+            const response = await fetch(`${process.env.EXPO_PUBLIC_API_BASE_URL || 'https://snookerapp.up.railway.app'}/oneFourSeven/round-prizes/${eventId}/`);
             if (response.ok) {
                 const data = await response.json();
-                setPrizeData(data);
-                
-                // Also fetch round-specific prize amounts
-                const roundResponse = await fetch(`${process.env.EXPO_PUBLIC_API_BASE_URL || 'https://snookerapp.up.railway.app'}/oneFourSeven/round-prizes/${eventId}/`);
-                if (roundResponse.ok) {
-                    const roundData = await roundResponse.json();
-                    setRoundPrizes(roundData);
-                }
+                setRoundPrizes(data);
             }
         } catch (error) {
-            logger.warn('[PrizeData] Failed to fetch prize data:', error);
+            logger.warn('[PrizeData] Failed to fetch round prizes:', error);
         }
     }, []);
 
     // --- Process matches function (Using snake_case and corrected loop) ---
-    const processMatchesForList = (matches: Match[]): ListItem[] => {
+    const processMatchesForList = (matches: Match[], roundNames: Record<number, string> = {}): ListItem[] => {
         if (!matches || matches.length === 0) return [];
 
         // DEDUPLICATION FIX: Remove duplicate matches by api_match_id OR live_url/details_url
@@ -435,7 +460,9 @@ const TournamentDetailsScreen = () => {
                     const matchRound = match.round ?? null;
                     if (matchRound !== currentRound) {
                         currentRound = matchRound;
-                        const roundName = getRoundName(currentRound);
+                        const roundName = (currentRound != null && roundNames[currentRound])
+                            ? roundNames[currentRound]
+                            : getRoundName(currentRound);
                         const uniqueRoundHeaderId = `roundHeader-${key}-${currentRound ?? 'unknown'}-${roundHeaderIndex++}`;
                         processedList.push({ 
                             type: 'roundHeader', 
@@ -475,11 +502,11 @@ const TournamentDetailsScreen = () => {
             }
             
             const currentMatches = Array.isArray(matchesData) ? matchesData as Match[] : [];
-            const processedData = processMatchesForList(currentMatches);
+            const processedData = processMatchesForList(currentMatches, detailsTyped.round_names ?? {});
             setProcessedListData(processedData);
             
-            // Also fetch prize data
-            await fetchPrizeData(eventId);
+            // Fetch round prizes for round headers (non-blocking)
+            fetchRoundPrizes(eventId);
         } catch (err: any) {
             setError(err.message || "Failed to load tournament data."); 
             setTournamentDetails(null); 
@@ -579,10 +606,9 @@ const TournamentDetailsScreen = () => {
             </View>
             
             {/* Compact Tournament Header */}
-            <TournamentHeader 
-                tournament={tournamentDetails} 
+            <TournamentHeader
+                tournament={tournamentDetails}
                 matchCount={processedListData.filter(item => item.type === 'match').length}
-                prizeData={prizeData}
             />
             
             {/* Integrated Match List with Sticky Filters */}
@@ -638,64 +664,88 @@ const TournamentDetailsScreen = () => {
     );
 }; // End TournamentDetailsScreen
 
-// --- Compact Tournament Header Styles ---
+// --- Tournament Header Styles ---
 const tournamentHeaderStyles = StyleSheet.create({
     compactHeader: {
         marginHorizontal: 10,
-        marginVertical: 4,
-        borderRadius: 8,
+        marginTop: 6,
+        marginBottom: 2,
+        borderRadius: 10,
         overflow: 'hidden',
-        elevation: 1,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.03,
-        shadowRadius: 2,
+        borderWidth: StyleSheet.hairlineWidth,
+        borderColor: 'rgba(255,255,255,0.1)',
     },
     compactGradient: {
-        paddingHorizontal: 12,
-        paddingVertical: 8,
+        paddingHorizontal: 14,
+        paddingVertical: 12,
+        gap: 6,
     },
     titleRow: {
         flexDirection: 'row',
-        alignItems: 'center',
+        alignItems: 'flex-start',
         justifyContent: 'space-between',
-        marginBottom: 5,
+        gap: 8,
     },
     compactTitle: {
-        fontSize: 14,
+        fontSize: 15,
         fontFamily: 'PoppinsBold',
         flex: 1,
-        marginRight: 8,
-        lineHeight: 18,
+        lineHeight: 20,
+    },
+    badgeGroup: {
+        flexDirection: 'row',
+        gap: 4,
+        flexShrink: 0,
+        paddingTop: 2,
     },
     compactBadge: {
-        paddingHorizontal: 6,
-        paddingVertical: 2,
+        paddingHorizontal: 7,
+        paddingVertical: 3,
         borderRadius: 4,
     },
     compactBadgeText: {
-        color: '#FFFFFF',
-        fontSize: 8,
+        color: '#000',
+        fontSize: 9,
         fontFamily: 'PoppinsBold',
         letterSpacing: 0.3,
     },
-    infoRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
+    sponsorText: {
+        fontSize: 10,
+        fontFamily: 'PoppinsRegular',
+        color: COLORS.textMuted,
+        marginTop: -2,
+    },
+    infoGrid: {
         gap: 4,
+        marginTop: 2,
     },
     infoItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 3,
-        flex: 1,
-        minWidth: 70,
+        gap: 6,
     },
     infoText: {
-        fontSize: 9,
+        fontSize: 11,
         fontFamily: 'PoppinsRegular',
+        flexShrink: 1,
+    },
+    champRow: {
+        flexDirection: 'row',
+        gap: 12,
+        marginTop: 4,
+        paddingTop: 8,
+        borderTopWidth: StyleSheet.hairlineWidth,
+        borderTopColor: 'rgba(255,255,255,0.1)',
+    },
+    champItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 5,
+        flex: 1,
+    },
+    champText: {
+        fontSize: 12,
+        fontFamily: 'PoppinsSemiBold',
         flexShrink: 1,
     },
 });

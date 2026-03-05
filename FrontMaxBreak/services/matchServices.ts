@@ -19,6 +19,8 @@ export interface Player {
     Photo?: string | null;
     current_ranking_position?: number | null;
     prize_money_this_year?: number | null;
+    career_wins?: number | null;
+    career_losses?: number | null;
     Active: boolean | null
 }
 
