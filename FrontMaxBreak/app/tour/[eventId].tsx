@@ -159,7 +159,7 @@ const TournamentHeader = ({ tournament, matchCount, prizeData }: { tournament: E
 };
 
 // --- Constants & Icons (Ensure these are defined at the top level) ---
-const COLORS = { background: 'transparent', cardBackground: 'rgba(255, 255, 255, 0.12)', cardBorder: 'rgba(255, 255, 255, 0.25)', textHeader: '#FFA726', textPrimary: '#FFFFFF', textSecondary: '#FFCC80', textMuted: '#E0E0E0', score: '#FFA726', accent: '#FFB74D', accentLight: '#FFCC80', live: '#4CAF50', onBreak: '#FF9800', error: '#F87171', white: '#FFFFFF', black: '#000000', filterButton: 'rgba(255, 167, 38, 0.2)', filterButtonActive: '#FFA726', filterText: '#FFCC80', filterTextActive: '#000000', };
+const COLORS = { background: '#121212', cardBackground: '#1E1E1E', cardBorder: 'rgba(255, 255, 255, 0.12)', textHeader: '#FFB74D', textPrimary: '#FFFFFF', textSecondary: '#9CA3AF', textMuted: '#6B7280', score: '#FFB74D', accent: '#FFB74D', accentLight: '#FFB74D', live: '#4CAF50', onBreak: '#FF9800', error: '#F87171', white: '#FFFFFF', black: '#000000', filterButton: 'rgba(255, 180, 77, 0.15)', filterButtonActive: '#FFB74D', filterText: '#9CA3AF', filterTextActive: '#121212', };
 const ICONS: { [key: string]: IoniconName } = { livePlaying: 'play-circle-outline', onBreak: 'pause-circle-outline', upcoming: 'time-outline', finished: 'checkmark-done-outline', calendar: 'calendar-outline', trophy: 'trophy-outline', loading: 'hourglass-outline', error: 'alert-circle-outline', empty: 'information-circle-outline', refresh: 'refresh-outline', filter: 'filter-outline', all: 'list-outline', location: 'location-outline', backArrow: 'arrow-back-outline', };
 
 // --- Utility Functions (Moved outside component) ---
@@ -848,10 +848,11 @@ const styles = StyleSheet.create({
         marginRight: 4,
     },
     roundHeaderText: {
-        fontSize: 11,
+        fontSize: 12,
         fontFamily: 'PoppinsSemiBold',
         color: COLORS.textSecondary,
         flex: 1,
+        letterSpacing: 0.3,
     },
     prizeText: {
         fontSize: 9,
@@ -870,10 +871,10 @@ const styles = StyleSheet.create({
     },
     matchItemContent: {
         backgroundColor: COLORS.cardBackground,
-        paddingVertical: 8,
-        paddingHorizontal: 10,
-        borderRadius: 8,
-        borderWidth: 1,
+        paddingVertical: 12,
+        paddingHorizontal: 14,
+        borderRadius: 10,
+        borderWidth: StyleSheet.hairlineWidth,
         borderColor: COLORS.cardBorder,
         overflow: 'hidden',
     },
@@ -903,31 +904,31 @@ const styles = StyleSheet.create({
         marginTop: 2,
     },
     playerName: {
-        fontSize: 12,
+        fontSize: 13,
         fontFamily: 'PoppinsMedium',
         color: COLORS.textPrimary,
         flexShrink: 1,
-        flexBasis: '40%',
+        flexBasis: '38%',
     },
     playerLeft: {
         textAlign: 'left',
-        marginRight: 4,
+        marginRight: 6,
     },
     playerRight: {
         textAlign: 'right',
-        marginLeft: 4,
-        paddingRight: 40,
+        marginLeft: 6,
     },
     winnerText: {
         fontFamily: 'PoppinsBold',
         color: COLORS.score,
     },
     score: {
-        fontSize: 14,
+        fontSize: 16,
         fontFamily: 'PoppinsBold',
         color: COLORS.score,
         textAlign: 'center',
-        paddingHorizontal: 4,
+        paddingHorizontal: 8,
+        minWidth: 56,
     },
     detailsRow: {
         flexDirection: 'row',

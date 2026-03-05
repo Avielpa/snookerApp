@@ -82,7 +82,8 @@
       "WebFetch(domain:rss.feedspot.com)",
       "WebFetch(domain:snookerhq.com)",
       "WebFetch(domain:www.totallysnookered.com)",
-      "Bash(/c/Users/Aviel/vsprojects/snookerApp/venv/Scripts/python:*)"
+      "Bash(/c/Users/Aviel/vsprojects/snookerApp/venv/Scripts/python:*)",
+      "WebFetch(domain:snookerapp.up.railway.app)"
     ],
     "deny": [],
     "ask": [],
