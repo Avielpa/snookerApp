@@ -497,12 +497,77 @@ def ranking_tabs_view(request, tab_type='mens'):
 def event_detail_view(request, event_id):
     """
     API endpoint that returns details for a single event, looked up by its ID.
+    Augments the base serializer data with:
+      - defending_champion_name  (resolved from DefendingChampion player ID)
+      - winner_name / winner_id  (from the highest-round finished match)
+      - winner_prize             (prize for NumLeft=1 round, i.e. the winner)
+      - round_names              ({round_number: round_name} from RoundDetails)
     """
     logger.debug(f"Request received for event details ID: {event_id}")
-    # Use get_object_or_404 for standard object lookup and 404 handling
     event_instance = get_object_or_404(Event, ID=event_id)
     serializer = EventSerializer(event_instance)
-    return Response(serializer.data)
+    data = dict(serializer.data)
+
+    # Defending champion name
+    try:
+        dc_id = event_instance.DefendingChampion
+        if dc_id:
+            dc = Player.objects.filter(ID=dc_id).first()
+            data['defending_champion_name'] = str(dc) if dc else None
+        else:
+            data['defending_champion_name'] = None
+    except Exception:
+        data['defending_champion_name'] = None
+
+    # Winner: highest-round finished match
+    try:
+        final = (
+            MatchesOfAnEvent.objects
+            .filter(Event_id=event_id, Status=3, WinnerID__isnull=False)
+            .order_by('-Round')
+            .first()
+        )
+        if final and final.WinnerID:
+            winner = Player.objects.filter(ID=final.WinnerID).first()
+            data['winner_name'] = str(winner) if winner else None
+            data['winner_id'] = final.WinnerID
+        else:
+            data['winner_name'] = None
+            data['winner_id'] = None
+    except Exception:
+        data['winner_name'] = None
+        data['winner_id'] = None
+
+    # Winner prize: round where NumLeft=1 (the champion's prize)
+    try:
+        winner_round = (
+            RoundDetails.objects
+            .filter(Event_id=event_id, NumLeft=1)
+            .order_by('-Money')
+            .first()
+        )
+        if winner_round and winner_round.Money:
+            data['winner_prize'] = float(winner_round.Money)
+            data['winner_prize_currency'] = winner_round.Currency or 'GBP'
+        else:
+            data['winner_prize'] = None
+            data['winner_prize_currency'] = None
+    except Exception:
+        data['winner_prize'] = None
+        data['winner_prize_currency'] = None
+
+    # Round names from RoundDetails
+    try:
+        round_names = {
+            r.Round: r.RoundName
+            for r in RoundDetails.objects.filter(Event_id=event_id)
+            if r.RoundName
+        }
+        data['round_names'] = round_names
+    except Exception:
+        data['round_names'] = {}
+
+    return Response(data)
 
 
 @api_view(['GET'])
