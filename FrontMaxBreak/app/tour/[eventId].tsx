@@ -493,10 +493,10 @@ const TournamentDetailsScreen = () => {
             ]);
             
             const detailsTyped = detailsData as EventDetails | null;
-            if (detailsTyped && typeof detailsTyped === 'object' && detailsTyped.ID === eventId) { 
-                setTournamentDetails(detailsTyped); 
-            } else { 
-                throw new Error(`Tournament details not found or invalid for event ${eventId}.`); 
+            if (detailsTyped && typeof detailsTyped === 'object' && detailsTyped.ID === eventId) {
+                setTournamentDetails(detailsTyped);
+            } else {
+                throw new Error('Tournament data not available. This event may not have started yet.');
             }
             
             const currentMatches = Array.isArray(matchesData) ? matchesData as Match[] : [];
@@ -950,6 +950,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginBottom: 5,
         marginTop: 2,
+        direction: 'ltr',
     },
     playerName: {
         fontSize: 13,
