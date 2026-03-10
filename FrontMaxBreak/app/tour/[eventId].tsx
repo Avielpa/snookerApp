@@ -224,9 +224,8 @@ const MatchItem = React.memo(({ item, navigation }: { item: MatchListItem; navig
             isP2Win = true;
         }
         
-        // CORRECT WORKING LOGIC: Use the order that shows correct scores initially
-        scoreDisplay = `${item.score2} - ${item.score1}`;
-        
+        scoreDisplay = `${item.score1} - ${item.score2}`;
+
         // Double-check against winner_id if available (for validation)
         if (item.winner_id) {
             const scoreBasedWinner = item.score1 > item.score2 ? item.player1_id : item.player2_id;
@@ -234,10 +233,9 @@ const MatchItem = React.memo(({ item, navigation }: { item: MatchListItem; navig
                 logger.warn(`[MatchItem] Score/Winner mismatch for match ${item.api_match_id}: Score says ${scoreBasedWinner}, API says ${item.winner_id}`);
             }
         }
-    } else if (item.score1 !== null && item.score1 !== undefined && 
+    } else if (item.score1 !== null && item.score1 !== undefined &&
                item.score2 !== null && item.score2 !== undefined) {
-        // CORRECT WORKING LOGIC: Use the order that shows correct scores initially
-        scoreDisplay = `${item.score2} - ${item.score1}`;
+        scoreDisplay = `${item.score1} - ${item.score2}`;
     }
     
     const date=formatDate(item.scheduled_date);
