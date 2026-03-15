@@ -17,45 +17,27 @@ export function parseFrameScoresString(frameScoresString: string): FrameScore[] 
   let frameNumber = 1;
 
   try {
-    // Clean up HTML tags and normalize breaks
     let cleanString = frameScoresString
-      .replace(/<br\s*\/?>/gi, '\n') // Replace <br> tags with newlines
-      .replace(/<[^>]*>/g, '') // Remove any other HTML tags
-      .replace(/&nbsp;/g, ' ') // Replace HTML entities
+      .replace(/<br\s*\/?>/gi, ',')       // <br> acts as frame group separator → comma
+      .replace(/<[^>]*>/g, '')            // Remove other HTML tags
+      .replace(/&nbsp;/g, ' ')            // Replace HTML entities
+      // Remove session headers: "First session:", "Second session:", "Session 1:" etc.
+      .replace(/\b(?:first|second|third|fourth)\s+session\s*:/gi, '')
+      .replace(/session\s+\d+\s*:/gi, '')
       .trim();
 
-    // Check if the string contains session headers
-    if (cleanString.includes('Session')) {
-      // Handle session-based format
-      const sessions = cleanString.split(/Session\s+\d+:/i).filter(s => s.trim());
+    // Protect commas inside parentheses (e.g. "(MF 59, DJ 59)") by replacing them with semicolons
+    // so the outer split(',') doesn't break mid-break-info
+    cleanString = cleanString.replace(/\([^)]*\)/g, (match) => match.replace(/,/g, ';'));
 
-      for (const session of sessions) {
-        // Split session into lines and process each line
-        const lines = session.split('\n').filter(line => line.trim());
+    // Now split by comma — each token is one frame entry
+    const frameEntries = cleanString.split(',').map(s => s.trim()).filter(s => s);
 
-        for (const line of lines) {
-          // Split line by commas to get individual frame scores
-          const frameScoresInLine = line.split(',').filter(score => score.trim());
-
-          for (const frameScore of frameScoresInLine) {
-            const parsedFrame = parseIndividualFrame(frameScore.trim(), frameNumber);
-            if (parsedFrame) {
-              frameScores.push(parsedFrame);
-              frameNumber++;
-            }
-          }
-        }
-      }
-    } else {
-      // Handle simple comma-separated format (e.g., "8-73, 111-20 (69), 28-96 (65)")
-      const frameScoresInLine = cleanString.split(',').filter(score => score.trim());
-      
-      for (const frameScore of frameScoresInLine) {
-        const parsedFrame = parseIndividualFrame(frameScore.trim(), frameNumber);
-        if (parsedFrame) {
-          frameScores.push(parsedFrame);
-          frameNumber++;
-        }
+    for (const entry of frameEntries) {
+      const parsedFrame = parseIndividualFrame(entry, frameNumber);
+      if (parsedFrame) {
+        frameScores.push(parsedFrame);
+        frameNumber++;
       }
     }
   } catch (error) {
