@@ -1639,3 +1639,80 @@ def news_view(request):
     except Exception as e:
         logger.error(f'Error in news_view: {e}')
         return Response([], status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def admin_import_matches_view(request):
+    """
+    Protected admin endpoint to find events with no match data and optionally trigger import.
+
+    Usage:
+      GET /oneFourSeven/admin/import-matches/?token=<SECRET_KEY[:20]>
+        → lists events with no matches
+
+      GET /oneFourSeven/admin/import-matches/?token=<SECRET_KEY[:20]>&trigger=true
+        → starts background import for all events with no matches
+    """
+    import threading
+    from django.conf import settings
+
+    token = request.GET.get('token', '')
+    if token != settings.SECRET_KEY[:20]:
+        return Response({'error': 'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
+
+    # Events that have no matches at all in our DB
+    events_with_matches_ids = set(
+        MatchesOfAnEvent.objects.values_list('Event_id', flat=True).distinct()
+    )
+    events_without_matches = list(
+        Event.objects.exclude(ID__in=events_with_matches_ids)
+        .order_by('-StartDate')
+    )
+
+    event_list = [
+        {'id': e.ID, 'name': e.Name, 'type': e.Type, 'season': e.Season,
+         'start': str(e.StartDate), 'end': str(e.EndDate)}
+        for e in events_without_matches
+    ]
+
+    trigger = request.GET.get('trigger', 'false').lower() == 'true'
+
+    if not trigger:
+        return Response({
+            'status': 'preview',
+            'events_without_match_data': len(event_list),
+            'events': event_list,
+            'hint': 'Add &trigger=true to start import',
+        })
+
+    # Run import in background thread (rate-limited to respect snooker.org 10 req/min)
+    def run_import():
+        import time
+        from django.db import close_old_connections
+        from .scraper import fetch_event_matches_data, save_matches_of_an_event
+        close_old_connections()
+        results = []
+        for event in events_without_matches:
+            try:
+                matches_data = fetch_event_matches_data(event.ID)
+                if matches_data:
+                    save_matches_of_an_event(event.ID, matches_data)
+                    logger.info(f"[AdminImport] Imported {len(matches_data)} matches for '{event.Name}' (ID {event.ID})")
+                    results.append({'id': event.ID, 'name': event.Name, 'imported': len(matches_data)})
+                else:
+                    logger.info(f"[AdminImport] No matches found for '{event.Name}' (ID {event.ID})")
+                time.sleep(7)  # Respect snooker.org rate limit (10 req/min)
+            except Exception as e:
+                logger.error(f"[AdminImport] Failed for event {event.ID}: {e}")
+        logger.info(f"[AdminImport] Done. Imported matches for {len(results)} events.")
+
+    t = threading.Thread(target=run_import, daemon=True)
+    t.start()
+
+    return Response({
+        'status': 'import_started',
+        'events_queued': len(event_list),
+        'events': event_list,
+        'note': 'Import running in background. Check Railway logs for progress.',
+    })
