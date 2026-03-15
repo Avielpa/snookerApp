@@ -18,25 +18,16 @@ const ThemedLayout = () => {
     const { theme } = useTheme();
     const colors = theme.colors;
 
-    // Check for OTA update on startup and apply immediately if available
+    // React to updates found by the automatic ON_LOAD check and apply immediately
+    const { isUpdateAvailable } = Updates.useUpdates();
+
     useEffect(() => {
-        if (__DEV__) return; // expo-updates throws in dev builds
-        const checkForUpdate = async () => {
-            try {
-                const update = await Updates.checkForUpdateAsync();
-                logger.log(`[OTA] Check complete. isAvailable=${update.isAvailable}`);
-                if (update.isAvailable) {
-                    logger.log('[OTA] Downloading update...');
-                    await Updates.fetchUpdateAsync();
-                    logger.log('[OTA] Download complete — reloading');
-                    await Updates.reloadAsync();
-                }
-            } catch (e: any) {
-                logger.warn(`[OTA] Update check failed: ${e?.message}`);
-            }
-        };
-        checkForUpdate();
-    }, []);
+        if (__DEV__ || !isUpdateAvailable) return;
+        logger.log('[OTA] Update available — downloading and applying...');
+        Updates.fetchUpdateAsync()
+            .then(() => Updates.reloadAsync())
+            .catch((e: any) => logger.warn(`[OTA] Apply failed: ${e?.message}`));
+    }, [isUpdateAvailable]);
 
     // Test API connectivity on app start
     useEffect(() => {
