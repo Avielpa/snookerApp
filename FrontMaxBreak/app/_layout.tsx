@@ -3,6 +3,7 @@ import React, { useEffect } from 'react';
 import { ImageBackground, View, StyleSheet, StatusBar } from 'react-native';
 import { Stack } from 'expo-router';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import * as Updates from 'expo-updates';
 import { ThemeProvider, useTheme } from '../contexts/ThemeContext';
 import { logger } from '../utils/logger';
 import { api } from '../services/api';
@@ -16,6 +17,27 @@ import ErrorBoundary from '../components/ErrorBoundary';
 const ThemedLayout = () => {
     const { theme } = useTheme();
     const colors = theme.colors;
+
+    // Check for OTA update on startup and apply immediately if available
+    useEffect(() => {
+        const checkForUpdate = async () => {
+            try {
+                if (!Updates.isEmbeddedLaunch) {
+                    // Already running an OTA bundle — check for a newer one
+                    const update = await Updates.checkForUpdateAsync();
+                    if (update.isAvailable) {
+                        logger.log('[OTA] New update available — downloading...');
+                        await Updates.fetchUpdateAsync();
+                        logger.log('[OTA] Update downloaded — reloading app');
+                        await Updates.reloadAsync();
+                    }
+                }
+            } catch (e) {
+                // Non-fatal — silently skip if update check fails
+            }
+        };
+        checkForUpdate();
+    }, []);
 
     // Test API connectivity on app start
     useEffect(() => {
