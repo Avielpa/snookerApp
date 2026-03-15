@@ -48,6 +48,11 @@ class Command(BaseCommand):
             default=10,
             help='Maximum number of events to update when using --all-current (default: 10)',
         )
+        parser.add_argument(
+            '--empty-only',
+            action='store_true',
+            help='Import matches for all events in DB that have zero match data (any season)',
+        )
 
     def handle(self, *args, **options):
         self.stdout.write(
@@ -58,6 +63,7 @@ class Command(BaseCommand):
         event_id = options.get('event_id')
         active_only = options.get('active_only', False)
         all_current = options.get('all_current', False)
+        empty_only = options.get('empty_only', False)
         max_events = options.get('max_events', 10)
 
         try:
@@ -91,7 +97,7 @@ class Command(BaseCommand):
                 # Update all events in current season
                 from datetime import date
                 current_year = date.today().year
-                
+
                 events_to_update = list(
                     Event.objects.filter(
                         Season=current_year,
@@ -100,8 +106,17 @@ class Command(BaseCommand):
                         Name__icontains='Championship League Stage'
                     ).order_by('StartDate')[:max_events]
                 )
-                
+
                 self.stdout.write(f'Found {len(events_to_update)} tournament(s) in current season to update')
+
+            elif empty_only:
+                # Find all events in DB that have zero match data (any season)
+                from oneFourSeven.models import MatchesOfAnEvent
+                events_with_data = MatchesOfAnEvent.objects.values_list('Event_id', flat=True).distinct()
+                events_to_update = list(
+                    Event.objects.exclude(ID__in=events_with_data).order_by('-StartDate')
+                )
+                self.stdout.write(f'Found {len(events_to_update)} event(s) with no match data to import')
 
             else:
                 raise CommandError(

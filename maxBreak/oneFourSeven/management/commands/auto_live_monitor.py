@@ -246,8 +246,9 @@ class Command(BaseCommand):
             call_command('update_matches', '--active-only')
             self.stdout.write('[SUCCESS] Daily matches updated')
 
-            # Import matches for any event in DB that has zero match data (past or future)
-            self._import_empty_events()
+            # Import matches for any event in DB that has zero match data (any season)
+            call_command('update_matches', '--empty-only')
+            self.stdout.write('[SUCCESS] Empty events import done')
 
             # Update upcoming tournaments round details (next 30 days)
             call_command('update_round_details', '--upcoming-only', '--days', '30')
@@ -261,33 +262,6 @@ class Command(BaseCommand):
             logger.error(f'Daily updates failed: {str(e)}')
             self.stdout.write(f'[FAILED] Daily updates failed: {str(e)}')
 
-    def _import_empty_events(self):
-        """Import matches for events that exist in DB but have no match data at all."""
-        import time
-        try:
-            events_with_matches = set(
-                MatchesOfAnEvent.objects.values_list('Event_id', flat=True).distinct()
-            )
-            empty_events = Event.objects.exclude(ID__in=events_with_matches).order_by('-StartDate')
-
-            if not empty_events.exists():
-                self.stdout.write('[EMPTY_EVENTS] All events have match data - nothing to import')
-                return
-
-            self.stdout.write(f'[EMPTY_EVENTS] Found {empty_events.count()} events with no match data - importing...')
-
-            for event in empty_events:
-                try:
-                    call_command('update_matches', '--event-id', str(event.ID))
-                    self.stdout.write(f'[EMPTY_EVENTS] Imported matches for {event.Name} (ID {event.ID})')
-                    time.sleep(7)  # Respect snooker.org rate limit
-                except Exception as e:
-                    self.stdout.write(f'[EMPTY_EVENTS] Failed for {event.Name} (ID {event.ID}): {str(e)}')
-
-        except Exception as e:
-            logger.error(f'Empty events import failed: {str(e)}')
-            self.stdout.write(f'[FAILED] Empty events import failed: {str(e)}')
-    
     def _check_monthly_updates(self):
         """Check if monthly updates should run (1st of month)."""
         current_time = timezone.now()
