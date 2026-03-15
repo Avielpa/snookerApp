@@ -35,7 +35,6 @@ from .views import (
     upcoming_matches_fallback_view,
     recent_matches_view,
     news_view,
-    admin_import_matches_view,
 )
 
 # --- DRF Router Setup ---
@@ -120,8 +119,6 @@ urlpatterns = [
     # Debug endpoint for checking system status
     path('debug/status/', debug_status_view, name='debug-status'),
 
-    # --- Admin Import URL ---
-    path('admin/import-matches/', admin_import_matches_view, name='admin-import-matches'),
 ]
 
 # You might want to namespace these URLs if this app is included in a larger project's urls.py
