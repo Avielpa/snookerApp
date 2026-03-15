@@ -22,18 +22,15 @@ const ThemedLayout = () => {
     useEffect(() => {
         const checkForUpdate = async () => {
             try {
-                if (!Updates.isEmbeddedLaunch) {
-                    // Already running an OTA bundle — check for a newer one
-                    const update = await Updates.checkForUpdateAsync();
-                    if (update.isAvailable) {
-                        logger.log('[OTA] New update available — downloading...');
-                        await Updates.fetchUpdateAsync();
-                        logger.log('[OTA] Update downloaded — reloading app');
-                        await Updates.reloadAsync();
-                    }
+                const update = await Updates.checkForUpdateAsync();
+                if (update.isAvailable) {
+                    logger.log('[OTA] New update available — downloading...');
+                    await Updates.fetchUpdateAsync();
+                    logger.log('[OTA] Update downloaded — reloading app');
+                    await Updates.reloadAsync();
                 }
             } catch (e) {
-                // Non-fatal — silently skip if update check fails
+                // Non-fatal — silently skip if update check fails (e.g., in dev mode)
             }
         };
         checkForUpdate();
