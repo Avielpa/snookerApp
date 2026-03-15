@@ -145,6 +145,13 @@ export const MatchItem = ({
                     </Text>
                 </View>
 
+                {/* Note (walkover, withdrawal, etc.) */}
+                {!!item.note && (
+                    <Text style={{ fontSize: 11, color: COLORS.textSecondary, fontStyle: 'italic', marginTop: 6, paddingHorizontal: 2 }} numberOfLines={2}>
+                        {item.note}
+                    </Text>
+                )}
+
                 {/* Footer: date only */}
                 <View style={styles.detailsRow}>
                     <View style={styles.detailItem}>

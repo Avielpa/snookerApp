@@ -254,6 +254,11 @@ const MatchItem = React.memo(({ item, navigation }: { item: MatchListItem; navig
                     <Text style={styles.score}>{scoreDisplay}</Text>
                     <Text style={[styles.playerName, styles.playerRight, isP2Win && styles.winnerText]} onPress={()=>navP(item.player2_id)} disabled={!item.player2_id} numberOfLines={1}>{p2}</Text>
                 </View>
+                {!!item.note && (
+                    <Text style={{ fontSize: 11, color: COLORS.textSecondary, fontStyle: 'italic', marginTop: 4, paddingHorizontal: 2 }} numberOfLines={2}>
+                        {item.note}
+                    </Text>
+                )}
                 <View style={styles.detailsRow}>
                     <View style={styles.detailItem}><Ionicons name={ICONS.calendar} size={14} color={COLORS.textSecondary} /><Text style={styles.detailText}>{date}</Text></View>
                 </View>
@@ -290,6 +295,7 @@ const TournamentDetailsScreen = () => {
     const [loading, setLoading] = useState<boolean>(true);
     const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
+    const [noData, setNoData] = useState<boolean>(false);
     const [roundPrizes, setRoundPrizes] = useState<Record<number, string>>({});
 
     const checkLoginStatus = useCallback(async () => { 
@@ -481,22 +487,24 @@ const TournamentDetailsScreen = () => {
         if (eventId === null || eventId === undefined) { 
             return; 
         }
-        if (!refreshing) setLoading(true); 
-        setIsRefreshing(refreshing); 
+        if (!refreshing) setLoading(true);
+        setIsRefreshing(refreshing);
         setError(null);
+        setNoData(false);
         logger.log(`[TourScreen] ${refreshing ? 'Refreshing' : 'Loading'} data for Event ID: ${eventId}`);
-        
+
         try {
             const [detailsData, matchesData] = await Promise.all([
-                getTournamentDetails(eventId), 
+                getTournamentDetails(eventId),
                 getTournamentMatches(eventId)
             ]);
-            
+
             const detailsTyped = detailsData as EventDetails | null;
             if (detailsTyped && typeof detailsTyped === 'object' && detailsTyped.ID === eventId) {
                 setTournamentDetails(detailsTyped);
             } else {
-                throw new Error('Tournament data not available. This event may not have started yet.');
+                setNoData(true);
+                return;
             }
             
             const currentMatches = Array.isArray(matchesData) ? matchesData as Match[] : [];
@@ -564,12 +572,27 @@ const TournamentDetailsScreen = () => {
     const LoadingComponent = (): React.ReactElement => ( // Return JSX element
         <View style={styles.centerContent}><ActivityIndicator size="large" color={COLORS.accentLight}/><Text style={styles.messageText}>Loading Tournament...</Text></View>
     );
-    const ErrorComponent = (): React.ReactElement => ( // Return JSX element
-         <View style={styles.centerContent}>
+    const ErrorComponent = (): React.ReactElement => (
+        <View style={styles.centerContent}>
             <Ionicons name={ICONS.error} size={48} color={COLORS.error} />
             <Text style={[styles.messageText, { color: COLORS.error }]}>Error: {error}</Text>
             {eventId !== null && <TouchableOpacity onPress={() => loadData()} style={styles.retryButton}><Ionicons name={ICONS.refresh} size={18} color={COLORS.white} /><Text style={styles.retryButtonText}>Retry</Text></TouchableOpacity>}
             <TouchableOpacity onPress={() => router.back()} style={styles.backBtnError}><Text style={styles.retryButtonText}>Go Back</Text></TouchableOpacity>
+        </View>
+    );
+    const NoDataComponent = (): React.ReactElement => (
+        <View style={styles.centerContent}>
+            <Ionicons name="calendar-outline" size={56} color={COLORS.textMuted} />
+            <Text style={[styles.messageText, { fontSize: 18, fontFamily: 'PoppinsSemiBold', color: COLORS.textSecondary }]}>
+                No Data Available
+            </Text>
+            <Text style={[styles.messageText, { fontSize: 13, marginTop: 6 }]}>
+                This tournament hasn't started yet or data hasn't been loaded.
+            </Text>
+            <TouchableOpacity onPress={() => router.back()} style={[styles.retryButton, { backgroundColor: COLORS.textMuted }]}>
+                <Ionicons name="arrow-back-outline" size={18} color={COLORS.white} />
+                <Text style={styles.retryButtonText}>Go Back</Text>
+            </TouchableOpacity>
         </View>
     );
     const EmptyMatchesComponent = (): React.ReactElement => ( // Return JSX element
@@ -588,8 +611,9 @@ const TournamentDetailsScreen = () => {
 
     // --- Main Display Logic ---
     if (loading && !tournamentDetails) return <SafeAreaView style={styles.container}><LoadingComponent /></SafeAreaView>;
+    if (noData) return <SafeAreaView style={styles.container}><NoDataComponent /></SafeAreaView>;
     if (error && !tournamentDetails) return <SafeAreaView style={styles.container}><ErrorComponent /></SafeAreaView>;
-    if (!tournamentDetails) return ( <SafeAreaView style={styles.container}><View style={styles.centerContent}><Text style={styles.messageText}>Tournament not found or ID is invalid.</Text><TouchableOpacity onPress={() => router.back()} style={styles.backBtnError}><Text style={styles.retryButtonText}>Go Back</Text></TouchableOpacity></View></SafeAreaView> );
+    if (!tournamentDetails) return <SafeAreaView style={styles.container}><NoDataComponent /></SafeAreaView>;
 
     return (
         <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
