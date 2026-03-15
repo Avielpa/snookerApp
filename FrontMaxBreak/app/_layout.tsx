@@ -20,17 +20,19 @@ const ThemedLayout = () => {
 
     // Check for OTA update on startup and apply immediately if available
     useEffect(() => {
+        if (__DEV__) return; // expo-updates throws in dev builds
         const checkForUpdate = async () => {
             try {
                 const update = await Updates.checkForUpdateAsync();
+                logger.log(`[OTA] Check complete. isAvailable=${update.isAvailable}`);
                 if (update.isAvailable) {
-                    logger.log('[OTA] New update available — downloading...');
+                    logger.log('[OTA] Downloading update...');
                     await Updates.fetchUpdateAsync();
-                    logger.log('[OTA] Update downloaded — reloading app');
+                    logger.log('[OTA] Download complete — reloading');
                     await Updates.reloadAsync();
                 }
-            } catch (e) {
-                // Non-fatal — silently skip if update check fails (e.g., in dev mode)
+            } catch (e: any) {
+                logger.warn(`[OTA] Update check failed: ${e?.message}`);
             }
         };
         checkForUpdate();
