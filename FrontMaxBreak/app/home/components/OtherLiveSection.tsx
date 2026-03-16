@@ -47,11 +47,23 @@ export const OtherLiveSection = ({ matches, activeFilter, COLORS }: OtherLiveSec
                 paddingVertical: 8,
                 gap: 6,
             }}>
-                <View style={{ width: 3, height: 16, backgroundColor: '#22C55E', borderRadius: 2 }} />
-                <Ionicons name="radio-outline" size={15} color="#22C55E" />
-                <Text style={{ color: '#22C55E', fontSize: 13, fontFamily: 'PoppinsSemiBold', letterSpacing: 0.3 }}>
-                    Also Live
-                </Text>
+                {activeFilter === 'onBreak' ? (
+                    <>
+                        <View style={{ width: 3, height: 16, backgroundColor: '#F59E0B', borderRadius: 2 }} />
+                        <Ionicons name="pause-circle-outline" size={15} color="#F59E0B" />
+                        <Text style={{ color: '#F59E0B', fontSize: 13, fontFamily: 'PoppinsSemiBold', letterSpacing: 0.3 }}>
+                            Also on Break
+                        </Text>
+                    </>
+                ) : (
+                    <>
+                        <View style={{ width: 3, height: 16, backgroundColor: '#22C55E', borderRadius: 2 }} />
+                        <Ionicons name="radio-outline" size={15} color="#22C55E" />
+                        <Text style={{ color: '#22C55E', fontSize: 13, fontFamily: 'PoppinsSemiBold', letterSpacing: 0.3 }}>
+                            Also Live
+                        </Text>
+                    </>
+                )}
             </View>
 
             {/* Matches grouped by event */}
