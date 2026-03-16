@@ -73,7 +73,42 @@ def get_player_names(player_ids: Set[Optional[int]]) -> Dict[int, str]:
     found_ids = set(players_map.keys())
     missing_ids = valid_player_ids - found_ids
     if missing_ids:
-         logger.warning(f"Could not find Player records for IDs: {missing_ids}")
+        logger.warning(f"Could not find Player records for IDs: {missing_ids} — fetching from snooker.org")
+        try:
+            import requests as _requests
+            for pid in missing_ids:
+                try:
+                    resp = _requests.get(
+                        f"https://api.snooker.org/?t=4&p={pid}",
+                        headers={"X-Requested-By": "FahimaApp128"},
+                        timeout=5
+                    )
+                    if resp.status_code == 200:
+                        data = resp.json()
+                        pdata = data[0] if isinstance(data, list) and data else data
+                        if pdata and pdata.get("ID") == pid:
+                            Player.objects.get_or_create(
+                                ID=pid,
+                                defaults={
+                                    "FirstName": pdata.get("FirstName") or "",
+                                    "MiddleName": pdata.get("MiddleName") or "",
+                                    "LastName": pdata.get("LastName") or "",
+                                    "ShortName": pdata.get("ShortName") or "",
+                                    "Nationality": pdata.get("Nationality") or "",
+                                    "Sex": pdata.get("Sex") or "",
+                                    "Type": pdata.get("Type"),
+                                }
+                            )
+                            name = " ".join(filter(None, [
+                                pdata.get("FirstName"), pdata.get("MiddleName"), pdata.get("LastName")
+                            ]))
+                            players_map[pid] = name or f"Player {pid}"
+                            logger.info(f"Auto-saved missing player {pid}: {name}")
+                except Exception as e:
+                    logger.warning(f"Failed to fetch player {pid} from snooker.org: {e}")
+                    players_map[pid] = f"Player {pid}"
+        except Exception as e:
+            logger.warning(f"Bulk player fetch failed: {e}")
 
     logger.debug(f"Fetched names for {len(players_map)} out of {len(valid_player_ids)} requested player IDs.")
     return players_map
