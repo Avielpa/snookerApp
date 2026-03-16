@@ -145,6 +145,9 @@ class Command(BaseCommand):
                             self.style.ERROR(f' ERROR: {error_msg}')
                         )
 
+            # After updating matches, save any player IDs not yet in our DB
+            self._save_missing_players(all_events)
+
             # Summary
             self.stdout.write(
                 self.style.SUCCESS(
@@ -155,6 +158,61 @@ class Command(BaseCommand):
         except Exception as e:
             logger.error(f"Error in update_live_matches command: {e}", exc_info=True)
             raise CommandError(f'Failed to update live matches: {e}')
+
+    def _save_missing_players(self, events):
+        """Fetch and save any player IDs from these events that aren't in our DB yet."""
+        from oneFourSeven.models import Player
+        import requests
+
+        # Collect all player IDs referenced in these events' matches
+        match_player_ids = set(
+            MatchesOfAnEvent.objects.filter(Event__in=events)
+            .values_list('Player1ID', 'Player2ID')
+            .distinct()
+        )
+        flat_ids = {pid for pair in match_player_ids for pid in pair if pid}
+
+        # Find which ones are missing
+        existing_ids = set(Player.objects.filter(ID__in=flat_ids).values_list('ID', flat=True))
+        missing_ids = flat_ids - existing_ids
+
+        if not missing_ids:
+            return
+
+        self.stdout.write(f'[PLAYERS] Saving {len(missing_ids)} missing player(s): {missing_ids}')
+
+        for pid in missing_ids:
+            try:
+                time.sleep(6)  # Respect 10 req/min limit
+                resp = requests.get(
+                    f'https://api.snooker.org/?t=4&p={pid}',
+                    headers={'X-Requested-By': 'FahimaApp128'},
+                    timeout=10
+                )
+                if resp.status_code != 200:
+                    self.stdout.write(f'  [SKIP] Player {pid}: HTTP {resp.status_code}')
+                    continue
+                data = resp.json()
+                pdata = data[0] if isinstance(data, list) and data else data
+                if not pdata or pdata.get('ID') != pid:
+                    self.stdout.write(f'  [SKIP] Player {pid}: unexpected response')
+                    continue
+                Player.objects.get_or_create(
+                    ID=pid,
+                    defaults={
+                        'FirstName': pdata.get('FirstName') or '',
+                        'MiddleName': pdata.get('MiddleName') or '',
+                        'LastName': pdata.get('LastName') or '',
+                        'ShortName': pdata.get('ShortName') or '',
+                        'Nationality': pdata.get('Nationality') or '',
+                        'Sex': pdata.get('Sex') or '',
+                        'Type': pdata.get('Type'),
+                    }
+                )
+                name = ' '.join(filter(None, [pdata.get('FirstName'), pdata.get('LastName')]))
+                self.stdout.write(f'  [OK] Saved player {pid}: {name}')
+            except Exception as e:
+                self.stdout.write(f'  [WARN] Could not save player {pid}: {e}')
 
     def _fix_finished_tournaments(self, dry_run=False):
         """Fix matches in tournaments that have ended but still show as running."""
