@@ -75,7 +75,10 @@ class Command(BaseCommand):
         self.stdout.write('[START] AUTO LIVE MONITOR STARTING...')
         self.stdout.write(f'[ACTIVE] Active interval: {active_interval}s')
         self.stdout.write(f'[SLEEP] Sleep interval: {sleep_interval}s')
-        
+
+        # On startup: sync current season events + import any missing match data
+        self._startup_sync()
+
         while not self.should_stop:
             try:
                 current_time = timezone.now()
@@ -141,6 +144,24 @@ class Command(BaseCommand):
                 error_sleep = min(300, 30 * (2 ** self.error_count))  # Max 5 minutes
                 self.stdout.write(f'[WAIT] Sleeping {error_sleep}s due to error')
                 time.sleep(error_sleep)
+
+    def _startup_sync(self):
+        """On startup: import current season events + any missing match data."""
+        try:
+            self.stdout.write('[STARTUP] Syncing current season events...')
+            call_command('update_tournaments', '--season', '2025', '--tour', 'main')
+            self.stdout.write('[STARTUP] Season events synced')
+        except Exception as e:
+            logger.error(f'Startup tournament sync failed: {e}')
+            self.stdout.write(f'[STARTUP] Tournament sync failed: {e}')
+
+        try:
+            self.stdout.write('[STARTUP] Importing matches for events with no data...')
+            call_command('update_matches', '--empty-only')
+            self.stdout.write('[STARTUP] Missing match data imported')
+        except Exception as e:
+            logger.error(f'Startup match import failed: {e}')
+            self.stdout.write(f'[STARTUP] Match import failed: {e}')
 
     def _has_active_matches(self, current_time):
         """Check if there are any tournaments currently in their date range."""
