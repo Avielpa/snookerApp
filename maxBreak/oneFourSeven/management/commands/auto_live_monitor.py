@@ -143,48 +143,32 @@ class Command(BaseCommand):
                 time.sleep(error_sleep)
 
     def _has_active_matches(self, current_time):
-        """Check if there are any tournaments with matches that should be active."""
+        """Check if there are any tournaments currently in their date range."""
         today = current_time.date()
-        
-        # Find tournaments active today or recently
-        recent_date = today - timedelta(days=1)
-        tomorrow = today + timedelta(days=1)
-        
+
+        # A tournament is "active" if today falls within its start/end dates
         active_tournaments = Event.objects.filter(
-            StartDate__lte=tomorrow,
-            EndDate__gte=recent_date
+            StartDate__lte=today,
+            EndDate__gte=today
         )
-        
-        if not active_tournaments.exists():
-            return False
-        
-        # Check if any tournaments have matches that should be live or starting soon
-        for event in active_tournaments:
-            # Look for matches scheduled for today that might be active
-            today_matches = MatchesOfAnEvent.objects.filter(
-                Event=event,
-                ScheduledDate__date=today,
-                Status__in=[0, 1, 2]  # Scheduled, Running, On Break
-            )
-            
-            for match in today_matches:
-                if not match.ScheduledDate:
-                    continue
-                
-                # Calculate time difference
-                match_time = match.ScheduledDate
-                if match_time.tzinfo is None:
-                    match_time = timezone.make_aware(match_time)
-                
-                time_diff = current_time - match_time
-                
-                # Match should be monitored if:
-                # 1. Started in last 4 hours (might still be running)
-                # 2. Starting in next 30 minutes
-                if timedelta(minutes=-30) <= time_diff <= timedelta(hours=4):
-                    self.stdout.write(f'[MATCH] Active match found: {event.Name} - {match.api_match_id}')
-                    return True
-        
+
+        if active_tournaments.exists():
+            for event in active_tournaments:
+                self.stdout.write(f'[MATCH] Active tournament found: {event.Name} (ID: {event.ID})')
+            return True
+
+        # Also check tournaments that ended yesterday (matches can run late)
+        yesterday = today - timedelta(days=1)
+        recent_tournaments = Event.objects.filter(
+            StartDate__lte=today,
+            EndDate__gte=yesterday
+        )
+
+        if recent_tournaments.exists():
+            for event in recent_tournaments:
+                self.stdout.write(f'[MATCH] Recent tournament found: {event.Name} (ID: {event.ID})')
+            return True
+
         return False
 
     def _run_live_updates(self):
