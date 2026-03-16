@@ -52,16 +52,29 @@ class Command(BaseCommand):
             tomorrow = today + timedelta(days=1)
 
             # First, fix any finished tournaments with stuck running matches
+            # Grace period of 3 days so qualifiers running past their EndDate aren't wrongly closed
             self._fix_finished_tournaments(dry_run)
 
             active_events = Event.objects.filter(
                 StartDate__lte=tomorrow,  # Started by tomorrow
                 EndDate__gte=yesterday,   # Ended after yesterday
-                # Include all tours for live updates - users want all live matches
-            ).order_by('StartDate')[:max_events]
+            ).order_by('StartDate')
 
-            event_count = active_events.count()
-            
+            active_event_ids = set(active_events.values_list('ID', flat=True))
+
+            # Also include past events (up to 60 days) that still have unfinished matches
+            # e.g. qualifiers whose EndDate passed but matches are still running
+            past_with_unfinished = Event.objects.filter(
+                EndDate__lt=yesterday,
+                EndDate__gte=today - timedelta(days=60),
+                matches__Status__in=[0, 1, 2],
+            ).distinct().exclude(ID__in=active_event_ids)
+
+            all_events = list(active_events) + list(past_with_unfinished)
+            all_events = all_events[:max_events]
+
+            event_count = len(all_events)
+
             if event_count == 0:
                 self.stdout.write(
                     self.style.WARNING('No active tournaments found for live update')
@@ -71,7 +84,7 @@ class Command(BaseCommand):
             self.stdout.write(f'Found {event_count} active tournament(s) to update')
 
             if dry_run:
-                for event in active_events:
+                for event in all_events:
                     self.stdout.write(f'  Would update: {event.Name} (ID: {event.ID})')
                 self.stdout.write(
                     self.style.WARNING('DRY RUN: No changes made')
@@ -81,8 +94,8 @@ class Command(BaseCommand):
             # Update matches with rate limiting
             updated_count = 0
             failed_count = 0
-            
-            for i, event in enumerate(active_events):
+
+            for i, event in enumerate(all_events):
                 self.stdout.write(f'Updating matches for: {event.Name}')
                 
                 try:
@@ -148,8 +161,10 @@ class Command(BaseCommand):
         today = date.today()
         
         # Find finished tournaments with running matches
+        # Use a 3-day grace period so qualifiers running past their EndDate aren't wrongly closed
+        grace_cutoff = today - timedelta(days=3)
         problem_events = Event.objects.filter(
-            EndDate__lt=today,  # Tournament ended
+            EndDate__lt=grace_cutoff,  # Tournament ended more than 3 days ago
             matches__Status=1  # Has running matches (STATUS_RUNNING)
         ).distinct()
         
