@@ -250,9 +250,13 @@ const MatchItem = React.memo(({ item, navigation }: { item: MatchListItem; navig
             {ind && <View style={styles.statusIndicatorWrapper}>{ind}</View>}
             <View style={styles.matchItemContent}>
                 <View style={styles.playerRow}>
-                    <Text style={[styles.playerName, styles.playerLeft, isP1Win && styles.winnerText]} onPress={()=>navP(item.player1_id)} disabled={!item.player1_id} numberOfLines={1}>{p1}</Text>
-                    <Text style={styles.score}>{scoreDisplay}</Text>
-                    <Text style={[styles.playerName, styles.playerRight, isP2Win && styles.winnerText]} onPress={()=>navP(item.player2_id)} disabled={!item.player2_id} numberOfLines={1}>{p2}</Text>
+                    <Text style={[styles.playerName, styles.playerLeft, isP1Win && styles.winnerText]} onPress={()=>navP(item.player1_id)} disabled={!item.player1_id} numberOfLines={1} writingDirection="ltr">{p1}</Text>
+                    <View style={styles.scoreContainer}>
+                        <Text style={[styles.scoreNumber, isP1Win && styles.winnerText]} writingDirection="ltr">{item.score1 ?? 'vs'}</Text>
+                        {item.score1 != null && item.score2 != null && <Text style={styles.scoreDash}>—</Text>}
+                        {item.score2 != null && <Text style={[styles.scoreNumber, isP2Win && styles.winnerText]} writingDirection="ltr">{item.score2}</Text>}
+                    </View>
+                    <Text style={[styles.playerName, styles.playerRight, isP2Win && styles.winnerText]} onPress={()=>navP(item.player2_id)} disabled={!item.player2_id} numberOfLines={1} writingDirection="ltr">{p2}</Text>
                 </View>
                 {!!item.note && (
                     <Text style={{ fontSize: 11, color: COLORS.textSecondary, fontStyle: 'italic', marginTop: 4, paddingHorizontal: 2 }} numberOfLines={2}>
@@ -994,6 +998,21 @@ const styles = StyleSheet.create({
     winnerText: {
         fontFamily: 'PoppinsBold',
         color: COLORS.score,
+    },
+    scoreContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+    },
+    scoreNumber: {
+        fontSize: 16,
+        fontFamily: 'PoppinsBold',
+        color: COLORS.score,
+    },
+    scoreDash: {
+        fontSize: 14,
+        color: COLORS.textSecondary,
+        fontFamily: 'PoppinsMedium',
     },
     score: {
         fontSize: 16,
