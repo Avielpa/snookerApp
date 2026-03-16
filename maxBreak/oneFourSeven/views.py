@@ -1428,20 +1428,10 @@ def all_live_matches_view(request):
     Accepts optional ?exclude_event_id=X to skip the already-shown main tour.
     Each match includes event_name and event_tour for labelling in the frontend.
     """
-    from datetime import date, timedelta
-    today = date.today()
-    yesterday = today - timedelta(days=1)
-    tomorrow = today + timedelta(days=1)
-
     exclude_event_id = request.query_params.get('exclude_event_id')
 
-    active_events = Event.objects.filter(
-        StartDate__lte=tomorrow,
-        EndDate__gte=yesterday,
-    )
-
+    # No date filter — trust Status=1/2 as the source of truth for live matches
     live_qs = MatchesOfAnEvent.objects.filter(
-        Event__in=active_events,
         Status__in=[1, 2],  # 1=Running, 2=On Break
     ).select_related('Event')
 
