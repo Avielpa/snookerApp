@@ -152,8 +152,18 @@ export const MatchItem = ({
                     </Text>
                 )}
 
-                {/* Footer: date only */}
+                {/* Footer: live badge + date */}
                 <View style={styles.detailsRow}>
+                    {item.matchCategory === 'livePlaying' && (
+                        <View style={{ backgroundColor: '#22C55E', borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2, marginRight: 8 }}>
+                            <Text style={{ color: '#fff', fontSize: 10, fontWeight: '700', letterSpacing: 0.5 }}>LIVE</Text>
+                        </View>
+                    )}
+                    {item.matchCategory === 'onBreak' && (
+                        <View style={{ backgroundColor: '#F59E0B', borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2, marginRight: 8 }}>
+                            <Text style={{ color: '#fff', fontSize: 10, fontWeight: '700', letterSpacing: 0.5 }}>BREAK</Text>
+                        </View>
+                    )}
                     <View style={styles.detailItem}>
                         <Ionicons name={ICONS.calendar} size={11} color={COLORS.textSecondary} />
                         <Text style={styles.detailText}>{scheduledDate}</Text>

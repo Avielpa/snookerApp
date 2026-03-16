@@ -1,7 +1,8 @@
 // ErrorBoundary.tsx - Prevents app crashes by catching component errors
 import React, { Component, ReactNode } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { logger } from '../utils/logger';
 
 interface Props {
@@ -46,29 +47,27 @@ class ErrorBoundary extends Component<Props, State> {
     });
   }
 
-  handleReset = () => {
-    // Reset the error boundary state
-    this.setState({
-      hasError: false,
-      error: null,
-    });
+  handleGoHome = () => {
+    this.setState({ hasError: false, error: null });
+    try {
+      router.replace('/');
+    } catch {}
   };
 
   render() {
     if (this.state.hasError) {
-      // Fallback UI when there's an error
       return (
-        <View style={styles.container}>
+        <ScrollView contentContainerStyle={styles.container}>
           <View style={styles.content}>
             <Ionicons name="alert-circle" size={64} color="#FF6B6B" />
 
-            <Text style={styles.title}>Oops! Something went wrong</Text>
+            <Text style={styles.title}>Something went wrong</Text>
 
             <Text style={styles.message}>
-              Don't worry, your data is safe. The app encountered an unexpected error.
+              The app hit an unexpected error. Tap below to go back to the home screen.
             </Text>
 
-            {__DEV__ && this.state.error && (
+            {this.state.error && (
               <View style={styles.errorDetails}>
                 <Text style={styles.errorText}>
                   {this.state.error.toString()}
@@ -78,13 +77,13 @@ class ErrorBoundary extends Component<Props, State> {
 
             <TouchableOpacity
               style={styles.button}
-              onPress={this.handleReset}
+              onPress={this.handleGoHome}
             >
-              <Ionicons name="refresh" size={20} color="#FFFFFF" />
-              <Text style={styles.buttonText}>Try Again</Text>
+              <Ionicons name="home-outline" size={20} color="#FFFFFF" />
+              <Text style={styles.buttonText}>Go to Home</Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </ScrollView>
       );
     }
 

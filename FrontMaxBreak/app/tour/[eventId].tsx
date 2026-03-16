@@ -158,7 +158,7 @@ const TournamentHeader = ({ tournament, matchCount }: { tournament: EventDetails
                     {location.length > 0 && (
                         <InfoLine icon="location-outline" text={location} />
                     )}
-                    {tournament.NumCompetitors && (
+                    {!!tournament.NumCompetitors && (
                         <InfoLine icon="people-outline" text={`${tournament.NumCompetitors} players`} />
                     )}
                     {prizeFormatted && (

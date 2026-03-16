@@ -26,6 +26,8 @@ import { LoadingComponent, ErrorComponent, EmptyComponent } from './home/compone
 import { ICONS } from './home/utils/icons';
 import { getDeviceTabConfig } from '../config/deviceTabConfig';
 import { DeviceAwareFilterScrollView } from '../components/DeviceAwareFilterScrollView';
+import { useOtherLiveMatches } from './home/hooks/useOtherLiveMatches';
+import { OtherLiveSection } from './home/components/OtherLiveSection';
 
 const HomeScreen = (): React.ReactElement | null => {
     const [activeFilter, setActiveFilter] = useState<ActiveFilterType>('all');
@@ -52,9 +54,12 @@ const HomeScreen = (): React.ReactElement | null => {
         error,
         activeOtherTours,
         selectedOtherTour,
+        currentTournamentId,
         loadTournamentInfo,
         handleOtherTourSelection
     } = useHomeData();
+
+    const { matches: otherLiveMatches } = useOtherLiveMatches(currentTournamentId);
     
     // Auto-collapse Results only when there are live/upcoming matches
     // During tournament gaps (only finished matches), keep Results expanded
@@ -281,6 +286,13 @@ const HomeScreen = (): React.ReactElement | null => {
                                     onRefresh={() => loadTournamentInfo(true, selectedOtherTour)}
                                     tintColor={COLORS.accentLight}
                                     colors={[COLORS.accentLight]}
+                                />
+                            }
+                            ListFooterComponent={
+                                <OtherLiveSection
+                                    matches={otherLiveMatches}
+                                    activeFilter={activeFilter}
+                                    COLORS={COLORS}
                                 />
                             }
                             initialNumToRender={15}

@@ -1422,6 +1422,54 @@ def upcoming_matches_fallback_view(request):
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
+def all_live_matches_view(request):
+    """
+    Returns all live/on-break matches across ALL currently active events.
+    Accepts optional ?exclude_event_id=X to skip the already-shown main tour.
+    Each match includes event_name and event_tour for labelling in the frontend.
+    """
+    from datetime import date, timedelta
+    today = date.today()
+    yesterday = today - timedelta(days=1)
+    tomorrow = today + timedelta(days=1)
+
+    exclude_event_id = request.query_params.get('exclude_event_id')
+
+    active_events = Event.objects.filter(
+        StartDate__lte=tomorrow,
+        EndDate__gte=yesterday,
+    )
+
+    live_qs = MatchesOfAnEvent.objects.filter(
+        Event__in=active_events,
+        Status__in=[1, 2],  # 1=Running, 2=On Break
+    ).select_related('Event')
+
+    if exclude_event_id:
+        try:
+            live_qs = live_qs.exclude(Event_id=int(exclude_event_id))
+        except (ValueError, TypeError):
+            pass
+
+    matches_list = list(live_qs)
+    if not matches_list:
+        return Response([])
+
+    player_ids = {m.Player1ID for m in matches_list} | {m.Player2ID for m in matches_list}
+    player_names_map = get_player_names(player_ids)
+
+    response_data = []
+    for match in matches_list:
+        match_dict = _build_match_dict(match, player_names_map)
+        match_dict['event_name'] = match.Event.Name
+        match_dict['event_tour'] = match.Event.Tour or 'other'
+        response_data.append(match_dict)
+
+    return Response(response_data)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
 def recent_matches_view(request):
     """
     Returns finished matches from the most recently completed main tour tournament.

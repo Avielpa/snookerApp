@@ -34,6 +34,7 @@ from .views import (
     # Fallback Views
     upcoming_matches_fallback_view,
     recent_matches_view,
+    all_live_matches_view,
     news_view,
 )
 
@@ -113,6 +114,7 @@ urlpatterns = [
     # Upcoming matches fallback endpoint when no active tournaments
     path('upcoming-matches/', upcoming_matches_fallback_view, name='upcoming-matches-fallback'),
     path('recent-matches/', recent_matches_view, name='recent-matches'),
+    path('all-live-matches/', all_live_matches_view, name='all-live-matches'),
     path('news/', news_view, name='news'),
     
     # --- Debug URL ---

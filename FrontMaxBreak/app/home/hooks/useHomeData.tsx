@@ -23,6 +23,7 @@ export const useHomeData = () => {
     const [liveUpdateCount, setLiveUpdateCount] = useState<number>(0);
     const [lastLiveUpdate, setLastLiveUpdate] = useState<number>(0);
     const [tournamentPrize, setTournamentPrize] = useState<string | null>(null);
+    const [currentTournamentId, setCurrentTournamentId] = useState<number | null>(null);
 
     // Load tournament information
     const loadTournamentInfo = useCallback(async (isRefresh = false, specificTournamentId: number | null = null) => {
@@ -111,7 +112,8 @@ export const useHomeData = () => {
             }
             
             logger.log(`[HomeScreen] Target tournament ID: ${targetTournamentId}`);
-            
+            setCurrentTournamentId(targetTournamentId);
+
             // Always load active other tours for the toolbar
             const otherTours = await getActiveOtherTours();
             setActiveOtherTours(otherTours);
@@ -448,6 +450,7 @@ export const useHomeData = () => {
         error,
         activeOtherTours,
         selectedOtherTour,
+        currentTournamentId,
         loadTournamentInfo,
         handleOtherTourSelection,
         // Live detection info
