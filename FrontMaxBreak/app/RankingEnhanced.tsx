@@ -6,7 +6,6 @@ import {
   TextInput,
   StyleSheet,
   TouchableOpacity,
-  Pressable,
   ActivityIndicator,
   ScrollView,
   RefreshControl,
@@ -133,7 +132,6 @@ export default function RankingEnhanced() {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedFilter, setSelectedFilter] = useState<string>('MoneyRankings');
   const [selectedCountry, setSelectedCountry] = useState<string>('');
-  const [showCountryPicker, setShowCountryPicker] = useState<boolean>(false);
   // Cache to prevent unnecessary reloads
   const [rankingCache, setRankingCache] = useState<Record<string, RankingItem[]>>({});
 
@@ -567,30 +565,42 @@ export default function RankingEnhanced() {
           placeholderTextColor={colors.textSecondary}
         />
 
-        {/* Country filter row */}
-        <View style={styles.countryRow}>
-          <TouchableOpacity
-            style={[styles.countryButton, selectedCountry ? styles.countryButtonActive : null]}
-            onPress={() => setShowCountryPicker(true)}
-            activeOpacity={0.7}
+        {/* Country chips — horizontal scroll, tap to filter */}
+        {availableCountries.length > 0 && (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.countryChipsRow}
+            style={styles.countryChipsScroll}
           >
-            <Ionicons name="flag-outline" size={14} color={selectedCountry ? '#fff' : colors.textSecondary} />
-            <Text style={[styles.countryButtonText, selectedCountry ? styles.countryButtonTextActive : null]} numberOfLines={1}>
-              {selectedCountry ? `${getFlag(selectedCountry)} ${selectedCountry}` : 'Filter by Country'}
-            </Text>
-            <Ionicons name="chevron-down" size={12} color={selectedCountry ? '#fff' : colors.textSecondary} />
-          </TouchableOpacity>
-          {!!selectedCountry && (
+            {/* "All" chip always first */}
             <TouchableOpacity
-              style={styles.clearCountryButton}
+              style={[styles.countryChip, !selectedCountry && styles.countryChipActive]}
               onPress={() => setSelectedCountry('')}
               activeOpacity={0.7}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
-              <Ionicons name="close-circle" size={20} color={colors.textSecondary} />
+              <Text style={[styles.countryChipText, !selectedCountry && styles.countryChipTextActive]}>
+                All
+              </Text>
             </TouchableOpacity>
-          )}
-        </View>
+
+            {availableCountries.map(country => {
+              const active = selectedCountry === country;
+              return (
+                <TouchableOpacity
+                  key={country}
+                  style={[styles.countryChip, active && styles.countryChipActive]}
+                  onPress={() => setSelectedCountry(active ? '' : country)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.countryChipText, active && styles.countryChipTextActive]}>
+                    {getFlag(country)}  {country}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        )}
 
         {/* Filter Buttons - Device Aware */}
         <DeviceAwareFilterScrollView
@@ -647,43 +657,6 @@ export default function RankingEnhanced() {
       </View>
     </SafeAreaView>
 
-    {/* Country Picker — inline overlay, no Modal (avoids Android touch bugs) */}
-    {showCountryPicker && (
-      <>
-        <Pressable
-          style={styles.modalBackdrop}
-          onPress={() => setShowCountryPicker(false)}
-        />
-        <View style={styles.modalSheet}>
-          <View style={styles.modalHandle} />
-          <Text style={styles.modalTitle}>Filter by Country</Text>
-          <ScrollView showsVerticalScrollIndicator={false} style={styles.modalList}>
-            <TouchableOpacity
-              style={[styles.modalOption, !selectedCountry ? styles.modalOptionActive : null]}
-              onPress={() => { setSelectedCountry(''); setShowCountryPicker(false); }}
-            >
-              <Text style={[styles.modalOptionText, !selectedCountry ? styles.modalOptionTextActive : null]}>
-                All Countries
-              </Text>
-              {!selectedCountry && <Ionicons name="checkmark" size={16} color={colors.primary} />}
-            </TouchableOpacity>
-            {availableCountries.map(country => (
-              <TouchableOpacity
-                key={country}
-                style={[styles.modalOption, selectedCountry === country ? styles.modalOptionActive : null]}
-                onPress={() => { setSelectedCountry(country); setShowCountryPicker(false); }}
-              >
-                <Text style={[styles.modalOptionText, selectedCountry === country ? styles.modalOptionTextActive : null]}>
-                  {getFlag(country)}{'  '}{country}
-                </Text>
-                {selectedCountry === country && <Ionicons name="checkmark" size={16} color={colors.primary} />}
-              </TouchableOpacity>
-            ))}
-            <View style={{ height: 20 }} />
-          </ScrollView>
-        </View>
-      </>
-    )}
     </ImageBackground>
   );
 }
@@ -725,96 +698,37 @@ const createRankingStyles = (colors: any) => StyleSheet.create({
     borderColor: colors.cardBorder,
     marginBottom: 8,
   },
-  countryRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  countryChipsScroll: {
     marginBottom: 4,
   },
-  countryButton: {
-    flex: 1,
+  countryChipsRow: {
     flexDirection: 'row',
-    alignItems: 'center',
     gap: 6,
-    height: 38,
-    paddingHorizontal: 14,
-    borderRadius: 19,
+    paddingVertical: 4,
+    paddingRight: 12,
+  },
+  countryChip: {
+    height: 34,
+    paddingHorizontal: 12,
+    borderRadius: 17,
     backgroundColor: colors.cardBackground,
     borderWidth: 1,
     borderColor: colors.cardBorder,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  countryButtonActive: {
+  countryChipActive: {
     backgroundColor: colors.primary,
     borderColor: colors.primary,
   },
-  countryButtonText: {
-    flex: 1,
+  countryChipText: {
     fontSize: 13,
     fontFamily: 'PoppinsMedium',
     color: colors.textSecondary,
   },
-  countryButtonTextActive: {
+  countryChipTextActive: {
     color: '#fff',
-  },
-  clearCountryButton: {
-    padding: 4,
-  },
-  modalBackdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.55)',
-    zIndex: 10,
-  },
-  modalSheet: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: '58%',
-    backgroundColor: colors.background,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingTop: 12,
-    paddingHorizontal: 16,
-    zIndex: 11,
-  },
-  modalHandle: {
-    width: 40,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: 'rgba(255,255,255,0.3)',
-    alignSelf: 'center',
-    marginBottom: 12,
-  },
-  modalTitle: {
-    fontSize: 16,
     fontFamily: 'PoppinsBold',
-    color: colors.textPrimary,
-    marginBottom: 12,
-  },
-  modalList: {
-    flex: 1,
-  },
-  modalOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 12,
-    paddingHorizontal: 8,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.cardBorder,
-  },
-  modalOptionActive: {
-    backgroundColor: 'rgba(255,167,38,0.08)',
-    borderRadius: 8,
-  },
-  modalOptionText: {
-    fontSize: 14,
-    fontFamily: 'PoppinsRegular',
-    color: colors.textPrimary,
-  },
-  modalOptionTextActive: {
-    fontFamily: 'PoppinsSemiBold',
-    color: colors.primary,
   },
   filtersScrollView: {
     marginVertical: 8,
