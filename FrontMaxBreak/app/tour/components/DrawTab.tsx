@@ -22,6 +22,18 @@ interface DrawTabProps {
   colors: any;
 }
 
+// ─── Round name inference (fallback when round_names not provided) ────────────
+function inferRoundName(round: number): string {
+  if (round >= 15) return 'Final';
+  if (round === 14) return 'Semi-Finals';
+  if (round === 13) return 'Quarter-Finals';
+  if (round === 12) return 'Last 16';
+  if (round === 11) return 'Last 32';
+  if (round === 10) return 'Last 64';
+  if (round === 9) return 'Last 128';
+  return `Round ${round}`;
+}
+
 // ─── Layout constants ─────────────────────────────────────────────────────────
 const CARD_W = 185;
 const CARD_H = 70;   // estimated rendered height (2 player rows + divider)
@@ -184,7 +196,7 @@ export function DrawTab({ matches, roundNames, colors }: DrawTabProps) {
 
     return mainRounds.map((r) => ({
       roundNumber: r,
-      roundName: roundNames[r] || `Round ${r}`,
+      roundName: roundNames[r] || inferRoundName(r),
       matches: byRound.get(r) || [],
     }));
   }, [matches, roundNames]);

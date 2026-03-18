@@ -28,6 +28,8 @@ import { getDeviceTabConfig } from '../config/deviceTabConfig';
 import { DeviceAwareFilterScrollView } from '../components/DeviceAwareFilterScrollView';
 import { useOtherLiveMatches } from './home/hooks/useOtherLiveMatches';
 import { OtherLiveSection } from './home/components/OtherLiveSection';
+import { DrawTab } from './tour/components/DrawTab';
+import { MatchListItem } from './home/types';
 
 const HomeScreen = (): React.ReactElement | null => {
     const [activeFilter, setActiveFilter] = useState<ActiveFilterType>('all');
@@ -147,6 +149,12 @@ const HomeScreen = (): React.ReactElement | null => {
         return result;
     }, [processedListData, activeFilter, collapsedSections]);
 
+    // Raw matches for DrawTab — derived from processedListData, no extra fetch
+    const rawMatches = useMemo(
+        () => processedListData.filter((item): item is MatchListItem => item.type === 'match'),
+        [processedListData]
+    );
+
     // Create styles with dynamic colors
     const styles = createStyles(COLORS);
     const deviceConfig = getDeviceTabConfig();
@@ -183,6 +191,7 @@ const HomeScreen = (): React.ReactElement | null => {
         { label: 'Break', value: 'onBreak', icon: ICONS.onBreak },
         { label: 'Upcoming', value: 'upcoming', icon: ICONS.upcoming },
         { label: 'Results', value: 'finished', icon: ICONS.finished },
+        { label: 'Draw', value: 'draw', icon: 'git-branch-outline' },
     ];
 
     // Main Render structure
@@ -253,11 +262,17 @@ const HomeScreen = (): React.ReactElement | null => {
                     {loading && filteredListData.length === 0 ? (
                         <LoadingComponent COLORS={COLORS} styles={styles} />
                     ) : error ? (
-                        <ErrorComponent 
-                            COLORS={COLORS} 
-                            styles={styles} 
-                            error={error} 
-                            onRetry={() => loadTournamentInfo()} 
+                        <ErrorComponent
+                            COLORS={COLORS}
+                            styles={styles}
+                            error={error}
+                            onRetry={() => loadTournamentInfo()}
+                        />
+                    ) : activeFilter === 'draw' ? (
+                        <DrawTab
+                            matches={rawMatches}
+                            roundNames={{}}
+                            colors={COLORS}
                         />
                     ) : (
                         <FlatList

@@ -55,7 +55,7 @@ export interface RoundHeaderListItem {
 }
 
 export type ListItem = MatchListItem | StatusHeaderListItem | RoundHeaderListItem;
-export type ActiveFilterType = MatchCategory | 'all';
+export type ActiveFilterType = MatchCategory | 'all' | 'draw';
 export type IoniconName = keyof typeof Ionicons.glyphMap;
 
 export interface FilterButton {
