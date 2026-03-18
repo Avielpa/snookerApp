@@ -6,12 +6,12 @@ import {
   TextInput,
   StyleSheet,
   TouchableOpacity,
+  Pressable,
   ActivityIndicator,
   ScrollView,
   RefreshControl,
   FlatList,
   ImageBackground,
-  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -647,50 +647,43 @@ export default function RankingEnhanced() {
       </View>
     </SafeAreaView>
 
-    {/* Country Picker Modal */}
-    <Modal
-      visible={showCountryPicker}
-      transparent
-      animationType="slide"
-      onRequestClose={() => setShowCountryPicker(false)}
-    >
-      <View style={styles.modalContainer}>
-      <TouchableOpacity
-        style={styles.modalBackdrop}
-        activeOpacity={1}
-        onPress={() => setShowCountryPicker(false)}
-      />
-      <View style={styles.modalSheet}>
-        <View style={styles.modalHandle} />
-        <Text style={styles.modalTitle}>Filter by Country</Text>
-        <ScrollView showsVerticalScrollIndicator={false} style={styles.modalList}>
-          {/* All option */}
-          <TouchableOpacity
-            style={[styles.modalOption, !selectedCountry ? styles.modalOptionActive : null]}
-            onPress={() => { setSelectedCountry(''); setShowCountryPicker(false); }}
-          >
-            <Text style={[styles.modalOptionText, !selectedCountry ? styles.modalOptionTextActive : null]}>
-              All Countries
-            </Text>
-            {!selectedCountry && <Ionicons name="checkmark" size={16} color={colors.primary} />}
-          </TouchableOpacity>
-          {availableCountries.map(country => (
+    {/* Country Picker — inline overlay, no Modal (avoids Android touch bugs) */}
+    {showCountryPicker && (
+      <>
+        <Pressable
+          style={styles.modalBackdrop}
+          onPress={() => setShowCountryPicker(false)}
+        />
+        <View style={styles.modalSheet}>
+          <View style={styles.modalHandle} />
+          <Text style={styles.modalTitle}>Filter by Country</Text>
+          <ScrollView showsVerticalScrollIndicator={false} style={styles.modalList}>
             <TouchableOpacity
-              key={country}
-              style={[styles.modalOption, selectedCountry === country ? styles.modalOptionActive : null]}
-              onPress={() => { setSelectedCountry(country); setShowCountryPicker(false); }}
+              style={[styles.modalOption, !selectedCountry ? styles.modalOptionActive : null]}
+              onPress={() => { setSelectedCountry(''); setShowCountryPicker(false); }}
             >
-              <Text style={[styles.modalOptionText, selectedCountry === country ? styles.modalOptionTextActive : null]}>
-                {getFlag(country)}{'  '}{country}
+              <Text style={[styles.modalOptionText, !selectedCountry ? styles.modalOptionTextActive : null]}>
+                All Countries
               </Text>
-              {selectedCountry === country && <Ionicons name="checkmark" size={16} color={colors.primary} />}
+              {!selectedCountry && <Ionicons name="checkmark" size={16} color={colors.primary} />}
             </TouchableOpacity>
-          ))}
-          <View style={{ height: 20 }} />
-        </ScrollView>
-      </View>
-      </View>
-    </Modal>
+            {availableCountries.map(country => (
+              <TouchableOpacity
+                key={country}
+                style={[styles.modalOption, selectedCountry === country ? styles.modalOptionActive : null]}
+                onPress={() => { setSelectedCountry(country); setShowCountryPicker(false); }}
+              >
+                <Text style={[styles.modalOptionText, selectedCountry === country ? styles.modalOptionTextActive : null]}>
+                  {getFlag(country)}{'  '}{country}
+                </Text>
+                {selectedCountry === country && <Ionicons name="checkmark" size={16} color={colors.primary} />}
+              </TouchableOpacity>
+            ))}
+            <View style={{ height: 20 }} />
+          </ScrollView>
+        </View>
+      </>
+    )}
     </ImageBackground>
   );
 }
@@ -766,21 +759,23 @@ const createRankingStyles = (colors: any) => StyleSheet.create({
   clearCountryButton: {
     padding: 4,
   },
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'flex-end',
-  },
   modalBackdrop: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0,0,0,0.55)',
+    zIndex: 10,
   },
   modalSheet: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
     height: '58%',
     backgroundColor: colors.background,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     paddingTop: 12,
     paddingHorizontal: 16,
+    zIndex: 11,
   },
   modalHandle: {
     width: 40,
