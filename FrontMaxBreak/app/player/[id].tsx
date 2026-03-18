@@ -40,6 +40,7 @@ interface PlayerData {
     recent_form?: string[] | null;
     win_streak?: number | null;
     ranking_trend?: { current: number | null; previous: number | null; delta: number | null } | null;
+    season_stats?: { matches: number; wins: number; season: number | null } | null;
 }
 
 interface TabConfig {
@@ -387,6 +388,36 @@ export default function PlayerDetailsScreen(): React.ReactElement {
                     <Text style={styles.sectionTitle}>Current Form</Text>
                     <FormDots form={player?.recent_form ?? []} />
                     <WinStreak streak={player?.win_streak ?? 0} />
+                </GlassCard>
+            )}
+
+            {/* Current Season Stats */}
+            {(player?.season_stats?.matches ?? 0) > 0 && (
+                <GlassCard style={styles.infoCard}>
+                    <Text style={styles.sectionTitle}>
+                        {player?.season_stats?.season
+                            ? `${player.season_stats.season} Season`
+                            : 'This Season'}
+                    </Text>
+                    <InfoRow
+                        icon="checkmark-circle-outline"
+                        label="Wins"
+                        value={String(player?.season_stats?.wins ?? 0)}
+                    />
+                    <InfoRow
+                        icon="stats-chart-outline"
+                        label="Matches Played"
+                        value={String(player?.season_stats?.matches ?? 0)}
+                    />
+                    <InfoRow
+                        icon="pie-chart-outline"
+                        label="Win Rate"
+                        value={(() => {
+                            const w = player?.season_stats?.wins ?? 0;
+                            const m = player?.season_stats?.matches ?? 0;
+                            return m > 0 ? `${Math.round((w / m) * 100)}%` : 'N/A';
+                        })()}
+                    />
                 </GlassCard>
             )}
 

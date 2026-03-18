@@ -63,6 +63,33 @@ def get_win_streak(player_id: int) -> int:
         return 0
 
 
+def get_season_stats(player_id: int) -> dict:
+    """
+    Returns finished match count and win count for the player's most recent active season.
+    Falls back to previous season if no data found for current year.
+    Returns {'matches': int, 'wins': int, 'season': int|None}
+    """
+    try:
+        from oneFourSeven.models import PlayerMatchHistory
+        current_season = datetime.now().year
+
+        for season in [current_season, current_season - 1]:
+            qs = PlayerMatchHistory.objects.filter(
+                player_id=player_id,
+                status=3,
+                season=season
+            )
+            count = qs.count()
+            if count > 0:
+                wins = qs.filter(winner_id=player_id).count()
+                return {'matches': count, 'wins': wins, 'season': season}
+
+        return {'matches': 0, 'wins': 0, 'season': current_season}
+    except Exception as e:
+        logger.error(f'[player_stats] get_season_stats failed for {player_id}: {e}')
+        return {'matches': 0, 'wins': 0, 'season': None}
+
+
 def get_ranking_trend(player_id: int) -> dict:
     """
     Returns ranking position for current and previous season.

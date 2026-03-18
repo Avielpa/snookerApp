@@ -744,15 +744,17 @@ def player_by_id_view(request, player_id):
 
     # Recent form, win streak, ranking trend — safe: never breaks player loading
     try:
-        from oneFourSeven.player_stats import get_recent_form, get_win_streak, get_ranking_trend
+        from oneFourSeven.player_stats import get_recent_form, get_win_streak, get_ranking_trend, get_season_stats
         player_data['recent_form'] = get_recent_form(player_id, n=10)
         player_data['win_streak'] = get_win_streak(player_id)
         player_data['ranking_trend'] = get_ranking_trend(player_id)
+        player_data['season_stats'] = get_season_stats(player_id)
     except Exception as e:
         logger.warning(f"[player_by_id_view] player_stats failed for {player_id}: {e}")
         player_data['recent_form'] = []
         player_data['win_streak'] = 0
         player_data['ranking_trend'] = {'current': None, 'previous': None, 'delta': None}
+        player_data['season_stats'] = {'matches': 0, 'wins': 0, 'season': None}
 
     return Response(player_data)
 
