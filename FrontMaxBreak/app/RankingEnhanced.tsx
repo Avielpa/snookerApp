@@ -18,60 +18,89 @@ import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 
 const COUNTRY_FLAGS: Record<string, string> = {
+  // British Isles
   'England': '🏴󠁧󠁢󠁥󠁮󠁧󁿢',
   'Scotland': '🏴󠁧󠁢󠁳󠁣󠁴󁿢',
   'Wales': '🏴󠁧󠁢󠁷󠁬󠁳󁿢',
   'Northern Ireland': '🇬🇧',
   'Ireland': '🇮🇪',
+  'United Kingdom': '🇬🇧',
+  // Asia
   'China': '🇨🇳',
-  'Australia': '🇦🇺',
-  'Belgium': '🇧🇪',
-  'Germany': '🇩🇪',
-  'India': '🇮🇳',
-  'Thailand': '🇹🇭',
-  'Malta': '🇲🇹',
-  'Canada': '🇨🇦',
-  'South Africa': '🇿🇦',
-  'Portugal': '🇵🇹',
-  'Poland': '🇵🇱',
-  'Netherlands': '🇳🇱',
   'Hong Kong': '🇭🇰',
+  'Thailand': '🇹🇭',
+  'India': '🇮🇳',
   'Pakistan': '🇵🇰',
-  'Iran': '🇮🇷',
-  'Norway': '🇳🇴',
-  'Cyprus': '🇨🇾',
-  'Switzerland': '🇨🇭',
-  'France': '🇫🇷',
-  'Spain': '🇪🇸',
-  'New Zealand': '🇳🇿',
-  'Romania': '🇷🇴',
-  'Slovakia': '🇸🇰',
-  'Ukraine': '🇺🇦',
-  'Finland': '🇫🇮',
-  'Denmark': '🇩🇰',
-  'Austria': '🇦🇹',
-  'United States': '🇺🇸',
-  'Brazil': '🇧🇷',
-  'Indonesia': '🇮🇩',
   'Malaysia': '🇲🇾',
   'Singapore': '🇸🇬',
+  'Indonesia': '🇮🇩',
   'Japan': '🇯🇵',
   'South Korea': '🇰🇷',
-  'Egypt': '🇪🇬',
-  'Sweden': '🇸🇪',
-  'Czech Republic': '🇨🇿',
-  'Lithuania': '🇱🇹',
-  'Estonia': '🇪🇪',
-  'Latvia': '🇱🇻',
-  'Nigeria': '🇳🇬',
-  'Turkey': '🇹🇷',
-  'Greece': '🇬🇷',
+  'Iran': '🇮🇷',
+  'Saudi Arabia': '🇸🇦',
+  'Qatar': '🇶🇦',
+  'Bahrain': '🇧🇭',
+  'United Arab Emirates': '🇦🇪',
+  'Kazakhstan': '🇰🇿',
+  'Myanmar': '🇲🇲',
+  'Philippines': '🇵🇭',
+  'Vietnam': '🇻🇳',
+  // Oceania
+  'Australia': '🇦🇺',
+  'New Zealand': '🇳🇿',
+  // Europe
+  'Belgium': '🇧🇪',
+  'Germany': '🇩🇪',
+  'Netherlands': '🇳🇱',
+  'France': '🇫🇷',
+  'Spain': '🇪🇸',
+  'Portugal': '🇵🇹',
   'Italy': '🇮🇹',
+  'Greece': '🇬🇷',
+  'Malta': '🇲🇹',
+  'Cyprus': '🇨🇾',
+  'Switzerland': '🇨🇭',
+  'Austria': '🇦🇹',
+  'Sweden': '🇸🇪',
+  'Norway': '🇳🇴',
+  'Denmark': '🇩🇰',
+  'Finland': '🇫🇮',
+  'Iceland': '🇮🇸',
+  'Poland': '🇵🇱',
+  'Czech Republic': '🇨🇿',
+  'Slovakia': '🇸🇰',
+  'Hungary': '🇭🇺',
+  'Romania': '🇷🇴',
+  'Bulgaria': '🇧🇬',
+  'Lithuania': '🇱🇹',
+  'Latvia': '🇱🇻',
+  'Estonia': '🇪🇪',
+  'Ukraine': '🇺🇦',
+  'Russia': '🇷🇺',
+  'Belarus': '🇧🇾',
+  'Serbia': '🇷🇸',
+  'Croatia': '🇭🇷',
+  'Slovenia': '🇸🇮',
+  'Bosnia': '🇧🇦',
+  'Luxembourg': '🇱🇺',
+  'Turkey': '🇹🇷',
+  // Americas
+  'Canada': '🇨🇦',
+  'United States': '🇺🇸',
+  'USA': '🇺🇸',
+  'Brazil': '🇧🇷',
+  // Africa
+  'South Africa': '🇿🇦',
+  'Egypt': '🇪🇬',
+  'Nigeria': '🇳🇬',
+  'Morocco': '🇲🇦',
+  'Zimbabwe': '🇿🇼',
+  'Kenya': '🇰🇪',
 };
 
 const getFlag = (country?: string): string => {
   if (!country) return '';
-  return COUNTRY_FLAGS[country] || '🌍';
+  return COUNTRY_FLAGS[country] || '';  // empty string fallback — no broken globe emoji
 };
 
 // Import services
@@ -457,7 +486,7 @@ export default function RankingEnhanced() {
                 <Text style={styles.playerName} numberOfLines={1}>
                   {playerName}
                 </Text>
-                {item.country && <Text style={styles.country}>{getFlag(item.country)}</Text>}
+                {item.country && getFlag(item.country) ? <Text style={styles.country}>{getFlag(item.country)}</Text> : null}
               </View>
               
               {/* Prize Money with Progress Bar */}
@@ -594,7 +623,7 @@ export default function RankingEnhanced() {
                   activeOpacity={0.7}
                 >
                   <Text style={[styles.countryChipText, active && styles.countryChipTextActive]}>
-                    {getFlag(country)}  {country}
+                    {getFlag(country) ? `${getFlag(country)}  ${country}` : country}
                   </Text>
                 </TouchableOpacity>
               );
