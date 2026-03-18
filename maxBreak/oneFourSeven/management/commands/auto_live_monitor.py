@@ -50,9 +50,10 @@ class Command(BaseCommand):
         self.error_count = 0
         self.max_errors = 10
         self.processed_tournament_ends = set()  # Track processed tournament end updates
-        self.last_daily_run = None    # Track last date daily updates ran (date object)
-        self.last_monthly_run = None  # Track last month monthly updates ran (YYYY-MM string)
-        self.last_news_fetch = None   # Track last news RSS fetch time
+        self.last_daily_run = None              # Track last date daily updates ran (date object)
+        self.last_monthly_run = None            # Track last month monthly updates ran (YYYY-MM string)
+        self.last_news_fetch = None             # Track last news RSS fetch time
+        self.last_player_history_run = None     # Track last date player history updated during active tour
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -90,7 +91,11 @@ class Command(BaseCommand):
                 if has_active_matches:
                     self.stdout.write('[ACTIVE] ACTIVE TOURNAMENTS FOUND - Starting live updates')
                     self._run_live_updates()
-                    
+
+                    # During active tournaments: update player match history at 1am UTC
+                    if self._check_player_history_update():
+                        self.stdout.write('[AUTOMATION] Player history update completed')
+
                     # Use short interval during active periods
                     next_check = active_interval
                     self.stdout.write(f'[TIMER] Next check in {next_check//60} minutes')
@@ -163,6 +168,14 @@ class Command(BaseCommand):
             logger.error(f'Startup match import failed: {e}')
             self.stdout.write(f'[STARTUP] Match import failed: {e}')
 
+        try:
+            self.stdout.write('[STARTUP] Refreshing player match history for top 128...')
+            call_command('update_player_details', '--top', '128')
+            self.stdout.write('[STARTUP] Player match history refreshed')
+        except Exception as e:
+            logger.error(f'Startup player history sync failed: {e}')
+            self.stdout.write(f'[STARTUP] Player history sync failed: {e}')
+
     def _has_active_matches(self, current_time):
         """Check if there are any tournaments currently in their date range."""
         today = current_time.date()
@@ -203,6 +216,29 @@ class Command(BaseCommand):
             self.stdout.write(f'[FAILED] Live update failed: {str(e)}')
             raise
     
+    def _check_player_history_update(self) -> bool:
+        """
+        During active tournaments: update player match history at 1am UTC.
+        Runs once per day when a tournament is active.
+        """
+        current_time = timezone.now()
+
+        # 1am UTC window (0–2 inclusive)
+        if 0 <= current_time.hour <= 2:
+            today = current_time.date()
+            if self.last_player_history_run != today:
+                self.stdout.write('[PLAYER_HISTORY] Running 1am player match history update...')
+                try:
+                    call_command('update_player_details', '--top', '128')
+                    self.stdout.write('[SUCCESS] Player match history updated')
+                except Exception as e:
+                    logger.error(f'Player history update failed: {e}')
+                    self.stdout.write(f'[FAILED] Player history update failed: {e}')
+                self.last_player_history_run = today
+                return True
+
+        return False
+
     def _update_upcoming_matches_fallback(self):
         """Update upcoming matches as fallback when no active tournaments."""
         try:
