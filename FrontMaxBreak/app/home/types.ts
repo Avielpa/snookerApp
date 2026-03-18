@@ -26,7 +26,6 @@ export interface Match {
     sessions_str?: string | null;
     live_url?: string | null;
     details_url?: string | null;
-    broadcasters?: { name: string; url: string }[] | null;
 }
 
 export interface EventDetails { 

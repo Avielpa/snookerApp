@@ -21,9 +21,6 @@ export interface Player {
     prize_money_this_year?: number | null;
     career_wins?: number | null;
     career_losses?: number | null;
-    recent_form?: string[] | null;
-    win_streak?: number | null;
-    ranking_trend?: { current: number | null; previous: number | null; delta: number | null } | null;
     Active: boolean | null
 }
 
