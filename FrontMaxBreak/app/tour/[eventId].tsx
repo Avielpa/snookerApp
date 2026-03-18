@@ -19,6 +19,7 @@ import { useColors } from '../../contexts/ThemeContext';
 import { getDeviceTabConfig } from '../../config/deviceTabConfig';
 import { DeviceAwareFilterScrollView } from '../../components/DeviceAwareFilterScrollView';
 import { DeviceAwareFilterButton } from '../../components/DeviceAwareFilterButton';
+import { DrawTab } from './components/DrawTab';
 
 // --- Interfaces (Using snake_case for API fields) ---
 interface Match {
@@ -76,7 +77,7 @@ interface MatchListItem extends Match { type: 'match'; matchCategory: MatchCateg
 interface StatusHeaderListItem { type: 'statusHeader'; title: string; iconName: keyof typeof Ionicons.glyphMap; id: string; }
 interface RoundHeaderListItem { type: 'roundHeader'; roundName: string; id: string; round?: number | null; }
 type ListItem = MatchListItem | StatusHeaderListItem | RoundHeaderListItem;
-type ActiveFilterType = MatchCategory | 'all';
+type ActiveFilterType = MatchCategory | 'all' | 'draw';
 
 // --- Type Definition for Ionicons Names ---
 type IoniconName = keyof typeof Ionicons.glyphMap; // Defined type alias
@@ -537,8 +538,14 @@ const TournamentDetailsScreen = () => {
         } 
     }, [eventId]); // CRASH FIX: Remove loadData dependency to prevent infinite loop
 
+    // Raw match list for DrawTab — derived from already-processed data, no extra fetch
+    const rawMatches = useMemo(
+        () => processedListData.filter((item): item is MatchListItem => item.type === 'match'),
+        [processedListData]
+    );
+
     // Filtering logic
-    const filteredListData = useMemo(() => { 
+    const filteredListData = useMemo(() => {
         if (activeFilter === 'all') return processedListData; 
         
         const filtered: ListItem[] = []; 
@@ -606,11 +613,12 @@ const TournamentDetailsScreen = () => {
         </View>
     );
     const filterButtons: { label: string; value: ActiveFilterType; icon: keyof typeof Ionicons.glyphMap }[] = [
-        { label: 'All', value: 'all', icon: ICONS.all }, 
-        { label: 'Live', value: 'livePlaying', icon: ICONS.livePlaying }, 
-        { label: 'Break', value: 'onBreak', icon: ICONS.onBreak }, 
-        { label: 'Upcoming', value: 'upcoming', icon: ICONS.upcoming }, 
-        { label: 'Results', value: 'finished', icon: ICONS.finished }
+        { label: 'All', value: 'all', icon: ICONS.all },
+        { label: 'Live', value: 'livePlaying', icon: ICONS.livePlaying },
+        { label: 'Break', value: 'onBreak', icon: ICONS.onBreak },
+        { label: 'Upcoming', value: 'upcoming', icon: ICONS.upcoming },
+        { label: 'Results', value: 'finished', icon: ICONS.finished },
+        { label: 'Draw', value: 'draw', icon: 'git-branch-outline' },
     ];
 
     // --- Main Display Logic ---
@@ -639,51 +647,79 @@ const TournamentDetailsScreen = () => {
             
             {/* Integrated Match List with Sticky Filters */}
             <View style={styles.integratedListArea}>
-                {/* Conditional Rendering Logic */}
-                {loading && filteredListData.length === 0 ? <LoadingComponent />
-                : error ? <ErrorComponent />
-                : (
-                    <FlatList
-                        data={filteredListData}
-                        renderItem={renderListItem}
-                        keyExtractor={(item: ListItem) => {
-                             if (item.type === 'match') { return `match-${item.id}`; }
-                             return item.id;
-                         }}
-                        ListHeaderComponent={() => (
-                            <View style={styles.stickyFilterContainer}>
-                                <DeviceAwareFilterScrollView
-                                    options={filterButtons.map(filter => ({
-                                        id: filter.value,
-                                        label: filter.label,
-                                        icon: filter.icon
-                                    }))}
-                                    selectedValue={activeFilter}
-                                    onSelectionChange={(value) => {
-                                        logger.debug(`[TourFilter] Device-Aware: ${value}`);
-                                        setActiveFilter(value as ActiveFilterType);
-                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                    }}
-                                    colors={COLORS}
-                                    containerStyle={styles.stickyFilterScrollView}
-                                />
-                            </View>
-                        )}
-                        stickyHeaderIndices={[0]}
-                        ListEmptyComponent={!loading ? <EmptyMatchesComponent /> : null}
-                        contentContainerStyle={styles.integratedListContentContainer}
-                        initialNumToRender={15} 
-                        maxToRenderPerBatch={10} 
-                        windowSize={11}
-                        refreshControl={
-                            <RefreshControl 
-                                refreshing={isRefreshing} 
-                                onRefresh={() => loadData(true)} 
-                                tintColor={COLORS.accentLight} 
-                                colors={[COLORS.accentLight]} 
+                {activeFilter === 'draw' ? (
+                    // ── Draw / Bracket view ──────────────────────────────────
+                    <>
+                        <View style={styles.stickyFilterContainer}>
+                            <DeviceAwareFilterScrollView
+                                options={filterButtons.map(filter => ({
+                                    id: filter.value,
+                                    label: filter.label,
+                                    icon: filter.icon
+                                }))}
+                                selectedValue={activeFilter}
+                                onSelectionChange={(value) => {
+                                    logger.debug(`[TourFilter] Device-Aware: ${value}`);
+                                    setActiveFilter(value as ActiveFilterType);
+                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                }}
+                                colors={COLORS}
+                                containerStyle={styles.stickyFilterScrollView}
                             />
-                        }
-                    />
+                        </View>
+                        <DrawTab
+                            matches={rawMatches}
+                            roundNames={tournamentDetails?.round_names ?? {}}
+                            colors={COLORS}
+                        />
+                    </>
+                ) : (
+                    // ── Normal match list ────────────────────────────────────
+                    loading && filteredListData.length === 0 ? <LoadingComponent />
+                    : error ? <ErrorComponent />
+                    : (
+                        <FlatList
+                            data={filteredListData}
+                            renderItem={renderListItem}
+                            keyExtractor={(item: ListItem) => {
+                                if (item.type === 'match') { return `match-${item.id}`; }
+                                return item.id;
+                            }}
+                            ListHeaderComponent={() => (
+                                <View style={styles.stickyFilterContainer}>
+                                    <DeviceAwareFilterScrollView
+                                        options={filterButtons.map(filter => ({
+                                            id: filter.value,
+                                            label: filter.label,
+                                            icon: filter.icon
+                                        }))}
+                                        selectedValue={activeFilter}
+                                        onSelectionChange={(value) => {
+                                            logger.debug(`[TourFilter] Device-Aware: ${value}`);
+                                            setActiveFilter(value as ActiveFilterType);
+                                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                        }}
+                                        colors={COLORS}
+                                        containerStyle={styles.stickyFilterScrollView}
+                                    />
+                                </View>
+                            )}
+                            stickyHeaderIndices={[0]}
+                            ListEmptyComponent={!loading ? <EmptyMatchesComponent /> : null}
+                            contentContainerStyle={styles.integratedListContentContainer}
+                            initialNumToRender={15}
+                            maxToRenderPerBatch={10}
+                            windowSize={11}
+                            refreshControl={
+                                <RefreshControl
+                                    refreshing={isRefreshing}
+                                    onRefresh={() => loadData(true)}
+                                    tintColor={COLORS.accentLight}
+                                    colors={[COLORS.accentLight]}
+                                />
+                            }
+                        />
+                    )
                 )}
             </View>
         </SafeAreaView>
