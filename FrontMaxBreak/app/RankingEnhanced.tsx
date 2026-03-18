@@ -11,6 +11,7 @@ import {
   RefreshControl,
   FlatList,
   ImageBackground,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -39,8 +40,10 @@ interface RankingItem {
   Sum: number;
   Type: string;
   player_name?: string;
+  nationality?: string;
+  surname_first?: boolean;
   // Additional computed fields
-  positionChange?: number; // +1, -2, etc.
+  positionChange?: number;
   isRising?: boolean;
   country?: string;
   flag?: string;
@@ -72,6 +75,8 @@ export default function RankingEnhanced() {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedFilter, setSelectedFilter] = useState<string>('MoneyRankings');
+  const [selectedCountry, setSelectedCountry] = useState<string>('');
+  const [showCountryPicker, setShowCountryPicker] = useState<boolean>(false);
   // Cache to prevent unnecessary reloads
   const [rankingCache, setRankingCache] = useState<Record<string, RankingItem[]>>({});
 
@@ -160,6 +165,8 @@ export default function RankingEnhanced() {
       const rankings: RankingItem[] = (response.rankings || []).map((item: any) => ({
         ...item,
         Position: typeof item.Position === 'number' && item.Position !== null ? item.Position : 0,
+        country: item.nationality || item.country || '',
+        surname_first: item.surname_first || false,
       }));
       
       logger.log(`[RankingEnhanced] Processed ${rankings.length} rankings`);
@@ -209,15 +216,18 @@ export default function RankingEnhanced() {
     setSearchQuery(query);
   }, []);
 
+  // Derive unique sorted countries from loaded data
+  const availableCountries = useMemo(() => {
+    const countries = rankingData
+      .map(item => item.country)
+      .filter((c): c is string => !!c && c.trim().length > 0);
+    return Array.from(new Set(countries)).sort();
+  }, [rankingData]);
+
   // Apply filters and search
   useEffect(() => {
-    logger.log(`[RankingEnhanced] === FILTERING DATA ===`);
-    logger.log(`[RankingEnhanced] rankingData length: ${rankingData.length}`);
-    logger.log(`[RankingEnhanced] searchQuery: "${searchQuery}"`);
-    
     let filtered = [...rankingData];
 
-    // Apply search filter
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase().trim();
       filtered = filtered.filter(item =>
@@ -225,12 +235,14 @@ export default function RankingEnhanced() {
         (item.country && item.country.toLowerCase().includes(query)) ||
         item.Position.toString().includes(query)
       );
-      logger.log(`[RankingEnhanced] After search filter: ${filtered.length} items`);
     }
 
-    logger.log(`[RankingEnhanced] Final filtered data: ${filtered.length} items`);
+    if (selectedCountry) {
+      filtered = filtered.filter(item => item.country === selectedCountry);
+    }
+
     setFilteredData(filtered);
-  }, [rankingData, searchQuery]);
+  }, [rankingData, searchQuery, selectedCountry]);
 
   // Direct API test function - bypass all complex logic
   const testDirectAPI = async () => {
@@ -489,15 +501,32 @@ export default function RankingEnhanced() {
       
       {/* Search and Filters Container */}
       <View style={styles.headerContainer}>
-        {/* Simple search input to avoid crashes */}
-        <View style={styles.searchContainer}>
+        {/* Search + Country Filter row */}
+        <View style={styles.searchRow}>
           <TextInput
             style={styles.searchInput}
-            placeholder="Search players, countries..."
+            placeholder="Search players..."
             value={searchQuery}
             onChangeText={handleSearch}
             placeholderTextColor={colors.textSecondary}
           />
+          <TouchableOpacity
+            style={[styles.countryButton, selectedCountry ? styles.countryButtonActive : null]}
+            onPress={() => setShowCountryPicker(true)}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="flag-outline" size={14} color={selectedCountry ? '#fff' : colors.textSecondary} />
+            <Text style={[styles.countryButtonText, selectedCountry ? styles.countryButtonTextActive : null]} numberOfLines={1}>
+              {selectedCountry || 'Country'}
+            </Text>
+            {selectedCountry ? (
+              <TouchableOpacity onPress={() => setSelectedCountry('')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                <Ionicons name="close-circle" size={14} color="#fff" />
+              </TouchableOpacity>
+            ) : (
+              <Ionicons name="chevron-down" size={12} color={colors.textSecondary} />
+            )}
+          </TouchableOpacity>
         </View>
 
         {/* Filter Buttons - Device Aware */}
@@ -554,6 +583,49 @@ export default function RankingEnhanced() {
         )}
       </View>
     </SafeAreaView>
+
+    {/* Country Picker Modal */}
+    <Modal
+      visible={showCountryPicker}
+      transparent
+      animationType="slide"
+      onRequestClose={() => setShowCountryPicker(false)}
+    >
+      <TouchableOpacity
+        style={styles.modalBackdrop}
+        activeOpacity={1}
+        onPress={() => setShowCountryPicker(false)}
+      />
+      <View style={styles.modalSheet}>
+        <View style={styles.modalHandle} />
+        <Text style={styles.modalTitle}>Filter by Country</Text>
+        <ScrollView showsVerticalScrollIndicator={false} style={styles.modalList}>
+          {/* All option */}
+          <TouchableOpacity
+            style={[styles.modalOption, !selectedCountry ? styles.modalOptionActive : null]}
+            onPress={() => { setSelectedCountry(''); setShowCountryPicker(false); }}
+          >
+            <Text style={[styles.modalOptionText, !selectedCountry ? styles.modalOptionTextActive : null]}>
+              All Countries
+            </Text>
+            {!selectedCountry && <Ionicons name="checkmark" size={16} color={colors.primary} />}
+          </TouchableOpacity>
+          {availableCountries.map(country => (
+            <TouchableOpacity
+              key={country}
+              style={[styles.modalOption, selectedCountry === country ? styles.modalOptionActive : null]}
+              onPress={() => { setSelectedCountry(country); setShowCountryPicker(false); }}
+            >
+              <Text style={[styles.modalOptionText, selectedCountry === country ? styles.modalOptionTextActive : null]}>
+                {country}
+              </Text>
+              {selectedCountry === country && <Ionicons name="checkmark" size={16} color={colors.primary} />}
+            </TouchableOpacity>
+          ))}
+          <View style={{ height: 20 }} />
+        </ScrollView>
+      </View>
+    </Modal>
     </ImageBackground>
   );
 }
@@ -584,10 +656,14 @@ const createRankingStyles = (colors: any) => StyleSheet.create({
     paddingHorizontal: 12,
     marginBottom: 5,
   },
-  searchContainer: {
+  searchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
     marginBottom: 8,
   },
   searchInput: {
+    flex: 1,
     height: 36,
     backgroundColor: colors.cardBackground,
     borderRadius: 18,
@@ -596,6 +672,82 @@ const createRankingStyles = (colors: any) => StyleSheet.create({
     color: colors.textPrimary,
     borderWidth: 1,
     borderColor: colors.cardBorder,
+  },
+  countryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    height: 36,
+    paddingHorizontal: 10,
+    borderRadius: 18,
+    backgroundColor: colors.cardBackground,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    maxWidth: 120,
+  },
+  countryButtonActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  countryButtonText: {
+    fontSize: 12,
+    fontFamily: 'PoppinsMedium',
+    color: colors.textSecondary,
+    flexShrink: 1,
+  },
+  countryButtonTextActive: {
+    color: '#fff',
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalSheet: {
+    backgroundColor: colors.background || '#1A1A2E',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingTop: 12,
+    paddingHorizontal: 16,
+    maxHeight: '65%',
+  },
+  modalHandle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(255,255,255,0.3)',
+    alignSelf: 'center',
+    marginBottom: 12,
+  },
+  modalTitle: {
+    fontSize: 16,
+    fontFamily: 'PoppinsBold',
+    color: colors.textPrimary,
+    marginBottom: 12,
+  },
+  modalList: {
+    flexGrow: 0,
+  },
+  modalOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.cardBorder,
+  },
+  modalOptionActive: {
+    backgroundColor: 'rgba(255,167,38,0.08)',
+    borderRadius: 8,
+  },
+  modalOptionText: {
+    fontSize: 14,
+    fontFamily: 'PoppinsRegular',
+    color: colors.textPrimary,
+  },
+  modalOptionTextActive: {
+    fontFamily: 'PoppinsSemiBold',
+    color: colors.primary,
   },
   filtersScrollView: {
     marginVertical: 8,

@@ -12,7 +12,7 @@ export const formatDate = (dateString: string | null): string => {
             return 'Invalid Date';
         }
         
-        return date.toLocaleString('en-GB', {
+        return date.toLocaleString(undefined, {   // device locale = device timezone
             month: 'short',
             day: 'numeric',
             hour: '2-digit',

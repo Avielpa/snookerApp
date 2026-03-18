@@ -584,19 +584,19 @@ export default function PlayerDetailsScreen(): React.ReactElement {
                                     borderRadius: 4,
                                     marginRight: 8
                                 }}>
-                                    {/* Player Score: Orange if won, White if lost/ongoing */}
+                                    {/* Player Score: green if won, red if lost */}
                                     <Text style={[
                                         { fontSize: 18, fontWeight: 'bold' },
-                                        isFinished && isWinner ? { color: '#FF9500' } : { color: '#FFFFFF' },
+                                        isFinished ? (isWinner ? { color: '#22C55E' } : { color: '#EF4444' }) : { color: '#FFFFFF' },
                                         isLive && { color: '#FF3B30' }
                                     ]}>
                                         {playerScore ?? '0'}
                                     </Text>
                                     <Text style={{ fontSize: 12, color: COLORS.textMuted, marginHorizontal: 5, fontWeight: '700' }}>-</Text>
-                                    {/* Opponent Score: Green if player lost, White otherwise */}
+                                    {/* Opponent Score: red if player won, green if player lost */}
                                     <Text style={[
                                         { fontSize: 18, fontWeight: 'bold' },
-                                        isFinished && !isWinner ? { color: '#4CAF50' } : { color: '#FFFFFF' },
+                                        isFinished ? (!isWinner ? { color: '#22C55E' } : { color: '#EF4444' }) : { color: '#FFFFFF' },
                                         isLive && { color: '#FFD700' }
                                     ]}>
                                         {opponentScore ?? '0'}

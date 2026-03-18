@@ -28,6 +28,7 @@ export interface MatchDetails {
   live_url: string | null;
   details_url: string | null;
   note: string | null;
+  broadcasters?: { name: string; url: string }[] | null;
 }
 
 export interface EventDetails {

@@ -32,6 +32,8 @@ export interface Ranking {
     Position?: number | null;
     Player?: number | null;
     player_name?: string;
+    nationality?: string | null;
+    surname_first?: boolean | null;
     Season?: number | null;
     Sum?: number | null;
     Type?: string | null;
