@@ -18,10 +18,10 @@ import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 
 const COUNTRY_FLAGS: Record<string, string> = {
-  // British Isles
-  'England': '🏴󠁧󠁢󠁥󠁮󠁧󁿢',
-  'Scotland': '🏴󠁧󠁢󠁳󠁣󠁴󁿢',
-  'Wales': '🏴󠁧󠁢󠁷󠁬󠁳󁿢',
+  // British Isles — subdivision flags (🏴󠁧󠁢󠁥󠁮󠁧󁿢) don't render on most Android, using 🇬🇧
+  'England': '🇬🇧',
+  'Scotland': '🇬🇧',
+  'Wales': '🇬🇧',
   'Northern Ireland': '🇬🇧',
   'Ireland': '🇮🇪',
   'United Kingdom': '🇬🇧',
