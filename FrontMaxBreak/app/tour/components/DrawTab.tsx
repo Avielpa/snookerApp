@@ -3,7 +3,6 @@
 import React, { useMemo } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 
-// Minimal match shape needed by this component
 export interface DrawMatch {
   id: number;
   round?: number | null;
@@ -23,61 +22,59 @@ interface DrawTabProps {
   colors: any;
 }
 
-const CARD_WIDTH = 190;
-const CARD_GAP = 12;
+const CARD_WIDTH = 200;
+const WINNER_COLOR = '#FFA726';
 
 // ─── Single match card ────────────────────────────────────────────────────────
-function BracketMatchCard({ match, colors }: { match: DrawMatch; colors: any }) {
+function BracketMatchCard({ match, accent }: { match: DrawMatch; accent: string }) {
   const isFinished = match.status_code === 3;
+  const isLive = match.status_code === 1 || match.status_code === 2;
   const p1Won = isFinished && match.winner_id != null && match.winner_id === match.player1_id;
   const p2Won = isFinished && match.winner_id != null && match.winner_id === match.player2_id;
-  const hasScore = isFinished && match.score1 != null && match.score2 != null;
+  const hasScore = (isFinished || isLive) && match.score1 != null && match.score2 != null;
 
   const p1Name = match.player1_name || 'TBD';
   const p2Name = match.player2_name || 'TBD';
 
-  const isTBD = !match.player1_name && !match.player2_name;
-
   return (
-    <View style={[s.card, { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder }]}>
-      {/* Player 1 row */}
-      <View style={s.playerRow}>
+    <View style={[s.card, isLive && { borderColor: accent + 'AA' }]}>
+      {/* Player 1 */}
+      <View style={[s.playerRow, p1Won && s.winnerRow]}>
         <Text
           style={[
             s.playerName,
-            { color: p1Won ? '#FFA726' : isTBD ? colors.textSecondary : colors.textPrimary },
-            p1Won && s.winner,
+            p1Won ? { color: WINNER_COLOR } : !match.player1_name ? s.tbd : s.normal,
             !p1Won && isFinished && s.loser,
+            p1Won && { fontFamily: 'PoppinsBold' },
           ]}
           numberOfLines={1}
         >
-          {p1Name}
+          {p1Won ? '🏆 ' : ''}{p1Name}
         </Text>
         {hasScore && (
-          <Text style={[s.score, { color: p1Won ? '#FFA726' : colors.textSecondary }, p1Won && s.winner]}>
+          <Text style={[s.score, p1Won ? { color: WINNER_COLOR, fontFamily: 'PoppinsBold' } : s.scoreDim]}>
             {match.score1}
           </Text>
         )}
       </View>
 
-      {/* Divider */}
-      <View style={[s.divider, { backgroundColor: colors.cardBorder }]} />
+      <View style={s.divider} />
 
-      {/* Player 2 row */}
-      <View style={s.playerRow}>
+      {/* Player 2 */}
+      <View style={[s.playerRow, p2Won && s.winnerRow]}>
         <Text
           style={[
             s.playerName,
-            { color: p2Won ? '#FFA726' : isTBD ? colors.textSecondary : colors.textPrimary },
-            p2Won && s.winner,
+            p2Won ? { color: WINNER_COLOR } : !match.player2_name ? s.tbd : s.normal,
             !p2Won && isFinished && s.loser,
+            p2Won && { fontFamily: 'PoppinsBold' },
           ]}
           numberOfLines={1}
         >
-          {p2Name}
+          {p2Won ? '🏆 ' : ''}{p2Name}
         </Text>
         {hasScore && (
-          <Text style={[s.score, { color: p2Won ? '#FFA726' : colors.textSecondary }, p2Won && s.winner]}>
+          <Text style={[s.score, p2Won ? { color: WINNER_COLOR, fontFamily: 'PoppinsBold' } : s.scoreDim]}>
             {match.score2}
           </Text>
         )}
@@ -88,8 +85,10 @@ function BracketMatchCard({ match, colors }: { match: DrawMatch; colors: any }) 
 
 // ─── Main DrawTab ─────────────────────────────────────────────────────────────
 export function DrawTab({ matches, roundNames, colors }: DrawTabProps) {
+  // Graceful fallback — event screen uses `accent`, ranking screen uses `primary`
+  const accent: string = colors.accent || colors.primary || '#FFA726';
+
   const bracketRounds = useMemo(() => {
-    // Group by round number
     const byRound = new Map<number, DrawMatch[]>();
     matches.forEach((m) => {
       const r = m.round ?? 0;
@@ -99,10 +98,10 @@ export function DrawTab({ matches, roundNames, colors }: DrawTabProps) {
 
     const allRounds = Array.from(byRound.keys()).sort((a, b) => a - b);
 
-    // Main draw = rounds with ≤ 8 matches (covers R16, QF, SF, Final)
+    // Show rounds with ≤ 8 matches (R16, QF, SF, Final)
     let mainRounds = allRounds.filter((r) => (byRound.get(r)?.length ?? 0) <= 8);
 
-    // Fallback: if nothing qualifies (tiny event), show last 4 rounds
+    // Fallback: take last 4 rounds if nothing qualifies
     if (mainRounds.length === 0 && allRounds.length > 0) {
       mainRounds = allRounds.slice(-Math.min(4, allRounds.length));
     }
@@ -117,7 +116,7 @@ export function DrawTab({ matches, roundNames, colors }: DrawTabProps) {
   if (bracketRounds.length === 0) {
     return (
       <View style={s.empty}>
-        <Text style={[s.emptyText, { color: colors.textSecondary }]}>
+        <Text style={[s.emptyText, { color: colors.textSecondary || '#9CA3AF' }]}>
           {'No bracket data yet.\nMain draw matches may not have started.'}
         </Text>
       </View>
@@ -138,19 +137,18 @@ export function DrawTab({ matches, roundNames, colors }: DrawTabProps) {
       >
         {bracketRounds.map((round) => (
           <View key={round.roundNumber} style={s.column}>
-            {/* Round header */}
-            <View style={[s.roundHeader, { borderBottomColor: colors.primary + '80' }]}>
-              <Text style={[s.roundTitle, { color: colors.primary }]} numberOfLines={2}>
+            {/* Round header pill */}
+            <View style={[s.roundPill, { backgroundColor: accent + '22', borderColor: accent + '66' }]}>
+              <Text style={[s.roundTitle, { color: accent }]} numberOfLines={1}>
                 {round.roundName}
               </Text>
-              <Text style={[s.matchCount, { color: colors.textSecondary }]}>
+              <Text style={[s.matchCount, { color: accent + 'AA' }]}>
                 {round.matches.length} {round.matches.length === 1 ? 'match' : 'matches'}
               </Text>
             </View>
 
-            {/* Match cards */}
             {round.matches.map((match) => (
-              <BracketMatchCard key={match.id} match={match} colors={colors} />
+              <BracketMatchCard key={match.id} match={match} accent={accent} />
             ))}
           </View>
         ))}
@@ -164,60 +162,73 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     paddingHorizontal: 12,
     paddingTop: 12,
-    gap: CARD_GAP,
+    gap: 10,
     alignItems: 'flex-start',
   },
   column: {
     width: CARD_WIDTH,
   },
-  roundHeader: {
-    borderBottomWidth: 1,
-    paddingBottom: 8,
+  roundPill: {
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     marginBottom: 10,
   },
   roundTitle: {
-    fontSize: 13,
+    fontSize: 14,
     fontFamily: 'PoppinsBold',
-    lineHeight: 18,
   },
   matchCount: {
     fontSize: 10,
     fontFamily: 'PoppinsRegular',
-    marginTop: 2,
+    marginTop: 1,
   },
   card: {
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
+    borderRadius: 10,
     marginBottom: 10,
     overflow: 'hidden',
+    backgroundColor: '#252525',
   },
   playerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 10,
-    paddingVertical: 9,
+    paddingVertical: 10,
     gap: 6,
+  },
+  winnerRow: {
+    backgroundColor: 'rgba(255,167,38,0.08)',
   },
   playerName: {
     flex: 1,
     fontSize: 12,
     fontFamily: 'PoppinsRegular',
   },
-  score: {
-    fontSize: 13,
-    fontFamily: 'PoppinsBold',
-    minWidth: 16,
-    textAlign: 'right',
+  normal: {
+    color: '#FFFFFF',
   },
-  winner: {
-    fontFamily: 'PoppinsBold',
+  tbd: {
+    color: '#6B7280',
+    fontStyle: 'italic',
   },
   loser: {
-    opacity: 0.45,
+    opacity: 0.4,
+  },
+  score: {
+    fontSize: 14,
+    minWidth: 18,
+    textAlign: 'right',
+  },
+  scoreDim: {
+    color: '#9CA3AF',
+    fontFamily: 'PoppinsRegular',
   },
   divider: {
     height: StyleSheet.hairlineWidth,
-    marginHorizontal: 0,
+    backgroundColor: 'rgba(255,255,255,0.1)',
   },
   empty: {
     flex: 1,
