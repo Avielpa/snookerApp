@@ -18,6 +18,63 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 
+const COUNTRY_FLAGS: Record<string, string> = {
+  'England': '🏴󠁧󠁢󠁥󠁮󠁧󁿢',
+  'Scotland': '🏴󠁧󠁢󠁳󠁣󠁴󁿢',
+  'Wales': '🏴󠁧󠁢󠁷󠁬󠁳󁿢',
+  'Northern Ireland': '🇬🇧',
+  'Ireland': '🇮🇪',
+  'China': '🇨🇳',
+  'Australia': '🇦🇺',
+  'Belgium': '🇧🇪',
+  'Germany': '🇩🇪',
+  'India': '🇮🇳',
+  'Thailand': '🇹🇭',
+  'Malta': '🇲🇹',
+  'Canada': '🇨🇦',
+  'South Africa': '🇿🇦',
+  'Portugal': '🇵🇹',
+  'Poland': '🇵🇱',
+  'Netherlands': '🇳🇱',
+  'Hong Kong': '🇭🇰',
+  'Pakistan': '🇵🇰',
+  'Iran': '🇮🇷',
+  'Norway': '🇳🇴',
+  'Cyprus': '🇨🇾',
+  'Switzerland': '🇨🇭',
+  'France': '🇫🇷',
+  'Spain': '🇪🇸',
+  'New Zealand': '🇳🇿',
+  'Romania': '🇷🇴',
+  'Slovakia': '🇸🇰',
+  'Ukraine': '🇺🇦',
+  'Finland': '🇫🇮',
+  'Denmark': '🇩🇰',
+  'Austria': '🇦🇹',
+  'United States': '🇺🇸',
+  'Brazil': '🇧🇷',
+  'Indonesia': '🇮🇩',
+  'Malaysia': '🇲🇾',
+  'Singapore': '🇸🇬',
+  'Japan': '🇯🇵',
+  'South Korea': '🇰🇷',
+  'Egypt': '🇪🇬',
+  'Sweden': '🇸🇪',
+  'Czech Republic': '🇨🇿',
+  'Lithuania': '🇱🇹',
+  'Estonia': '🇪🇪',
+  'Latvia': '🇱🇻',
+  'Nigeria': '🇳🇬',
+  'Turkey': '🇹🇷',
+  'Greece': '🇬🇷',
+  'Italy': '🇮🇹',
+};
+
+const getFlag = (country?: string): string => {
+  if (!country) return '';
+  return COUNTRY_FLAGS[country] || '🌍';
+};
+
 // Import services
 import { getRanking, RANKING_TYPES } from '../services/matchServices';
 import { api } from '../services/api';
@@ -402,7 +459,7 @@ export default function RankingEnhanced() {
                 <Text style={styles.playerName} numberOfLines={1}>
                   {playerName}
                 </Text>
-                {item.country && <Text style={styles.country}>{item.country}</Text>}
+                {item.country && <Text style={styles.country}>{getFlag(item.country)}</Text>}
               </View>
               
               {/* Prize Money with Progress Bar */}
@@ -501,15 +558,17 @@ export default function RankingEnhanced() {
       
       {/* Search and Filters Container */}
       <View style={styles.headerContainer}>
-        {/* Search + Country Filter row */}
-        <View style={styles.searchRow}>
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search players..."
-            value={searchQuery}
-            onChangeText={handleSearch}
-            placeholderTextColor={colors.textSecondary}
-          />
+        {/* Search bar */}
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search players..."
+          value={searchQuery}
+          onChangeText={handleSearch}
+          placeholderTextColor={colors.textSecondary}
+        />
+
+        {/* Country filter row */}
+        <View style={styles.countryRow}>
           <TouchableOpacity
             style={[styles.countryButton, selectedCountry ? styles.countryButtonActive : null]}
             onPress={() => setShowCountryPicker(true)}
@@ -517,16 +576,20 @@ export default function RankingEnhanced() {
           >
             <Ionicons name="flag-outline" size={14} color={selectedCountry ? '#fff' : colors.textSecondary} />
             <Text style={[styles.countryButtonText, selectedCountry ? styles.countryButtonTextActive : null]} numberOfLines={1}>
-              {selectedCountry || 'Country'}
+              {selectedCountry ? `${getFlag(selectedCountry)} ${selectedCountry}` : 'Filter by Country'}
             </Text>
-            {selectedCountry ? (
-              <TouchableOpacity onPress={() => setSelectedCountry('')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                <Ionicons name="close-circle" size={14} color="#fff" />
-              </TouchableOpacity>
-            ) : (
-              <Ionicons name="chevron-down" size={12} color={colors.textSecondary} />
-            )}
+            <Ionicons name="chevron-down" size={12} color={selectedCountry ? '#fff' : colors.textSecondary} />
           </TouchableOpacity>
+          {!!selectedCountry && (
+            <TouchableOpacity
+              style={styles.clearCountryButton}
+              onPress={() => setSelectedCountry('')}
+              activeOpacity={0.7}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <Ionicons name="close-circle" size={20} color={colors.textSecondary} />
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Filter Buttons - Device Aware */}
@@ -617,7 +680,7 @@ export default function RankingEnhanced() {
               onPress={() => { setSelectedCountry(country); setShowCountryPicker(false); }}
             >
               <Text style={[styles.modalOptionText, selectedCountry === country ? styles.modalOptionTextActive : null]}>
-                {country}
+                {getFlag(country)}{'  '}{country}
               </Text>
               {selectedCountry === country && <Ionicons name="checkmark" size={16} color={colors.primary} />}
             </TouchableOpacity>
@@ -656,47 +719,50 @@ const createRankingStyles = (colors: any) => StyleSheet.create({
     paddingHorizontal: 12,
     marginBottom: 5,
   },
-  searchRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 8,
-  },
   searchInput: {
-    flex: 1,
-    height: 36,
+    height: 38,
     backgroundColor: colors.cardBackground,
-    borderRadius: 18,
-    paddingHorizontal: 12,
+    borderRadius: 19,
+    paddingHorizontal: 14,
     fontSize: 13,
     color: colors.textPrimary,
     borderWidth: 1,
     borderColor: colors.cardBorder,
+    marginBottom: 8,
   },
-  countryButton: {
+  countryRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    height: 36,
-    paddingHorizontal: 10,
-    borderRadius: 18,
+    gap: 8,
+    marginBottom: 4,
+  },
+  countryButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    height: 38,
+    paddingHorizontal: 14,
+    borderRadius: 19,
     backgroundColor: colors.cardBackground,
     borderWidth: 1,
     borderColor: colors.cardBorder,
-    maxWidth: 120,
   },
   countryButtonActive: {
     backgroundColor: colors.primary,
     borderColor: colors.primary,
   },
   countryButtonText: {
-    fontSize: 12,
+    flex: 1,
+    fontSize: 13,
     fontFamily: 'PoppinsMedium',
     color: colors.textSecondary,
-    flexShrink: 1,
   },
   countryButtonTextActive: {
     color: '#fff',
+  },
+  clearCountryButton: {
+    padding: 4,
   },
   modalBackdrop: {
     flex: 1,
