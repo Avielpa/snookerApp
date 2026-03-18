@@ -7,6 +7,7 @@ import { TOUCH_SLOP, MATCH_CONSTANTS } from '../../../utils/constants';
 import { getMatchPlayerNames, areScoresValid, normalizeScore } from '../../../utils/playerUtils';
 import { clearMatchCache } from '../../../services/matchServices';
 import { ModernGlassCard } from '../../components/modern/ModernGlassCard';
+import { BroadcastBadge } from '../../components/match/BroadcastBadge';
 import { MatchListItem } from '../types';
 import { formatDate } from '../utils/dateFormatting';
 import { ICONS } from '../utils/icons';
@@ -144,6 +145,11 @@ export const MatchItem = ({
                         {player2Name}
                     </Text>
                 </View>
+
+                {/* Broadcast badges — tappable links to where you can watch */}
+                {!!item.broadcasters && item.broadcasters.length > 0 && (
+                    <BroadcastBadge broadcasters={item.broadcasters} />
+                )}
 
                 {/* Note (walkover, withdrawal, etc.) */}
                 {!!item.note && (

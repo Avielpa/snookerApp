@@ -172,7 +172,7 @@ def _format_datetime_for_json(dt: Optional[datetime]) -> Optional[str]:
 
 
 # --- Helper Function: _build_match_dict ---
-def _build_match_dict(match: MatchesOfAnEvent, player_names_map: Dict[int, str]) -> Dict[str, Any]:
+def _build_match_dict(match: MatchesOfAnEvent, player_names_map: Dict[int, str], broadcasters: list = None) -> Dict[str, Any]:
     """
     Builds the dictionary representation of a single match, suitable for JSON response.
     Includes player names fetched separately and formats dates.
@@ -222,6 +222,7 @@ def _build_match_dict(match: MatchesOfAnEvent, player_names_map: Dict[int, str])
         "live_url": match.LiveUrl,
         "details_url": match.DetailsUrl,
         "note": match.Note,
+        "broadcasters": broadcasters if broadcasters is not None else [],
     }
     return match_data
 
@@ -618,11 +619,19 @@ def matches_of_an_event_view(request, event_id):
     player_names_map = get_player_names(player_ids_to_fetch)
     # -----------------------------------------------------------------
 
+    # Parse broadcasters from the event — safe: never breaks match loading
+    event_broadcasters = []
+    try:
+        from oneFourSeven.broadcast_parser import parse_broadcasters
+        event_broadcasters = parse_broadcasters(event.CommonNote or '')
+    except Exception as _e:
+        logger.warning(f"[event_detail_view] broadcast parse failed for event {event_id}: {_e}")
+
     # Build the final list of match data dictionaries using the helper
     response_data = []
     try:
         for match in sorted_matches:
-            response_data.append(_build_match_dict(match, player_names_map))
+            response_data.append(_build_match_dict(match, player_names_map, broadcasters=event_broadcasters))
         logger.debug(f"Prepared {len(response_data)} matches for JSON response for event {event_id}.")
     except Exception as e:
         logger.error(f"Error building match dictionary for event {event_id}: {e}", exc_info=True)
@@ -732,6 +741,18 @@ def player_by_id_view(request, player_id):
         logger.error(f"Error fetching career stats for player {player_id}: {e}")
         player_data['career_wins'] = None
         player_data['career_losses'] = None
+
+    # Recent form, win streak, ranking trend — safe: never breaks player loading
+    try:
+        from oneFourSeven.player_stats import get_recent_form, get_win_streak, get_ranking_trend
+        player_data['recent_form'] = get_recent_form(player_id, n=10)
+        player_data['win_streak'] = get_win_streak(player_id)
+        player_data['ranking_trend'] = get_ranking_trend(player_id)
+    except Exception as e:
+        logger.warning(f"[player_by_id_view] player_stats failed for {player_id}: {e}")
+        player_data['recent_form'] = []
+        player_data['win_streak'] = 0
+        player_data['ranking_trend'] = {'current': None, 'previous': None, 'delta': None}
 
     return Response(player_data)
 
@@ -1448,9 +1469,22 @@ def all_live_matches_view(request):
     player_ids = {m.Player1ID for m in matches_list} | {m.Player2ID for m in matches_list}
     player_names_map = get_player_names(player_ids)
 
+    # Parse broadcasters per event — safe: never breaks match loading
+    event_broadcasters_cache: Dict[int, list] = {}
+    try:
+        from oneFourSeven.broadcast_parser import parse_broadcasters
+        for match in matches_list:
+            eid = match.Event_id
+            if eid not in event_broadcasters_cache:
+                event_broadcasters_cache[eid] = parse_broadcasters(match.Event.CommonNote or '')
+    except Exception as _e:
+        logger.warning(f"[all_live_matches_view] broadcast parse failed: {_e}")
+        event_broadcasters_cache = {}
+
     response_data = []
     for match in matches_list:
-        match_dict = _build_match_dict(match, player_names_map)
+        bc = event_broadcasters_cache.get(match.Event_id, [])
+        match_dict = _build_match_dict(match, player_names_map, broadcasters=bc)
         match_dict['event_name'] = match.Event.Name
         match_dict['event_tour'] = match.Event.Tour or 'other'
         response_data.append(match_dict)

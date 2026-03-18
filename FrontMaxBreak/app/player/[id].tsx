@@ -16,7 +16,8 @@ import { logger } from '../../utils/logger';
 import { useColors } from '../../contexts/ThemeContext';
 import { createPlayerStyles } from './styles-modern';
 import { getNationalityFlag } from '../../utils/nationalityFlag';
-
+import { FormDots } from '../components/stats/FormDots';
+import { WinStreak } from '../components/stats/WinStreak';
 
 // Enhanced interfaces
 interface PlayerData {
@@ -36,6 +37,9 @@ interface PlayerData {
     prize_money_this_year?: number | null;
     career_wins?: number | null;
     career_losses?: number | null;
+    recent_form?: string[] | null;
+    win_streak?: number | null;
+    ranking_trend?: { current: number | null; previous: number | null; delta: number | null } | null;
 }
 
 interface TabConfig {
@@ -335,7 +339,15 @@ export default function PlayerDetailsScreen(): React.ReactElement {
                     icon="podium-outline"
                     title="World Ranking"
                     value={player?.current_ranking_position ? `#${player.current_ranking_position}` : 'N/A'}
-                    subtitle="Current season"
+                    subtitle={
+                        player?.ranking_trend?.delta != null
+                            ? player.ranking_trend.delta > 0
+                                ? `▲ ${player.ranking_trend.delta} vs last season`
+                                : player.ranking_trend.delta < 0
+                                ? `▼ ${Math.abs(player.ranking_trend.delta)} vs last season`
+                                : 'Same as last season'
+                            : 'Current season'
+                    }
                 />
                 <StatCard
                     icon="cash-outline"
@@ -348,11 +360,6 @@ export default function PlayerDetailsScreen(): React.ReactElement {
             {/* Personal Information */}
             <GlassCard style={styles.infoCard}>
                 <Text style={styles.sectionTitle}>Personal Information</Text>
-                <InfoRow
-                    icon="flag-outline"
-                    label="Nationality"
-                    value={formatValue(player?.Nationality, 'nationality')}
-                />
                 <InfoRow
                     icon="calendar-outline"
                     label="Date of Birth"
@@ -374,29 +381,14 @@ export default function PlayerDetailsScreen(): React.ReactElement {
 
     const renderStatsContent = () => (
         <View style={styles.tabContent}>
-            <GlassCard style={styles.infoCard}>
-                <Text style={styles.sectionTitle}>Career Statistics</Text>
-                <InfoRow
-                    icon="trophy-outline"
-                    label="Ranking Titles Won"
-                    value={String(player?.NumRankingTitles || 0)}
-                />
-                <InfoRow
-                    icon="flash-outline"
-                    label="Maximum Breaks (147s)"
-                    value={String(player?.NumMaximums || 0)}
-                />
-                <InfoRow
-                    icon="trending-up-outline"
-                    label="First Season as Pro"
-                    value={formatValue(player?.FirstSeasonAsPro)}
-                />
-                <InfoRow
-                    icon="trending-down-outline"
-                    label="Last Season as Pro"
-                    value={formatValue(player?.LastSeasonAsPro) || 'Current'}
-                />
-            </GlassCard>
+            {/* Current Form — only shown when backend returns data */}
+            {(!!player?.recent_form?.length || !!player?.win_streak) && (
+                <GlassCard style={styles.infoCard}>
+                    <Text style={styles.sectionTitle}>Current Form</Text>
+                    <FormDots form={player?.recent_form ?? []} />
+                    <WinStreak streak={player?.win_streak ?? 0} />
+                </GlassCard>
+            )}
 
             {/* Career W/L — only shown if match history data exists */}
             {((player?.career_wins ?? 0) + (player?.career_losses ?? 0)) > 0 && (
