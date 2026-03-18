@@ -654,6 +654,7 @@ export default function RankingEnhanced() {
       animationType="slide"
       onRequestClose={() => setShowCountryPicker(false)}
     >
+      <View style={styles.modalContainer}>
       <TouchableOpacity
         style={styles.modalBackdrop}
         activeOpacity={1}
@@ -687,6 +688,7 @@ export default function RankingEnhanced() {
           ))}
           <View style={{ height: 20 }} />
         </ScrollView>
+      </View>
       </View>
     </Modal>
     </ImageBackground>
@@ -764,17 +766,21 @@ const createRankingStyles = (colors: any) => StyleSheet.create({
   clearCountryButton: {
     padding: 4,
   },
-  modalBackdrop: {
+  modalContainer: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.55)',
   },
   modalSheet: {
-    backgroundColor: colors.background || '#1A1A2E',
+    height: '58%',
+    backgroundColor: colors.background,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     paddingTop: 12,
     paddingHorizontal: 16,
-    maxHeight: '65%',
   },
   modalHandle: {
     width: 40,
@@ -791,7 +797,7 @@ const createRankingStyles = (colors: any) => StyleSheet.create({
     marginBottom: 12,
   },
   modalList: {
-    flexGrow: 0,
+    flex: 1,
   },
   modalOption: {
     flexDirection: 'row',
