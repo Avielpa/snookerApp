@@ -57,6 +57,7 @@ class Command(BaseCommand):
         # Push notification dedup sets (reset at midnight UTC)
         self.notified_live = set()              # api_match_ids already notified as live
         self.notified_result = set()            # api_match_ids already notified as finished
+        self.notified_upcoming = set()          # api_match_ids already sent 15-min warning
         self.last_notif_reset = None            # date when sets were last cleared
 
     def add_arguments(self, parser):
@@ -237,6 +238,7 @@ class Command(BaseCommand):
             if self.last_notif_reset != today:
                 self.notified_live.clear()
                 self.notified_result.clear()
+                self.notified_upcoming.clear()
                 self.last_notif_reset = today
 
             # --- Helper: get player name ---
@@ -352,6 +354,58 @@ class Command(BaseCommand):
                         self.stdout.write(f'[NOTIFY] Player result: {p2_name} {outcome} → {len(p2_tokens)} devices')
 
                 self.notified_result.add(mid)
+
+            # --- Notify: matches starting in the next 10–20 minutes (15-min heads-up) ---
+            now = timezone.now()
+            window_start = now + timedelta(minutes=10)
+            window_end = now + timedelta(minutes=20)
+            upcoming_matches = MatchesOfAnEvent.objects.filter(
+                Status=0,
+                ScheduledDate__gte=window_start,
+                ScheduledDate__lte=window_end,
+            )
+            for match in upcoming_matches:
+                mid = match.api_match_id
+                if mid is None or mid in self.notified_upcoming:
+                    continue
+
+                p1_name = get_name(match.Player1ID)
+                p2_name = get_name(match.Player2ID)
+
+                # Match followers
+                match_devices = DeviceToken.objects.filter(favorite_match_ids__contains=[mid])
+                match_tokens = [d.push_token for d in match_devices if d.push_token]
+                if match_tokens:
+                    send_expo_push(match_tokens, '⏰ Starting Soon',
+                                   f'{p1_name} vs {p2_name} in ~15 min',
+                                   {'type': 'match_upcoming', 'match_id': mid})
+                    self.stdout.write(f'[NOTIFY] Upcoming match: {p1_name} vs {p2_name} → {len(match_tokens)} devices')
+
+                # Player 1 followers
+                if match.Player1ID:
+                    p1_devices = DeviceToken.objects.filter(
+                        favorite_player_ids__contains=[match.Player1ID]
+                    )
+                    p1_tokens = [d.push_token for d in p1_devices if d.push_token]
+                    if p1_tokens:
+                        send_expo_push(p1_tokens, '⏰ Starting Soon',
+                                       f'{p1_name} vs {p2_name} in ~15 min',
+                                       {'type': 'player_upcoming', 'player_id': match.Player1ID, 'match_id': mid})
+                        self.stdout.write(f'[NOTIFY] Upcoming player: {p1_name} → {len(p1_tokens)} devices')
+
+                # Player 2 followers
+                if match.Player2ID:
+                    p2_devices = DeviceToken.objects.filter(
+                        favorite_player_ids__contains=[match.Player2ID]
+                    )
+                    p2_tokens = [d.push_token for d in p2_devices if d.push_token]
+                    if p2_tokens:
+                        send_expo_push(p2_tokens, '⏰ Starting Soon',
+                                       f'{p2_name} vs {p1_name} in ~15 min',
+                                       {'type': 'player_upcoming', 'player_id': match.Player2ID, 'match_id': mid})
+                        self.stdout.write(f'[NOTIFY] Upcoming player: {p2_name} → {len(p2_tokens)} devices')
+
+                self.notified_upcoming.add(mid)
 
         except Exception as e:
             logger.error(f'[NOTIFY] Push notification error (non-fatal): {e}')
