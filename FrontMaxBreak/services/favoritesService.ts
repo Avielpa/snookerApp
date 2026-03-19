@@ -49,18 +49,23 @@ async function writeCache(favs: Favorites): Promise<void> {
  * Also primes the in-memory cache for synchronous reads.
  */
 export async function loadFavorites(): Promise<Favorites> {
+    // Always read local cache first so we never lose locally-saved stars
+    const local = await readCache();
     try {
         const deviceId = await getOrCreateDeviceId();
         const response = await api.get(`device/favorites/?device_id=${deviceId}`);
-        const favs: Favorites = {
-            playerIds: (response.data.player_ids ?? []).map(Number),
-            matchIds: (response.data.match_ids ?? []).map(Number),
+        const serverPlayerIds: number[] = (response.data.player_ids ?? []).map(Number);
+        const serverMatchIds: number[] = (response.data.match_ids ?? []).map(Number);
+        // Merge: union of local + server (server may be empty for unregistered devices)
+        const merged: Favorites = {
+            playerIds: Array.from(new Set([...local.playerIds, ...serverPlayerIds])),
+            matchIds: Array.from(new Set([...local.matchIds, ...serverMatchIds])),
         };
-        await writeCache(favs);
-        return favs;
+        await writeCache(merged);
+        return merged;
     } catch (error) {
         logger.warn('[Favorites] Could not load from server, using local cache');
-        return readCache();
+        return local;
     }
 }
 

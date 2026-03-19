@@ -64,9 +64,7 @@ function formatPrize(amount: any): string | null {
   if (!amount) return null;
   const n = parseFloat(amount);
   if (isNaN(n)) return null;
-  if (n >= 1000000) return `£${(n / 1000000).toFixed(1)}m`;
-  if (n >= 1000) return `£${Math.round(n / 1000)}k`;
-  return `£${n}`;
+  return `£${Math.round(n).toLocaleString('en-GB')}`;
 }
 
 // ─── Single match card ────────────────────────────────────────────────────────
@@ -258,7 +256,11 @@ export function DrawTab({ matches, roundNames, roundFormats, roundPrizes, colors
                 {round.roundFormat && (
                   <Text style={[s.roundMeta, { color: accent + 'BB' }]} numberOfLines={1}>
                     {round.roundFormat}
-                    {round.roundPrize ? ` · ${formatPrize(round.roundPrize)}` : ''}
+                  </Text>
+                )}
+                {round.roundPrize && (
+                  <Text style={[s.roundMeta, { color: accent + 'BB' }]} numberOfLines={1}>
+                    {'Losers: '}{formatPrize(round.roundPrize)}
                   </Text>
                 )}
                 <Text style={[s.matchCount, { color: accent + '88' }]}>

@@ -1,6 +1,6 @@
 // app/home/components/MatchItem.tsx
 import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, I18nManager } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { logger } from '../../../utils/logger';
 import { TOUCH_SLOP, MATCH_CONSTANTS } from '../../../utils/constants';
@@ -136,7 +136,7 @@ export const MatchItem = ({
                 {isNotFinished && (
                     <TouchableOpacity
                         onPress={handleStarPress}
-                        style={{ position: 'absolute', top: 8, right: 8, zIndex: 10, padding: 4 }}
+                        style={{ position: 'absolute', top: 8, [I18nManager.isRTL ? 'left' : 'right']: 8, zIndex: 10, padding: 4 }}
                         hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}
                     >
                         <Ionicons
