@@ -36,6 +36,11 @@ from .views import (
     recent_matches_view,
     all_live_matches_view,
     news_view,
+    # Device / Push Notification Views
+    device_register_view,
+    device_favorites_players_view,
+    device_favorites_matches_view,
+    device_favorites_view,
 )
 
 # --- DRF Router Setup ---
@@ -116,7 +121,13 @@ urlpatterns = [
     path('recent-matches/', recent_matches_view, name='recent-matches'),
     path('all-live-matches/', all_live_matches_view, name='all-live-matches'),
     path('news/', news_view, name='news'),
-    
+
+    # --- Device / Push Notification URLs ---
+    path('device/register/', device_register_view, name='device-register'),
+    path('device/favorites/players/', device_favorites_players_view, name='device-favorites-players'),
+    path('device/favorites/matches/', device_favorites_matches_view, name='device-favorites-matches'),
+    path('device/favorites/', device_favorites_view, name='device-favorites'),
+
     # --- Debug URL ---
     # Debug endpoint for checking system status
     path('debug/status/', debug_status_view, name='debug-status'),

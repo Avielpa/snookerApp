@@ -7,6 +7,8 @@ import * as Updates from 'expo-updates';
 import { ThemeProvider, useTheme } from '../contexts/ThemeContext';
 import { logger } from '../utils/logger';
 import { api } from '../services/api';
+import { initPushNotifications } from '../utils/notifications';
+import { loadFavorites } from '../services/favoritesService';
 
 // --- Component Imports ---
 import Header from './components/Header';
@@ -28,6 +30,12 @@ const ThemedLayout = () => {
             .then(() => Updates.reloadAsync())
             .catch((e: any) => logger.warn(`[OTA] Apply failed: ${e?.message}`));
     }, [isUpdateAvailable]);
+
+    // Register device for push notifications + prime the favourites cache
+    useEffect(() => {
+        initPushNotifications();
+        loadFavorites().catch(() => {}); // warm the in-memory cache
+    }, []);
 
     // Test API connectivity on app start
     useEffect(() => {

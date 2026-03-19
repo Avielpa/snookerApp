@@ -1715,3 +1715,95 @@ def news_view(request):
         return Response([], status=status.HTTP_200_OK)
 
 
+# ===================== Device / Push Notification Views =====================
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def device_register_view(request):
+    """Upsert a device push token. Body: {device_id, push_token}"""
+    from .models import DeviceToken
+    device_id = request.data.get('device_id', '').strip()
+    push_token = request.data.get('push_token', '').strip()
+
+    if not device_id or not push_token:
+        return Response({'error': 'device_id and push_token are required'},
+                        status=status.HTTP_400_BAD_REQUEST)
+
+    device, created = DeviceToken.objects.update_or_create(
+        device_id=device_id,
+        defaults={'push_token': push_token},
+    )
+    return Response({'status': 'created' if created else 'updated'}, status=status.HTTP_200_OK)
+
+
+@api_view(['PATCH'])
+@permission_classes([AllowAny])
+def device_favorites_players_view(request):
+    """Update favourite player IDs for a device. Body: {device_id, player_ids}"""
+    from .models import DeviceToken
+    device_id = request.data.get('device_id', '').strip()
+    player_ids = request.data.get('player_ids', [])
+
+    if not device_id:
+        return Response({'error': 'device_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+    if not isinstance(player_ids, list):
+        return Response({'error': 'player_ids must be a list'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        device = DeviceToken.objects.get(device_id=device_id)
+        device.favorite_player_ids = [int(pid) for pid in player_ids if pid is not None]
+        device.save(update_fields=['favorite_player_ids', 'updated_at'])
+        return Response({'status': 'ok', 'player_ids': device.favorite_player_ids})
+    except DeviceToken.DoesNotExist:
+        return Response({'error': 'Device not registered'}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        logger.error(f'Error updating player favourites: {e}')
+        return Response({'error': 'Internal error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['PATCH'])
+@permission_classes([AllowAny])
+def device_favorites_matches_view(request):
+    """Update favourite match IDs for a device. Body: {device_id, match_ids}"""
+    from .models import DeviceToken
+    device_id = request.data.get('device_id', '').strip()
+    match_ids = request.data.get('match_ids', [])
+
+    if not device_id:
+        return Response({'error': 'device_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+    if not isinstance(match_ids, list):
+        return Response({'error': 'match_ids must be a list'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        device = DeviceToken.objects.get(device_id=device_id)
+        device.favorite_match_ids = [int(mid) for mid in match_ids if mid is not None]
+        device.save(update_fields=['favorite_match_ids', 'updated_at'])
+        return Response({'status': 'ok', 'match_ids': device.favorite_match_ids})
+    except DeviceToken.DoesNotExist:
+        return Response({'error': 'Device not registered'}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        logger.error(f'Error updating match favourites: {e}')
+        return Response({'error': 'Internal error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def device_favorites_view(request):
+    """Return favourites for a device. Query param: ?device_id=xxx"""
+    from .models import DeviceToken
+    device_id = request.query_params.get('device_id', '').strip()
+
+    if not device_id:
+        return Response({'error': 'device_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        device = DeviceToken.objects.get(device_id=device_id)
+        return Response({
+            'player_ids': device.favorite_player_ids,
+            'match_ids': device.favorite_match_ids,
+        })
+    except DeviceToken.DoesNotExist:
+        # Return empty favourites if device not yet registered
+        return Response({'player_ids': [], 'match_ids': []})
+
+

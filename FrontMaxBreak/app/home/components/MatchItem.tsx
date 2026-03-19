@@ -6,6 +6,7 @@ import { logger } from '../../../utils/logger';
 import { TOUCH_SLOP, MATCH_CONSTANTS } from '../../../utils/constants';
 import { getMatchPlayerNames, areScoresValid, normalizeScore } from '../../../utils/playerUtils';
 import { clearMatchCache } from '../../../services/matchServices';
+import { isMatchFavouriteSync, toggleMatchFavourite } from '../../../services/favoritesService';
 import { ModernGlassCard } from '../../components/modern/ModernGlassCard';
 import { BroadcastBadge } from '../../components/match/BroadcastBadge';
 import { MatchListItem } from '../types';
@@ -30,6 +31,18 @@ export const MatchItem = ({
     
     // Debug counter for force refresh on multiple taps
     const [debugTapCount, setDebugTapCount] = React.useState(0);
+
+    // Star / favourite state — only for upcoming + live matches
+    const isNotFinished = item.status_code !== 3;
+    const [isStarred, setIsStarred] = React.useState(
+        item.api_match_id ? isMatchFavouriteSync(item.api_match_id) : false
+    );
+
+    const handleStarPress = async () => {
+        if (!item.api_match_id) return;
+        const newVal = await toggleMatchFavourite(item.api_match_id);
+        setIsStarred(newVal);
+    };
     
     // Get formatted player names - DIRECT from backend JSON
     const { player1Name, player2Name} = getMatchPlayerNames(item);
@@ -108,6 +121,21 @@ export const MatchItem = ({
             activeOpacity={0.6}
         >
             <ModernGlassCard style={styles.matchItemContainer} accentColor={accentColor}>
+
+                {/* Star button — only for upcoming/live matches */}
+                {isNotFinished && (
+                    <TouchableOpacity
+                        onPress={handleStarPress}
+                        style={{ position: 'absolute', top: 8, right: 8, zIndex: 10, padding: 4 }}
+                        hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}
+                    >
+                        <Ionicons
+                            name={isStarred ? 'star' : 'star-outline'}
+                            size={16}
+                            color={isStarred ? '#F59E0B' : COLORS.textSecondary}
+                        />
+                    </TouchableOpacity>
+                )}
 
                 {/* Score-centered row: Name | Score — Score | Name */}
                 <View style={styles.scoreRow}>

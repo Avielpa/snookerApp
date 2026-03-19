@@ -18,6 +18,7 @@ import { createPlayerStyles } from './styles-modern';
 import { getNationalityFlag } from '../../utils/nationalityFlag';
 import { FormDots } from '../components/stats/FormDots';
 import { WinStreak } from '../components/stats/WinStreak';
+import { isPlayerFavouriteSync, togglePlayerFavourite } from '../../services/favoritesService';
 
 // Enhanced interfaces
 interface PlayerData {
@@ -104,7 +105,16 @@ export default function PlayerDetailsScreen(): React.ReactElement {
     const [matches, setMatches] = useState<PlayerMatchHistoryItem[]>([]);
     const [matchesLoading, setMatchesLoading] = useState(false);
     const [matchesError, setMatchesError] = useState<string | null>(null);
+    const [isStarred, setIsStarred] = useState(
+        playerId ? isPlayerFavouriteSync(playerId) : false
+    );
     const COLORS = usePlayerColors();
+
+    const handleStarPress = useCallback(async () => {
+        if (!playerId) return;
+        const newVal = await togglePlayerFavourite(playerId);
+        setIsStarred(newVal);
+    }, [playerId]);
 
     // Create styles with dynamic colors
     const styles = createPlayerStyles(COLORS);
@@ -809,12 +819,25 @@ export default function PlayerDetailsScreen(): React.ReactElement {
                     title: headerTitle,
                     headerStyle: { backgroundColor: COLORS.background },
                     headerTintColor: COLORS.primary,
-                    headerTitleStyle: { 
-                        color: COLORS.primary, 
+                    headerTitleStyle: {
+                        color: COLORS.primary,
                         fontFamily: 'PoppinsSemiBold',
                         fontSize: 18,
                     },
                     headerBackTitle: '',
+                    headerRight: () => (
+                        <TouchableOpacity
+                            onPress={handleStarPress}
+                            style={{ paddingHorizontal: 12, paddingVertical: 8 }}
+                            hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}
+                        >
+                            <Ionicons
+                                name={isStarred ? 'star' : 'star-outline'}
+                                size={22}
+                                color={isStarred ? '#F59E0B' : COLORS.primary}
+                            />
+                        </TouchableOpacity>
+                    ),
                 }}
             />
             {content}

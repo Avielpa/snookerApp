@@ -1,7 +1,10 @@
 // utils/notifications.ts
 import * as Notifications from 'expo-notifications';
+import * as Device from 'expo-device';
 import { Platform } from 'react-native';
 import { logger } from './logger';
+import { getOrCreateDeviceId } from './deviceIdentity';
+import { api } from '../services/api';
 
 // Configure notification behavior
 Notifications.setNotificationHandler({
@@ -184,3 +187,64 @@ export class NotificationManager {
 
 // Export singleton instance
 export const notificationManager = NotificationManager.getInstance();
+
+// ---- Push notification registration (for server-sent notifications) ----
+
+/**
+ * Request push permission and return the Expo push token string, or null on failure.
+ */
+export async function requestPushPermissionAndGetToken(): Promise<string | null> {
+    if (!Device.isDevice) {
+        logger.warn('[Push] Push notifications only work on physical devices');
+        return null;
+    }
+
+    try {
+        if (Platform.OS === 'android') {
+            await Notifications.setNotificationChannelAsync('match-updates', {
+                name: 'Match Updates',
+                importance: Notifications.AndroidImportance.HIGH,
+                vibrationPattern: [0, 250, 250, 250],
+                lightColor: '#FFA726',
+            });
+        }
+
+        const { status: existingStatus } = await Notifications.getPermissionsAsync();
+        let finalStatus = existingStatus;
+
+        if (existingStatus !== 'granted') {
+            const { status } = await Notifications.requestPermissionsAsync();
+            finalStatus = status;
+        }
+
+        if (finalStatus !== 'granted') {
+            logger.warn('[Push] Permission not granted');
+            return null;
+        }
+
+        const tokenData = await Notifications.getExpoPushTokenAsync();
+        logger.log('[Push] Got push token');
+        return tokenData.data;
+    } catch (error) {
+        logger.error('[Push] Error getting push token:', error);
+        return null;
+    }
+}
+
+/**
+ * Initialize push notifications: get device ID + push token, register with backend.
+ * Called once on app startup. Never throws.
+ */
+export async function initPushNotifications(): Promise<void> {
+    try {
+        const deviceId = await getOrCreateDeviceId();
+        const pushToken = await requestPushPermissionAndGetToken();
+
+        if (!pushToken) return;
+
+        await api.post('device/register/', { device_id: deviceId, push_token: pushToken });
+        logger.log('[Push] Device registered successfully');
+    } catch (error) {
+        logger.error('[Push] Failed to initialize push notifications:', error);
+    }
+}

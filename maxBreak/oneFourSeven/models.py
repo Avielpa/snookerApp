@@ -852,5 +852,24 @@ class NewsArticle(models.Model):
         ordering = ['-published_at']
 
 
+# ================== DeviceToken Model ==================
+class DeviceToken(models.Model):
+    """
+    Stores device push tokens and favourites for push notifications.
+    No sign-up required — identified by a UUID generated on the device.
+    """
+    device_id = models.CharField(max_length=64, unique=True, db_index=True)
+    push_token = models.CharField(max_length=512)
+    favorite_player_ids = models.JSONField(default=list)   # player IDs from player profile stars
+    favorite_match_ids = models.JSONField(default=list)    # api_match_ids from match card stars
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
+    def __str__(self):
+        return (f"Device {self.device_id[:8]}... "
+                f"({len(self.favorite_player_ids)} players, {len(self.favorite_match_ids)} matches)")
+
+    class Meta:
+        verbose_name = "Device Token"
+        verbose_name_plural = "Device Tokens"
 

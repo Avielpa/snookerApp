@@ -54,6 +54,10 @@ class Command(BaseCommand):
         self.last_monthly_run = None            # Track last month monthly updates ran (YYYY-MM string)
         self.last_news_fetch = None             # Track last news RSS fetch time
         self.last_player_history_run = None     # Track last date player history updated during active tour
+        # Push notification dedup sets (reset at midnight UTC)
+        self.notified_live = set()              # api_match_ids already notified as live
+        self.notified_result = set()            # api_match_ids already notified as finished
+        self.last_notif_reset = None            # date when sets were last cleared
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -215,6 +219,143 @@ class Command(BaseCommand):
             logger.error(f'Failed to run live updates: {str(e)}')
             self.stdout.write(f'[FAILED] Live update failed: {str(e)}')
             raise
+
+        # Send push notifications after match data is updated (never raises)
+        self._send_match_notifications()
+
+    def _send_match_notifications(self):
+        """
+        Send push notifications to devices with favourited players/matches.
+        Called after each live update cycle. All errors are caught — never blocks updates.
+        """
+        try:
+            from oneFourSeven.models import DeviceToken, MatchesOfAnEvent, Player
+            from oneFourSeven.push_notifications import send_expo_push
+
+            # Reset dedup sets at midnight UTC
+            today = timezone.now().date()
+            if self.last_notif_reset != today:
+                self.notified_live.clear()
+                self.notified_result.clear()
+                self.last_notif_reset = today
+
+            # --- Helper: get player name ---
+            player_name_cache = {}
+
+            def get_name(pid):
+                if pid is None:
+                    return 'Unknown'
+                if pid not in player_name_cache:
+                    try:
+                        p = Player.objects.get(ID=pid)
+                        name = f"{p.FirstName or ''} {p.LastName or ''}".strip()
+                        player_name_cache[pid] = name or f"Player {pid}"
+                    except Player.DoesNotExist:
+                        player_name_cache[pid] = f"Player {pid}"
+                return player_name_cache[pid]
+
+            # --- Notify: matches that just went live (status=1) ---
+            live_matches = MatchesOfAnEvent.objects.filter(Status=1)
+            for match in live_matches:
+                mid = match.api_match_id
+                if mid is None or mid in self.notified_live:
+                    continue
+
+                p1_name = get_name(match.Player1ID)
+                p2_name = get_name(match.Player2ID)
+
+                # Devices following this specific match
+                match_devices = DeviceToken.objects.filter(favorite_match_ids__contains=[mid])
+                match_tokens = [d.push_token for d in match_devices if d.push_token]
+                if match_tokens:
+                    send_expo_push(match_tokens, '🎱 Live Now',
+                                   f'{p1_name} vs {p2_name}',
+                                   {'type': 'match_live', 'match_id': mid})
+                    self.stdout.write(f'[NOTIFY] Match live: {p1_name} vs {p2_name} → {len(match_tokens)} devices')
+
+                # Devices following Player 1
+                if match.Player1ID:
+                    p1_devices = DeviceToken.objects.filter(
+                        favorite_player_ids__contains=[match.Player1ID]
+                    )
+                    p1_tokens = [d.push_token for d in p1_devices if d.push_token]
+                    if p1_tokens:
+                        send_expo_push(p1_tokens, '🎱 Now Live',
+                                       f'{p1_name} vs {p2_name}',
+                                       {'type': 'player_live', 'player_id': match.Player1ID, 'match_id': mid})
+                        self.stdout.write(f'[NOTIFY] Player live: {p1_name} → {len(p1_tokens)} devices')
+
+                # Devices following Player 2
+                if match.Player2ID:
+                    p2_devices = DeviceToken.objects.filter(
+                        favorite_player_ids__contains=[match.Player2ID]
+                    )
+                    p2_tokens = [d.push_token for d in p2_devices if d.push_token]
+                    if p2_tokens:
+                        send_expo_push(p2_tokens, '🎱 Now Live',
+                                       f'{p2_name} vs {p1_name}',
+                                       {'type': 'player_live', 'player_id': match.Player2ID, 'match_id': mid})
+                        self.stdout.write(f'[NOTIFY] Player live: {p2_name} → {len(p2_tokens)} devices')
+
+                self.notified_live.add(mid)
+
+            # --- Notify: matches that just finished (status=3, ended recently) ---
+            finished_matches = MatchesOfAnEvent.objects.filter(
+                Status=3,
+                EndDate__gte=timezone.now() - timedelta(minutes=10),
+            )
+            for match in finished_matches:
+                mid = match.api_match_id
+                if mid is None or mid in self.notified_result:
+                    continue
+
+                p1_name = get_name(match.Player1ID)
+                p2_name = get_name(match.Player2ID)
+                s1 = match.Score1 if match.Score1 is not None else 0
+                s2 = match.Score2 if match.Score2 is not None else 0
+
+                # Match followers
+                match_devices = DeviceToken.objects.filter(favorite_match_ids__contains=[mid])
+                match_tokens = [d.push_token for d in match_devices if d.push_token]
+                if match_tokens:
+                    send_expo_push(match_tokens, '✅ Result',
+                                   f'{p1_name} {s1} – {s2} {p2_name}',
+                                   {'type': 'match_result', 'match_id': mid})
+                    self.stdout.write(f'[NOTIFY] Match result: {p1_name} {s1}-{s2} {p2_name} → {len(match_tokens)} devices')
+
+                # Player 1 followers
+                if match.Player1ID:
+                    won = match.WinnerID == match.Player1ID
+                    p1_devices = DeviceToken.objects.filter(
+                        favorite_player_ids__contains=[match.Player1ID]
+                    )
+                    p1_tokens = [d.push_token for d in p1_devices if d.push_token]
+                    if p1_tokens:
+                        outcome = 'won' if won else 'lost'
+                        send_expo_push(p1_tokens, f'✅ {p1_name} {outcome}',
+                                       f'{p1_name} {s1}–{s2} {p2_name}',
+                                       {'type': 'player_result', 'player_id': match.Player1ID, 'match_id': mid})
+                        self.stdout.write(f'[NOTIFY] Player result: {p1_name} {outcome} → {len(p1_tokens)} devices')
+
+                # Player 2 followers
+                if match.Player2ID:
+                    won = match.WinnerID == match.Player2ID
+                    p2_devices = DeviceToken.objects.filter(
+                        favorite_player_ids__contains=[match.Player2ID]
+                    )
+                    p2_tokens = [d.push_token for d in p2_devices if d.push_token]
+                    if p2_tokens:
+                        outcome = 'won' if won else 'lost'
+                        send_expo_push(p2_tokens, f'✅ {p2_name} {outcome}',
+                                       f'{p2_name} {s2}–{s1} {p1_name}',
+                                       {'type': 'player_result', 'player_id': match.Player2ID, 'match_id': mid})
+                        self.stdout.write(f'[NOTIFY] Player result: {p2_name} {outcome} → {len(p2_tokens)} devices')
+
+                self.notified_result.add(mid)
+
+        except Exception as e:
+            logger.error(f'[NOTIFY] Push notification error (non-fatal): {e}')
+            self.stdout.write(f'[NOTIFY] Error (non-fatal): {e}')
     
     def _check_player_history_update(self) -> bool:
         """
