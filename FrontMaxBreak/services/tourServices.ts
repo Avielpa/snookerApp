@@ -218,6 +218,8 @@ export const getActiveTournamentId = async (): Promise<number | null> => {
         }
         
         // Sixth priority: Any recent tournament
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
         const recentAnyTour = events
             .filter(tournament => {
                 if (!tournament.EndDate) return false;
