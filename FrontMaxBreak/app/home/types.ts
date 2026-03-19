@@ -48,10 +48,11 @@ export interface StatusHeaderListItem {
     id: string; 
 }
 
-export interface RoundHeaderListItem { 
-    type: 'roundHeader'; 
-    roundName: string; 
-    id: string; 
+export interface RoundHeaderListItem {
+    type: 'roundHeader';
+    roundName: string;
+    id: string;
+    round?: number | null;
 }
 
 export type ListItem = MatchListItem | StatusHeaderListItem | RoundHeaderListItem;

@@ -24,6 +24,7 @@ export const useHomeData = () => {
     const [lastLiveUpdate, setLastLiveUpdate] = useState<number>(0);
     const [tournamentPrize, setTournamentPrize] = useState<string | null>(null);
     const [currentTournamentId, setCurrentTournamentId] = useState<number | null>(null);
+    const [currentEventDetails, setCurrentEventDetails] = useState<any>(null);
 
     // Load tournament information
     const loadTournamentInfo = useCallback(async (isRefresh = false, specificTournamentId: number | null = null) => {
@@ -155,6 +156,7 @@ export const useHomeData = () => {
                 });
 
                 const eventDetails = detailsData as EventDetails | null;
+                setCurrentEventDetails(eventDetails);
                 const tourDisplayName = eventDetails?.Name ?? 'Tournament';
 
                 // Add tour type indicator for non-main tours
@@ -456,6 +458,10 @@ export const useHomeData = () => {
         // Live detection info
         isMonitoring,
         nextMatchInfo,
-        liveUpdateCount
+        liveUpdateCount,
+        // Round metadata for DrawTab + round headers
+        roundNames: (currentEventDetails as any)?.round_names ?? {},
+        roundFormats: (currentEventDetails as any)?.round_formats ?? {},
+        roundPrizesLoser: (currentEventDetails as any)?.round_prizes_loser ?? {},
     };
 };

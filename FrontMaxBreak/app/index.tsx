@@ -31,6 +31,15 @@ import { OtherLiveSection } from './home/components/OtherLiveSection';
 import { DrawTab } from './tour/components/DrawTab';
 import { MatchListItem } from './home/types';
 
+function formatRoundPrize(amount: any): string | null {
+    if (!amount) return null;
+    const n = typeof amount === 'number' ? amount : parseFloat(amount);
+    if (isNaN(n) || n <= 0) return null;
+    if (n >= 1000000) return `\u00a3${(n / 1000000).toFixed(1)}m`;
+    if (n >= 1000) return `\u00a3${Math.round(n / 1000)}k`;
+    return `\u00a3${Math.round(n)}`;
+}
+
 const HomeScreen = (): React.ReactElement | null => {
     const [activeFilter, setActiveFilter] = useState<ActiveFilterType>('all');
     const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
@@ -58,7 +67,10 @@ const HomeScreen = (): React.ReactElement | null => {
         selectedOtherTour,
         currentTournamentId,
         loadTournamentInfo,
-        handleOtherTourSelection
+        handleOtherTourSelection,
+        roundNames,
+        roundFormats,
+        roundPrizesLoser,
     } = useHomeData();
 
     const { matches: otherLiveMatches } = useOtherLiveMatches(currentTournamentId);
@@ -177,7 +189,9 @@ const HomeScreen = (): React.ReactElement | null => {
             );
         }
         if (item.type === 'roundHeader') {
-            return <RoundHeaderItem roundName={item.roundName} styles={styles} />;
+            const raw = item.round != null ? roundPrizesLoser[item.round] : undefined;
+            const prizeAmount = raw ? formatRoundPrize(raw) ?? undefined : undefined;
+            return <RoundHeaderItem roundName={item.roundName} styles={styles} prizeAmount={prizeAmount} />;
         }
         if (item.type === 'match') {
             return <MatchItem item={item} tourName={tourName} navigation={navigation} />;
@@ -271,7 +285,9 @@ const HomeScreen = (): React.ReactElement | null => {
                     ) : activeFilter === 'draw' ? (
                         <DrawTab
                             matches={rawMatches}
-                            roundNames={{}}
+                            roundNames={roundNames}
+                            roundFormats={roundFormats}
+                            roundPrizes={roundPrizesLoser}
                             colors={COLORS}
                         />
                     ) : (

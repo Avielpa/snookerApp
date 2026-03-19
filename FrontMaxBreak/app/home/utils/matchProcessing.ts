@@ -184,7 +184,8 @@ export const processMatchesForList = (matches: Match[]): ListItem[] => {
                     processedList.push({
                         type: 'roundHeader',
                         roundName: roundName,
-                        id: uniqueRoundHeaderId
+                        id: uniqueRoundHeaderId,
+                        round: currentRound,
                     });
                 }
                 
