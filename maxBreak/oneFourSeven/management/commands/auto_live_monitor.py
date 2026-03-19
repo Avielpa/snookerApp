@@ -486,8 +486,8 @@ class Command(BaseCommand):
             call_command('update_matches', '--empty-only')
             self.stdout.write('[SUCCESS] Empty events import done')
 
-            # Update upcoming tournaments round details (next 30 days)
-            call_command('update_round_details', '--upcoming-only', '--days', '30')
+            # Update round details for the current season (top 10 most recent events)
+            call_command('update_round_details', '--limit', '10')
             self.stdout.write('[SUCCESS] Daily round details updated')
 
             # Update player match history daily so profiles stay current

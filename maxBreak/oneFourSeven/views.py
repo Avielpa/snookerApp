@@ -1824,6 +1824,21 @@ def device_send_test_view(request):
     return Response({'status': 'sent', 'device_id': device_id})
 
 
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def refresh_round_details_view(request):
+    """Trigger round details fetch for an event. Body: {event_id}"""
+    from django.core.management import call_command
+    event_id = request.data.get('event_id')
+    if not event_id:
+        return Response({'error': 'event_id required'}, status=status.HTTP_400_BAD_REQUEST)
+    try:
+        call_command('update_round_details', '--event-id', str(event_id))
+        return Response({'status': 'ok', 'event_id': event_id})
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def device_favorites_view(request):
