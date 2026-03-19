@@ -1,15 +1,21 @@
 // app/tour/components/DrawTab.tsx
 // Self-contained tournament bracket — proper vertical alignment + connector lines.
 import React, { useMemo } from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import { useRouter } from 'expo-router';
+import { getNationalityFlag } from '../../../utils/nationalityFlag';
 
 export interface DrawMatch {
   id: number;
+  api_match_id?: number | null;
+  number?: number | null;
   round?: number | null;
   player1_name?: string;
   player2_name?: string;
   player1_id?: number | null;
   player2_id?: number | null;
+  player1_nationality?: string | null;
+  player2_nationality?: string | null;
   score1?: number | null;
   score2?: number | null;
   winner_id?: number | null;
@@ -19,6 +25,8 @@ export interface DrawMatch {
 interface DrawTabProps {
   matches: DrawMatch[];
   roundNames: Record<number, string>;
+  roundFormats?: Record<number, string>;
+  roundPrizes?: Record<number, any>;
   colors: any;
 }
 
@@ -35,36 +43,54 @@ function inferRoundName(round: number): string {
 }
 
 // ─── Layout constants ─────────────────────────────────────────────────────────
-const CARD_W = 185;
-const CARD_H = 70;   // estimated rendered height (2 player rows + divider)
-const BASE_SLOT = CARD_H + 8;   // 78px — height of one "slot" in the first round
-const CONN_W = 26;              // width of connector column between rounds
-const PILL_H = 52;              // round header pill height
+const CARD_W = 190;
+const CARD_H = 70;
+const BASE_SLOT = CARD_H + 8;
+const CONN_W = 26;
+const PILL_H = 60;
 const WIN_COLOR = '#FFA726';
 
-// Top offset of match j in roundIndex (0 = first/most-matches round)
 function getTop(roundIndex: number, matchIndex: number): number {
   const slotH = BASE_SLOT * Math.pow(2, roundIndex);
   return matchIndex * slotH + (slotH - CARD_H) / 2;
 }
 
-// Total height of the card area — determined by first round match count
 function totalHeight(firstRoundCount: number): number {
   return firstRoundCount * BASE_SLOT;
 }
 
+// ─── Format prize money ───────────────────────────────────────────────────────
+function formatPrize(amount: any): string | null {
+  if (!amount) return null;
+  const n = parseFloat(amount);
+  if (isNaN(n)) return null;
+  if (n >= 1000000) return `£${(n / 1000000).toFixed(1)}m`;
+  if (n >= 1000) return `£${Math.round(n / 1000)}k`;
+  return `£${n}`;
+}
+
 // ─── Single match card ────────────────────────────────────────────────────────
-function BracketMatchCard({ match, accent }: { match: DrawMatch; accent: string }) {
+function BracketMatchCard({
+  match,
+  accent,
+  onPress,
+}: {
+  match: DrawMatch;
+  accent: string;
+  onPress?: () => void;
+}) {
   const isFinished = match.status_code === 3;
   const isLive = match.status_code === 1 || match.status_code === 2;
   const p1Won = isFinished && match.winner_id != null && match.winner_id === match.player1_id;
   const p2Won = isFinished && match.winner_id != null && match.winner_id === match.player2_id;
   const hasScore = (isFinished || isLive) && match.score1 != null && match.score2 != null;
 
-  const p1Name = match.player1_name || 'TBD';
-  const p2Name = match.player2_name || 'TBD';
+  const p1Flag = match.player1_nationality ? getNationalityFlag(match.player1_nationality) + ' ' : '';
+  const p2Flag = match.player2_nationality ? getNationalityFlag(match.player2_nationality) + ' ' : '';
+  const p1Name = (match.player1_name || 'TBD');
+  const p2Name = (match.player2_name || 'TBD');
 
-  return (
+  const card = (
     <View style={[s.card, isLive && { borderColor: accent }]}>
       {/* Player 1 */}
       <View style={[s.playerRow, p1Won && { backgroundColor: accent + '18' }]}>
@@ -78,7 +104,7 @@ function BracketMatchCard({ match, accent }: { match: DrawMatch; accent: string 
           ]}
           numberOfLines={1}
         >
-          {p1Name}
+          {p1Flag}{p1Name}
         </Text>
         {hasScore && (
           <Text style={[s.score, { color: p1Won ? WIN_COLOR : '#9CA3AF' }]}>
@@ -101,7 +127,7 @@ function BracketMatchCard({ match, accent }: { match: DrawMatch; accent: string 
           ]}
           numberOfLines={1}
         >
-          {p2Name}
+          {p2Flag}{p2Name}
         </Text>
         {hasScore && (
           <Text style={[s.score, { color: p2Won ? WIN_COLOR : '#9CA3AF' }]}>
@@ -111,6 +137,15 @@ function BracketMatchCard({ match, accent }: { match: DrawMatch; accent: string 
       </View>
     </View>
   );
+
+  if (onPress) {
+    return (
+      <TouchableOpacity onPress={onPress} activeOpacity={0.75}>
+        {card}
+      </TouchableOpacity>
+    );
+  }
+  return card;
 }
 
 // ─── Connector lines between two adjacent round columns ──────────────────────
@@ -121,7 +156,7 @@ function ConnectorLines({
   accent,
 }: {
   roundIndex: number;
-  numMatches: number;   // matches in the SOURCE (left) round
+  numMatches: number;
   totalH: number;
   accent: string;
 }) {
@@ -135,35 +170,17 @@ function ConnectorLines({
     const parentCenter = getTop(roundIndex + 1, j) + CARD_H / 2;
     const midX = CONN_W / 2;
 
-    // Horizontal line: left edge → midX at child0 level
     lines.push(
-      <View key={`lh0-${j}`} style={{
-        position: 'absolute', top: child0Center - 0.5,
-        left: 0, width: midX, height: 1, backgroundColor: lineColor,
-      }} />
+      <View key={`lh0-${j}`} style={{ position: 'absolute', top: child0Center - 0.5, left: 0, width: midX, height: 1, backgroundColor: lineColor }} />
     );
-    // Horizontal line: left edge → midX at child1 level
     lines.push(
-      <View key={`lh1-${j}`} style={{
-        position: 'absolute', top: child1Center - 0.5,
-        left: 0, width: midX, height: 1, backgroundColor: lineColor,
-      }} />
+      <View key={`lh1-${j}`} style={{ position: 'absolute', top: child1Center - 0.5, left: 0, width: midX, height: 1, backgroundColor: lineColor }} />
     );
-    // Vertical line joining child0 and child1 at midX
     lines.push(
-      <View key={`lv-${j}`} style={{
-        position: 'absolute', top: child0Center,
-        left: midX - 0.5, width: 1,
-        height: child1Center - child0Center,
-        backgroundColor: lineColor,
-      }} />
+      <View key={`lv-${j}`} style={{ position: 'absolute', top: child0Center, left: midX - 0.5, width: 1, height: child1Center - child0Center, backgroundColor: lineColor }} />
     );
-    // Horizontal line: midX → right edge at parent level
     lines.push(
-      <View key={`lhp-${j}`} style={{
-        position: 'absolute', top: parentCenter - 0.5,
-        left: midX, width: midX, height: 1, backgroundColor: lineColor,
-      }} />
+      <View key={`lhp-${j}`} style={{ position: 'absolute', top: parentCenter - 0.5, left: midX, width: midX, height: 1, backgroundColor: lineColor }} />
     );
   }
 
@@ -175,8 +192,9 @@ function ConnectorLines({
 }
 
 // ─── Main DrawTab ─────────────────────────────────────────────────────────────
-export function DrawTab({ matches, roundNames, colors }: DrawTabProps) {
+export function DrawTab({ matches, roundNames, roundFormats, roundPrizes, colors }: DrawTabProps) {
   const accent: string = colors.accent || colors.primary || '#FFA726';
+  const router = useRouter();
 
   const bracketRounds = useMemo(() => {
     const byRound = new Map<number, DrawMatch[]>();
@@ -197,9 +215,15 @@ export function DrawTab({ matches, roundNames, colors }: DrawTabProps) {
     return mainRounds.map((r) => ({
       roundNumber: r,
       roundName: roundNames[r] || inferRoundName(r),
-      matches: byRound.get(r) || [],
+      roundFormat: roundFormats?.[r] ?? null,
+      roundPrize: roundPrizes?.[r] ?? null,
+      matches: (byRound.get(r) || []).slice().sort((a, b) => {
+        const aPos = a.number ?? a.api_match_id ?? a.id;
+        const bPos = b.number ?? b.api_match_id ?? b.id;
+        return aPos - bPos;
+      }),
     }));
-  }, [matches, roundNames]);
+  }, [matches, roundNames, roundFormats, roundPrizes]);
 
   if (bracketRounds.length === 0) {
     return (
@@ -231,7 +255,13 @@ export function DrawTab({ matches, roundNames, colors }: DrawTabProps) {
                 <Text style={[s.roundTitle, { color: accent }]} numberOfLines={1}>
                   {round.roundName}
                 </Text>
-                <Text style={[s.matchCount, { color: accent + 'AA' }]}>
+                {round.roundFormat && (
+                  <Text style={[s.roundMeta, { color: accent + 'BB' }]} numberOfLines={1}>
+                    {round.roundFormat}
+                    {round.roundPrize ? ` · ${formatPrize(round.roundPrize)}` : ''}
+                  </Text>
+                )}
+                <Text style={[s.matchCount, { color: accent + '88' }]}>
                   {round.matches.length} {round.matches.length === 1 ? 'match' : 'matches'}
                 </Text>
               </View>
@@ -243,7 +273,11 @@ export function DrawTab({ matches, roundNames, colors }: DrawTabProps) {
                     key={match.id}
                     style={{ position: 'absolute', top: getTop(roundIndex, matchIndex), left: 0, right: 0 }}
                   >
-                    <BracketMatchCard match={match} accent={accent} />
+                    <BracketMatchCard
+                      match={match}
+                      accent={accent}
+                      onPress={match.api_match_id ? () => router.push(`/match/${match.api_match_id}`) : undefined}
+                    />
                   </View>
                 ))}
               </View>
@@ -286,6 +320,11 @@ const s = StyleSheet.create({
   roundTitle: {
     fontSize: 13,
     fontFamily: 'PoppinsBold',
+  },
+  roundMeta: {
+    fontSize: 10,
+    fontFamily: 'PoppinsRegular',
+    marginTop: 1,
   },
   matchCount: {
     fontSize: 10,

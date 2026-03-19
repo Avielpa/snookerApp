@@ -37,46 +37,37 @@ from .scraper import (
 
 logger = logging.getLogger(__name__)
 
-# Inside get_player_names in views.py (Proposed NEW version)
 def get_player_names(player_ids: Set[Optional[int]]) -> Dict[int, str]:
-    """ Fetches player names efficiently for a given set of IDs. """
-    # Filter out None values and ensure IDs are integers
+    """Fetches player names efficiently, respecting SurnameFirst for Chinese/Eastern players."""
     valid_player_ids: Set[int] = {pid for pid in player_ids if isinstance(pid, int)}
 
     players_map: Dict[int, str] = {}
     if not valid_player_ids:
-        logger.debug("No valid player IDs provided to get_player_names.")
         return players_map
 
-    players = Player.objects.filter(ID__in=valid_player_ids)
-    for p in players:
-        # --- MODIFIED NAME ASSEMBLY ---
-        # Build name parts, including MiddleName if it exists
-        name_parts = []
-        if p.FirstName:
-            name_parts.append(p.FirstName)
-        if p.MiddleName:
-            name_parts.append(p.MiddleName)
-        if p.LastName:
-            name_parts.append(p.LastName)
-        
-        # Join with spaces to create full name
-        full_name = " ".join(name_parts)
-        # --- END MODIFIED NAME ASSEMBLY ---
-
-        # Provide a fallback using ID if name parts are all missing
-        if full_name:
-            players_map[p.ID] = full_name
+    for p in Player.objects.filter(ID__in=valid_player_ids):
+        if p.SurnameFirst:
+            # Eastern name order: e.g. "Zhao Xintong", "Ding Junhui"
+            name_parts = [p.LastName, p.FirstName]
         else:
-            players_map[p.ID] = f"Player {p.ID}"
+            # Western name order: e.g. "Ronnie O'Sullivan"
+            name_parts = [p.FirstName, p.MiddleName, p.LastName]
 
-    found_ids = set(players_map.keys())
-    missing_ids = valid_player_ids - found_ids
+        full_name = " ".join(filter(None, name_parts))
+        players_map[p.ID] = full_name if full_name else f"Player {p.ID}"
+
+    missing_ids = valid_player_ids - set(players_map.keys())
     if missing_ids:
         logger.warning(f"Could not find Player records for IDs: {missing_ids}")
-
-    logger.debug(f"Fetched names for {len(players_map)} out of {len(valid_player_ids)} requested player IDs.")
     return players_map
+
+
+def get_player_nationality_map(player_ids: Set[Optional[int]]) -> Dict[int, Optional[str]]:
+    """Fetches player nationalities for a given set of IDs."""
+    valid_ids: Set[int] = {pid for pid in player_ids if isinstance(pid, int)}
+    if not valid_ids:
+        return {}
+    return {p.ID: p.Nationality for p in Player.objects.filter(ID__in=valid_ids)}
 
 
 # --- Helper Function: _get_sortable_datetime ---
@@ -172,7 +163,7 @@ def _format_datetime_for_json(dt: Optional[datetime]) -> Optional[str]:
 
 
 # --- Helper Function: _build_match_dict ---
-def _build_match_dict(match: MatchesOfAnEvent, player_names_map: Dict[int, str], broadcasters: list = None) -> Dict[str, Any]:
+def _build_match_dict(match: MatchesOfAnEvent, player_names_map: Dict[int, str], broadcasters: list = None, player_nationality_map: Dict[int, Optional[str]] = None) -> Dict[str, Any]:
     """
     Builds the dictionary representation of a single match, suitable for JSON response.
     Includes player names fetched separately and formats dates.
@@ -223,6 +214,8 @@ def _build_match_dict(match: MatchesOfAnEvent, player_names_map: Dict[int, str],
         "details_url": match.DetailsUrl,
         "note": match.Note,
         "broadcasters": broadcasters if broadcasters is not None else [],
+        "player1_nationality": (player_nationality_map or {}).get(p1_id) if p1_id else None,
+        "player2_nationality": (player_nationality_map or {}).get(p2_id) if p2_id else None,
     }
     return match_data
 
@@ -557,16 +550,22 @@ def event_detail_view(request, event_id):
         data['winner_prize'] = None
         data['winner_prize_currency'] = None
 
-    # Round names from RoundDetails
+    # Round names + formats from RoundDetails
     try:
-        round_names = {
-            r.Round: r.RoundName
-            for r in RoundDetails.objects.filter(Event_id=event_id)
-            if r.RoundName
+        round_details_qs = list(RoundDetails.objects.filter(Event_id=event_id))
+        data['round_names'] = {r.Round: r.RoundName for r in round_details_qs if r.RoundName}
+        data['round_formats'] = {
+            r.Round: f"Best of {r.get_best_of_frames()}"
+            for r in round_details_qs if r.Distance
         }
-        data['round_names'] = round_names
+        data['round_prizes_loser'] = {
+            r.Round: r.Money
+            for r in round_details_qs if r.Money
+        }
     except Exception:
         data['round_names'] = {}
+        data['round_formats'] = {}
+        data['round_prizes_loser'] = {}
 
     return Response(data)
 
@@ -615,8 +614,9 @@ def matches_of_an_event_view(request, event_id):
         player_ids_to_fetch.add(match.Player1ID)
         player_ids_to_fetch.add(match.Player2ID)
 
-    # 2. Fetch names for these IDs in bulk using the helper
+    # 2. Fetch names + nationalities in bulk
     player_names_map = get_player_names(player_ids_to_fetch)
+    player_nationality_map = get_player_nationality_map(player_ids_to_fetch)
     # -----------------------------------------------------------------
 
     # Parse broadcasters from the event — safe: never breaks match loading
@@ -631,7 +631,7 @@ def matches_of_an_event_view(request, event_id):
     response_data = []
     try:
         for match in sorted_matches:
-            response_data.append(_build_match_dict(match, player_names_map, broadcasters=event_broadcasters))
+            response_data.append(_build_match_dict(match, player_names_map, broadcasters=event_broadcasters, player_nationality_map=player_nationality_map))
         logger.debug(f"Prepared {len(response_data)} matches for JSON response for event {event_id}.")
     except Exception as e:
         logger.error(f"Error building match dictionary for event {event_id}: {e}", exc_info=True)
@@ -671,13 +671,14 @@ def match_detail_view(request, api_match_id):
     # if not match_instance:
     #      raise Http404(f"Match with API ID {id_int} not found.")
 
-    # Fetch player names involved in this specific match
+    # Fetch player names + nationalities for this match
     player_ids_to_fetch: Set[Optional[int]] = {match_instance.Player1ID, match_instance.Player2ID}
     player_names_map = get_player_names(player_ids_to_fetch)
+    player_nationality_map = get_player_nationality_map(player_ids_to_fetch)
 
     # Build the response dictionary using the helper
     try:
-        match_data = _build_match_dict(match_instance, player_names_map)
+        match_data = _build_match_dict(match_instance, player_names_map, player_nationality_map=player_nationality_map)
         return Response(match_data)
     except Exception as e:
         logger.error(f"Error building dictionary for match api_id {api_match_id}: {e}", exc_info=True)
@@ -1784,6 +1785,43 @@ def device_favorites_matches_view(request):
     except Exception as e:
         logger.error(f'Error updating match favourites: {e}')
         return Response({'error': 'Internal error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def device_tokens_view(request):
+    """List registered devices (debug). Returns device_id + token prefix + fav counts."""
+    from .models import DeviceToken
+    devices = DeviceToken.objects.order_by('-updated_at')[:50]
+    return Response([{
+        'device_id': d.device_id,
+        'push_token_prefix': d.push_token[:35] + '...',
+        'player_favs': len(d.favorite_player_ids),
+        'match_favs': len(d.favorite_match_ids),
+        'updated_at': d.updated_at.isoformat(),
+    } for d in devices])
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def device_send_test_view(request):
+    """Send a test push notification. Body: {device_id}"""
+    from .models import DeviceToken
+    from .push_notifications import send_expo_push
+    device_id = request.data.get('device_id', '').strip()
+    if not device_id:
+        return Response({'error': 'device_id required'}, status=status.HTTP_400_BAD_REQUEST)
+    try:
+        device = DeviceToken.objects.get(device_id=device_id)
+    except DeviceToken.DoesNotExist:
+        return Response({'error': 'Device not found'}, status=status.HTTP_404_NOT_FOUND)
+    send_expo_push(
+        [device.push_token],
+        '🎱 MaxBreak Test',
+        'Push notifications are working!',
+        {'type': 'test'},
+    )
+    return Response({'status': 'sent', 'device_id': device_id})
 
 
 @api_view(['GET'])

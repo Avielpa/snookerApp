@@ -6,7 +6,7 @@ import { logger } from '../../../utils/logger';
 import { TOUCH_SLOP, MATCH_CONSTANTS } from '../../../utils/constants';
 import { getMatchPlayerNames, areScoresValid, normalizeScore } from '../../../utils/playerUtils';
 import { clearMatchCache } from '../../../services/matchServices';
-import { isMatchFavouriteSync, toggleMatchFavourite } from '../../../services/favoritesService';
+import { isMatchFavouriteSync, isMatchFavouriteAsync, toggleMatchFavourite } from '../../../services/favoritesService';
 import { ModernGlassCard } from '../../components/modern/ModernGlassCard';
 import { BroadcastBadge } from '../../components/match/BroadcastBadge';
 import { MatchListItem } from '../types';
@@ -37,6 +37,16 @@ export const MatchItem = ({
     const [isStarred, setIsStarred] = React.useState(
         item.api_match_id ? isMatchFavouriteSync(item.api_match_id) : false
     );
+
+    // Re-read from storage after async cache loads (fixes persistence across restarts)
+    React.useEffect(() => {
+        if (!item.api_match_id) return;
+        let cancelled = false;
+        isMatchFavouriteAsync(item.api_match_id).then((val) => {
+            if (!cancelled) setIsStarred(val);
+        });
+        return () => { cancelled = true; };
+    }, [item.api_match_id]);
 
     const handleStarPress = async () => {
         if (!item.api_match_id) return;

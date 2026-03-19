@@ -20,6 +20,7 @@ import { getDeviceTabConfig } from '../../config/deviceTabConfig';
 import { DeviceAwareFilterScrollView } from '../../components/DeviceAwareFilterScrollView';
 import { DeviceAwareFilterButton } from '../../components/DeviceAwareFilterButton';
 import { DrawTab } from './components/DrawTab';
+import { getNationalityFlag } from '../../utils/nationalityFlag';
 
 // --- Interfaces (Using snake_case for API fields) ---
 interface Match {
@@ -43,6 +44,8 @@ interface Match {
     number?: number | null;
     player1_name?: string;
     player2_name?: string;
+    player1_nationality?: string | null;
+    player2_nationality?: string | null;
     frame_scores?: string | null;
     sessions_str?: string | null;
     live_url?: string | null;
@@ -70,6 +73,8 @@ interface EventDetails {
     winner_prize?: number | null;
     winner_prize_currency?: string | null;
     round_names?: Record<number, string>;
+    round_formats?: Record<number, string>;
+    round_prizes_loser?: Record<number, any>;
 }
 // --- List Item Types ---
 type MatchCategory = 'livePlaying' | 'onBreak' | 'upcoming' | 'finished';
@@ -205,8 +210,10 @@ const getRoundName = (round: number | null | undefined): string => { if (round =
 // --- Reusable Components ---
 // MatchItem: Accessing properties using snake_case with consistent winner/score logic
 const MatchItem = React.memo(({ item, navigation }: { item: MatchListItem; navigation: any; }) => {
-    const p1=item.player1_name||(item.player1_id?`P${item.player1_id}`:'TBD');
-    const p2=item.player2_name||(item.player2_id?`P${item.player2_id}`:'TBD');
+    const p1Flag = item.player1_nationality ? getNationalityFlag(item.player1_nationality) + ' ' : '';
+    const p2Flag = item.player2_nationality ? getNationalityFlag(item.player2_nationality) + ' ' : '';
+    const p1=p1Flag+(item.player1_name||(item.player1_id?`P${item.player1_id}`:'TBD'));
+    const p2=p2Flag+(item.player2_name||(item.player2_id?`P${item.player2_id}`:'TBD'));
     
     // Ensure consistent winner and score logic
     let isP1Win = false;
@@ -670,6 +677,8 @@ const TournamentDetailsScreen = () => {
                         <DrawTab
                             matches={rawMatches}
                             roundNames={tournamentDetails?.round_names ?? {}}
+                            roundFormats={tournamentDetails?.round_formats ?? {}}
+                            roundPrizes={tournamentDetails?.round_prizes_loser ?? {}}
                             colors={COLORS}
                         />
                     </>

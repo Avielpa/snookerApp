@@ -17,6 +17,14 @@ interface Favorites {
 // In-memory cache — populated on first loadFavorites() call
 let cache: Favorites | null = null;
 
+// Warm cache immediately when module is imported so sync reads work on first render
+(async () => {
+    try {
+        const stored = await AsyncStorage.getItem(CACHE_KEY);
+        if (stored && !cache) cache = JSON.parse(stored);
+    } catch {}
+})();
+
 async function readCache(): Promise<Favorites> {
     if (cache) return cache;
     try {
@@ -104,6 +112,18 @@ export async function togglePlayerFavourite(playerId: number): Promise<boolean> 
         : [...favs.playerIds, playerId];
     await savePlayerFavorites(updated);
     return !isFav;
+}
+
+// ---- Async helpers (read from AsyncStorage when in-memory cache isn't warm yet) ----
+
+export async function isMatchFavouriteAsync(matchId: number): Promise<boolean> {
+    const favs = await readCache();
+    return favs.matchIds.includes(matchId);
+}
+
+export async function isPlayerFavouriteAsync(playerId: number): Promise<boolean> {
+    const favs = await readCache();
+    return favs.playerIds.includes(playerId);
 }
 
 export async function toggleMatchFavourite(matchId: number): Promise<boolean> {

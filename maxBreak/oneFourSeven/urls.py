@@ -41,6 +41,8 @@ from .views import (
     device_favorites_players_view,
     device_favorites_matches_view,
     device_favorites_view,
+    device_tokens_view,
+    device_send_test_view,
 )
 
 # --- DRF Router Setup ---
@@ -127,6 +129,8 @@ urlpatterns = [
     path('device/favorites/players/', device_favorites_players_view, name='device-favorites-players'),
     path('device/favorites/matches/', device_favorites_matches_view, name='device-favorites-matches'),
     path('device/favorites/', device_favorites_view, name='device-favorites'),
+    path('device/tokens/', device_tokens_view, name='device-tokens'),
+    path('device/send-test/', device_send_test_view, name='device-send-test'),
 
     # --- Debug URL ---
     # Debug endpoint for checking system status

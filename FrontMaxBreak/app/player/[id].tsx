@@ -18,7 +18,7 @@ import { createPlayerStyles } from './styles-modern';
 import { getNationalityFlag } from '../../utils/nationalityFlag';
 import { FormDots } from '../components/stats/FormDots';
 import { WinStreak } from '../components/stats/WinStreak';
-import { isPlayerFavouriteSync, togglePlayerFavourite } from '../../services/favoritesService';
+import { isPlayerFavouriteSync, isPlayerFavouriteAsync, togglePlayerFavourite } from '../../services/favoritesService';
 
 // Enhanced interfaces
 interface PlayerData {
@@ -109,6 +109,16 @@ export default function PlayerDetailsScreen(): React.ReactElement {
         playerId ? isPlayerFavouriteSync(playerId) : false
     );
     const COLORS = usePlayerColors();
+
+    // Re-read from storage after async cache loads (fixes persistence across restarts)
+    useEffect(() => {
+        if (!playerId) return;
+        let cancelled = false;
+        isPlayerFavouriteAsync(playerId).then((val) => {
+            if (!cancelled) setIsStarred(val);
+        });
+        return () => { cancelled = true; };
+    }, [playerId]);
 
     const handleStarPress = useCallback(async () => {
         if (!playerId) return;
