@@ -47,7 +47,7 @@ const CARD_W = 190;
 const CARD_H = 70;
 const BASE_SLOT = CARD_H + 8;
 const CONN_W = 26;
-const PILL_H = 60;
+const PILL_H = 80;
 const WIN_COLOR = '#FFA726';
 
 function getTop(roundIndex: number, matchIndex: number): number {
@@ -62,9 +62,11 @@ function totalHeight(firstRoundCount: number): number {
 // ─── Format prize money ───────────────────────────────────────────────────────
 function formatPrize(amount: any): string | null {
   if (!amount) return null;
-  const n = parseFloat(amount);
-  if (isNaN(n)) return null;
-  return `£${Math.round(n).toLocaleString('en-GB')}`;
+  const n = typeof amount === 'number' ? amount : parseFloat(amount);
+  if (isNaN(n) || n <= 0) return null;
+  if (n >= 1000000) return `\u00a3${(n / 1000000).toFixed(1)}m`;
+  if (n >= 1000) return `\u00a3${Math.round(n / 1000)}k`;
+  return `\u00a3${Math.round(n)}`;
 }
 
 // ─── Single match card ────────────────────────────────────────────────────────

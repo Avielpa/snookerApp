@@ -291,6 +291,15 @@ const RoundHeaderItem = ({ roundName, prizeAmount }: { roundName: string; prizeA
     </View> 
 );
 
+function formatRoundPrize(amount: any): string | null {
+    if (!amount) return null;
+    const n = typeof amount === 'number' ? amount : parseFloat(amount);
+    if (isNaN(n) || n <= 0) return null;
+    if (n >= 1000000) return `\u00a3${(n / 1000000).toFixed(1)}m`;
+    if (n >= 1000) return `\u00a3${Math.round(n / 1000)}k`;
+    return `\u00a3${Math.round(n)}`;
+}
+
 // --- Main Screen Component ---
 const TournamentDetailsScreen = () => {
     const params = useLocalSearchParams<{ eventId: string }>();
@@ -308,23 +317,8 @@ const TournamentDetailsScreen = () => {
     const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
     const [noData, setNoData] = useState<boolean>(false);
-    const [roundPrizes, setRoundPrizes] = useState<Record<number, string>>({});
-
-    const checkLoginStatus = useCallback(async () => { 
+    const checkLoginStatus = useCallback(async () => {
         // Empty function - no login check needed for now
-    }, []);
-
-    // Fetch round prizes for round header display
-    const fetchRoundPrizes = useCallback(async (eventId: number) => {
-        try {
-            const response = await fetch(`${process.env.EXPO_PUBLIC_API_BASE_URL || 'https://snookerapp.up.railway.app'}/oneFourSeven/round-prizes/${eventId}/`);
-            if (response.ok) {
-                const data = await response.json();
-                setRoundPrizes(data);
-            }
-        } catch (error) {
-            logger.warn('[PrizeData] Failed to fetch round prizes:', error);
-        }
     }, []);
 
     // --- Process matches function (Using snake_case and corrected loop) ---
@@ -523,8 +517,6 @@ const TournamentDetailsScreen = () => {
             const processedData = processMatchesForList(currentMatches, detailsTyped.round_names ?? {});
             setProcessedListData(processedData);
             
-            // Fetch round prizes for round headers (non-blocking)
-            fetchRoundPrizes(eventId);
         } catch (err: any) {
             setError(err.message || "Failed to load tournament data."); 
             setTournamentDetails(null); 
@@ -579,7 +571,8 @@ const TournamentDetailsScreen = () => {
     const renderListItem = ({ item }: { item: ListItem }): React.ReactElement | null => { // Explicit return type
         if (item.type === 'statusHeader') return <StatusHeaderItem title={item.title} iconName={item.iconName} />;
         if (item.type === 'roundHeader') {
-            const prizeAmount = item.round !== null && item.round !== undefined ? roundPrizes[item.round] : undefined;
+            const raw = item.round != null ? (tournamentDetails?.round_prizes_loser ?? {})[item.round] : undefined;
+            const prizeAmount = raw ? formatRoundPrize(raw) : undefined;
             return <RoundHeaderItem roundName={item.roundName} prizeAmount={prizeAmount} />;
         }
         if (item.type === 'match') return <MatchItem item={item} navigation={router} />;
