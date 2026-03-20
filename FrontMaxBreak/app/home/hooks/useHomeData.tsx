@@ -133,7 +133,8 @@ export const useHomeData = () => {
 
                 // Also fetch prize money data
                 try {
-                    const prizeResponse = await fetch(`${process.env.EXPO_PUBLIC_API_BASE_URL || 'https://snookerapp.up.railway.app'}/oneFourSeven/prize-money/${targetTournamentId}/`);
+                    const _apiBase = (process.env.EXPO_PUBLIC_API_BASE_URL || 'https://snookerapp.up.railway.app/oneFourSeven/').replace(/\/+$/, '');
+                    const prizeResponse = await fetch(`${_apiBase}/prize-money/${targetTournamentId}/`);
                     if (prizeResponse.ok) {
                         const prizeData = await prizeResponse.json();
                         const prizeText = prizeData?.winner?.formatted || null;

@@ -623,7 +623,7 @@ def matches_of_an_event_view(request, event_id):
     event_broadcasters = []
     try:
         from oneFourSeven.broadcast_parser import parse_broadcasters
-        event_broadcasters = parse_broadcasters(event.CommonNote or '')
+        event_broadcasters = parse_broadcasters(event_instance.CommonNote or '')
     except Exception as _e:
         logger.warning(f"[event_detail_view] broadcast parse failed for event {event_id}: {_e}")
 
@@ -1751,12 +1751,10 @@ def device_favorites_players_view(request):
         return Response({'error': 'player_ids must be a list'}, status=status.HTTP_400_BAD_REQUEST)
 
     try:
-        device = DeviceToken.objects.get(device_id=device_id)
+        device, _ = DeviceToken.objects.get_or_create(device_id=device_id)
         device.favorite_player_ids = [int(pid) for pid in player_ids if pid is not None]
         device.save(update_fields=['favorite_player_ids', 'updated_at'])
         return Response({'status': 'ok', 'player_ids': device.favorite_player_ids})
-    except DeviceToken.DoesNotExist:
-        return Response({'error': 'Device not registered'}, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
         logger.error(f'Error updating player favourites: {e}')
         return Response({'error': 'Internal error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -1776,12 +1774,10 @@ def device_favorites_matches_view(request):
         return Response({'error': 'match_ids must be a list'}, status=status.HTTP_400_BAD_REQUEST)
 
     try:
-        device = DeviceToken.objects.get(device_id=device_id)
+        device, _ = DeviceToken.objects.get_or_create(device_id=device_id)
         device.favorite_match_ids = [int(mid) for mid in match_ids if mid is not None]
         device.save(update_fields=['favorite_match_ids', 'updated_at'])
         return Response({'status': 'ok', 'match_ids': device.favorite_match_ids})
-    except DeviceToken.DoesNotExist:
-        return Response({'error': 'Device not registered'}, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
         logger.error(f'Error updating match favourites: {e}')
         return Response({'error': 'Internal error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
