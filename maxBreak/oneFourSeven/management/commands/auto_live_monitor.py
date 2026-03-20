@@ -257,7 +257,8 @@ class Command(BaseCommand):
                 return player_name_cache[pid]
 
             # --- Notify: matches that just went live (status=1) ---
-            live_matches = MatchesOfAnEvent.objects.filter(Status=1)
+            recently_started = timezone.now() - timedelta(minutes=4)
+            live_matches = MatchesOfAnEvent.objects.filter(Status=1, StartDate__gte=recently_started)
             for match in live_matches:
                 mid = match.api_match_id
                 if mid is None or mid in self.notified_live:
@@ -355,10 +356,10 @@ class Command(BaseCommand):
 
                 self.notified_result.add(mid)
 
-            # --- Notify: matches starting in the next 10–20 minutes (15-min heads-up) ---
+            # --- Notify: matches starting in the next 5–30 minutes (15-min heads-up) ---
             now = timezone.now()
-            window_start = now + timedelta(minutes=10)
-            window_end = now + timedelta(minutes=20)
+            window_start = now + timedelta(minutes=5)
+            window_end = now + timedelta(minutes=30)
             upcoming_matches = MatchesOfAnEvent.objects.filter(
                 Status=0,
                 ScheduledDate__gte=window_start,
