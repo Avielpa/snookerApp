@@ -64,15 +64,12 @@ const PILL_H = 80;
 const WIN_COLOR = '#FFA726';
 
 function getTop(roundIndex: number, matchIndex: number, firstRoundCount: number = 8): number {
-  // Scale slot height so first round fills the bracket regardless of match count
-  const scale = Math.max(1, 8 / firstRoundCount);
-  const slotH = BASE_SLOT * scale * Math.pow(2, roundIndex);
+  const slotH = BASE_SLOT * Math.pow(2, roundIndex);
   return matchIndex * slotH + (slotH - CARD_H) / 2;
 }
 
 function totalHeight(firstRoundCount: number): number {
-  const scale = Math.max(1, 8 / firstRoundCount);
-  return firstRoundCount * BASE_SLOT * scale;
+  return firstRoundCount * BASE_SLOT;
 }
 
 // ─── Format prize money ───────────────────────────────────────────────────────
@@ -224,15 +221,38 @@ export function DrawTab({ matches, roundNames, roundFormats, roundPrizes, colors
 
     const allRounds = Array.from(byRound.keys()).sort((a, b) => a - b);
 
-    // Main draw = rounds with ≤ 8 matches (R16, QF, SF, Final)
-    let mainRounds = allRounds.filter((r) => (byRound.get(r)?.length ?? 0) <= 8);
-    if (mainRounds.length === 0 && allRounds.length > 0) {
-      mainRounds = allRounds.slice(-Math.min(4, allRounds.length));
+    // Build bracket by chaining backwards from the last round:
+    // valid bracket = chain where each earlier round has exactly 2x the matches
+    // (e.g. Final=1, SF=2, QF=4, R16=8) — max 4 rounds shown
+    let chain: number[] = [];
+    // Find last round with ≤ 8 matches as starting point
+    for (let i = allRounds.length - 1; i >= 0; i--) {
+      if ((byRound.get(allRounds[i])?.length ?? 0) <= 8) {
+        chain = [allRounds[i]];
+        break;
+      }
     }
+    if (chain.length > 0) {
+      let needed = (byRound.get(chain[0])?.length ?? 1) * 2;
+      const startIdx = allRounds.indexOf(chain[0]) - 1;
+      for (let i = startIdx; i >= 0 && chain.length < 4; i--) {
+        const r = allRounds[i];
+        const count = byRound.get(r)?.length ?? 0;
+        if (count === needed) {
+          chain.unshift(r);
+          needed = count * 2;
+        }
+      }
+    }
+
+    // Fallback: if no chain found, take last 4 rounds with ≤ 8 matches
+    let mainRounds = chain.length > 0
+      ? chain
+      : allRounds.filter((r) => (byRound.get(r)?.length ?? 0) <= 8).slice(-4);
 
     return mainRounds.map((r) => ({
       roundNumber: r,
-      roundName: roundNames[r] || inferRoundNameFromCount(byRound.get(r)!.length) || inferRoundName(r),
+      roundName: roundNames[r] || inferRoundNameFromCount(byRound.get(r)!.length),
       roundFormat: roundFormats?.[r] ?? null,
       roundPrize: roundPrizes?.[r] ?? null,
       matches: (byRound.get(r) || []).slice().sort((a, b) => {
