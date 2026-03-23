@@ -30,7 +30,20 @@ interface DrawTabProps {
   colors: any;
 }
 
-// ─── Round name inference (fallback when round_names not provided) ────────────
+// ─── Round name inference ─────────────────────────────────────────────────────
+// Primary: infer from match count (works regardless of API round numbering)
+function inferRoundNameFromCount(count: number): string {
+  if (count === 1) return 'Final';
+  if (count === 2) return 'Semi-Finals';
+  if (count === 4) return 'Quarter-Finals';
+  if (count === 8) return 'Last 16';
+  if (count === 16) return 'Last 32';
+  if (count === 32) return 'Last 64';
+  if (count === 64) return 'Last 128';
+  return `Round (${count} matches)`;
+}
+
+// Fallback: infer from round number (only used when count isn't a clean power of 2)
 function inferRoundName(round: number): string {
   if (round >= 15) return 'Final';
   if (round === 14) return 'Semi-Finals';
@@ -50,13 +63,16 @@ const CONN_W = 26;
 const PILL_H = 80;
 const WIN_COLOR = '#FFA726';
 
-function getTop(roundIndex: number, matchIndex: number): number {
-  const slotH = BASE_SLOT * Math.pow(2, roundIndex);
+function getTop(roundIndex: number, matchIndex: number, firstRoundCount: number = 8): number {
+  // Scale slot height so first round fills the bracket regardless of match count
+  const scale = Math.max(1, 8 / firstRoundCount);
+  const slotH = BASE_SLOT * scale * Math.pow(2, roundIndex);
   return matchIndex * slotH + (slotH - CARD_H) / 2;
 }
 
 function totalHeight(firstRoundCount: number): number {
-  return firstRoundCount * BASE_SLOT;
+  const scale = Math.max(1, 8 / firstRoundCount);
+  return firstRoundCount * BASE_SLOT * scale;
 }
 
 // ─── Format prize money ───────────────────────────────────────────────────────
@@ -152,11 +168,13 @@ function BracketMatchCard({
 function ConnectorLines({
   roundIndex,
   numMatches,
+  numMatchesFirstRound,
   totalH,
   accent,
 }: {
   roundIndex: number;
   numMatches: number;
+  numMatchesFirstRound: number;
   totalH: number;
   accent: string;
 }) {
@@ -165,9 +183,9 @@ function ConnectorLines({
   const lines: React.ReactElement[] = [];
 
   for (let j = 0; j < pairs; j++) {
-    const child0Center = getTop(roundIndex, j * 2) + CARD_H / 2;
-    const child1Center = getTop(roundIndex, j * 2 + 1) + CARD_H / 2;
-    const parentCenter = getTop(roundIndex + 1, j) + CARD_H / 2;
+    const child0Center = getTop(roundIndex, j * 2, numMatchesFirstRound) + CARD_H / 2;
+    const child1Center = getTop(roundIndex, j * 2 + 1, numMatchesFirstRound) + CARD_H / 2;
+    const parentCenter = getTop(roundIndex + 1, j, numMatchesFirstRound) + CARD_H / 2;
     const midX = CONN_W / 2;
 
     lines.push(
@@ -214,7 +232,7 @@ export function DrawTab({ matches, roundNames, roundFormats, roundPrizes, colors
 
     return mainRounds.map((r) => ({
       roundNumber: r,
-      roundName: roundNames[r] || inferRoundName(r),
+      roundName: roundNames[r] || inferRoundNameFromCount(byRound.get(r)!.length) || inferRoundName(r),
       roundFormat: roundFormats?.[r] ?? null,
       roundPrize: roundPrizes?.[r] ?? null,
       matches: (byRound.get(r) || []).slice().sort((a, b) => {
@@ -275,7 +293,7 @@ export function DrawTab({ matches, roundNames, roundFormats, roundPrizes, colors
                 {round.matches.map((match, matchIndex) => (
                   <View
                     key={match.id}
-                    style={{ position: 'absolute', top: getTop(roundIndex, matchIndex), left: 0, right: 0 }}
+                    style={{ position: 'absolute', top: getTop(roundIndex, matchIndex, firstRoundCount), left: 0, right: 0 }}
                   >
                     <BracketMatchCard
                       match={match}
@@ -293,6 +311,7 @@ export function DrawTab({ matches, roundNames, roundFormats, roundPrizes, colors
                 <ConnectorLines
                   roundIndex={roundIndex}
                   numMatches={round.matches.length}
+                  numMatchesFirstRound={firstRoundCount}
                   totalH={cardAreaH}
                   accent={accent}
                 />
