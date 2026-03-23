@@ -592,106 +592,68 @@ export default function PlayerDetailsScreen(): React.ReactElement {
                         return null;
                     };
 
+                    const resultColor = isWinner ? '#22C55E' : '#EF4444';
+                    const dateStr = (match.scheduled_date || match.start_date)
+                        ? new Date(match.scheduled_date || match.start_date!).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' })
+                        : null;
+
                     return (
                         <GlassCard key={`${match.api_match_id}-${index}`} style={{
                             marginBottom: 8,
-                            paddingVertical: 8,
-                            paddingHorizontal: 10,
-                            borderLeftWidth: isLive ? 3 : 0,
-                            borderLeftColor: isLive ? '#FF3B30' : 'transparent'
+                            paddingVertical: 10,
+                            paddingHorizontal: 12,
+                            borderLeftWidth: 3,
+                            borderLeftColor: isLive ? '#FF3B30' : isFinished ? resultColor : 'rgba(255,255,255,0.1)',
                         }}>
-                            {/* Header: Event + Round - Single compact row */}
-                            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 5 }}>
-                                {isLive && (
-                                    <View style={{
-                                        backgroundColor: '#FF3B30',
-                                        paddingHorizontal: 4,
-                                        paddingVertical: 1,
-                                        borderRadius: 2,
-                                        marginRight: 5
-                                    }}>
-                                        <Text style={{ color: '#FFF', fontSize: 7, fontWeight: 'bold', letterSpacing: 0.5 }}>LIVE</Text>
-                                    </View>
-                                )}
-                                <Text style={{ fontSize: 10, color: COLORS.textSecondary, fontWeight: '600', flex: 1 }} numberOfLines={1}>
+                            {/* Row 1: Tournament name + date */}
+                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                                <Text style={{ fontSize: 11, color: COLORS.textSecondary, fontWeight: '600', flex: 1 }} numberOfLines={1}>
                                     {match.event_name || 'Unknown Event'}
                                 </Text>
-                                {getRoundDisplay() && (
-                                    <Text style={{ fontSize: 8, color: COLORS.textMuted, marginLeft: 6 }}>
-                                        {getRoundDisplay()}
+                                {dateStr && (
+                                    <Text style={{ fontSize: 10, color: COLORS.textMuted, marginLeft: 8 }}>
+                                        {dateStr}
                                     </Text>
                                 )}
                             </View>
 
-                            {/* Main row: Player score - Opponent score vs Opponent name */}
-                            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 5 }}>
-                                {/* Score display - prominent */}
+                            {/* Row 2: Score + opponent + round */}
+                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                {/* Result badge */}
                                 <View style={{
-                                    flexDirection: 'row',
-                                    alignItems: 'center',
-                                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                                    paddingHorizontal: 8,
-                                    paddingVertical: 4,
+                                    backgroundColor: isLive ? '#FF3B30' : isFinished ? resultColor : 'rgba(255,255,255,0.12)',
+                                    paddingHorizontal: 6,
+                                    paddingVertical: 3,
                                     borderRadius: 4,
-                                    marginRight: 8
+                                    marginRight: 8,
+                                    minWidth: 36,
+                                    alignItems: 'center',
                                 }}>
-                                    {/* Player Score: green if won, red if lost */}
-                                    <Text style={[
-                                        { fontSize: 18, fontWeight: 'bold' },
-                                        isFinished ? (isWinner ? { color: '#22C55E' } : { color: '#EF4444' }) : { color: '#FFFFFF' },
-                                        isLive && { color: '#FF3B30' }
-                                    ]}>
-                                        {playerScore ?? '0'}
-                                    </Text>
-                                    <Text style={{ fontSize: 12, color: COLORS.textMuted, marginHorizontal: 5, fontWeight: '700' }}>-</Text>
-                                    {/* Opponent Score: red if player won, green if player lost */}
-                                    <Text style={[
-                                        { fontSize: 18, fontWeight: 'bold' },
-                                        isFinished ? (!isWinner ? { color: '#22C55E' } : { color: '#EF4444' }) : { color: '#FFFFFF' },
-                                        isLive && { color: '#FFD700' }
-                                    ]}>
-                                        {opponentScore ?? '0'}
+                                    <Text style={{ color: '#FFF', fontSize: 9, fontWeight: '800', letterSpacing: 0.5 }}>
+                                        {isLive ? 'LIVE' : isFinished ? (isWinner ? 'W' : 'L') : 'UP'}
                                     </Text>
                                 </View>
 
-                                {/* Opponent name */}
-                                <Text style={{ fontSize: 12, color: COLORS.textPrimary, flex: 1, fontWeight: '600' }} numberOfLines={1}>
-                                    vs {opponentName || 'Unknown'}
+                                {/* Score */}
+                                <Text style={{ fontSize: 20, fontWeight: 'bold', color: isFinished ? resultColor : '#FFF', marginRight: 6 }}>
+                                    {playerScore ?? '-'}
                                 </Text>
-                            </View>
+                                <Text style={{ fontSize: 13, color: COLORS.textMuted, marginRight: 6 }}>–</Text>
+                                <Text style={{ fontSize: 20, fontWeight: 'bold', color: isFinished ? (isWinner ? '#EF4444' : '#22C55E') : '#FFF', marginRight: 10 }}>
+                                    {opponentScore ?? '-'}
+                                </Text>
 
-                            {/* Footer: Status + Date - More compact */}
-                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <View style={{
-                                    backgroundColor: match.status === 1 ? '#FF3B30' :
-                                                   match.status === 2 ? '#FF9500' :
-                                                   match.status === 0 ? '#2196F3' :
-                                                   isWinner ? '#4CAF50' : 'rgba(255, 255, 255, 0.15)',
-                                    paddingHorizontal: 5,
-                                    paddingVertical: 2,
-                                    borderRadius: 3
-                                }}>
-                                    <Text style={{
-                                        color: '#FFF',
-                                        fontSize: 8,
-                                        fontWeight: '700',
-                                        letterSpacing: 0.3
-                                    }}>
-                                        {match.status === 0 ? 'UPCOMING' :
-                                         match.status === 1 ? 'LIVE' :
-                                         match.status === 2 ? 'BREAK' :
-                                         isWinner ? 'WON' : 'LOST'}
+                                {/* Opponent + round */}
+                                <View style={{ flex: 1 }}>
+                                    <Text style={{ fontSize: 12, color: COLORS.textPrimary, fontWeight: '600' }} numberOfLines={1}>
+                                        vs {opponentName || 'Unknown'}
                                     </Text>
+                                    {getRoundDisplay() && (
+                                        <Text style={{ fontSize: 10, color: COLORS.textMuted, marginTop: 1 }}>
+                                            {getRoundDisplay()}
+                                        </Text>
+                                    )}
                                 </View>
-                                {match.scheduled_date && (
-                                    <Text style={{ fontSize: 9, color: COLORS.textMuted }}>
-                                        {new Date(match.scheduled_date).toLocaleDateString('en-GB', {
-                                            day: 'numeric',
-                                            month: 'short',
-                                            year: '2-digit'
-                                        })}
-                                    </Text>
-                                )}
                             </View>
                         </GlassCard>
                     );

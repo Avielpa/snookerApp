@@ -1671,9 +1671,26 @@ def player_match_history(request, player_id):
             F('start_date').desc(nulls_last=True)
         )
 
-        # Apply limit
+        # Apply limit — fetch extra to account for deduplication
         limit = int(request.query_params.get('limit', 20))
-        matches = matches[:limit]
+        matches = list(matches[:limit * 3])
+
+        # Deduplicate: same event + round + players can appear twice when the API
+        # assigns a new match ID after the draw is made (pre-draw TBD vs actual match).
+        # Keep the record with the higher status (3=finished wins over 0=scheduled).
+        seen: dict = {}
+        deduped = []
+        for m in matches:
+            key = (m.event_id, m.round_number, m.player1_id or 0, m.player2_id or 0)
+            if key not in seen:
+                seen[key] = m
+                deduped.append(m)
+            else:
+                existing = seen[key]
+                if (m.status or 0) > (existing.status or 0):
+                    seen[key] = m
+                    deduped[deduped.index(existing)] = m
+        matches = deduped[:limit]
 
         # Serialize
         serializer = PlayerMatchHistorySerializer(matches, many=True)
