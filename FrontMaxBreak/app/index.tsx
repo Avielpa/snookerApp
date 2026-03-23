@@ -68,6 +68,7 @@ const HomeScreen = (): React.ReactElement | null => {
         currentTournamentId,
         loadTournamentInfo,
         handleOtherTourSelection,
+        rawMatches,
         roundNames,
         roundFormats,
         roundPrizesLoser,
@@ -161,11 +162,7 @@ const HomeScreen = (): React.ReactElement | null => {
         return result;
     }, [processedListData, activeFilter, collapsedSections]);
 
-    // Raw matches for DrawTab — derived from processedListData, no extra fetch
-    const rawMatches = useMemo(
-        () => processedListData.filter((item): item is MatchListItem => item.type === 'match'),
-        [processedListData]
-    );
+    // rawMatches for DrawTab comes directly from useHomeData (unprocessed, no dedup)
 
     // Create styles with dynamic colors
     const styles = createStyles(COLORS);

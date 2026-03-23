@@ -446,6 +446,7 @@ export const useHomeData = () => {
 
     return {
         processedListData,
+        rawMatches: currentMatches,
         tourName,
         tournamentPrize,
         loading,
