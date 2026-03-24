@@ -39,10 +39,10 @@ export function MatchRow({ match }: Props) {
                 numberOfLines={1}
                 style={{
                     flex: 1,
-                    color: p2Won ? '#4B5563' : '#E5E7EB',
+                    color: p1Won ? '#FFFFFF' : (p2Won ? '#4B5563' : '#9CA3AF'),
                     fontSize: 12,
                     fontFamily: p1Won ? 'PoppinsBold' : 'PoppinsRegular',
-                    opacity: p2Won ? 0.7 : 1,
+                    opacity: p2Won ? 0.6 : 1,
                 }}
             >
                 {p1Flag}{match.player1_name}
@@ -61,11 +61,11 @@ export function MatchRow({ match }: Props) {
                 numberOfLines={1}
                 style={{
                     flex: 1,
-                    color: p1Won ? '#4B5563' : '#E5E7EB',
+                    color: p2Won ? '#FFFFFF' : (p1Won ? '#4B5563' : '#9CA3AF'),
                     fontSize: 12,
                     fontFamily: p2Won ? 'PoppinsBold' : 'PoppinsRegular',
                     textAlign: 'right',
-                    opacity: p1Won ? 0.7 : 1,
+                    opacity: p1Won ? 0.6 : 1,
                 }}
             >
                 {match.player2_name}{p2Flag ? ' ' + p2Flag : ''}
