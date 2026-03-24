@@ -222,7 +222,9 @@ export async function requestPushPermissionAndGetToken(): Promise<string | null>
             return null;
         }
 
-        const tokenData = await Notifications.getExpoPushTokenAsync();
+        const tokenData = await Notifications.getExpoPushTokenAsync({
+            projectId: 'f7e50a46-3a59-4341-af3c-06828f5eb7bd',
+        });
         logger.log('[Push] Got push token');
         return tokenData.data;
     } catch (error) {
