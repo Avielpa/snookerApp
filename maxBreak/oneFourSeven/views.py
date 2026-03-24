@@ -1460,13 +1460,10 @@ def other_tours_view(request):
     today = date.today()
     # Snooker season starts in May; if before May, current season = last year
     current_season = today.year if today.month >= 5 else today.year - 1
-    # Show events that ended within the last 60 days OR haven't ended yet
-    cutoff = today - timedelta(days=60)
 
+    # Show all events from the current season
     events_qs = OtherTourEvent.objects.filter(
         season=current_season,
-    ).filter(
-        models.Q(end_date__isnull=True) | models.Q(end_date__gte=cutoff)
     ).order_by('-start_date')
 
     if tour_filter:
