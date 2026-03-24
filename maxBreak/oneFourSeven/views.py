@@ -1446,6 +1446,68 @@ def upcoming_matches_fallback_view(request):
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
+def other_tours_view(request):
+    """
+    Returns matches from other tours (women's, seniors, Q tour) grouped by event.
+    Accepts optional ?tour=womens|seniors|qtour to filter by a single tour.
+    Only returns events from the current season that have at least one match.
+    Frontend uses this for the 'Other Tours' tab — never calls snooker.org directly.
+    """
+    from oneFourSeven.models import OtherTourEvent, OtherTourMatch
+    from datetime import date, timedelta
+
+    tour_filter = request.query_params.get('tour')
+    today = date.today()
+    season_start = date(today.year, 1, 1)
+    # Show events that ended within the last 60 days OR haven't ended yet
+    cutoff = today - timedelta(days=60)
+
+    events_qs = OtherTourEvent.objects.filter(
+        start_date__gte=season_start,
+    ).filter(
+        models.Q(end_date__isnull=True) | models.Q(end_date__gte=cutoff)
+    ).order_by('-start_date')
+
+    if tour_filter:
+        events_qs = events_qs.filter(tour=tour_filter)
+
+    result = []
+    for event in events_qs:
+        matches = OtherTourMatch.objects.filter(event=event).order_by('round', 'number')
+        if not matches.exists():
+            continue
+        result.append({
+            'event_id': event.snooker_id,
+            'event_name': event.name,
+            'tour': event.tour,
+            'start_date': event.start_date,
+            'end_date': event.end_date,
+            'city': event.city,
+            'country': event.country,
+            'matches': [
+                {
+                    'id': m.snooker_id,
+                    'round': m.round,
+                    'number': m.number,
+                    'player1_name': m.player1_name,
+                    'player2_name': m.player2_name,
+                    'player1_nationality': m.player1_nationality,
+                    'player2_nationality': m.player2_nationality,
+                    'score1': m.score1,
+                    'score2': m.score2,
+                    'winner_id': m.winner_id,
+                    'status': m.status,
+                    'scheduled_date': m.scheduled_date,
+                }
+                for m in matches
+            ]
+        })
+
+    return Response(result)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
 def all_live_matches_view(request):
     """
     Returns live/on-break matches from non-main tours only (women's, seniors, other).

@@ -495,6 +495,10 @@ class Command(BaseCommand):
             call_command('update_player_details', '--top', '128')
             self.stdout.write('[SUCCESS] Daily player details updated')
 
+            # Sync other tours (women's, seniors, Q tour) into separate tables
+            call_command('sync_other_tours')
+            self.stdout.write('[SUCCESS] Other tours synced')
+
         except Exception as e:
             logger.error(f'Daily updates failed: {str(e)}')
             self.stdout.write(f'[FAILED] Daily updates failed: {str(e)}')

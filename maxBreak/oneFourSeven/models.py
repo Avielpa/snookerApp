@@ -852,6 +852,86 @@ class NewsArticle(models.Model):
         ordering = ['-published_at']
 
 
+# ================== Other Tours Models ==================
+
+class OtherTourEvent(models.Model):
+    """
+    Stores events from non-main tours: women's, seniors, Q tour.
+    Completely separate from the main Event table — zero risk to main tour data.
+    """
+    snooker_id = models.IntegerField(unique=True, db_index=True)
+    name = models.CharField(max_length=255)
+    tour = models.CharField(max_length=50)          # womens / seniors / qtour / other
+    season = models.IntegerField(null=True, blank=True)
+    start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
+    venue = models.CharField(max_length=255, null=True, blank=True)
+    city = models.CharField(max_length=100, null=True, blank=True)
+    country = models.CharField(max_length=100, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.name} ({self.tour}, {self.season})"
+
+    class Meta:
+        verbose_name = "Other Tour Event"
+        verbose_name_plural = "Other Tour Events"
+        ordering = ['-start_date']
+
+
+class OtherTourPlayer(models.Model):
+    """
+    Stores players from other tours not present in the main Player table.
+    Grows over time — each sync checks here before hitting the snooker.org API.
+    """
+    snooker_id = models.IntegerField(unique=True, db_index=True)
+    first_name = models.CharField(max_length=100)
+    last_name = models.CharField(max_length=100)
+    nationality = models.CharField(max_length=50, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.first_name} {self.last_name} (id={self.snooker_id})"
+
+    class Meta:
+        verbose_name = "Other Tour Player"
+        verbose_name_plural = "Other Tour Players"
+
+
+class OtherTourMatch(models.Model):
+    """
+    Stores matches from other tours. Player names are denormalized directly
+    on the row so the API never needs a join at read time.
+    """
+    snooker_id = models.IntegerField(unique=True, db_index=True)
+    event = models.ForeignKey(OtherTourEvent, on_delete=models.CASCADE, related_name='matches')
+    round = models.IntegerField()
+    number = models.IntegerField()
+    player1_id = models.IntegerField(null=True, blank=True)
+    player2_id = models.IntegerField(null=True, blank=True)
+    player1_name = models.CharField(max_length=150, default='TBD')
+    player2_name = models.CharField(max_length=150, default='TBD')
+    player1_nationality = models.CharField(max_length=50, null=True, blank=True)
+    player2_nationality = models.CharField(max_length=50, null=True, blank=True)
+    score1 = models.IntegerField(null=True, blank=True)
+    score2 = models.IntegerField(null=True, blank=True)
+    winner_id = models.IntegerField(null=True, blank=True)
+    status = models.IntegerField(default=0)         # 0=scheduled 1=live 2=finished
+    scheduled_date = models.DateTimeField(null=True, blank=True)
+    start_date = models.DateTimeField(null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.player1_name} vs {self.player2_name} (R{self.round})"
+
+    class Meta:
+        verbose_name = "Other Tour Match"
+        verbose_name_plural = "Other Tour Matches"
+        unique_together = ('event', 'round', 'number')
+        ordering = ['round', 'number']
+
+
 # ================== DeviceToken Model ==================
 class DeviceToken(models.Model):
     """

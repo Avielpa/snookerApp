@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import MatchesOfAnEvent, Player, Event, Ranking, DeviceToken
+from .models import MatchesOfAnEvent, Player, Event, Ranking, DeviceToken, OtherTourEvent, OtherTourMatch, OtherTourPlayer
 
 @admin.register(Player)
 class PlayerAdmin(admin.ModelAdmin):
@@ -42,3 +42,23 @@ class DeviceTokenAdmin(admin.ModelAdmin):
     def match_count(self, obj):
         return len(obj.favorite_match_ids or [])
     match_count.short_description = 'Matches ⭐'
+
+
+@admin.register(OtherTourEvent)
+class OtherTourEventAdmin(admin.ModelAdmin):
+    list_display = ('name', 'tour', 'season', 'start_date', 'end_date', 'country')
+    list_filter = ('tour', 'season')
+    search_fields = ('name', 'city', 'country')
+
+
+@admin.register(OtherTourPlayer)
+class OtherTourPlayerAdmin(admin.ModelAdmin):
+    list_display = ('snooker_id', 'first_name', 'last_name', 'nationality')
+    search_fields = ('first_name', 'last_name')
+
+
+@admin.register(OtherTourMatch)
+class OtherTourMatchAdmin(admin.ModelAdmin):
+    list_display = ('player1_name', 'player2_name', 'score1', 'score2', 'status', 'event')
+    list_filter = ('status', 'event__tour')
+    search_fields = ('player1_name', 'player2_name')

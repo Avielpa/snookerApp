@@ -36,6 +36,7 @@ from .views import (
     recent_matches_view,
     all_live_matches_view,
     news_view,
+    other_tours_view,
     # Device / Push Notification Views
     device_register_view,
     device_favorites_players_view,
@@ -123,6 +124,7 @@ urlpatterns = [
     path('upcoming-matches/', upcoming_matches_fallback_view, name='upcoming-matches-fallback'),
     path('recent-matches/', recent_matches_view, name='recent-matches'),
     path('all-live-matches/', all_live_matches_view, name='all-live-matches'),
+    path('other-tours/', other_tours_view, name='other-tours'),
     path('news/', news_view, name='news'),
 
     # --- Device / Push Notification URLs ---
