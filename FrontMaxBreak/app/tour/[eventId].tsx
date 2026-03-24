@@ -258,13 +258,13 @@ const MatchItem = React.memo(({ item, navigation }: { item: MatchListItem; navig
             {ind && <View style={styles.statusIndicatorWrapper}>{ind}</View>}
             <View style={styles.matchItemContent}>
                 <View style={styles.playerRow}>
-                    <Text style={[styles.playerName, styles.playerLeft, isP1Win && styles.winnerText]} onPress={()=>navP(item.player1_id)} disabled={!item.player1_id} numberOfLines={1} writingDirection="ltr">{p1}</Text>
+                    <Text style={[styles.playerName, styles.playerLeft, isP1Win && styles.winnerText]} onPress={()=>navP(item.player1_id)} disabled={!item.player1_id} numberOfLines={1}>{p1}</Text>
                     <View style={styles.scoreContainer}>
-                        <Text style={[styles.scoreNumber, isP1Win && styles.winnerText]} writingDirection="ltr">{item.score1 ?? 'vs'}</Text>
+                        <Text style={[styles.scoreNumber, isP1Win && styles.winnerText, { writingDirection: 'ltr' }]}>{item.score1 ?? 'vs'}</Text>
                         {item.score1 != null && item.score2 != null && <Text style={styles.scoreDash}>—</Text>}
-                        {item.score2 != null && <Text style={[styles.scoreNumber, isP2Win && styles.winnerText]} writingDirection="ltr">{item.score2}</Text>}
+                        {item.score2 != null && <Text style={[styles.scoreNumber, isP2Win && styles.winnerText, { writingDirection: 'ltr' }]}>{item.score2}</Text>}
                     </View>
-                    <Text style={[styles.playerName, styles.playerRight, isP2Win && styles.winnerText]} onPress={()=>navP(item.player2_id)} disabled={!item.player2_id} numberOfLines={1} writingDirection="ltr">{p2}</Text>
+                    <Text style={[styles.playerName, styles.playerRight, isP2Win && styles.winnerText]} onPress={()=>navP(item.player2_id)} disabled={!item.player2_id} numberOfLines={1}>{p2}</Text>
                 </View>
                 {!!item.note && (
                     <Text style={{ fontSize: 11, color: COLORS.textSecondary, fontStyle: 'italic', marginTop: 4, paddingHorizontal: 2 }} numberOfLines={2}>
@@ -291,10 +291,10 @@ const RoundHeaderItem = ({ roundName, prizeAmount }: { roundName: string; prizeA
     </View> 
 );
 
-function formatRoundPrize(amount: any): string | null {
-    if (!amount) return null;
+function formatRoundPrize(amount: any): string | undefined {
+    if (!amount) return undefined;
     const n = typeof amount === 'number' ? amount : parseFloat(amount);
-    if (isNaN(n) || n <= 0) return null;
+    if (isNaN(n) || n <= 0) return undefined;
     if (n >= 1000000) return `\u00a3${(n / 1000000).toFixed(1)}m`;
     if (n >= 1000) return `\u00a3${Math.round(n / 1000)}k`;
     return `\u00a3${Math.round(n)}`;

@@ -1448,15 +1448,17 @@ def upcoming_matches_fallback_view(request):
 @permission_classes([AllowAny])
 def all_live_matches_view(request):
     """
-    Returns all live/on-break matches across ALL currently active events.
-    Accepts optional ?exclude_event_id=X to skip the already-shown main tour.
-    Each match includes event_name and event_tour for labelling in the frontend.
+    Returns live/on-break matches from non-main tours only (women's, seniors, other).
+    Main tour is always excluded — it's already shown in the main home screen list.
+    This prevents the same match appearing twice on the home screen.
     """
     exclude_event_id = request.query_params.get('exclude_event_id')
 
-    # No date filter — trust Status=1/2 as the source of truth for live matches
+    # Always exclude main tour to prevent duplicates on the home screen
     live_qs = MatchesOfAnEvent.objects.filter(
         Status__in=[1, 2],  # 1=Running, 2=On Break
+    ).exclude(
+        Event__Tour='main'
     ).select_related('Event')
 
     if exclude_event_id:
