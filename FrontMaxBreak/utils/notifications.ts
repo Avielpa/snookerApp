@@ -1,6 +1,7 @@
 // utils/notifications.ts
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
+import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 import { logger } from './logger';
 import { getOrCreateDeviceId } from './deviceIdentity';
@@ -222,10 +223,13 @@ export async function requestPushPermissionAndGetToken(): Promise<string | null>
             return null;
         }
 
-        const tokenData = await Notifications.getExpoPushTokenAsync({
-            projectId: 'f7e50a46-3a59-4341-af3c-06828f5eb7bd',
-        });
-        logger.log('[Push] Got push token');
+        const projectId =
+            Constants.expoConfig?.extra?.eas?.projectId ??
+            Constants.easConfig?.projectId ??
+            'f7e50a46-3a59-4341-af3c-06828f5eb7bd';
+        logger.log(`[Push] Using projectId: ${projectId}`);
+        const tokenData = await Notifications.getExpoPushTokenAsync({ projectId });
+        logger.log(`[Push] Got push token: ${tokenData.data?.slice(0, 30)}`);
         return tokenData.data;
     } catch (error) {
         logger.error('[Push] Error getting push token:', error);
@@ -242,8 +246,12 @@ export async function initPushNotifications(): Promise<void> {
         const deviceId = await getOrCreateDeviceId();
         const pushToken = await requestPushPermissionAndGetToken();
 
-        if (!pushToken) return;
+        if (!pushToken) {
+            logger.warn('[Push] No push token obtained — skipping registration');
+            return;
+        }
 
+        logger.log(`[Push] Registering device ${deviceId.slice(0, 8)} with token ${pushToken.slice(0, 30)}`);
         await api.post('device/register/', { device_id: deviceId, push_token: pushToken });
         logger.log('[Push] Device registered successfully');
     } catch (error) {
