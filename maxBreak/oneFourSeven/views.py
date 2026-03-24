@@ -1487,6 +1487,8 @@ def other_tours_view(request):
                     'id': m.snooker_id,
                     'round': m.round,
                     'number': m.number,
+                    'player1_id': m.player1_id,
+                    'player2_id': m.player2_id,
                     'player1_name': m.player1_name,
                     'player2_name': m.player2_name,
                     'player1_nationality': m.player1_nationality,

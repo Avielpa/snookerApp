@@ -16,9 +16,17 @@ export function MatchRow({ match }: Props) {
     const isFinished = match.status === 2 || match.status === 3;
     const hasScore = (isLive || isFinished) && match.score1 != null && match.score2 != null;
 
-    // Determine winner by score — no need for winner_id comparison
-    const p1Won = isFinished && hasScore && (match.score1 ?? 0) > (match.score2 ?? 0);
-    const p2Won = isFinished && hasScore && (match.score2 ?? 0) > (match.score1 ?? 0);
+    // Prefer winner_id comparison (handles walkovers); fall back to score
+    const p1Won = isFinished && (
+        match.winner_id != null
+            ? match.winner_id === match.player1_id
+            : hasScore && (match.score1 ?? 0) > (match.score2 ?? 0)
+    );
+    const p2Won = isFinished && (
+        match.winner_id != null
+            ? match.winner_id === match.player2_id
+            : hasScore && (match.score2 ?? 0) > (match.score1 ?? 0)
+    );
 
     const p1Flag = match.player1_nationality ? getNationalityFlag(match.player1_nationality) + ' ' : '';
     const p2Flag = match.player2_nationality ? getNationalityFlag(match.player2_nationality) + ' ' : '';

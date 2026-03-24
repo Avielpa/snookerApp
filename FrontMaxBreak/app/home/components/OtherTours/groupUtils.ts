@@ -7,6 +7,8 @@ export interface OtherTourMatch {
     id: number;
     round: number;
     number: number;
+    player1_id: number | null;
+    player2_id: number | null;
     player1_name: string;
     player2_name: string;
     player1_nationality: string | null;
@@ -14,7 +16,7 @@ export interface OtherTourMatch {
     score1: number | null;
     score2: number | null;
     winner_id: number | null;
-    status: number; // 0=scheduled, 1=live, 2=finished, 3=walkover
+    status: number;
     scheduled_date: string | null;
 }
 
