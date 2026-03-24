@@ -41,7 +41,7 @@ function formatRoundPrize(amount: any): string | null {
 }
 
 const HomeScreen = (): React.ReactElement | null => {
-    const [activeFilter, setActiveFilter] = useState<ActiveFilterType>('all');
+    const [activeFilter, setActiveFilter] = useState<ActiveFilterType>('upcoming');
     const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
     const navigation = useRouter();
 
@@ -197,10 +197,9 @@ const HomeScreen = (): React.ReactElement | null => {
     };
 
     const filterButtons: FilterButton[] = [
-        { label: 'All', value: 'all', icon: ICONS.all },
+        { label: 'Upcoming', value: 'upcoming', icon: ICONS.upcoming },
         { label: 'Live', value: 'livePlaying', icon: ICONS.livePlaying },
         { label: 'Break', value: 'onBreak', icon: ICONS.onBreak },
-        { label: 'Upcoming', value: 'upcoming', icon: ICONS.upcoming },
         { label: 'Results', value: 'finished', icon: ICONS.finished },
         { label: 'Draw', value: 'draw', icon: 'git-branch-outline' },
     ];
