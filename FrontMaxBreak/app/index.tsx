@@ -29,6 +29,7 @@ import { DeviceAwareFilterScrollView } from '../components/DeviceAwareFilterScro
 import { useOtherLiveMatches } from './home/hooks/useOtherLiveMatches';
 import { OtherLiveSection } from './home/components/OtherLiveSection';
 import { DrawTab } from './tour/components/DrawTab';
+import { OtherToursTab } from './home/components/OtherToursTab';
 import { MatchListItem } from './home/types';
 
 function formatRoundPrize(amount: any): string | null {
@@ -202,6 +203,7 @@ const HomeScreen = (): React.ReactElement | null => {
         { label: 'Break', value: 'onBreak', icon: ICONS.onBreak },
         { label: 'Results', value: 'finished', icon: ICONS.finished },
         { label: 'Draw', value: 'draw', icon: 'git-branch-outline' },
+        { label: 'Other Tours', value: 'otherTours', icon: 'trophy-outline' },
     ];
 
     // Main Render structure
@@ -286,6 +288,8 @@ const HomeScreen = (): React.ReactElement | null => {
                             roundPrizes={roundPrizesLoser}
                             colors={COLORS}
                         />
+                    ) : activeFilter === 'otherTours' ? (
+                        <OtherToursTab colors={COLORS} />
                     ) : (
                         <FlatList
                             data={filteredListData}
