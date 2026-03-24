@@ -31,6 +31,7 @@ export function MatchRow({ match }: Props) {
             paddingHorizontal: 12,
             borderBottomWidth: 0.5,
             borderBottomColor: 'rgba(255,255,255,0.06)',
+            direction: 'ltr',
         }}>
             {isLive && (
                 <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: LIVE_COLOR, marginRight: 6 }} />
@@ -54,6 +55,7 @@ export function MatchRow({ match }: Props) {
                 marginHorizontal: 8,
                 minWidth: 36,
                 textAlign: 'center',
+                writingDirection: 'ltr',
             }}>
                 {hasScore ? `${match.score1}–${match.score2}` : 'vs'}
             </Text>
