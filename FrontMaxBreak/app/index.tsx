@@ -29,7 +29,7 @@ import { DeviceAwareFilterScrollView } from '../components/DeviceAwareFilterScro
 import { useOtherLiveMatches } from './home/hooks/useOtherLiveMatches';
 import { OtherLiveSection } from './home/components/OtherLiveSection';
 import { DrawTab } from './tour/components/DrawTab';
-import { OtherToursTab } from './home/components/OtherToursTab';
+import { OtherToursTab } from './home/components/OtherTours';
 import { MatchListItem } from './home/types';
 
 function formatRoundPrize(amount: any): string | null {
