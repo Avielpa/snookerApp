@@ -25,7 +25,10 @@ from oneFourSeven.models import Player, OtherTourEvent, OtherTourPlayer, OtherTo
 from oneFourSeven.constants import API_BASE_URL, HEADERS, DEFAULT_TIMEOUT
 
 RATE_LIMIT_SECONDS = 6
-TOURS_TO_SYNC = ['womens', 'seniors', 'qtour']
+TOURS_TO_SYNC = ['women', 'seniors', 'q']
+
+# Map API tr= values to friendly labels stored in OtherTourEvent.tour
+TOUR_LABEL_MAP = {'women': 'womens', 'seniors': 'seniors', 'q': 'qtour'}
 
 
 def _api_get(params: dict) -> list:
@@ -125,11 +128,11 @@ class Command(BaseCommand):
             try:
                 self.stdout.write('[SEASON] Fetching current season...')
                 season_data = _api_get({'t': '20'})
-                season = season_data[0].get('Season') if season_data else 2026
+                season = season_data[0].get('CurrentSeason') if season_data else 2025
                 time.sleep(RATE_LIMIT_SECONDS)
             except Exception as e:
-                self.stdout.write(f'[SEASON] Failed to get season, defaulting to 2026: {e}')
-                season = 2026
+                self.stdout.write(f'[SEASON] Failed to get season, defaulting to 2025: {e}')
+                season = 2025
 
         self.stdout.write(f'[START] Syncing other tours for season {season}: {tours}')
 
@@ -177,7 +180,7 @@ class Command(BaseCommand):
                     snooker_id=event_id,
                     defaults={
                         'name': event_name,
-                        'tour': tour,
+                        'tour': TOUR_LABEL_MAP.get(tour, tour),
                         'season': season,
                         'start_date': parse_date(event_data.get('StartDate')),
                         'end_date': parse_date(event_data.get('EndDate')),
