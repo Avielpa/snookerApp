@@ -18,6 +18,30 @@ const TOUR_LABEL: Record<string, string> = {
     qtour: 'Q Tour',
 };
 
+function getRoundLabel(round: number, maxRound: number): string {
+    const fromEnd = maxRound - round;
+    if (fromEnd === 0) return 'Final';
+    if (fromEnd === 1) return 'Semi-finals';
+    if (fromEnd === 2) return 'Quarter-finals';
+    if (fromEnd === 3) return 'Last 16';
+    if (fromEnd === 4) return 'Last 32';
+    return `Round ${round}`;
+}
+
+function groupByRound(matches: OtherTourMatch[]): { label: string; matches: OtherTourMatch[] }[] {
+    if (matches.length === 0) return [];
+    const rounds = new Map<number, OtherTourMatch[]>();
+    for (const m of matches) {
+        const r = m.round ?? 0;
+        if (!rounds.has(r)) rounds.set(r, []);
+        rounds.get(r)!.push(m);
+    }
+    const maxRound = Math.max(...rounds.keys());
+    return Array.from(rounds.entries())
+        .sort(([a], [b]) => b - a) // highest round first (Final at top)
+        .map(([round, ms]) => ({ label: getRoundLabel(round, maxRound), matches: ms }));
+}
+
 function formatDateRange(start: string | null, end: string | null): string {
     if (!start) return '';
     const s = new Date(start);
@@ -132,7 +156,22 @@ export function EventCard({ event, defaultExpanded = false }: Props) {
                             ))}
                         </View>
                     ))
-                    : event.matches.map(m => <MatchRow key={m.id} match={m} />)
+                    : groupByRound(event.matches).map(({ label, matches }) => (
+                        <View key={label}>
+                            <View style={{
+                                paddingHorizontal: 12,
+                                paddingVertical: 5,
+                                backgroundColor: 'rgba(255,255,255,0.04)',
+                                borderTopWidth: 0.5,
+                                borderTopColor: 'rgba(255,255,255,0.08)',
+                            }}>
+                                <Text style={{ color: '#6B7280', fontSize: 10, fontFamily: 'PoppinsBold', letterSpacing: 0.5, textTransform: 'uppercase' }}>
+                                    {label}
+                                </Text>
+                            </View>
+                            {matches.map(m => <MatchRow key={m.id} match={m} />)}
+                        </View>
+                    ))
             )}
         </View>
     );
