@@ -209,19 +209,19 @@ export const useHomeData = () => {
 
                 // Emergency sync detection (only on initial load, only when 0 matches)
                 if (currentMatches.length === 0 && !isRefresh) {
-                    quickStatusCheck().then(status => {
+                    quickStatusCheck().then((status: { [key: string]: any }) => {
                         const missingTournaments = Object.entries(status).filter(
                             ([name, data]: [string, any]) => data.shouldHave && !data.hasData
                         );
                         if (missingTournaments.length > 0) {
-                            triggerEmergencySync().then(syncResults => {
-                                const successfulSyncs = syncResults.filter(r => r.success);
+                            triggerEmergencySync().then((syncResults: any[]) => {
+                                const successfulSyncs = syncResults.filter((r: any) => r.success);
                                 if (successfulSyncs.length > 0) {
                                     setTimeout(() => loadTournamentInfo(true, specificTournamentId), 3000);
                                 }
-                            }).catch(error => logger.error('[HomeScreen] Emergency sync failed:', error));
+                            }).catch((error: unknown) => logger.error('[HomeScreen] Emergency sync failed:', error));
                         }
-                    }).catch(error => logger.error('[HomeScreen] Status check failed:', error));
+                    }).catch((error: unknown) => logger.error('[HomeScreen] Status check failed:', error));
                 }
             }
 

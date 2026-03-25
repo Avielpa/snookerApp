@@ -48,7 +48,6 @@ export const DeviceAwareFilterScrollView: React.FC<DeviceAwareFilterScrollViewPr
         bounces={true} // Allow natural bouncing
         style={[dynamicStyles.filterScrollView, enhancedStyles.enhancedScrollView]}
         // Minimal optimizations - keep it simple
-        showsHorizontalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         // NO snap behavior - smooth free scrolling like bottom bar
         // NO snapToInterval - removes rectangle behavior

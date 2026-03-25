@@ -40,7 +40,7 @@ export async function triggerEmergencySync() {
       
     } catch (error) {
       logger.error(`[EmergencySync] Failed to process ${tournament.name}:`, error);
-      results.push({ tournament: tournament.name, success: false, error: error.message });
+      results.push({ tournament: tournament.name, success: false, error: (error as Error).message });
     }
   }
   
@@ -82,7 +82,7 @@ async function checkTournamentStatus(tournamentId: number) {
     };
   } catch (error) {
     logger.error(`[EmergencySync] Error checking tournament ${tournamentId} status:`, error);
-    return { hasMatches: false, shouldHaveMatches: true, error: error.message };
+    return { hasMatches: false, shouldHaveMatches: true, error: (error as Error).message };
   }
 }
 
@@ -201,7 +201,7 @@ export async function quickStatusCheck(): Promise<{ [key: string]: any }> {
         status: status.isActive ? 'active' : status.isPast ? 'past' : 'upcoming'
       };
     } catch (error) {
-      results[name] = { id, error: error.message };
+      results[name] = { id, error: (error as Error).message };
     }
   }
   

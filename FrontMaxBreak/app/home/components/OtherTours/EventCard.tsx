@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { MatchRow } from './MatchRow';
-import { GroupedEvent } from './groupUtils';
+import { GroupedEvent, OtherTourMatch } from './groupUtils';
 
 const TOUR_COLOR: Record<string, string> = {
     womens: '#E91E63',
