@@ -33,7 +33,7 @@
       },
       "package": "com.avielpahima.maxbreaksnooker",
       "edgeToEdgeEnabled": true,
-      "versionCode": 49,
+      "versionCode": 50,
       "permissions": [
         "INTERNET",
         "ACCESS_NETWORK_STATE",

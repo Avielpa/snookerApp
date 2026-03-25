@@ -5,6 +5,22 @@ const baseConfig = require('./app.json').expo;
 
 const isPreview = process.env.ANDROID_PACKAGE === 'com.avielpahima.maxbreaksnooker.preview';
 
+// Custom plugin: sets android:extractNativeLibs="true" directly in AndroidManifest.xml.
+// This compresses .so files in the APK/AAB, which exempts the app from the 16KB ELF
+// alignment requirement (Android docs: compressed native libs are exempt).
+// Going through expo-build-properties useLegacyPackaging → gradle.properties is unreliable
+// with expo-build-properties 0.13.3 + AGP 8.6 — patch the manifest directly instead.
+const withExtractNativeLibs = (config) => {
+  const { withAndroidManifest } = require('@expo/config-plugins');
+  return withAndroidManifest(config, (config) => {
+    const manifest = config.modResults;
+    if (manifest.manifest.application && manifest.manifest.application[0]) {
+      manifest.manifest.application[0].$['android:extractNativeLibs'] = 'true';
+    }
+    return config;
+  });
+};
+
 // Custom plugin: patches build.gradle to use NDK 28 (16KB page size compliance).
 // expo-build-properties 0.13.3 does not handle ndkVersion — must patch directly.
 const withNdk28 = (config) => {
@@ -38,6 +54,7 @@ module.exports = {
     plugins: [
       ...(baseConfig.plugins || []),
       withNdk28,
+      withExtractNativeLibs,
     ],
   },
 };
