@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "378528065329",
+    "project_id": "snooker-maxbreak",
+    "storage_bucket": "snooker-maxbreak.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:378528065329:android:c69e716bcd2db930e5b210",
+        "android_client_info": {
+          "package_name": "com.avielpahima.maxbreaksnooker.preview"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCIc-57d_Tm66FYsMxQdWjso4dIvAk2GYo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -13,16 +13,53 @@ logger = logging.getLogger(__name__)
 EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send'
 
 
-def send_expo_push(tokens, title, body, data=None):
-    """
-    Send Expo push notifications to a list of push tokens.
+# def send_expo_push(tokens, title, body, data=None):
+#     """
+#     Send Expo push notifications to a list of push tokens.
 
-    Args:
-        tokens: list of Expo push token strings
-        title: notification title
-        body: notification body text
-        data: optional dict of extra data sent to the app
-    """
+#     Args:
+#         tokens: list of Expo push token strings
+#         title: notification title
+#         body: notification body text
+#         data: optional dict of extra data sent to the app
+#     """
+#     if not tokens:
+#         return
+#     if data is None:
+#         data = {}
+
+#     try:
+#         for i in range(0, len(tokens), 100):
+#             batch = tokens[i:i + 100]
+#             messages = [
+#                 {
+#                     'to': token,
+#                     'title': title,
+#                     'body': body,
+#                     'data': data,
+#                     'sound': 'default',
+#                 }
+#                 for token in batch
+#             ]
+#             response = requests.post(
+#                 EXPO_PUSH_URL,
+#                 json=messages,
+#                 headers={
+#                     'Accept': 'application/json',
+#                     'Accept-Encoding': 'gzip, deflate',
+#                     'Content-Type': 'application/json',
+#                 },
+#                 timeout=10,
+#             )
+#             response.raise_for_status()
+#             logger.info(f'[PUSH] Sent {len(batch)} push notifications: "{title}"')
+#     except Exception as e:
+#         logger.error(f'[PUSH] Failed to send push notifications: {e}')
+
+
+# oneFourSeven/push_notifications.py
+
+def send_expo_push(tokens, title, body, data=None):
     if not tokens:
         return
     if data is None:
@@ -38,6 +75,13 @@ def send_expo_push(tokens, title, body, data=None):
                     'body': body,
                     'data': data,
                     'sound': 'default',
+                    # הוספת ה-ChannelId עבור אנדרואיד
+                    'channelId': 'match-updates', 
+                    # הגדרות ספציפיות לאנדרואיד כדי להבטיח תצוגה
+                    'android': {
+                        'channelId': 'match-updates',
+                        'priority': 'high',
+                    }
                 }
                 for token in batch
             ]
