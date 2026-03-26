@@ -12,7 +12,7 @@ module.exports = {
     android: {
       ...baseConfig.android,
       package: process.env.ANDROID_PACKAGE || baseConfig.android.package,
-      googleServicesFile: process.env.GOOGLE_SERVICES_JSON ?? baseConfig.android.googleServicesFile,
+      googleServicesFile: process.env.GOOGLE_SERVICES_JSON ?? (isPreview ? './google-services-preview.json' : baseConfig.android.googleServicesFile),
     },
     plugins: [
       ...(baseConfig.plugins || []),
