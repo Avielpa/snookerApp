@@ -1,19 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "expo/tsconfig.base",
   "compilerOptions": {
-    "allowJs": true,
-    "esModuleInterop": true,
-    "jsx": "react-native",
-    "lib": [
-      "DOM",
-      "ESNext"
-    ],
-    "module": "esnext",
-    "moduleResolution": "node",
-    "noEmit": true,
-    "resolveJsonModule": true,
-    "skipLibCheck": true,
-    "target": "ESNext",
     "strict": true,
     "paths": {
       "@/*": [
@@ -33,6 +21,5 @@
     "babel.config.js",
     "metro.config.js",
     "jest.config.js"
-  ],
-  "extends": "expo/tsconfig.base"
+  ]
 }

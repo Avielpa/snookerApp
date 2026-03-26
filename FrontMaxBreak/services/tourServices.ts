@@ -464,7 +464,7 @@ export const getTournamentMatches = async (eventId: number | string | undefined 
 
     try {
         // FORCE FRESH DATA - skip cache to prevent stale data display
-        const response = await api.get<Match[]>(urlPath, { skipCache: true });
+        const response = await api.get<Match[]>(urlPath, { skipCache: true } as any);
         
         if (Array.isArray(response.data)) {
             logger.debug(`[TourService] Successfully fetched ${response.data.length} matches for event ${numericEventId}.`);

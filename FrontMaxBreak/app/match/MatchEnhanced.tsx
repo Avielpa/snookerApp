@@ -542,7 +542,7 @@ export default function MatchEnhanced() {
 
   // Auto-refresh for live matches - simplified to prevent infinite loops
   useEffect(() => {
-    let intervalId: NodeJS.Timeout | null = null;
+    let intervalId: ReturnType<typeof setTimeout> | null = null;
     const isLiveMatch = matchDetails?.status_code === 1 || matchDetails?.status_code === 2;
 
     if (isLiveMatch && apiMatchId !== null) {

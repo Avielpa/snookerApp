@@ -25,7 +25,7 @@ export const useLiveMatchDetection = ({
     minutesUntilStart: number;
   } | null>(null);
   
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const notificationSentRef = useRef<Set<number>>(new Set());
 
   // Get current UTC time
