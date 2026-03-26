@@ -27,13 +27,17 @@ class MatchOnAnEvent(admin.ModelAdmin):
 
 @admin.register(DeviceToken)
 class DeviceTokenAdmin(admin.ModelAdmin):
-    list_display = ('device_id', 'push_token_short', 'player_count', 'match_count', 'updated_at')
+    list_display = ('device_id', 'push_token_short', 'push_error_short', 'player_count', 'match_count', 'updated_at')
     search_fields = ('device_id',)
     readonly_fields = ('device_id', 'created_at', 'updated_at')
 
     def push_token_short(self, obj):
         return obj.push_token[:30] + '...' if obj.push_token else '-'
     push_token_short.short_description = 'Push Token'
+
+    def push_error_short(self, obj):
+        return obj.push_error[:60] if obj.push_error else ''
+    push_error_short.short_description = 'Push Error'
 
     def player_count(self, obj):
         return len(obj.favorite_player_ids or [])

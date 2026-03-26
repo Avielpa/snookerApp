@@ -1802,18 +1802,27 @@ def news_view(request):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def device_register_view(request):
-    """Upsert a device push token. Body: {device_id, push_token}"""
+    """Upsert a device push token. Body: {device_id, push_token, push_error?}"""
     from .models import DeviceToken
     device_id = request.data.get('device_id', '').strip()
     push_token = request.data.get('push_token', '').strip()
+    push_error = request.data.get('push_error', '').strip()
 
-    if not device_id or not push_token:
-        return Response({'error': 'device_id and push_token are required'},
-                        status=status.HTTP_400_BAD_REQUEST)
+    if not device_id:
+        return Response({'error': 'device_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+    if not push_token and not push_error:
+        return Response({'error': 'push_token or push_error is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+    defaults = {}
+    if push_token:
+        defaults['push_token'] = push_token
+        defaults['push_error'] = ''
+    if push_error:
+        defaults['push_error'] = push_error
 
     device, created = DeviceToken.objects.update_or_create(
         device_id=device_id,
-        defaults={'push_token': push_token},
+        defaults=defaults,
     )
     return Response({'status': 'created' if created else 'updated'}, status=status.HTTP_200_OK)
 
