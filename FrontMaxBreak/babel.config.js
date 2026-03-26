@@ -3,7 +3,11 @@ module.exports = function (api) {
     return {
       presets: [
         ["babel-preset-expo", { jsxImportSource: "nativewind" }],
-        "nativewind/babel",
+      ],
+      plugins: [
+        // Use css-interop babel plugin directly to avoid pulling in
+        // react-native-worklets/plugin (reanimated 4 only) from nativewind/babel preset
+        require("react-native-css-interop/dist/babel-plugin").default,
       ],
     };
   };
