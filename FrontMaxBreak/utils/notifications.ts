@@ -13,8 +13,6 @@ Notifications.setNotificationHandler({
     shouldShowAlert: true,
     shouldPlaySound: true,
     shouldSetBadge: false,
-    shouldShowBanner: true,
-    shouldShowList: true,
   }),
 });
 
@@ -196,10 +194,9 @@ export const notificationManager = NotificationManager.getInstance();
 /**
  * Request push permission and return the Expo push token string, or null on failure.
  */
-export async function requestPushPermissionAndGetToken(): Promise<string | null> {
+export async function requestPushPermissionAndGetToken(): Promise<{ token: string | null; error: string | null }> {
     if (!Device.isDevice) {
-        logger.warn('[Push] Push notifications only work on physical devices');
-        return null;
+        return { token: null, error: 'NOT_PHYSICAL_DEVICE' };
     }
 
     try {
@@ -221,8 +218,8 @@ export async function requestPushPermissionAndGetToken(): Promise<string | null>
         }
 
         if (finalStatus !== 'granted') {
-            logger.warn('[Push] Permission not granted');
-            return null;
+            logger.warn('[Push] Permission not granted, status:', finalStatus);
+            return { token: null, error: `PERMISSION_${finalStatus}` };
         }
 
         const projectId =
@@ -232,30 +229,31 @@ export async function requestPushPermissionAndGetToken(): Promise<string | null>
         logger.log(`[Push] Using projectId: ${projectId}`);
         const tokenData = await Notifications.getExpoPushTokenAsync({ projectId });
         logger.log(`[Push] Got push token: ${tokenData.data?.slice(0, 30)}`);
-        return tokenData.data;
-    } catch (error) {
-        logger.error('[Push] Error getting push token:', error);
-        return null;
+        return { token: tokenData.data, error: null };
+    } catch (error: any) {
+        const msg = error?.message || String(error);
+        logger.error('[Push] Error getting push token:', msg);
+        return { token: null, error: `FCM_ERROR: ${msg}` };
     }
 }
 
 /**
  * Initialize push notifications: get device ID + push token, register with backend.
- * Called once on app startup. Never throws.
+ * Always reports status to backend so we can diagnose failures. Never throws.
  */
 export async function initPushNotifications(): Promise<void> {
     try {
         const deviceId = await getOrCreateDeviceId();
-        const pushToken = await requestPushPermissionAndGetToken();
+        const { token: pushToken, error: pushError } = await requestPushPermissionAndGetToken();
 
-        if (!pushToken) {
-            logger.warn('[Push] No push token obtained — skipping registration');
-            return;
+        if (pushToken) {
+            logger.log(`[Push] Registering device ${deviceId.slice(0, 8)} with token ${pushToken.slice(0, 30)}`);
+            await api.post('device/register/', { device_id: deviceId, push_token: pushToken });
+            logger.log('[Push] Device registered successfully');
+        } else {
+            logger.warn('[Push] No push token — reporting error to backend:', pushError);
+            await api.post('device/register/', { device_id: deviceId, push_error: pushError || 'UNKNOWN' });
         }
-
-        logger.log(`[Push] Registering device ${deviceId.slice(0, 8)} with token ${pushToken.slice(0, 30)}`);
-        await api.post('device/register/', { device_id: deviceId, push_token: pushToken });
-        logger.log('[Push] Device registered successfully');
     } catch (error) {
         logger.error('[Push] Failed to initialize push notifications:', error);
     }

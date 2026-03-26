@@ -939,7 +939,8 @@ class DeviceToken(models.Model):
     No sign-up required — identified by a UUID generated on the device.
     """
     device_id = models.CharField(max_length=64, unique=True, db_index=True)
-    push_token = models.CharField(max_length=512)
+    push_token = models.CharField(max_length=512, blank=True, default='')
+    push_error = models.TextField(blank=True, default='')  # diagnostic: why token is missing
     favorite_player_ids = models.JSONField(default=list)   # player IDs from player profile stars
     favorite_match_ids = models.JSONField(default=list)    # api_match_ids from match card stars
     created_at = models.DateTimeField(auto_now_add=True)
