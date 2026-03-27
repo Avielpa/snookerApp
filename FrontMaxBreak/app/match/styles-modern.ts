@@ -6,7 +6,7 @@ export const createMatchStyles = (colors: any) => StyleSheet.create({
   // CONTAINER
   container: {
     flex: 1,
-    backgroundColor: 'transparent',
+    backgroundColor: colors.background,
   },
 
   // LOADING & ERROR STATES - Dark and comfortable

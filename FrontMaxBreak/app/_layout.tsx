@@ -9,16 +9,19 @@ import { logger } from '../utils/logger';
 import { api } from '../services/api';
 import { initPushNotifications } from '../utils/notifications';
 import { loadFavorites } from '../services/favoritesService';
+import { useDeviceType } from '../hooks/useDeviceType';
 
 // --- Component Imports ---
 import Header from './components/Header';
 import BottomBar from './components/BottomBar';
+import SideNav from './components/SideNav';
 import ErrorBoundary from '../components/ErrorBoundary';
 
 // Main Layout Component - wraps everything in ThemeProvider
 const ThemedLayout = () => {
     const { theme } = useTheme();
     const colors = theme.colors;
+    const device = useDeviceType();
 
     // React to updates found by the automatic ON_LOAD check and apply immediately
     const { isUpdateAvailable } = Updates.useUpdates();
@@ -65,8 +68,8 @@ const ThemedLayout = () => {
     
     return (
         <SafeAreaProvider>
-            <StatusBar 
-                barStyle={theme.isDark ? "light-content" : "dark-content"} 
+            <StatusBar
+                barStyle={theme.isDark ? "light-content" : "dark-content"}
                 backgroundColor={colors.background}
             />
             <ImageBackground
@@ -74,21 +77,28 @@ const ThemedLayout = () => {
                 resizeMode='cover'
                 style={[styles.background, { backgroundColor: colors.background }]}
             >
-                <Header />
-                
-                <View style={styles.contentArea}>
-                    <Stack
-                        screenOptions={{
-                            headerShown: false,
-                            contentStyle: {
-                                backgroundColor: 'transparent'
-                            },
-                            animation: 'fade',
-                        }}
-                    />
+                {device === 'phone' && <Header />}
+
+                <View style={styles.mainRow}>
+                    {device !== 'phone' && <SideNav device={device} />}
+
+                    <View style={[
+                        styles.contentArea,
+                        device === 'tablet' && styles.contentAreaTablet,
+                    ]}>
+                        <Stack
+                            screenOptions={{
+                                headerShown: false,
+                                contentStyle: {
+                                    backgroundColor: 'transparent'
+                                },
+                                animation: 'fade',
+                            }}
+                        />
+                    </View>
                 </View>
-                
-                <BottomBar />
+
+                {device === 'phone' && <BottomBar />}
             </ImageBackground>
         </SafeAreaProvider>
     );
@@ -109,8 +119,17 @@ const styles = StyleSheet.create({
     background: {
         flex: 1,
     },
+    mainRow: {
+        flex: 1,
+        flexDirection: 'row',
+    },
     contentArea: {
         flex: 1,
+    },
+    contentAreaTablet: {
+        maxWidth: 960,
+        alignSelf: 'center',
+        width: '100%',
     },
 });
 
