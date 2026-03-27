@@ -66,3 +66,4 @@ tmp/
 # React Native
 .metro-health-check*
 google-services.json
+google-services-preview.json
