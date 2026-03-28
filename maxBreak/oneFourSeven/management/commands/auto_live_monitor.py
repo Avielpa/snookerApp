@@ -567,8 +567,11 @@ class Command(BaseCommand):
             match_count = MatchesOfAnEvent.objects.filter(Event=tournament).count()
             round_count = RoundDetails.objects.filter(Event=tournament).count()
             
-            # Tournament needs update if it has no matches (regardless of rounds)
-            if match_count == 0:
+            # Tournament needs update if it has no matches, or if matches exist but none have a ScheduledDate
+            scheduled_count = MatchesOfAnEvent.objects.filter(
+                Event=tournament, ScheduledDate__isnull=False
+            ).count()
+            if match_count == 0 or scheduled_count == 0:
                 tournaments_needing_update.append(tournament)
         
         if tournaments_needing_update:
