@@ -59,7 +59,9 @@ class Command(BaseCommand):
         self.notified_result = set()            # api_match_ids already notified as finished
         self.notified_upcoming = set()          # api_match_ids already sent 15-min warning
         self.notified_resume = set()            # api_match_ids already notified as resumed from break
-        self.currently_on_break = set()         # api_match_ids currently at Status=2 (on break)
+        self.currently_on_break = {}            # {db_pk: api_match_id} for matches at Status=2
+                                                # Keyed by DB pk (never changes) so match ID changes
+                                                # from snooker.org don't break resume detection
         self.last_notif_reset = None            # date when sets were last cleared
 
     def add_arguments(self, parser):
@@ -412,16 +414,20 @@ class Command(BaseCommand):
                 self.notified_upcoming.add(mid)
 
             # --- Notify: matches that resumed from break (Status=2 → Status=1) ---
-            # Step 1: find all matches currently on break and update tracking set
-            current_on_break_ids = set(
-                MatchesOfAnEvent.objects.filter(Status=2)
-                .values_list('api_match_id', flat=True)
-            )
-            # Step 2: detect resumes — was on break last cycle, now live
-            resumed_ids = self.currently_on_break - current_on_break_ids
-            if resumed_ids:
+            # Track by DB pk (never changes) so api_match_id changes don't break detection.
+
+            # Step 1: current on-break matches keyed by DB pk
+            current_on_break = {
+                m.pk: m.api_match_id
+                for m in MatchesOfAnEvent.objects.filter(Status=2)
+            }
+
+            # Step 2: pks that were on break last cycle but are no longer Status=2
+            resumed_pks = set(self.currently_on_break.keys()) - set(current_on_break.keys())
+
+            if resumed_pks:
                 resumed_matches = MatchesOfAnEvent.objects.filter(
-                    Status=1, api_match_id__in=resumed_ids
+                    Status=1, pk__in=resumed_pks
                 )
                 for match in resumed_matches:
                     mid = match.api_match_id
@@ -469,7 +475,7 @@ class Command(BaseCommand):
                     self.notified_resume.add(mid)
 
             # Step 3: update on-break tracking for next cycle
-            self.currently_on_break = current_on_break_ids
+            self.currently_on_break = current_on_break
 
         except Exception as e:
             logger.error(f'[NOTIFY] Push notification error (non-fatal): {e}')
