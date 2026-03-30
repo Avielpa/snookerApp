@@ -93,8 +93,7 @@ const HomeScreen = (): React.ReactElement | null => {
     React.useEffect(() => {
         if (hasAutoSwitchedToLive.current) return;
         const hasLive = processedListData.some(
-            item => item.type === 'match' &&
-                (item.matchCategory === 'livePlaying' || item.matchCategory === 'onBreak')
+            item => item.type === 'match' && item.matchCategory === 'livePlaying'
         );
         if (hasLive) {
             setActiveFilter('livePlaying');
