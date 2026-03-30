@@ -58,6 +58,8 @@ class Command(BaseCommand):
         self.notified_live = set()              # api_match_ids already notified as live
         self.notified_result = set()            # api_match_ids already notified as finished
         self.notified_upcoming = set()          # api_match_ids already sent 15-min warning
+        self.notified_resume = set()            # api_match_ids already notified as resumed from break
+        self.currently_on_break = set()         # api_match_ids currently at Status=2 (on break)
         self.last_notif_reset = None            # date when sets were last cleared
 
     def add_arguments(self, parser):
@@ -239,6 +241,7 @@ class Command(BaseCommand):
                 self.notified_live.clear()
                 self.notified_result.clear()
                 self.notified_upcoming.clear()
+                self.notified_resume.clear()
                 self.last_notif_reset = today
 
             # --- Helper: get player name ---
@@ -407,6 +410,66 @@ class Command(BaseCommand):
                         self.stdout.write(f'[NOTIFY] Upcoming player: {p2_name} → {len(p2_tokens)} devices')
 
                 self.notified_upcoming.add(mid)
+
+            # --- Notify: matches that resumed from break (Status=2 → Status=1) ---
+            # Step 1: find all matches currently on break and update tracking set
+            current_on_break_ids = set(
+                MatchesOfAnEvent.objects.filter(Status=2)
+                .values_list('api_match_id', flat=True)
+            )
+            # Step 2: detect resumes — was on break last cycle, now live
+            resumed_ids = self.currently_on_break - current_on_break_ids
+            if resumed_ids:
+                resumed_matches = MatchesOfAnEvent.objects.filter(
+                    Status=1, api_match_id__in=resumed_ids
+                )
+                for match in resumed_matches:
+                    mid = match.api_match_id
+                    if mid is None or mid in self.notified_resume:
+                        continue
+
+                    p1_name = get_name(match.Player1ID)
+                    p2_name = get_name(match.Player2ID)
+                    s1 = match.Score1 if match.Score1 is not None else 0
+                    s2 = match.Score2 if match.Score2 is not None else 0
+
+                    # Match followers
+                    match_devices = DeviceToken.objects.filter(favorite_match_ids__contains=[mid])
+                    match_tokens = [d.push_token for d in match_devices if d.push_token]
+                    if match_tokens:
+                        send_expo_push(match_tokens, '▶️ Match Resumed',
+                                       f'{p1_name} {s1}–{s2} {p2_name}',
+                                       {'type': 'match_resumed', 'match_id': mid})
+                        self.stdout.write(f'[NOTIFY] Match resumed: {p1_name} vs {p2_name} → {len(match_tokens)} devices')
+
+                    # Player 1 followers
+                    if match.Player1ID:
+                        p1_devices = DeviceToken.objects.filter(
+                            favorite_player_ids__contains=[match.Player1ID]
+                        )
+                        p1_tokens = [d.push_token for d in p1_devices if d.push_token]
+                        if p1_tokens:
+                            send_expo_push(p1_tokens, '▶️ Match Resumed',
+                                           f'{p1_name} {s1}–{s2} {p2_name}',
+                                           {'type': 'player_resumed', 'player_id': match.Player1ID, 'match_id': mid})
+                            self.stdout.write(f'[NOTIFY] Resume: {p1_name} → {len(p1_tokens)} devices')
+
+                    # Player 2 followers
+                    if match.Player2ID:
+                        p2_devices = DeviceToken.objects.filter(
+                            favorite_player_ids__contains=[match.Player2ID]
+                        )
+                        p2_tokens = [d.push_token for d in p2_devices if d.push_token]
+                        if p2_tokens:
+                            send_expo_push(p2_tokens, '▶️ Match Resumed',
+                                           f'{p2_name} {s2}–{s1} {p1_name}',
+                                           {'type': 'player_resumed', 'player_id': match.Player2ID, 'match_id': mid})
+                            self.stdout.write(f'[NOTIFY] Resume: {p2_name} → {len(p2_tokens)} devices')
+
+                    self.notified_resume.add(mid)
+
+            # Step 3: update on-break tracking for next cycle
+            self.currently_on_break = current_on_break_ids
 
         except Exception as e:
             logger.error(f'[NOTIFY] Push notification error (non-fatal): {e}')
