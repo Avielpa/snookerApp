@@ -395,35 +395,45 @@ class DatabaseSaver:
 
     def _should_skip_match_update(self, existing_match, new_defaults: Dict[str, Any], api_match_id: Any) -> bool:
         """
-        CRITICAL FIX: Determine if we should skip updating a match to prevent data downgrade.
-
-        ROOT CAUSE: The Snooker API sometimes returns duplicate matches:
-        - Tournament draw with TBD players (Status=0, Player IDs=376)
-        - Actual finished matches with real players (Status=3, real Player IDs)
-
-        This causes the frontend to show old TBD matches in the Upcoming section.
+        Determine if we should skip updating a match to prevent data downgrade.
 
         SAFE RULE: Don't overwrite if it would LOSE data:
         1. Existing has REAL players, new has TBD → SKIP
         2. Existing is FINISHED, new is UPCOMING → SKIP
-        3. Otherwise → ALLOW UPDATE (normal progression)
+        3. Existing has scores, new has 0-0 → SKIP (unless match ID changed)
+
+        EXCEPTION: If the API match ID has changed, snooker.org replaced the fixture
+        entirely (happens 1-2x per tournament). In that case bypass RULE 3 so the
+        new fixture's players/status are saved correctly.
 
         Returns:
             True if update should be skipped, False if update should proceed
         """
         try:
-            # Get existing match data
             existing_player1_id = existing_match.Player1ID
             existing_player2_id = existing_match.Player2ID
             existing_status = existing_match.Status
 
-            # Get new match data
             new_player1_id = new_defaults.get('Player1ID')
             new_player2_id = new_defaults.get('Player2ID')
             new_status = new_defaults.get('Status')
 
+            # Detect match ID change — snooker.org replaced the fixture
+            existing_api_id = existing_match.api_match_id
+            new_api_id = int(api_match_id) if api_match_id else None
+            match_id_changed = (
+                new_api_id is not None and
+                existing_api_id is not None and
+                new_api_id != existing_api_id
+            )
+            if match_id_changed:
+                logger.info(
+                    f"🔄 Match ID change detected: {existing_api_id} → {new_api_id} "
+                    f"(Round {existing_match.Round}, Number {existing_match.Number}). "
+                    f"Snooker.org replaced fixture — allowing full update."
+                )
+
             # RULE 1: Don't replace REAL players with TBD (player ID 376)
-            # If existing has real players and new has TBD, skip
             existing_has_real_players = (
                 existing_player1_id is not None and existing_player1_id != 376 and
                 existing_player2_id is not None and existing_player2_id != 376
@@ -439,7 +449,6 @@ class DatabaseSaver:
                 return True  # SKIP
 
             # RULE 2: Don't replace FINISHED matches with UPCOMING status
-            # Status codes: 0=upcoming, 1=live, 2=on break, 3=finished
             if existing_status == 3 and new_status == 0:
                 logger.warning(
                     f"⚠️  SKIPPING match update for API ID {api_match_id}: "
@@ -448,32 +457,33 @@ class DatabaseSaver:
                 return True  # SKIP
 
             # RULE 3: Don't replace match with scores with 0-0 or None scores
-            existing_has_scores = (
-                existing_match.Score1 is not None and existing_match.Score2 is not None and
-                (existing_match.Score1 > 0 or existing_match.Score2 > 0)
-            )
-            new_score1 = new_defaults.get('Score1')
-            new_score2 = new_defaults.get('Score2')
-            new_has_no_scores = (
-                new_score1 is None or new_score2 is None or
-                (new_score1 == 0 and new_score2 == 0)
-            )
-
-            if existing_has_scores and new_has_no_scores:
-                logger.warning(
-                    f"⚠️  SKIPPING match update for API ID {api_match_id}: "
-                    f"Would replace real scores ({existing_match.Score1}-{existing_match.Score2}) "
-                    f"with empty scores ({new_score1}-{new_score2})"
+            # Exception: bypass if match ID changed (new fixture from snooker.org)
+            if not match_id_changed:
+                existing_has_scores = (
+                    existing_match.Score1 is not None and existing_match.Score2 is not None and
+                    (existing_match.Score1 > 0 or existing_match.Score2 > 0)
                 )
-                return True  # SKIP
+                new_score1 = new_defaults.get('Score1')
+                new_score2 = new_defaults.get('Score2')
+                new_has_no_scores = (
+                    new_score1 is None or new_score2 is None or
+                    (new_score1 == 0 and new_score2 == 0)
+                )
 
-            # All checks passed - ALLOW UPDATE (normal progression)
+                if existing_has_scores and new_has_no_scores:
+                    logger.warning(
+                        f"⚠️  SKIPPING match update for API ID {api_match_id}: "
+                        f"Would replace real scores ({existing_match.Score1}-{existing_match.Score2}) "
+                        f"with empty scores ({new_score1}-{new_score2})"
+                    )
+                    return True  # SKIP
+
+            # All checks passed - ALLOW UPDATE
             return False
 
         except Exception as e:
             logger.error(f"Error checking if should skip match update for API ID {api_match_id}: {e}")
-            # On error, allow update to proceed (fail-safe)
-            return False
+            return False  # On error, allow update (fail-safe)
 
     def save_round_details(self, event_id: int, round_details_data: List[Dict[str, Any]]) -> Dict[str, int]:
         """

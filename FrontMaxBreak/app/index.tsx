@@ -44,6 +44,7 @@ function formatRoundPrize(amount: any): string | null {
 const HomeScreen = (): React.ReactElement | null => {
     const [activeFilter, setActiveFilter] = useState<ActiveFilterType>('upcoming');
     const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
+    const hasAutoSwitchedToLive = React.useRef(false);
     const navigation = useRouter();
 
     const toggleSection = React.useCallback((sectionId: string) => {
@@ -55,7 +56,7 @@ const HomeScreen = (): React.ReactElement | null => {
         });
     }, []);
     const COLORS = useHomeColors();
-    
+
     // Use the extracted hook for data management
     const {
         processedListData,
@@ -76,7 +77,7 @@ const HomeScreen = (): React.ReactElement | null => {
     } = useHomeData();
 
     const { matches: otherLiveMatches } = useOtherLiveMatches(currentTournamentId);
-    
+
     // Auto-collapse Results only when there are live/upcoming matches
     // During tournament gaps (only finished matches), keep Results expanded
     React.useEffect(() => {
@@ -85,6 +86,20 @@ const HomeScreen = (): React.ReactElement | null => {
                 (item.matchCategory === 'livePlaying' || item.matchCategory === 'onBreak' || item.matchCategory === 'upcoming')
         );
         setCollapsedSections(hasLiveOrUpcoming ? new Set(['finished']) : new Set());
+    }, [processedListData]);
+
+    // Auto-switch to Live tab when live matches are detected.
+    // Only switches once per session — user can freely change tabs afterwards.
+    React.useEffect(() => {
+        if (hasAutoSwitchedToLive.current) return;
+        const hasLive = processedListData.some(
+            item => item.type === 'match' &&
+                (item.matchCategory === 'livePlaying' || item.matchCategory === 'onBreak')
+        );
+        if (hasLive) {
+            setActiveFilter('livePlaying');
+            hasAutoSwitchedToLive.current = true;
+        }
     }, [processedListData]);
 
     // AGGRESSIVE DEVICE FIX: Always refresh data when screen regains focus
