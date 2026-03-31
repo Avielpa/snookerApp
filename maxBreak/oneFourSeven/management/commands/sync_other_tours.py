@@ -1,6 +1,6 @@
 # management/commands/sync_other_tours.py
 """
-Syncs events and matches from non-main tours: women's, seniors, Q tour.
+Syncs events and matches from non-main tours: women's, seniors, Q tour, and other.
 Writes only to OtherTourEvent / OtherTourMatch / OtherTourPlayer tables.
 The main Event / MatchesOfAnEvent / Player tables are never touched.
 
@@ -25,10 +25,10 @@ from oneFourSeven.models import Player, OtherTourEvent, OtherTourPlayer, OtherTo
 from oneFourSeven.constants import API_BASE_URL, HEADERS, DEFAULT_TIMEOUT
 
 RATE_LIMIT_SECONDS = 6
-TOURS_TO_SYNC = ['women', 'seniors', 'q']
+TOURS_TO_SYNC = ['women', 'seniors', 'q', 'other']
 
 # Map API tr= values to friendly labels stored in OtherTourEvent.tour
-TOUR_LABEL_MAP = {'women': 'womens', 'seniors': 'seniors', 'q': 'qtour'}
+TOUR_LABEL_MAP = {'women': 'womens', 'seniors': 'seniors', 'q': 'qtour', 'other': 'other'}
 
 
 def _api_get(params: dict) -> list:
@@ -109,7 +109,7 @@ def _resolve_player(player_id: int, name_cache: dict, stdout) -> tuple:
 
 
 class Command(BaseCommand):
-    help = 'Sync women\'s, seniors, and Q tour events + matches into separate tables'
+    help = 'Sync women\'s, seniors, Q tour, and other events + matches into separate tables'
 
     def add_arguments(self, parser):
         parser.add_argument('--season', type=int, default=None,
@@ -117,11 +117,15 @@ class Command(BaseCommand):
         parser.add_argument('--tour', type=str, default=None,
                             choices=TOURS_TO_SYNC,
                             help='Sync a single tour only')
+        parser.add_argument('--force-resync-days', type=int, default=30,
+                            help='Force re-sync matches for events that ended within N days (default: 30). Use 0 to skip.')
 
     def handle(self, *args, **options):
+        from datetime import date, timedelta
         season = options.get('season')
         single_tour = options.get('tour')
         tours = [single_tour] if single_tour else TOURS_TO_SYNC
+        force_resync_days = options.get('force_resync_days', 30)
 
         # Determine season
         if not season:
@@ -167,7 +171,6 @@ class Command(BaseCommand):
                     continue
 
                 # Upsert event
-                from datetime import date
                 def parse_date(s):
                     if not s:
                         return None
@@ -250,3 +253,74 @@ class Command(BaseCommand):
         self.stdout.write(
             f'\n[DONE] Sync complete: {total_events} events, {total_matches} matches saved.'
         )
+
+        # Re-sync matches for recently completed events whose scores look stale (all 0-0).
+        # This catches events that were saved before they finished, and aren't picked up
+        # by the main loop above because they appear in a previous season's data or the
+        # API returned 0-0 scores at time of last sync.
+        if force_resync_days > 0:
+            cutoff = date.today() - timedelta(days=force_resync_days)
+            stale_events = OtherTourEvent.objects.filter(
+                end_date__gte=cutoff,
+                end_date__lt=date.today(),
+            )
+            if stale_events.exists():
+                self.stdout.write(f'\n[RESYNC] Checking {stale_events.count()} recently-ended events for stale scores...')
+                resync_count = 0
+                for ev in stale_events:
+                    # Consider stale if all matches are Status=0 and score is 0-0
+                    all_matches = OtherTourMatch.objects.filter(event=ev)
+                    if not all_matches.exists():
+                        has_stale = True
+                    else:
+                        has_stale = all_matches.filter(status=0, score1=0, score2=0).count() == all_matches.count()
+                    if not has_stale:
+                        continue
+                    self.stdout.write(f'  [RESYNC] Re-fetching matches for: {ev.name} (id={ev.snooker_id})')
+                    try:
+                        time.sleep(RATE_LIMIT_SECONDS)
+                        matches_data = _api_get({'t': '6', 'e': ev.snooker_id})
+                    except Exception as e:
+                        self.stdout.write(f'  [RESYNC] Failed: {e}')
+                        continue
+                    if not matches_data:
+                        continue
+                    for m in matches_data:
+                        match_id = m.get('ID')
+                        if not match_id:
+                            continue
+                        p1_id = m.get('Player1ID') or None
+                        p2_id = m.get('Player2ID') or None
+                        p1_name, p1_nat = _resolve_player(p1_id or 0, name_cache, self.stdout)
+                        p2_name, p2_nat = _resolve_player(p2_id or 0, name_cache, self.stdout)
+                        def parse_dt2(s):
+                            if not s:
+                                return None
+                            try:
+                                from django.utils.dateparse import parse_datetime
+                                return parse_datetime(s)
+                            except Exception:
+                                return None
+                        OtherTourMatch.objects.update_or_create(
+                            snooker_id=match_id,
+                            defaults={
+                                'event': ev,
+                                'round': m.get('Round', 0),
+                                'number': m.get('Number', 0),
+                                'player1_id': p1_id,
+                                'player2_id': p2_id,
+                                'player1_name': p1_name,
+                                'player2_name': p2_name,
+                                'player1_nationality': p1_nat,
+                                'player2_nationality': p2_nat,
+                                'score1': m.get('Score1') if m.get('Score1') is not None else None,
+                                'score2': m.get('Score2') if m.get('Score2') is not None else None,
+                                'winner_id': m.get('WinnerID') or None,
+                                'status': m.get('Status', 0),
+                                'scheduled_date': parse_dt2(m.get('ScheduledDate')),
+                                'start_date': parse_dt2(m.get('StartDate')),
+                            }
+                        )
+                        resync_count += 1
+                    self.stdout.write(f'  [RESYNC] Updated {len(matches_data)} matches for {ev.name}')
+                self.stdout.write(f'[RESYNC] Done: {resync_count} matches re-synced.')
