@@ -227,11 +227,11 @@ class Command(BaseCommand):
                             return None
 
                     OtherTourMatch.objects.update_or_create(
-                        snooker_id=match_id,
+                        event=other_event,
+                        round=m.get('Round', 0),
+                        number=m.get('Number', 0),
                         defaults={
-                            'event': other_event,
-                            'round': m.get('Round', 0),
-                            'number': m.get('Number', 0),
+                            'snooker_id': match_id,
                             'player1_id': p1_id,
                             'player2_id': p2_id,
                             'player1_name': p1_name,
@@ -302,11 +302,11 @@ class Command(BaseCommand):
                             except Exception:
                                 return None
                         OtherTourMatch.objects.update_or_create(
-                            snooker_id=match_id,
+                            event=ev,
+                            round=m.get('Round', 0),
+                            number=m.get('Number', 0),
                             defaults={
-                                'event': ev,
-                                'round': m.get('Round', 0),
-                                'number': m.get('Number', 0),
+                                'snooker_id': match_id,
                                 'player1_id': p1_id,
                                 'player2_id': p2_id,
                                 'player1_name': p1_name,
