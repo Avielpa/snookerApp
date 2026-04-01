@@ -932,6 +932,30 @@ class OtherTourMatch(models.Model):
         ordering = ['round', 'number']
 
 
+# ================== H2HCache Model ==================
+class H2HCache(models.Model):
+    """
+    Caches head-to-head results from snooker.org to avoid hitting the
+    10 req/min rate limit on concurrent user requests.
+    player1_id is always < player2_id (normalised at write time).
+    TTL: 24 hours — refreshed on next request after expiry.
+    """
+    player1_id  = models.IntegerField()
+    player2_id  = models.IntegerField()
+    total       = models.IntegerField()
+    p1_wins     = models.IntegerField()
+    p2_wins     = models.IntegerField()
+    raw_json    = models.TextField()          # full match list as JSON string
+    fetched_at  = models.DateTimeField()
+
+    class Meta:
+        unique_together = [('player1_id', 'player2_id')]
+        # player1_id < player2_id always — enforced in h2h_view
+
+    def __str__(self):
+        return f"H2H {self.player1_id} vs {self.player2_id} ({self.total} meetings, cached {self.fetched_at})"
+
+
 # ================== DeviceToken Model ==================
 class DeviceToken(models.Model):
     """

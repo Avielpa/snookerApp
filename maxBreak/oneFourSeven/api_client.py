@@ -146,10 +146,15 @@ class SnookerAPIClient:
         return self._make_request(params)
 
 
-    def fetch_head_to_head(self, player1_id: int, player2_id: int, season: int = -1, tour: str = 'main') -> Optional[Union[List, Dict]]:
-        """Fetch head-to-head statistics between two players."""
-        logger.info(f"Fetching H2H: Player {player1_id} vs Player {player2_id} (season: {season})")
-        params = {'p1': player1_id, 'p2': player2_id, 's': season, 'tr': tour}
+    def fetch_head_to_head(self, player1_id: int, player2_id: int, season: int = -1, tour: str = None) -> Optional[Union[List, Dict]]:
+        """Fetch head-to-head statistics between two players.
+        tour=None  → all tours (default — used by H2H tab)
+        tour='main' → ranking events only (pass explicitly when needed)
+        """
+        logger.info(f"Fetching H2H: Player {player1_id} vs Player {player2_id} (season: {season}, tour: {tour or 'all'})")
+        params = {'p1': player1_id, 'p2': player2_id, 's': season}
+        if tour:
+            params['tr'] = tour
         return self._make_request(params)
     
     def fetch_round_details(self, event_id: int, season: int) -> Optional[List[Dict]]:

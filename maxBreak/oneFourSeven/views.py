@@ -23,7 +23,7 @@ from rest_framework.response import Response # Use DRF Response
 from rest_framework_simplejwt.tokens import RefreshToken
 
 # Local Imports
-from .models import MatchesOfAnEvent, Player, Ranking, Event, RoundDetails, UpcomingMatch, PlayerMatchHistory
+from .models import MatchesOfAnEvent, Player, Ranking, Event, RoundDetails, UpcomingMatch, PlayerMatchHistory, H2HCache
 from .serializers import (
     EventSerializer, MatchesOfAnEventSerializer, PlayerSerializer,
     RankingSerializer, UserSerializer, PlayerMatchHistorySerializer
@@ -862,88 +862,126 @@ def tour_details_view(request, event_id):
         return Response({"error": "Internal server error while fetching external details."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+def _build_h2h_response(p1_int, p2_int, raw_matches):
+    """Build the processed response dict from a raw match list."""
+    import json as _json
+    if not isinstance(raw_matches, list):
+        return {
+            'Player1ID': p1_int, 'Player2ID': p2_int,
+            'Player1Wins': 0, 'Player2Wins': 0, 'TotalMeetings': 0,
+            'LastMeeting': None, 'LastResult': None, 'Matches': []
+        }
+
+    p1_wins = sum(1 for m in raw_matches if m.get('WinnerID') == p1_int)
+    p2_wins = sum(1 for m in raw_matches if m.get('WinnerID') == p2_int)
+    total   = len(raw_matches)
+
+    player_names_map = get_player_names({p1_int, p2_int})
+    p1_name = player_names_map.get(p1_int, f"Player {p1_int}")
+    p2_name = player_names_map.get(p2_int, f"Player {p2_int}")
+
+    last_meeting = last_result = None
+    if raw_matches:
+        last_match = raw_matches[0]
+        last_meeting = last_match.get('StartDate') or last_match.get('ScheduledDate')
+        if last_match.get('WinnerID') == p1_int:
+            last_result = f"{p1_name} won {last_match.get('Score1', 0)}-{last_match.get('Score2', 0)}"
+        elif last_match.get('WinnerID') == p2_int:
+            last_result = f"{p2_name} won {last_match.get('Score2', 0)}-{last_match.get('Score1', 0)}"
+
+    return {
+        'Player1ID': p1_int, 'Player1Name': p1_name,
+        'Player2ID': p2_int, 'Player2Name': p2_name,
+        'Player1Wins': p1_wins, 'Player2Wins': p2_wins,
+        'TotalMeetings': total,
+        'LastMeeting': last_meeting, 'LastResult': last_result,
+        'Matches': raw_matches,
+    }
+
+
+H2H_CACHE_TTL_HOURS = 24
+
+
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def h2h_view(request, player1_id, player2_id):
     """
-    API endpoint that proxies a request to the external snooker.org API
-    to fetch Head-to-Head statistics between two players (using t=13).
+    Returns H2H statistics between two players.
+    Results are cached in H2HCache for 24 hours to respect snooker.org's
+    10 req/min rate limit regardless of concurrent users.
     """
-    logger.info(f"Proxying request for H2H data for P1:{player1_id} vs P2:{player2_id}")
+    import json as _json
+    from django.utils import timezone as _tz
+    from datetime import timedelta
 
-    # Validate player IDs
+    logger.info(f"H2H request: P1={player1_id} vs P2={player2_id}")
+
     try:
         p1_int = int(player1_id)
         p2_int = int(player2_id)
     except (ValueError, TypeError):
-         return Response({"error": "Invalid Player ID format."}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"error": "Invalid Player ID format."}, status=status.HTTP_400_BAD_REQUEST)
 
-    # Use the refactored scraper function
+    # Normalise: always store/lookup with lower ID first
+    lo, hi = min(p1_int, p2_int), max(p1_int, p2_int)
+    swapped = (p1_int != lo)   # remember if we need to swap wins in response
+
+    # --- Cache lookup ---
+    cutoff = _tz.now() - timedelta(hours=H2H_CACHE_TTL_HOURS)
     try:
-        h2h_data = fetch_h2h_data(p1_int, p2_int) # Function from scraper.py
+        cached = H2HCache.objects.get(player1_id=lo, player2_id=hi)
+        if cached.fetched_at >= cutoff:
+            logger.debug(f"H2H cache HIT for {lo} vs {hi}")
+            raw_matches = _json.loads(cached.raw_json)
+            response = _build_h2h_response(p1_int, p2_int, raw_matches)
+            return Response(response)
+        logger.debug(f"H2H cache STALE for {lo} vs {hi} — re-fetching")
+    except H2HCache.DoesNotExist:
+        logger.debug(f"H2H cache MISS for {lo} vs {hi} — fetching from snooker.org")
+        cached = None
 
-        if h2h_data is not None:
-             # Process the raw match list into win statistics that frontend expects
-             if isinstance(h2h_data, list):
-                 # Count wins for each player
-                 p1_wins = sum(1 for match in h2h_data if match.get('WinnerID') == p1_int)
-                 p2_wins = sum(1 for match in h2h_data if match.get('WinnerID') == p2_int)
-                 total_meetings = len(h2h_data)
-                 
-                 # Get player names from the database
-                 player_names_map = get_player_names({p1_int, p2_int})
-                 p1_name = player_names_map.get(p1_int, f"Player {p1_int}")
-                 p2_name = player_names_map.get(p2_int, f"Player {p2_int}")
-                 
-                 # Find last meeting info
-                 last_meeting = None
-                 last_result = None
-                 if h2h_data:
-                     # Sort matches by most recent (assuming they're already sorted by date)
-                     last_match = h2h_data[0]  # First match should be most recent
-                     last_meeting = last_match.get('StartDate') or last_match.get('ScheduledDate')
-                     if last_match.get('WinnerID') == p1_int:
-                         last_result = f"{p1_name} won {last_match.get('Score1', 0)}-{last_match.get('Score2', 0)}"
-                     elif last_match.get('WinnerID') == p2_int:
-                         last_result = f"{p2_name} won {last_match.get('Score2', 0)}-{last_match.get('Score1', 0)}"
-                 
-                 # Create processed data in format frontend expects
-                 processed_data = {
-                     'Player1ID': p1_int,
-                     'Player1Name': p1_name,
-                     'Player2ID': p2_int,
-                     'Player2Name': p2_name,
-                     'Player1Wins': p1_wins,
-                     'Player2Wins': p2_wins,
-                     'TotalMeetings': total_meetings,
-                     'LastMeeting': last_meeting,
-                     'LastResult': last_result,
-                     'Matches': h2h_data  # Include raw matches for detailed view
-                 }
-             else:
-                 # Handle case where API returns non-list data
-                 processed_data = {
-                     'Player1ID': p1_int,
-                     'Player2ID': p2_int,
-                     'Player1Wins': 0,
-                     'Player2Wins': 0,
-                     'TotalMeetings': 0,
-                     'Matches': []
-                 }
-
-             logger.debug(f"Successfully processed H2H data for {p1_int} vs {p2_int}: {processed_data['Player1Wins']}-{processed_data['Player2Wins']} ({processed_data['TotalMeetings']} meetings)")
-             return Response(processed_data)
-        else:
-            # fetch_h2h_data returned None, indicating fetch error
-            logger.warning(f"Failed to fetch H2H data for {p1_int} vs {p2_int} from scraper.")
-            return Response(
-                {"error": f"Could not retrieve H2H data for players {p1_int} and {p2_int}."},
-                status=status.HTTP_404_NOT_FOUND
-            )
+    # --- Fetch from snooker.org (all tours, all seasons) ---
+    try:
+        h2h_data = fetch_h2h_data(lo, hi)
     except Exception as e:
-        # Catch unexpected errors during the fetch_h2h_data call
-        logger.error(f"Error calling scraper's fetch_h2h_data for {p1_int} vs {p2_int}: {e}", exc_info=True)
+        logger.error(f"Error fetching H2H for {lo} vs {hi}: {e}", exc_info=True)
+        # If we have stale cache, return it rather than showing an error
+        if cached is not None:
+            logger.warning(f"Returning stale H2H cache for {lo} vs {hi} due to fetch error")
+            raw_matches = _json.loads(cached.raw_json)
+            return Response(_build_h2h_response(p1_int, p2_int, raw_matches))
         return Response({"error": "Internal server error while fetching H2H data."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    if h2h_data is None:
+        if cached is not None:
+            logger.warning(f"Returning stale H2H cache for {lo} vs {hi} — API returned None")
+            raw_matches = _json.loads(cached.raw_json)
+            return Response(_build_h2h_response(p1_int, p2_int, raw_matches))
+        return Response({"error": f"Could not retrieve H2H data for players {p1_int} and {p2_int}."}, status=status.HTTP_404_NOT_FOUND)
+
+    raw_matches = h2h_data if isinstance(h2h_data, list) else []
+
+    # --- Save to cache ---
+    try:
+        H2HCache.objects.update_or_create(
+            player1_id=lo,
+            player2_id=hi,
+            defaults={
+                'total':      len(raw_matches),
+                'p1_wins':    sum(1 for m in raw_matches if m.get('WinnerID') == lo),
+                'p2_wins':    sum(1 for m in raw_matches if m.get('WinnerID') == hi),
+                'raw_json':   _json.dumps(raw_matches),
+                'fetched_at': _tz.now(),
+            }
+        )
+        logger.debug(f"H2H cache saved for {lo} vs {hi} ({len(raw_matches)} matches)")
+    except Exception as e:
+        logger.error(f"Failed to save H2H cache for {lo} vs {hi}: {e}", exc_info=True)
+        # Non-fatal — still return the data even if cache write fails
+
+    response = _build_h2h_response(p1_int, p2_int, raw_matches)
+    logger.debug(f"H2H result for {p1_int} vs {p2_int}: {response['Player1Wins']}-{response['Player2Wins']} ({response['TotalMeetings']} meetings)")
+    return Response(response)
 
 
 # --- Debug/Status Views ---

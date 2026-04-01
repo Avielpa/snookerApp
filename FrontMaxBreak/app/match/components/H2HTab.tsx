@@ -19,7 +19,7 @@ export function H2HTab({ h2hData, h2hLoading, p1Name, p2Name, styles }: H2HTabPr
       <View style={styles.h2hCard}>
         <Text style={styles.h2hTitle}>Head to Head</Text>
         <Text style={styles.h2hSubtitle}>
-          {`${p1Name} vs ${p2Name} - Historical meetings`}
+          {`${p1Name} vs ${p2Name} - All professional meetings`}
         </Text>
         
         {h2hLoading ? (
