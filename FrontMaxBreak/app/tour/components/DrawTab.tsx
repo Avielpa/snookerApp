@@ -56,11 +56,11 @@ function inferRoundName(round: number): string {
 }
 
 // ─── Layout constants ─────────────────────────────────────────────────────────
-const CARD_W = 190;
-const CARD_H = 70;
+const CARD_W = 160;
+const CARD_H = 58;
 const BASE_SLOT = CARD_H + 8;
-const CONN_W = 26;
-const PILL_H = 80;
+const CONN_W = 22;
+const PILL_H = 68;
 const WIN_COLOR = '#FFA726';
 
 function getTop(roundIndex: number, matchIndex: number, firstRoundCount: number = 8): number {
@@ -223,11 +223,11 @@ export function DrawTab({ matches, roundNames, roundFormats, roundPrizes, colors
 
     // Build bracket by chaining backwards from the last round:
     // valid bracket = chain where each earlier round has exactly 2x the matches
-    // (e.g. Final=1, SF=2, QF=4, R16=8) — max 4 rounds shown
+    // (e.g. Final=1, SF=2, QF=4, R16=8, Last32=16, Last64=32) — up to 7 rounds shown
     let chain: number[] = [];
-    // Find last round with ≤ 8 matches as starting point
+    // Find last round with ≤ 32 matches as starting point (covers Last 64 as first round)
     for (let i = allRounds.length - 1; i >= 0; i--) {
-      if ((byRound.get(allRounds[i])?.length ?? 0) <= 8) {
+      if ((byRound.get(allRounds[i])?.length ?? 0) <= 32) {
         chain = [allRounds[i]];
         break;
       }
@@ -235,7 +235,7 @@ export function DrawTab({ matches, roundNames, roundFormats, roundPrizes, colors
     if (chain.length > 0) {
       let needed = (byRound.get(chain[0])?.length ?? 1) * 2;
       const startIdx = allRounds.indexOf(chain[0]) - 1;
-      for (let i = startIdx; i >= 0 && chain.length < 4; i--) {
+      for (let i = startIdx; i >= 0 && chain.length < 7; i--) {
         const r = allRounds[i];
         const count = byRound.get(r)?.length ?? 0;
         if (count === needed) {
@@ -245,10 +245,10 @@ export function DrawTab({ matches, roundNames, roundFormats, roundPrizes, colors
       }
     }
 
-    // Fallback: if no chain found, take last 4 rounds with ≤ 8 matches
+    // Fallback: if no chain found, take last 7 rounds with ≤ 32 matches
     let mainRounds = chain.length > 0
       ? chain
-      : allRounds.filter((r) => (byRound.get(r)?.length ?? 0) <= 8).slice(-4);
+      : allRounds.filter((r) => (byRound.get(r)?.length ?? 0) <= 32).slice(-7);
 
     return mainRounds.map((r) => ({
       roundNumber: r,
