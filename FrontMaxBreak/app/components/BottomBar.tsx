@@ -44,6 +44,12 @@ const BottomBar = () => {
             iconOutline: 'film-outline',
             label: 'Media',
         },
+        {
+            path: '/StatsScreen',
+            icon: 'bar-chart',
+            iconOutline: 'bar-chart-outline',
+            label: 'Stats',
+        },
     ];
 
     const styles = createBottomBarStyles(colors);
@@ -93,9 +99,9 @@ const createBottomBarStyles = (colors: any) => StyleSheet.create({
         flexDirection: 'column',
         alignItems: 'center',
         paddingVertical: 10,
-        paddingHorizontal: 12,
+        paddingHorizontal: 8,
         borderRadius: 12,
-        minWidth: 72,
+        minWidth: 60,
         minHeight: 64,
         justifyContent: 'center',
     },
@@ -105,7 +111,7 @@ const createBottomBarStyles = (colors: any) => StyleSheet.create({
     bottomBarText: {
         color: colors.textSecondary,
         marginTop: 4,
-        fontSize: 12,
+        fontSize: 10,
         fontFamily: 'PoppinsMedium',
     },
     activeBottomBarText: {

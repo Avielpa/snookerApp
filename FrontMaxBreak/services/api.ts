@@ -172,6 +172,8 @@ api.interceptors.response.use(
                 ttl = 8000; // Match details: 8 seconds (longer to prevent initial load race conditions)
             } else if (response.config.url.includes('/rankings/')) {
                 ttl = 300000; // Rankings: 5 minutes (unchanged)
+            } else if (response.config.url.includes('stats/')) {
+                ttl = 3600000; // Stats screen: 1 hour (data updates once per day)
             }
 
             apiCache.set(cacheKey, response.data, ttl);
