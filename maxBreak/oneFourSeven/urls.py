@@ -3,6 +3,11 @@ from django.urls import path, include
 from rest_framework import routers # Import DRF router
 
 # Import views from the current application (.)
+from .views_stats import (
+    stats_centuries_view,
+    stats_tour_winners_view,
+    stats_title_leaders_view,
+)
 from .views import (
     # Generic List Views
     EventList,
@@ -126,6 +131,11 @@ urlpatterns = [
     path('all-live-matches/', all_live_matches_view, name='all-live-matches'),
     path('other-tours/', other_tours_view, name='other-tours'),
     path('news/', news_view, name='news'),
+
+    # --- Stats Screen URLs ---
+    path('stats/centuries/', stats_centuries_view, name='stats-centuries'),
+    path('stats/tour-winners/', stats_tour_winners_view, name='stats-tour-winners'),
+    path('stats/title-leaders/', stats_title_leaders_view, name='stats-title-leaders'),
 
     # --- Device / Push Notification URLs ---
     path('device/register/', device_register_view, name='device-register'),
