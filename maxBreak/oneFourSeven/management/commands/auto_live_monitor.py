@@ -568,6 +568,15 @@ class Command(BaseCommand):
             call_command('sync_other_tours')
             self.stdout.write('[SUCCESS] Other tours synced')
 
+            # Scrape century and 147 stats from snookerinfo.co.uk
+            try:
+                call_command('scrape_century_stats')
+                self.stdout.write('[SUCCESS] Century stats scraped')
+            except Exception as scrape_err:
+                # Non-fatal: existing century data is kept even on failure
+                logger.warning(f'Century stats scrape failed (data kept): {scrape_err}')
+                self.stdout.write(f'[WARNING] Century stats scrape failed: {scrape_err}')
+
         except Exception as e:
             logger.error(f'Daily updates failed: {str(e)}')
             self.stdout.write(f'[FAILED] Daily updates failed: {str(e)}')

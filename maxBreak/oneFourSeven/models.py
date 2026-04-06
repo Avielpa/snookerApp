@@ -956,6 +956,33 @@ class H2HCache(models.Model):
         return f"H2H {self.player1_id} vs {self.player2_id} ({self.total} meetings, cached {self.fetched_at})"
 
 
+# ================== CenturyRecord Model ==================
+class CenturyRecord(models.Model):
+    """
+    Scraped daily from snookerinfo.co.uk — stores century and 147 break counts
+    per player per season. Frontend never calls snookerinfo.co.uk directly;
+    all reads go through this table.
+    """
+    player_name    = models.CharField(max_length=100)
+    player         = models.ForeignKey(
+        Player, null=True, blank=True, on_delete=models.SET_NULL,
+        help_text="Linked Player row — null if name match failed"
+    )
+    career_total   = models.IntegerField(default=0)
+    career_147s    = models.IntegerField(default=0)
+    season_current = models.IntegerField(default=0)
+    season_prev1   = models.IntegerField(default=0)
+    season_prev2   = models.IntegerField(default=0)
+    season_label   = models.CharField(max_length=10)   # e.g. '2025-26'
+    scraped_at     = models.DateTimeField()
+
+    class Meta:
+        unique_together = [('player_name', 'season_label')]
+
+    def __str__(self):
+        return f"{self.player_name} — {self.season_label}: {self.season_current} centuries"
+
+
 # ================== DeviceToken Model ==================
 class DeviceToken(models.Model):
     """
