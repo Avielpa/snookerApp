@@ -15,7 +15,7 @@
 //   Hendry  — UCgjgqMmeaVhtHNIYjf4xHjw  (Stephen Hendry)
 //
 // Quota: playlistItems.list = 1 unit. Free tier = 10,000 units/day.
-// API key rotation: update EXPO_PUBLIC_YOUTUBE_API_KEY in .env, eas.json, and the fallback below.
+// API key rotation: run `eas secret:create --scope project --name EXPO_PUBLIC_YOUTUBE_API_KEY --value NEW_KEY --force`
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logger } from '../utils/logger';
 import { getSeasonEvents, Event } from './tourServices';
@@ -26,9 +26,9 @@ const MUBEEN_CHANNEL_ID = 'UCb4vVvFCy29IC-9soDMQgCw';
 const SASA_CHANNEL_ID   = 'UC7Fu3Qlk9IfFWA2bpfYF7GA';
 const HENDRY_CHANNEL_ID = 'UCgjgqMmeaVhtHNIYjf4xHjw';
 
-// Fallback ensures the app works even if env var isn't baked into the bundle.
-// To rotate the key: update .env, eas.json preview.env, and this fallback.
-const YOUTUBE_API_KEY = process.env.EXPO_PUBLIC_YOUTUBE_API_KEY || 'AIzaSyDSgvnj1Tao8fCQrC4sQTAZHJ4-BrYC9OU';
+// Key is injected at build time via EAS Secrets (never hardcoded).
+// To rotate: run `eas secret:create --scope project --name EXPO_PUBLIC_YOUTUBE_API_KEY --value NEW_KEY --force`
+const YOUTUBE_API_KEY = process.env.EXPO_PUBLIC_YOUTUBE_API_KEY;
 
 export interface Highlight {
     videoId: string;
