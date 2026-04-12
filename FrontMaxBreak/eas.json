@@ -24,7 +24,8 @@
         "NODE_ENV": "production",
         "EXPO_PUBLIC_API_BASE_URL": "https://snookerapp.up.railway.app/oneFourSeven/",
         "DEBUG_LOGGING": "false",
-        "ANDROID_PACKAGE": "com.avielpahima.maxbreaksnooker.preview"
+        "ANDROID_PACKAGE": "com.avielpahima.maxbreaksnooker.preview",
+        "EXPO_PUBLIC_YOUTUBE_API_KEY": "AIzaSyDSgvnj1Tao8fCQrC4sQTAZHJ4-BrYC9OU"
       }
     },
     "beta": {
@@ -51,7 +52,8 @@
         "NODE_ENV": "production",
         "EXPO_PUBLIC_API_BASE_URL": "https://snookerapp.up.railway.app/oneFourSeven/",
         "DEBUG_LOGGING": "false",
-        "ENABLE_SSL_PINNING": "true"
+        "ENABLE_SSL_PINNING": "true",
+        "EXPO_PUBLIC_YOUTUBE_API_KEY": "AIzaSyDSgvnj1Tao8fCQrC4sQTAZHJ4-BrYC9OU"
       },
       "ios": {
         "buildConfiguration": "Release"

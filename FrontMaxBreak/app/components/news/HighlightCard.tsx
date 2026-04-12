@@ -7,9 +7,10 @@ import { Highlight } from '../../../services/highlightsService';
 
 interface Props {
     highlight: Highlight;
+    badge?: string;
 }
 
-export const HighlightCard = ({ highlight }: Props) => {
+export const HighlightCard = ({ highlight, badge = 'WST' }: Props) => {
     const colors = useColors();
 
     return (
@@ -34,7 +35,7 @@ export const HighlightCard = ({ highlight }: Props) => {
                 </Text>
                 <View style={styles.meta}>
                     <View style={styles.badge}>
-                        <Text style={styles.badgeText}>WST</Text>
+                        <Text style={styles.badgeText}>{badge}</Text>
                     </View>
                     <Text style={[styles.time, { color: colors.textMuted }]}>
                         {timeAgo(highlight.published_at)}

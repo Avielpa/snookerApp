@@ -101,28 +101,32 @@ export function OverviewTab({
 
           {/* Official coverage link from snooker.org */}
           {hasLiveUrl && (
-            <TouchableOpacity
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 6,
-                marginTop: 10,
-                backgroundColor: 'rgba(255,167,38,0.15)',
-                paddingHorizontal: 12,
-                paddingVertical: 8,
-                borderRadius: 8,
-                borderWidth: 1,
-                borderColor: '#FFA726',
-                alignSelf: 'flex-start',
-              }}
-              onPress={() => openUrl(matchDetails.live_url!)}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="play-circle-outline" size={16} color="#FFA726" />
-              <Text style={{ color: '#FFA726', fontSize: 13, fontWeight: '700' }}>
-                Official Coverage
+            <View style={{ marginTop: 10 }}>
+              <TouchableOpacity
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 6,
+                  backgroundColor: 'rgba(255,167,38,0.15)',
+                  paddingHorizontal: 12,
+                  paddingVertical: 8,
+                  borderRadius: 8,
+                  borderWidth: 1,
+                  borderColor: '#FFA726',
+                  alignSelf: 'flex-start',
+                }}
+                onPress={() => openUrl(matchDetails.live_url!)}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="play-circle-outline" size={16} color="#FFA726" />
+                <Text style={{ color: '#FFA726', fontSize: 13, fontWeight: '700' }}>
+                  Official Coverage
+                </Text>
+              </TouchableOpacity>
+              <Text style={{ color: '#9CA3AF', fontSize: 11, fontFamily: 'PoppinsRegular', marginTop: 4 }}>
+                WST official live stream — opens in browser
               </Text>
-            </TouchableOpacity>
+            </View>
           )}
         </View>
       )}
