@@ -24,6 +24,10 @@ export interface Player {
     recent_form?: string[] | null;
     win_streak?: number | null;
     ranking_trend?: { current: number | null; previous: number | null; delta: number | null } | null;
+    season_stats?: { matches: number; wins: number; season: number | null } | null;
+    frame_stats?: { frames_won: number; frames_lost: number; frames_played: number; frame_pct: number } | null;
+    finals_record?: { finals_reached: number; finals_won: number; finals_pct: number } | null;
+    deciding_frames?: { deciding_played: number; deciding_won: number; deciding_pct: number } | null;
     Active: boolean | null
 }
 

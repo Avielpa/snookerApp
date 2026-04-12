@@ -10,6 +10,7 @@ import {
     TouchableOpacity,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { useColors } from '../contexts/ThemeContext';
 import { logger } from '../utils/logger';
 import {
@@ -451,18 +452,20 @@ const EmptyState = ({ colors }: { colors: any }) => (
 
 // ---- Tab bar ---------------------------------------------------------------
 
-type TabKey = 'centuries' | 'titles' | 'records';
+type TabKey = 'centuries' | 'titles' | 'records' | 'compare';
 
 const TABS: { key: TabKey; label: string; icon: React.ComponentProps<typeof Ionicons>['name'] }[] = [
     { key: 'centuries', label: 'Centuries', icon: 'trophy-outline' },
     { key: 'titles',    label: 'Titles',    icon: 'medal-outline' },
     { key: 'records',   label: 'Records',   icon: 'flash-outline' },
+    { key: 'compare',   label: 'Compare',   icon: 'git-compare-outline' },
 ];
 
 // ---- Main Screen -----------------------------------------------------------
 
 export default function StatsScreen() {
     const colors = useColors();
+    const router = useRouter();
     const [activeTab, setActiveTab] = useState<TabKey>('centuries');
     const [refreshing, setRefreshing] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -512,7 +515,13 @@ export default function StatsScreen() {
                         <TouchableOpacity
                             key={tab.key}
                             style={[styles.tabItem, isActive && styles.tabItemActive]}
-                            onPress={() => setActiveTab(tab.key)}
+                            onPress={() => {
+                                if (tab.key === 'compare') {
+                                    router.push('/compare');
+                                } else {
+                                    setActiveTab(tab.key);
+                                }
+                            }}
                             activeOpacity={0.7}
                         >
                             <Ionicons

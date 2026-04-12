@@ -504,11 +504,25 @@ export default function RankingEnhanced() {
               </View>
             </View>
 
+            {/* Compare Button */}
+            {item.Player && item.Player > 0 && item.Player !== 376 ? (
+              <TouchableOpacity
+                onPress={(e) => {
+                  e.stopPropagation();
+                  router.push(`/compare?p1=${item.Player}`);
+                }}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                style={{ paddingHorizontal: 6 }}
+              >
+                <Ionicons name="git-compare-outline" size={18} color={colors.textMuted} />
+              </TouchableOpacity>
+            ) : null}
+
             {/* Action Arrow */}
-            <Ionicons 
-              name="chevron-forward" 
-              size={20} 
-              color={colors.textSecondary} 
+            <Ionicons
+              name="chevron-forward"
+              size={20}
+              color={colors.textSecondary}
               style={styles.actionArrow}
             />
           </View>

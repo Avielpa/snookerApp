@@ -7,7 +7,7 @@ import {
     TouchableOpacity,
     RefreshControl,
 } from 'react-native';
-import { useLocalSearchParams, Stack } from 'expo-router';
+import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
 import { getPlayerDetails, getPlayerMatchHistory, PlayerMatchHistoryItem, PlayerMatchHistoryResponse } from '../../services/matchServices';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -42,6 +42,9 @@ interface PlayerData {
     win_streak?: number | null;
     ranking_trend?: { current: number | null; previous: number | null; delta: number | null } | null;
     season_stats?: { matches: number; wins: number; season: number | null } | null;
+    frame_stats?: { frames_won: number; frames_lost: number; frames_played: number; frame_pct: number } | null;
+    finals_record?: { finals_reached: number; finals_won: number; finals_pct: number } | null;
+    deciding_frames?: { deciding_played: number; deciding_won: number; deciding_pct: number } | null;
 }
 
 interface TabConfig {
@@ -109,6 +112,7 @@ export default function PlayerDetailsScreen(): React.ReactElement {
         playerId ? isPlayerFavouriteSync(playerId) : false
     );
     const COLORS = usePlayerColors();
+    const router = useRouter();
 
     // Re-read from storage after async cache loads (fixes persistence across restarts)
     useEffect(() => {
@@ -798,17 +802,28 @@ export default function PlayerDetailsScreen(): React.ReactElement {
                     },
                     headerBackTitle: '',
                     headerRight: () => (
-                        <TouchableOpacity
-                            onPress={handleStarPress}
-                            style={{ paddingHorizontal: 12, paddingVertical: 8 }}
-                            hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}
-                        >
-                            <Ionicons
-                                name={isStarred ? 'star' : 'star-outline'}
-                                size={22}
-                                color={isStarred ? '#F59E0B' : COLORS.primary}
-                            />
-                        </TouchableOpacity>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                            {playerId && playerId !== 376 ? (
+                                <TouchableOpacity
+                                    onPress={() => router.push(`/compare?p1=${playerId}`)}
+                                    style={{ paddingHorizontal: 8, paddingVertical: 8 }}
+                                    hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}
+                                >
+                                    <Ionicons name="git-compare-outline" size={22} color={COLORS.primary} />
+                                </TouchableOpacity>
+                            ) : null}
+                            <TouchableOpacity
+                                onPress={handleStarPress}
+                                style={{ paddingHorizontal: 8, paddingVertical: 8 }}
+                                hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}
+                            >
+                                <Ionicons
+                                    name={isStarred ? 'star' : 'star-outline'}
+                                    size={22}
+                                    color={isStarred ? '#F59E0B' : COLORS.primary}
+                                />
+                            </TouchableOpacity>
+                        </View>
                     ),
                 }}
             />

@@ -745,17 +745,26 @@ def player_by_id_view(request, player_id):
 
     # Recent form, win streak, ranking trend — safe: never breaks player loading
     try:
-        from oneFourSeven.player_stats import get_recent_form, get_win_streak, get_ranking_trend, get_season_stats
+        from oneFourSeven.player_stats import (
+            get_recent_form, get_win_streak, get_ranking_trend, get_season_stats,
+            get_frame_stats, get_finals_record, get_deciding_frames,
+        )
         player_data['recent_form'] = get_recent_form(player_id, n=10)
         player_data['win_streak'] = get_win_streak(player_id)
         player_data['ranking_trend'] = get_ranking_trend(player_id)
         player_data['season_stats'] = get_season_stats(player_id)
+        player_data['frame_stats'] = get_frame_stats(player_id)
+        player_data['finals_record'] = get_finals_record(player_id)
+        player_data['deciding_frames'] = get_deciding_frames(player_id)
     except Exception as e:
         logger.warning(f"[player_by_id_view] player_stats failed for {player_id}: {e}")
         player_data['recent_form'] = []
         player_data['win_streak'] = 0
         player_data['ranking_trend'] = {'current': None, 'previous': None, 'delta': None}
         player_data['season_stats'] = {'matches': 0, 'wins': 0, 'season': None}
+        player_data['frame_stats'] = {'frames_won': 0, 'frames_lost': 0, 'frames_played': 0, 'frame_pct': 0}
+        player_data['finals_record'] = {'finals_reached': 0, 'finals_won': 0, 'finals_pct': 0}
+        player_data['deciding_frames'] = {'deciding_played': 0, 'deciding_won': 0, 'deciding_pct': 0}
 
     return Response(player_data)
 
