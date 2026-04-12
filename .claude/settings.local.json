@@ -169,7 +169,17 @@
       "Bash(head -20 grep -rn \"device/register\\\\|device_register\" /c/Users/Aviel/vsprojects/snookerApp/maxBreak/oneFourSeven/urls.py)",
       "Bash(head -10 grep -rn \"EXPO_PUBLIC_API_BASE_URL\\\\|baseURL\\\\|BASE_URL\" /c/Users/Aviel/vsprojects/snookerApp/FrontMaxBreak/services/api.ts)",
       "Bash(head -5 grep -n \"runtimeVersion\\\\|runtime\" /c/Users/Aviel/vsprojects/snookerApp/FrontMaxBreak/eas.json)",
-      "Bash(/dev/null:*)"
+      "Bash(/dev/null:*)",
+      "Bash(xxd)",
+      "Bash(grep -E \"\\(^[^/]*\\\\.tsx$|/$\\)\")",
+      "WebFetch(domain:railway.com)",
+      "WebFetch(domain:snookerinfo.co.uk)",
+      "WebFetch(domain:datasportsgroup.com)",
+      "WebFetch(domain:scores.wst.tv)",
+      "WebFetch(domain:videos.feedspot.com)",
+      "WebFetch(domain:www.youtube.com)",
+      "WebFetch(domain:discuss.ai.google.dev)",
+      "WebFetch(domain:community.n8n.io)"
     ],
     "deny": [],
     "ask": [],

@@ -34,7 +34,7 @@ Welcome to the MaxBreak project. This document walks you from zero to shipping a
 | Backend hosting | Railway — auto-deploys on every `git push master` |
 | OTA updates | EAS (Expo Application Services) — run manually |
 | Push notifications | Firebase Cloud Messaging (FCM V1) |
-| Data source | snooker.org public API |
+| Data source | snooker.org API |
 | Android package (Preview) | `com.avielpahima.maxbreaksnooker.preview` |
 | Android package (Production) | `com.avielpahima.maxbreaksnooker` |
 
