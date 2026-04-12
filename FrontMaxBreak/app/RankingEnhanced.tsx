@@ -504,7 +504,7 @@ export default function RankingEnhanced() {
               </View>
             </View>
 
-            {/* Compare Button */}
+            {/* VS Compare pill */}
             {item.Player && item.Player > 0 && item.Player !== 376 ? (
               <TouchableOpacity
                 onPress={(e) => {
@@ -512,9 +512,9 @@ export default function RankingEnhanced() {
                   router.push(`/compare?p1=${item.Player}`);
                 }}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                style={{ paddingHorizontal: 6 }}
+                style={[styles.vsPill, { borderColor: colors.cardBorder }]}
               >
-                <Ionicons name="git-compare-outline" size={18} color={colors.textMuted} />
+                <Text style={[styles.vsPillText, { color: colors.textMuted }]}>VS</Text>
               </TouchableOpacity>
             ) : null}
 
@@ -904,7 +904,18 @@ const createRankingStyles = (colors: any) => StyleSheet.create({
     borderRadius: 1,
   },
   actionArrow: {
-    marginLeft: 8,
+    marginLeft: 4,
+  },
+  vsPill: {
+    borderWidth: 1,
+    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    marginHorizontal: 4,
+  },
+  vsPillText: {
+    fontSize: 10,
+    fontFamily: 'PoppinsBold',
   },
   centerContent: {
     flex: 1,

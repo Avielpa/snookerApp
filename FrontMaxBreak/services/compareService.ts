@@ -27,7 +27,15 @@ export interface ComparePlayer extends Player {
         deciding_won: number;
         deciding_pct: number;
     } | null;
+    semi_final_record?: { reached: number; won: number; pct: number } | null;
+    career_best_ranking?: number | null;
+    seasons_in_top16?: number | null;
+    best_win_streak?: number | null;
     season_stats?: { matches: number; wins: number; season: number | null } | null;
+    // Derived
+    centuries_per_match?: number | null;
+    avg_frames_per_match?: number | null;
+    prize_per_match?: number | null;
     // Century data merged from /stats/centuries/
     century_season_current?: number | null;
     century_season_prev1?: number | null;
@@ -74,12 +82,22 @@ function enrichPlayer(player: Player, centuries: CenturyEntry[]): ComparePlayer 
     const wins = player.career_wins ?? 0;
     const losses = player.career_losses ?? 0;
     const total = wins + losses;
+    const centuryData = mergeCentury(player, centuries);
+    const careerCenturies = centuryData.century_career_total ?? null;
+    const framesPlayed = player.frame_stats?.frames_played ?? null;
+    const seasonMatches = player.season_stats?.matches ?? null;
     return {
         ...player,
         age: computeAge(player.Born),
         years_as_pro: computeYearsAsPro(player.FirstSeasonAsPro),
         career_win_pct: total > 0 ? Math.round((wins / total) * 1000) / 10 : null,
-        ...mergeCentury(player, centuries),
+        centuries_per_match: careerCenturies != null && total > 0
+            ? Math.round((careerCenturies / total) * 100) / 100 : null,
+        avg_frames_per_match: framesPlayed != null && total > 0
+            ? Math.round((framesPlayed / total) * 10) / 10 : null,
+        prize_per_match: player.prize_money_this_year != null && seasonMatches && seasonMatches > 0
+            ? Math.round(player.prize_money_this_year / seasonMatches) : null,
+        ...centuryData,
     };
 }
 

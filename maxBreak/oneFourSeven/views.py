@@ -748,6 +748,7 @@ def player_by_id_view(request, player_id):
         from oneFourSeven.player_stats import (
             get_recent_form, get_win_streak, get_ranking_trend, get_season_stats,
             get_frame_stats, get_finals_record, get_deciding_frames,
+            get_semi_final_record, get_career_best_ranking, get_seasons_in_top16, get_best_win_streak,
         )
         player_data['recent_form'] = get_recent_form(player_id, n=10)
         player_data['win_streak'] = get_win_streak(player_id)
@@ -756,6 +757,10 @@ def player_by_id_view(request, player_id):
         player_data['frame_stats'] = get_frame_stats(player_id)
         player_data['finals_record'] = get_finals_record(player_id)
         player_data['deciding_frames'] = get_deciding_frames(player_id)
+        player_data['semi_final_record'] = get_semi_final_record(player_id)
+        player_data['career_best_ranking'] = get_career_best_ranking(player_id)
+        player_data['seasons_in_top16'] = get_seasons_in_top16(player_id)
+        player_data['best_win_streak'] = get_best_win_streak(player_id)
     except Exception as e:
         logger.warning(f"[player_by_id_view] player_stats failed for {player_id}: {e}")
         player_data['recent_form'] = []
@@ -765,6 +770,10 @@ def player_by_id_view(request, player_id):
         player_data['frame_stats'] = {'frames_won': 0, 'frames_lost': 0, 'frames_played': 0, 'frame_pct': 0}
         player_data['finals_record'] = {'finals_reached': 0, 'finals_won': 0, 'finals_pct': 0}
         player_data['deciding_frames'] = {'deciding_played': 0, 'deciding_won': 0, 'deciding_pct': 0}
+        player_data['semi_final_record'] = {'reached': 0, 'won': 0, 'pct': 0}
+        player_data['career_best_ranking'] = None
+        player_data['seasons_in_top16'] = 0
+        player_data['best_win_streak'] = 0
 
     return Response(player_data)
 

@@ -806,10 +806,17 @@ export default function PlayerDetailsScreen(): React.ReactElement {
                             {playerId && playerId !== 376 ? (
                                 <TouchableOpacity
                                     onPress={() => router.push(`/compare?p1=${playerId}`)}
-                                    style={{ paddingHorizontal: 8, paddingVertical: 8 }}
+                                    style={{
+                                        borderWidth: 1,
+                                        borderColor: COLORS.primary,
+                                        borderRadius: 8,
+                                        paddingHorizontal: 10,
+                                        paddingVertical: 4,
+                                        marginRight: 4,
+                                    }}
                                     hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}
                                 >
-                                    <Ionicons name="git-compare-outline" size={22} color={COLORS.primary} />
+                                    <Text style={{ color: COLORS.primary, fontFamily: 'PoppinsBold', fontSize: 12 }}>VS</Text>
                                 </TouchableOpacity>
                             ) : null}
                             <TouchableOpacity

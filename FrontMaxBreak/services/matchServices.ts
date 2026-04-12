@@ -28,6 +28,10 @@ export interface Player {
     frame_stats?: { frames_won: number; frames_lost: number; frames_played: number; frame_pct: number } | null;
     finals_record?: { finals_reached: number; finals_won: number; finals_pct: number } | null;
     deciding_frames?: { deciding_played: number; deciding_won: number; deciding_pct: number } | null;
+    semi_final_record?: { reached: number; won: number; pct: number } | null;
+    career_best_ranking?: number | null;
+    seasons_in_top16?: number | null;
+    best_win_streak?: number | null;
     Active: boolean | null
 }
 

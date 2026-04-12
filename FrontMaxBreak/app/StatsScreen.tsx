@@ -458,7 +458,7 @@ const TABS: { key: TabKey; label: string; icon: React.ComponentProps<typeof Ioni
     { key: 'centuries', label: 'Centuries', icon: 'trophy-outline' },
     { key: 'titles',    label: 'Titles',    icon: 'medal-outline' },
     { key: 'records',   label: 'Records',   icon: 'flash-outline' },
-    { key: 'compare',   label: 'Compare',   icon: 'git-compare-outline' },
+    { key: 'compare',   label: 'Compare',   icon: 'people-outline' },
 ];
 
 // ---- Main Screen -----------------------------------------------------------

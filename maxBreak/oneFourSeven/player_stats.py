@@ -177,6 +177,76 @@ def get_deciding_frames(player_id: int) -> dict:
         return {'deciding_played': 0, 'deciding_won': 0, 'deciding_pct': 0}
 
 
+def get_semi_final_record(player_id: int) -> dict:
+    """Semi-final appearances and wins (career)."""
+    try:
+        from oneFourSeven.models import PlayerMatchHistory
+        qs = PlayerMatchHistory.objects.filter(
+            player_id=player_id, status=3, round_name__icontains='Semi',
+        )
+        reached = qs.count()
+        won = qs.filter(winner_id=player_id).count()
+        return {'reached': reached, 'won': won, 'pct': round(won / reached * 100, 1) if reached else 0}
+    except Exception as e:
+        logger.error(f'[player_stats] get_semi_final_record failed for {player_id}: {e}')
+        return {'reached': 0, 'won': 0, 'pct': 0}
+
+
+def get_career_best_ranking(player_id: int) -> int | None:
+    """Lowest (best) world ranking ever achieved."""
+    try:
+        from django.db.models import Min
+        from oneFourSeven.models import Ranking
+        result = Ranking.objects.filter(
+            Player_id=player_id,
+            Type__in=['MoneyRankings', 'MoneySeedings'],
+        ).aggregate(best=Min('Position'))
+        return result['best']
+    except Exception as e:
+        logger.error(f'[player_stats] get_career_best_ranking failed for {player_id}: {e}')
+        return None
+
+
+def get_seasons_in_top16(player_id: int) -> int:
+    """Number of seasons the player finished inside the top 16."""
+    try:
+        from oneFourSeven.models import Ranking
+        return (
+            Ranking.objects
+            .filter(Player_id=player_id, Type__in=['MoneyRankings', 'MoneySeedings'], Position__lte=16)
+            .values('Season')
+            .distinct()
+            .count()
+        )
+    except Exception as e:
+        logger.error(f'[player_stats] get_seasons_in_top16 failed for {player_id}: {e}')
+        return 0
+
+
+def get_best_win_streak(player_id: int) -> int:
+    """Career best consecutive match win streak."""
+    try:
+        from oneFourSeven.models import PlayerMatchHistory
+        winner_ids = list(
+            PlayerMatchHistory.objects
+            .filter(player_id=player_id, status=3)
+            .order_by('end_date', 'start_date', 'api_match_id')
+            .values_list('winner_id', flat=True)
+        )
+        best = current = 0
+        for wid in winner_ids:
+            if wid == player_id:
+                current += 1
+                if current > best:
+                    best = current
+            else:
+                current = 0
+        return best
+    except Exception as e:
+        logger.error(f'[player_stats] get_best_win_streak failed for {player_id}: {e}')
+        return 0
+
+
 def get_ranking_trend(player_id: int) -> dict:
     """
     Returns ranking position for current and previous season.
