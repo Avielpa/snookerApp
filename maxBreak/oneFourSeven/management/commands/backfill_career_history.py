@@ -27,6 +27,7 @@ from pathlib import Path
 
 import requests
 from django.core.management.base import BaseCommand
+from django.db import close_old_connections
 from django.utils import timezone
 
 from oneFourSeven.constants import API_BASE_URL, HEADERS
@@ -150,6 +151,7 @@ class Command(BaseCommand):
             self.stdout.flush()
 
             try:
+                close_old_connections()
                 saved = self._fetch_and_save(player, season)
                 key = f'{player.ID}:{season}'
                 progress[key] = saved
