@@ -30,37 +30,53 @@ class Command(BaseCommand):
         )
         players = Player.objects.filter(ID__in=top_ids)
 
+        import json
+        from pathlib import Path
+        progress_file = Path(__file__).resolve().parent.parent.parent.parent / 'backfill_progress.json'
+        progress = {}
+        if progress_file.exists():
+            try:
+                progress = json.loads(progress_file.read_text())
+            except Exception:
+                pass
+
         total_expected = 0
-        total_fetched = 0
-        missing = []
+        total_fetched = 0     # has rows in DB
+        total_no_data = 0     # API called, returned 0 (player not active that season)
+        missing = []          # genuinely not fetched yet
 
         for player in players:
             first = player.FirstSeasonAsPro or 2005
             for season in range(first, current_season + 1):
                 total_expected += 1
-                has_data = PlayerMatchHistory.objects.filter(
+                key = f'{player.ID}:{season}'
+                has_rows = PlayerMatchHistory.objects.filter(
                     player_id=player.ID, season=season,
                 ).exists()
-                if has_data:
+                if has_rows:
                     total_fetched += 1
+                elif key in progress:
+                    total_no_data += 1  # API returned 0 — player not active that season
                 else:
                     missing.append((player, season))
 
-        pct = total_fetched / total_expected * 100 if total_expected else 0
-        remaining_calls = total_expected - total_fetched
-        eta_min = remaining_calls * 6 / 60  # 6 sec per call
+        total_called = total_fetched + total_no_data
+        pct = total_called / total_expected * 100 if total_expected else 0
+        remaining_calls = len(missing)
+        eta_min = remaining_calls * 6 / 60
 
         self.stdout.write(f'\n{"─" * 55}')
         self.stdout.write(f'  Players checked : {players.count()}')
         self.stdout.write(f'  Expected        : {total_expected} player+season combos')
-        self.stdout.write(f'  Fetched         : {total_fetched}')
-        self.stdout.write(f'  Missing         : {len(missing)}')
+        self.stdout.write(f'  Has DB rows     : {total_fetched}')
+        self.stdout.write(f'  No API data     : {total_no_data}  (player not active that season)')
+        self.stdout.write(f'  Not fetched yet : {len(missing)}')
         self.stdout.write(f'  Coverage        : {pct:.1f}%')
         self.stdout.write(f'  ETA to complete : ~{eta_min:.0f} min ({eta_min/60:.1f} hours)')
         self.stdout.write(f'{"─" * 55}')
 
         if missing:
-            self.stdout.write('\nFirst 20 missing:')
+            self.stdout.write('\nFirst 20 not yet fetched:')
             for player, season in missing[:20]:
                 self.stdout.write(
                     f'  {player.FirstName} {player.LastName} ({player.ID}) — season {season}'

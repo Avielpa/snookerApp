@@ -182,10 +182,17 @@ class Command(BaseCommand):
     # ── Helpers ──────────────────────────────────────────────────────────────
 
     def _already_fetched(self, player_id: int, season: int) -> bool:
-        """Skip if we already have finished matches for this player+season."""
-        return PlayerMatchHistory.objects.filter(
-            player_id=player_id, season=season, status=3,
-        ).exists()
+        """Skip if we already called the API for this player+season.
+        Checks any match status (not just finished) so seasons with only
+        qualifying losses or no-data aren't re-fetched unnecessarily.
+        Also checks the progress file for seasons where API returned 0 matches.
+        """
+        if PlayerMatchHistory.objects.filter(player_id=player_id, season=season).exists():
+            return True
+        # Check progress file for seasons fetched but returned 0 matches
+        key = f'{player_id}:{season}'
+        progress = self._load_progress()
+        return key in progress
 
     def _api_get(self, url: str):
         time.sleep(API_CALL_DELAY)
