@@ -180,6 +180,23 @@ class Command(BaseCommand):
                     self.stdout.write(f'  [MATCHES] No matches for season {season}')
                     continue
 
+                # Infer round names: highest round number in each event = Final
+                from collections import defaultdict
+                event_max_round = defaultdict(int)
+                for m in matches_data:
+                    eid = m.get('EventID')
+                    rnd = m.get('Round') or 0
+                    if eid and rnd > event_max_round[eid]:
+                        event_max_round[eid] = rnd
+
+                ROUND_NAMES = ['Final', 'Semi-Final', 'Quarter-Final', 'Last 16', 'Last 32', 'Last 64', 'Last 128', 'Qualifying Round']
+
+                def infer_round_name(event_id, round_number):
+                    if not event_id or not round_number:
+                        return None
+                    dist = event_max_round.get(event_id, 0) - round_number
+                    return ROUND_NAMES[dist] if 0 <= dist < len(ROUND_NAMES) else f'Round {round_number}'
+
                 matches_saved = 0
                 for match_data in matches_data:
                     try:
@@ -199,7 +216,7 @@ class Command(BaseCommand):
                                 'event_id': event_id,
                                 'event_name': event_name,
                                 'round_number': match_data.get('Round'),
-                                'round_name': None,
+                                'round_name': infer_round_name(event_id, match_data.get('Round')),
                                 'player1_id': match_data.get('Player1ID'),
                                 'player1_name': self._get_player_name(match_data.get('Player1ID')),
                                 'score1': match_data.get('Score1'),
