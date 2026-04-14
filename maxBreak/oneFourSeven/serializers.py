@@ -3,7 +3,7 @@ from rest_framework import serializers
 from django.contrib.auth.models import User # Default Django user model
 
 # Import your application's models
-from .models import Event, Player, Ranking, MatchesOfAnEvent, PlayerMatchHistory
+from .models import Event, Player, Ranking, MatchesOfAnEvent, PlayerMatchHistory, MatchComment
 
 class PlayerSerializer(serializers.ModelSerializer):
     """
@@ -154,6 +154,40 @@ class UserSerializer(serializers.ModelSerializer):
          ]
         # Ensure sensitive fields are never included
         # exclude = ['password', 'user_permissions', 'groups', 'is_superuser'] # Alternative to 'fields'
+
+
+class MatchCommentSerializer(serializers.ModelSerializer):
+    """
+    Serializes MatchComment instances for the comments API.
+    Computes likes_count, liked_by_me, and is_mine from the requesting device_id.
+    device_id is never exposed to the client.
+    """
+    likes_count = serializers.SerializerMethodField()
+    liked_by_me = serializers.SerializerMethodField()
+    is_mine     = serializers.SerializerMethodField()
+
+    class Meta:
+        model  = MatchComment
+        fields = ['id', 'author_name', 'text', 'created_at', 'likes_count', 'liked_by_me', 'is_mine']
+
+    def _device_id(self):
+        request = self.context.get('request')
+        return (request.data.get('device_id') or request.query_params.get('device_id') or '').strip() if request else ''
+
+    def get_likes_count(self, obj):
+        return obj.likes.count()
+
+    def get_liked_by_me(self, obj):
+        device_id = self._device_id()
+        if not device_id:
+            return False
+        return obj.likes.filter(device_id=device_id).exists()
+
+    def get_is_mine(self, obj):
+        device_id = self._device_id()
+        if not device_id:
+            return False
+        return obj.device_id == device_id
 
 
 class PlayerMatchHistorySerializer(serializers.ModelSerializer):

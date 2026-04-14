@@ -24,6 +24,7 @@ const TAB_CONFIG: TabConfig[] = [
   { id: 'frames', label: 'Frames', icon: 'grid-outline' },
   { id: 'stats', label: 'Stats', icon: 'bar-chart-outline' },
   { id: 'h2h', label: 'H2H', icon: 'people-outline' },
+  { id: 'comments', label: 'Chat', icon: 'chatbubbles-outline' },
 ];
 
 export function TabNavigation({ selectedTab, onTabChange, colors, styles }: TabNavigationProps) {

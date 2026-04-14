@@ -53,6 +53,10 @@ from .views import (
     # Prediction Views
     match_predict_view,
     match_predict_stats_view,
+    # Comment Views
+    match_comments_view,
+    match_comment_delete_view,
+    match_comment_like_view,
 )
 
 # --- DRF Router Setup ---
@@ -152,6 +156,11 @@ urlpatterns = [
     # --- Predictions ---
     path('matches/predict/', match_predict_view, name='match-predict'),
     path('matches/<int:match_api_id>/predict/', match_predict_stats_view, name='match-predict-stats'),
+
+    # --- Comments ---
+    path('matches/<int:match_api_id>/comments/', match_comments_view, name='match-comments'),
+    path('matches/<int:match_api_id>/comments/<int:comment_id>/', match_comment_delete_view, name='match-comment-delete'),
+    path('matches/<int:match_api_id>/comments/<int:comment_id>/like/', match_comment_like_view, name='match-comment-like'),
 
     # --- Debug URL ---
     # Debug endpoint for checking system status

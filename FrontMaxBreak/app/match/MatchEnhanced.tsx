@@ -27,9 +27,10 @@ import {
   PlayerScoreHeader, 
   TabNavigation, 
   OverviewTab, 
-  FramesTab, 
-  StatsTab, 
-  H2HTab 
+  FramesTab,
+  StatsTab,
+  H2HTab,
+  CommentsTab,
 } from './components';
 import { createMatchStyles } from './styles-modern';
 import { parseFrameScoresString } from './utils/frameScoreParser';
@@ -713,6 +714,15 @@ export default function MatchEnhanced() {
             p1Name={p1Name}
             p2Name={p2Name}
             styles={styles}
+          />
+        );
+
+      case 'comments':
+        if (!matchDetails.api_match_id) return null;
+        return (
+          <CommentsTab
+            matchApiId={matchDetails.api_match_id}
+            colors={colors}
           />
         );
 

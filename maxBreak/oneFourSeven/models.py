@@ -1028,3 +1028,42 @@ class MatchPrediction(models.Model):
     def __str__(self):
         return f"Device {self.device_id[:8]}... picks player {self.player} in match {self.match_api_id}"
 
+
+# ================== MatchComment Model ==================
+class MatchComment(models.Model):
+    """
+    Stores fan comments on a match. Identified by device_id (no login required).
+    author_name is a display name chosen by the user (stored client-side in AsyncStorage).
+    is_deleted supports soft delete so admins can moderate without losing data.
+    """
+    match_api_id = models.IntegerField(db_index=True)
+    device_id    = models.CharField(max_length=200, db_index=True)
+    author_name  = models.CharField(max_length=100)
+    text         = models.TextField()
+    created_at   = models.DateTimeField(auto_now_add=True)
+    is_deleted   = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "Match Comment"
+        verbose_name_plural = "Match Comments"
+
+    def __str__(self):
+        return f"{self.author_name} on match {self.match_api_id}: {self.text[:50]}"
+
+
+class CommentLike(models.Model):
+    """
+    Tracks which device liked which comment. One like per device per comment.
+    """
+    comment   = models.ForeignKey(MatchComment, on_delete=models.CASCADE, related_name='likes')
+    device_id = models.CharField(max_length=200)
+
+    class Meta:
+        unique_together = ('comment', 'device_id')
+        verbose_name = "Comment Like"
+        verbose_name_plural = "Comment Likes"
+
+    def __str__(self):
+        return f"Device {self.device_id[:8]}... liked comment {self.comment_id}"
+

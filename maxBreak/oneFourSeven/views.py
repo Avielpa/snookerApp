@@ -2024,3 +2024,100 @@ def match_predict_stats_view(request, match_api_id: int):
     return Response(_prediction_aggregate(match_api_id, device_id), status=status.HTTP_200_OK)
 
 
+# ================== Match Comments Views ==================
+
+@api_view(['GET', 'POST'])
+@permission_classes([AllowAny])
+def match_comments_view(request, match_api_id: int):
+    """
+    GET  /matches/<match_api_id>/comments/?device_id=xxx  — list non-deleted comments (newest first)
+    POST /matches/<match_api_id>/comments/               — create a comment
+         Body: { device_id, author_name, text }
+    """
+    from .models import MatchComment
+    from .serializers import MatchCommentSerializer
+
+    if request.method == 'GET':
+        comments = MatchComment.objects.filter(match_api_id=match_api_id, is_deleted=False)
+        serializer = MatchCommentSerializer(comments, many=True, context={'request': request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    # POST
+    device_id   = request.data.get('device_id', '').strip()
+    author_name = request.data.get('author_name', '').strip()
+    text        = request.data.get('text', '').strip()
+
+    if not device_id:
+        return Response({'error': 'device_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+    if not author_name:
+        return Response({'error': 'author_name is required'}, status=status.HTTP_400_BAD_REQUEST)
+    if not text:
+        return Response({'error': 'text is required'}, status=status.HTTP_400_BAD_REQUEST)
+    if len(text) > 1000:
+        return Response({'error': 'Comment must be 1000 characters or fewer'}, status=status.HTTP_400_BAD_REQUEST)
+
+    comment = MatchComment.objects.create(
+        match_api_id=match_api_id,
+        device_id=device_id,
+        author_name=author_name,
+        text=text,
+    )
+    serializer = MatchCommentSerializer(comment, context={'request': request})
+    return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+@api_view(['DELETE'])
+@permission_classes([AllowAny])
+def match_comment_delete_view(request, match_api_id: int, comment_id: int):
+    """
+    DELETE /matches/<match_api_id>/comments/<comment_id>/
+    Body: { device_id }  — only the comment's owner can soft-delete it.
+    """
+    from .models import MatchComment
+
+    device_id = request.data.get('device_id', '').strip()
+    if not device_id:
+        return Response({'error': 'device_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        comment = MatchComment.objects.get(id=comment_id, match_api_id=match_api_id, is_deleted=False)
+    except MatchComment.DoesNotExist:
+        return Response({'error': 'Comment not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    if comment.device_id != device_id:
+        return Response({'error': 'Not authorised to delete this comment'}, status=status.HTTP_403_FORBIDDEN)
+
+    comment.is_deleted = True
+    comment.save(update_fields=['is_deleted'])
+    return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def match_comment_like_view(request, match_api_id: int, comment_id: int):
+    """
+    POST /matches/<match_api_id>/comments/<comment_id>/like/
+    Body: { device_id }  — toggles like on/off.
+    Returns: { liked: bool, likes_count: int }
+    """
+    from .models import MatchComment, CommentLike
+
+    device_id = request.data.get('device_id', '').strip()
+    if not device_id:
+        return Response({'error': 'device_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        comment = MatchComment.objects.get(id=comment_id, match_api_id=match_api_id, is_deleted=False)
+    except MatchComment.DoesNotExist:
+        return Response({'error': 'Comment not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    like, created = CommentLike.objects.get_or_create(comment=comment, device_id=device_id)
+    if not created:
+        like.delete()
+        liked = False
+    else:
+        liked = True
+
+    return Response({'liked': liked, 'likes_count': comment.likes.count()}, status=status.HTTP_200_OK)
+
+

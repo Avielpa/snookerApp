@@ -90,4 +90,4 @@ export interface H2HResponse {
   }[];
 }
 
-export type TabType = 'overview' | 'frames' | 'stats' | 'h2h';
+export type TabType = 'overview' | 'frames' | 'stats' | 'h2h' | 'comments';

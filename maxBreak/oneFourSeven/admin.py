@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import MatchesOfAnEvent, Player, Event, Ranking, DeviceToken, OtherTourEvent, OtherTourMatch, OtherTourPlayer
+from .models import MatchesOfAnEvent, Player, Event, Ranking, DeviceToken, OtherTourEvent, OtherTourMatch, OtherTourPlayer, MatchComment
 
 @admin.register(Player)
 class PlayerAdmin(admin.ModelAdmin):
@@ -66,3 +66,24 @@ class OtherTourMatchAdmin(admin.ModelAdmin):
     list_display = ('player1_name', 'player2_name', 'score1', 'score2', 'status', 'event')
     list_filter = ('status', 'event__tour')
     search_fields = ('player1_name', 'player2_name')
+
+
+@admin.register(MatchComment)
+class MatchCommentAdmin(admin.ModelAdmin):
+    list_display  = ('id', 'author_name', 'match_api_id', 'text_preview', 'created_at', 'is_deleted')
+    list_filter   = ('is_deleted', 'created_at')
+    search_fields = ('author_name', 'text', 'device_id')
+    readonly_fields = ('device_id', 'match_api_id', 'created_at')
+    actions = ['restore_comments', 'hard_delete_comments']
+
+    def text_preview(self, obj):
+        return obj.text[:60] + ('...' if len(obj.text) > 60 else '')
+    text_preview.short_description = 'Comment'
+
+    @admin.action(description='Restore selected comments (undelete)')
+    def restore_comments(self, request, queryset):
+        queryset.update(is_deleted=False)
+
+    @admin.action(description='Hard delete selected comments (permanent)')
+    def hard_delete_comments(self, request, queryset):
+        queryset.delete()
