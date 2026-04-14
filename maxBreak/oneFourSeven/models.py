@@ -1005,3 +1005,26 @@ class DeviceToken(models.Model):
         verbose_name = "Device Token"
         verbose_name_plural = "Device Tokens"
 
+
+# ================== MatchPrediction Model ==================
+class MatchPrediction(models.Model):
+    """
+    Stores one prediction per device per match.
+    Device can change their pick — row is upserted, not duplicated.
+    Used to aggregate fan predictions and display percentage bars.
+    """
+    device_id = models.CharField(max_length=64, db_index=True)
+    match_api_id = models.IntegerField(db_index=True)
+    player = models.IntegerField()  # 1 or 2
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('device_id', 'match_api_id')
+        verbose_name = "Match Prediction"
+        verbose_name_plural = "Match Predictions"
+
+    def __str__(self):
+        return f"Device {self.device_id[:8]}... picks player {self.player} in match {self.match_api_id}"
+

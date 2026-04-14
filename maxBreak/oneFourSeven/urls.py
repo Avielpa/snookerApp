@@ -50,6 +50,9 @@ from .views import (
     device_tokens_view,
     device_send_test_view,
     refresh_round_details_view,
+    # Prediction Views
+    match_predict_view,
+    match_predict_stats_view,
 )
 
 # --- DRF Router Setup ---
@@ -145,6 +148,10 @@ urlpatterns = [
     path('device/tokens/', device_tokens_view, name='device-tokens'),
     path('device/send-test/', device_send_test_view, name='device-send-test'),
     path('device/refresh-round-details/', refresh_round_details_view, name='refresh-round-details'),
+
+    # --- Predictions ---
+    path('matches/predict/', match_predict_view, name='match-predict'),
+    path('matches/<int:match_api_id>/predict/', match_predict_stats_view, name='match-predict-stats'),
 
     # --- Debug URL ---
     # Debug endpoint for checking system status

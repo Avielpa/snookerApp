@@ -1,9 +1,11 @@
 // app/match/components/OverviewTab.tsx
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Linking } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Linking, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { LiveIndicator, ProgressBar } from '../../components/modern';
 import { MatchDetails, MatchStats } from '../types';
+import { PredictionStats } from '../../../services/matchServices';
 
 interface OverviewTabProps {
   matchDetails: MatchDetails;
@@ -11,6 +13,12 @@ interface OverviewTabProps {
   tournamentName: string | null;
   colors: any;
   styles: any;
+  userPrediction: 1 | 2 | null;
+  onPredictionChange: (player: 1 | 2) => void;
+  p1Name: string;
+  p2Name: string;
+  isFinished: boolean;
+  predictionStats: PredictionStats | null;
 }
 
 const BRAND_COLORS: Record<string, string> = {
@@ -30,10 +38,28 @@ export function OverviewTab({
   matchStats,
   tournamentName,
   colors,
-  styles
+  styles,
+  userPrediction,
+  onPredictionChange,
+  p1Name,
+  p2Name,
+  isFinished,
+  predictionStats,
 }: OverviewTabProps) {
   const isLive = matchDetails?.status_code === 1;
   const isOnBreak = matchDetails?.status_code === 2;
+
+  const handlePrediction = (player: 1 | 2) => {
+    if (isFinished) return;
+    onPredictionChange(player);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    const playerName = player === 1 ? p1Name : p2Name;
+    Alert.alert(
+      "Prediction Saved! 🎯",
+      `You predict ${playerName} will win this match.`,
+      [{ text: "Got it!", style: "default" }]
+    );
+  };
 
   const hasBroadcasters = !!matchDetails?.broadcasters?.length;
   const hasLiveUrl = !!matchDetails?.live_url;
@@ -164,6 +190,57 @@ export function OverviewTab({
               {session.trim()}
             </Text>
           ))}
+        </View>
+      )}
+      {/* Who will win prediction */}
+      {!isFinished && (
+        <View style={styles.predictionCard}>
+          <Text style={styles.predictionTitle}>Who do you think will win? 🤔</Text>
+          <View style={styles.predictionButtons}>
+            <TouchableOpacity
+              style={[styles.predictionButton, userPrediction === 1 && styles.predictionButtonSelected]}
+              onPress={() => handlePrediction(1)}
+            >
+              <Text style={[styles.predictionButtonText, userPrediction === 1 && styles.predictionButtonTextSelected]}>
+                {p1Name}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.predictionButton, userPrediction === 2 && styles.predictionButtonSelected]}
+              onPress={() => handlePrediction(2)}
+            >
+              <Text style={[styles.predictionButtonText, userPrediction === 2 && styles.predictionButtonTextSelected]}>
+                {p2Name}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Aggregate percentage bar */}
+          {predictionStats && predictionStats.total_votes > 0 ? (
+            <View style={{ marginTop: 14 }}>
+              {/* Split bar */}
+              <View style={{ flexDirection: 'row', height: 8, borderRadius: 4, overflow: 'hidden', backgroundColor: 'rgba(255,255,255,0.1)' }}>
+                <View style={{ flex: predictionStats.player1_pct, backgroundColor: '#4CAF50' }} />
+                <View style={{ flex: predictionStats.player2_pct, backgroundColor: '#FFA726' }} />
+              </View>
+              {/* Labels */}
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 }}>
+                <Text style={{ color: '#4CAF50', fontSize: 12, fontFamily: 'PoppinsSemiBold' }}>
+                  {predictionStats.player1_pct}%
+                </Text>
+                <Text style={{ color: '#9CA3AF', fontSize: 11, fontFamily: 'PoppinsRegular' }}>
+                  {predictionStats.total_votes} {predictionStats.total_votes === 1 ? 'vote' : 'votes'}
+                </Text>
+                <Text style={{ color: '#FFA726', fontSize: 12, fontFamily: 'PoppinsSemiBold' }}>
+                  {predictionStats.player2_pct}%
+                </Text>
+              </View>
+            </View>
+          ) : userPrediction ? null : (
+            <Text style={{ color: '#6B7280', fontSize: 12, fontFamily: 'PoppinsRegular', textAlign: 'center', marginTop: 10 }}>
+              Be the first to predict!
+            </Text>
+          )}
         </View>
       )}
     </ScrollView>

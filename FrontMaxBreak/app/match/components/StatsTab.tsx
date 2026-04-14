@@ -1,7 +1,6 @@
 // app/match/components/StatsTab.tsx
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
-import * as Haptics from 'expo-haptics';
+import { View, Text, ScrollView } from 'react-native';
 import { ProgressBar } from '../../components/modern';
 import { FrameScore, MatchStats } from '../types';
 
@@ -9,43 +8,23 @@ interface StatsTabProps {
   frameScores: FrameScore[];
   matchStats: MatchStats;
   realMatchFormat: string | null;
-  userPrediction: 1 | 2 | null;
-  onPredictionChange: (player: 1 | 2) => void;
   p1Name: string;
   p2Name: string;
-  isFinished: boolean;
   parseTimeString: (timeStr: string) => number;
   formatDuration: (minutes: number) => string;
   styles: any;
 }
 
-export function StatsTab({ 
+export function StatsTab({
   frameScores,
-  matchStats, 
-  realMatchFormat, 
-  userPrediction, 
-  onPredictionChange,
+  matchStats,
+  realMatchFormat,
   p1Name,
   p2Name,
-  isFinished,
   parseTimeString,
   formatDuration,
-  styles 
+  styles
 }: StatsTabProps) {
-  const handlePrediction = (player: 1 | 2) => {
-    if (isFinished) return;
-    
-    onPredictionChange(player);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    
-    const playerName = player === 1 ? p1Name : p2Name;
-    
-    Alert.alert(
-      "Prediction Saved! 🎯",
-      `You predict ${playerName} will win this match.`,
-      [{ text: "Got it!", style: "default" }]
-    );
-  };
 
   return (
     <ScrollView showsVerticalScrollIndicator={false}>
@@ -189,44 +168,6 @@ export function StatsTab({
         </View>
       )}
 
-      {/* Prediction Section */}
-      {!isFinished && (
-        <View style={styles.predictionCard}>
-          <Text style={styles.predictionTitle}>Who do you think will win? 🤔</Text>
-          
-          <View style={styles.predictionButtons}>
-            <TouchableOpacity
-              style={[
-                styles.predictionButton,
-                userPrediction === 1 && styles.predictionButtonSelected
-              ]}
-              onPress={() => handlePrediction(1)}
-            >
-              <Text style={[
-                styles.predictionButtonText,
-                userPrediction === 1 && styles.predictionButtonTextSelected
-              ]}>
-                {p1Name}
-              </Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity
-              style={[
-                styles.predictionButton,
-                userPrediction === 2 && styles.predictionButtonSelected
-              ]}
-              onPress={() => handlePrediction(2)}
-            >
-              <Text style={[
-                styles.predictionButtonText,
-                userPrediction === 2 && styles.predictionButtonTextSelected
-              ]}>
-                {p2Name}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      )}
     </ScrollView>
   );
 }

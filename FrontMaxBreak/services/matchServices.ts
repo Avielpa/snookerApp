@@ -1,6 +1,7 @@
 // services/matchServices.ts
 import { api } from "./api";
 import { logger } from "../utils/logger";
+import { getOrCreateDeviceId } from '../utils/deviceIdentity';
 
 // TypeScript interfaces for type safety
 export interface Player {
@@ -697,5 +698,42 @@ export const getPlayerMatchHistory = async (
                 matches: []
             };
         }
+    }
+};
+
+// ======================== Predictions ========================
+
+export interface PredictionStats {
+    player1_count: number;
+    player2_count: number;
+    player1_pct: number;
+    player2_pct: number;
+    total_votes: number;
+    user_pick: 1 | 2 | null;
+}
+
+export const fetchPredictionStats = async (matchApiId: number): Promise<PredictionStats | null> => {
+    try {
+        const deviceId = await getOrCreateDeviceId();
+        const response = await api.get(`matches/${matchApiId}/predict/?device_id=${deviceId}`, { skipCache: true } as any);
+        return response.data as PredictionStats;
+    } catch (error) {
+        logger.warn('[MatchService] Failed to fetch prediction stats:', error);
+        return null;
+    }
+};
+
+export const submitPrediction = async (matchApiId: number, player: 1 | 2): Promise<PredictionStats | null> => {
+    try {
+        const deviceId = await getOrCreateDeviceId();
+        const response = await api.post('matches/predict/', {
+            device_id: deviceId,
+            match_api_id: matchApiId,
+            player,
+        });
+        return response.data as PredictionStats;
+    } catch (error) {
+        logger.warn('[MatchService] Failed to submit prediction:', error);
+        return null;
     }
 };

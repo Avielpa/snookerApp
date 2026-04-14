@@ -179,7 +179,10 @@
       "WebFetch(domain:videos.feedspot.com)",
       "WebFetch(domain:www.youtube.com)",
       "WebFetch(domain:discuss.ai.google.dev)",
-      "WebFetch(domain:community.n8n.io)"
+      "WebFetch(domain:community.n8n.io)",
+      "WebFetch(domain:en.wikipedia.org)",
+      "Bash(grep -E \"FLAGGED|OK\\\\s*$|──────\")",
+      "Bash(grep -v \"//\")"
     ],
     "deny": [],
     "ask": [],

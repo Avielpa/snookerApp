@@ -14,11 +14,12 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
 // Import services
-import { getMatchDetails, getHeadToHead, getMatchFormat as getApiMatchFormat } from '../../services/matchServices';
+import { getMatchDetails, getHeadToHead, getMatchFormat as getApiMatchFormat, fetchPredictionStats, submitPrediction, PredictionStats } from '../../services/matchServices';
 import { getTournamentDetails } from '../../services/tourServices';
 import { apiCache, syncMatchDataToTournamentCache } from '../../services/api';
 import { logger } from '../../utils/logger';
 import { useColors } from '../../contexts/ThemeContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Import types and modular components
 import { MatchDetails, EventDetails, FrameScore, MatchStats, H2HData, H2HResponse, TabType } from './types';
@@ -61,6 +62,7 @@ export default function MatchEnhanced() {
   const [error, setError] = useState<string | null>(null);
   const [selectedTab, setSelectedTab] = useState<TabType>('overview');
   const [userPrediction, setUserPrediction] = useState<1 | 2 | null>(null);
+  const [predictionStats, setPredictionStats] = useState<PredictionStats | null>(null);
   const [h2hData, setH2hData] = useState<H2HData | null>(null);
   const [h2hLoading, setH2hLoading] = useState<boolean>(false);
   const [realMatchFormat, setRealMatchFormat] = useState<string | null>(null);
@@ -465,6 +467,14 @@ export default function MatchEnhanced() {
       
       setMatchDetails(safeMatchDetails);
       logger.log("[MatchEnhanced] Safe match details set:", safeMatchDetails);
+
+      // Fetch prediction stats for this match
+      fetchPredictionStats(apiMatchId).then(stats => {
+        if (stats) {
+          setPredictionStats(stats);
+          if (stats.user_pick) setUserPrediction(stats.user_pick);
+        }
+      });
       
       // TEMPORARY: Re-enable sync to understand original issue
       if (matchDetailsTyped.api_match_id) {
@@ -584,6 +594,14 @@ export default function MatchEnhanced() {
     checkLoginStatus();
   }, [checkLoginStatus]);
 
+  // Load saved prediction for this match
+  useEffect(() => {
+    if (apiMatchId === null) return;
+    AsyncStorage.getItem(`prediction_${apiMatchId}`).then(saved => {
+      if (saved === '1' || saved === '2') setUserPrediction(Number(saved) as 1 | 2);
+    }).catch(e => logger.warn('[MatchEnhanced] Failed to load prediction:', e));
+  }, [apiMatchId]);
+
   useEffect(() => {
     if (apiMatchId !== null) {
       loadData();
@@ -604,9 +622,20 @@ export default function MatchEnhanced() {
   }, [matchDetails]);
 
   // Handle player prediction
-  const handlePrediction = useCallback((player: 1 | 2) => {
+  const handlePrediction = useCallback(async (player: 1 | 2) => {
     setUserPrediction(player);
-  }, []);
+    if (apiMatchId !== null) {
+      try {
+        await AsyncStorage.setItem(`prediction_${apiMatchId}`, String(player));
+      } catch (e) {
+        logger.warn('[MatchEnhanced] Failed to save prediction locally:', e);
+      }
+      // Submit to backend and update aggregate stats
+      submitPrediction(apiMatchId, player).then(stats => {
+        if (stats) setPredictionStats(stats);
+      });
+    }
+  }, [apiMatchId]);
 
   // Handle share match
   const handleShare = () => {
@@ -644,6 +673,12 @@ export default function MatchEnhanced() {
             tournamentName={tournamentName}
             colors={colors}
             styles={styles}
+            userPrediction={userPrediction}
+            onPredictionChange={handlePrediction}
+            p1Name={p1Name}
+            p2Name={p2Name}
+            isFinished={isFinished}
+            predictionStats={predictionStats}
           />
         );
 
@@ -662,11 +697,8 @@ export default function MatchEnhanced() {
             frameScores={frameScores}
             matchStats={matchStats}
             realMatchFormat={realMatchFormat}
-            userPrediction={userPrediction}
-            onPredictionChange={handlePrediction}
             p1Name={p1Name}
             p2Name={p2Name}
-            isFinished={isFinished}
             parseTimeString={parseTimeString}
             formatDuration={formatDuration}
             styles={styles}

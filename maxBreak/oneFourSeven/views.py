@@ -1957,3 +1957,70 @@ def device_favorites_view(request):
         return Response({'player_ids': [], 'match_ids': []})
 
 
+# ======================== Predictions ========================
+
+def _prediction_aggregate(match_api_id: int, device_id: str = ''):
+    """Return aggregated prediction counts and percentages for a match."""
+    from .models import MatchPrediction
+    from django.db.models import Count
+
+    counts = (
+        MatchPrediction.objects
+        .filter(match_api_id=match_api_id)
+        .values('player')
+        .annotate(count=Count('id'))
+    )
+    p1 = next((c['count'] for c in counts if c['player'] == 1), 0)
+    p2 = next((c['count'] for c in counts if c['player'] == 2), 0)
+    total = p1 + p2
+
+    user_pick = None
+    if device_id:
+        try:
+            from .models import MatchPrediction
+            user_pick = MatchPrediction.objects.get(device_id=device_id, match_api_id=match_api_id).player
+        except Exception:
+            pass
+
+    return {
+        'player1_count': p1,
+        'player2_count': p2,
+        'player1_pct': round(p1 / total * 100) if total else 0,
+        'player2_pct': round(p2 / total * 100) if total else 0,
+        'total_votes': total,
+        'user_pick': user_pick,
+    }
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def match_predict_view(request):
+    """Submit or update a prediction. Body: {device_id, match_api_id, player}"""
+    from .models import MatchPrediction
+
+    device_id = request.data.get('device_id', '').strip()
+    match_api_id = request.data.get('match_api_id')
+    player = request.data.get('player')
+
+    if not device_id:
+        return Response({'error': 'device_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+    if match_api_id is None or player not in (1, 2):
+        return Response({'error': 'match_api_id and player (1 or 2) are required'}, status=status.HTTP_400_BAD_REQUEST)
+
+    MatchPrediction.objects.update_or_create(
+        device_id=device_id,
+        match_api_id=int(match_api_id),
+        defaults={'player': int(player)},
+    )
+
+    return Response(_prediction_aggregate(int(match_api_id), device_id), status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def match_predict_stats_view(request, match_api_id: int):
+    """Fetch prediction stats for a match. Optional query param: ?device_id=xxx"""
+    device_id = request.query_params.get('device_id', '').strip()
+    return Response(_prediction_aggregate(match_api_id, device_id), status=status.HTTP_200_OK)
+
+
