@@ -63,7 +63,7 @@ const SectionCard = ({ title, icon, children, colors }: {
     <View style={[styles.card, { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder }]}>
         <View style={styles.cardHeader}>
             <Ionicons name={icon} size={16} color={colors.primary} />
-            <Text style={[styles.cardTitle, { color: colors.text }]}>{title}</Text>
+            <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>{title}</Text>
         </View>
         {children}
     </View>
@@ -129,7 +129,7 @@ const PlayerSlot = ({ player, label, onPress, colors }: {
                     </View>
                 )}
                 <View style={{ flex: 1 }}>
-                    <Text style={[styles.slotName, { color: colors.text }]} numberOfLines={1}>
+                    <Text style={[styles.slotName, { color: colors.textPrimary }]} numberOfLines={1}>
                         {getNationalityFlag(player.Nationality || '')} {player.FirstName} {player.LastName}
                     </Text>
                     <Text style={[styles.slotSub, { color: colors.textSecondary }]}>
@@ -169,7 +169,7 @@ const PlayerPicker = ({ players, onSelect, colors }: {
             <View style={[styles.searchBar, { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder }]}>
                 <Ionicons name="search" size={16} color={colors.textMuted} style={{ marginRight: 8 }} />
                 <TextInput
-                    style={[styles.searchInput, { color: colors.text }]}
+                    style={[styles.searchInput, { color: colors.textPrimary }]}
                     placeholder="Search player..."
                     placeholderTextColor={colors.textMuted}
                     value={search}
@@ -198,7 +198,7 @@ const PlayerPicker = ({ players, onSelect, colors }: {
                                 {item.position ?? '—'}
                             </Text>
                         </View>
-                        <Text style={[styles.pickerName, { color: colors.text }]} numberOfLines={1}>
+                        <Text style={[styles.pickerName, { color: colors.textPrimary }]} numberOfLines={1}>
                             {getNationalityFlag(item.nationality || '')} {item.name}
                         </Text>
                         <Ionicons name="add-circle-outline" size={20} color={colors.primary} />
@@ -242,7 +242,7 @@ const ComparisonView = ({ data, onChangeP1, onChangeP2, colors }: {
                             <Ionicons name="person" size={30} color={colors.primary} />
                         </View>
                     )}
-                    <Text style={[styles.headerName, { color: colors.text }]} numberOfLines={2}>
+                    <Text style={[styles.headerName, { color: colors.textPrimary }]} numberOfLines={2}>
                         {getNationalityFlag(p1.Nationality || '')} {p1Name}
                     </Text>
                     <Text style={[styles.headerChange, { color: colors.textMuted }]}>tap to change</Text>
@@ -260,7 +260,7 @@ const ComparisonView = ({ data, onChangeP1, onChangeP2, colors }: {
                             <Ionicons name="person" size={30} color={colors.primary} />
                         </View>
                     )}
-                    <Text style={[styles.headerName, { color: colors.text }]} numberOfLines={2}>
+                    <Text style={[styles.headerName, { color: colors.textPrimary }]} numberOfLines={2}>
                         {getNationalityFlag(p2.Nationality || '')} {p2Name}
                     </Text>
                     <Text style={[styles.headerChange, { color: colors.textMuted }]}>tap to change</Text>
@@ -549,7 +549,7 @@ export default function CompareScreen() {
                     title: 'Compare Players',
                     headerStyle: { backgroundColor: colors.background },
                     headerTintColor: colors.primary,
-                    headerTitleStyle: { color: colors.text, fontFamily: 'PoppinsSemiBold', fontSize: 18 },
+                    headerTitleStyle: { color: colors.textPrimary, fontFamily: 'PoppinsSemiBold', fontSize: 18 },
                     headerBackTitle: '',
                 }}
             />

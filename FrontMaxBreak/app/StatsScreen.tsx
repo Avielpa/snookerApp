@@ -65,7 +65,7 @@ const SectionHeader = ({
     <View style={sharedStyles.sectionRow}>
         <Ionicons name={icon} size={18} color={colors.primary} style={{ marginRight: 8 }} />
         <View>
-            <Text style={[sharedStyles.sectionTitle, { color: colors.text }]}>{title}</Text>
+            <Text style={[sharedStyles.sectionTitle, { color: colors.textPrimary }]}>{title}</Text>
             {subtitle ? (
                 <Text style={[sharedStyles.sectionSubtitle, { color: colors.textSecondary }]}>{subtitle}</Text>
             ) : null}
@@ -125,7 +125,7 @@ const CenturiesTab = ({
                 <View style={[centuryStyles.leaderCard, { backgroundColor: '#FFA72618', borderColor: '#FFA72640' }]}>
                     <View>
                         <Text style={[centuryStyles.leaderLabel, { color: colors.textSecondary }]}>Season Leader</Text>
-                        <Text style={[centuryStyles.leaderName, { color: colors.text }]}>
+                        <Text style={[centuryStyles.leaderName, { color: colors.textPrimary }]}>
                             {getFlag(top.nationality)} {top.player_name}
                         </Text>
                     </View>
@@ -153,7 +153,7 @@ const CenturiesTab = ({
                 {rows.map((r) => (
                     <View key={r.rank} style={centuryStyles.dataRow}>
                         <Text style={[centuryStyles.colRank, { color: colors.textSecondary }]}>{r.rank}</Text>
-                        <Text style={[centuryStyles.colName, { color: colors.text }]} numberOfLines={1}>
+                        <Text style={[centuryStyles.colName, { color: colors.textPrimary }]} numberOfLines={1}>
                             {getFlag(r.nationality)} {r.player_name}
                         </Text>
                         <Text style={[centuryStyles.colNum, { color: colors.primary }]}>{r.season_current}</Text>
@@ -258,7 +258,7 @@ const TitlesTab = ({
                                     </Text>
                                 </View>
                                 <View style={{ flex: 1 }}>
-                                    <Text style={[titleStyles.name, { color: colors.text }]}>
+                                    <Text style={[titleStyles.name, { color: colors.textPrimary }]}>
                                         {getFlag(leader.nationality)} {leader.player_name}
                                     </Text>
                                     <Text style={[titleStyles.eventList, { color: colors.textMuted }]} numberOfLines={2}>
@@ -285,7 +285,7 @@ const TitlesTab = ({
                             {idx > 0 && <Divider colors={colors} />}
                             <View style={champStyles.row}>
                                 <View style={{ flex: 1 }}>
-                                    <Text style={[champStyles.eventName, { color: colors.text }]}>{w.event_name}</Text>
+                                    <Text style={[champStyles.eventName, { color: colors.textPrimary }]}>{w.event_name}</Text>
                                     <Text style={[champStyles.winner, { color: colors.primary }]}>
                                         {getFlag(w.winner_nationality)} {w.winner_name}
                                     </Text>
@@ -392,7 +392,7 @@ const RecordsTab = ({
                         {players147.map((r, idx) => (
                             <View key={r.player_name} style={recordStyles.dataRow}>
                                 <Text style={[recordStyles.colRank, { color: colors.textSecondary }]}>{idx + 1}</Text>
-                                <Text style={[recordStyles.colName, { color: colors.text }]} numberOfLines={1}>
+                                <Text style={[recordStyles.colName, { color: colors.textPrimary }]} numberOfLines={1}>
                                     {getFlag(r.nationality)} {r.player_name}
                                 </Text>
                                 <Text style={[recordStyles.colNum, { color: '#FFA726' }]}>{r.career_147s}</Text>
@@ -418,7 +418,7 @@ const RecordsTab = ({
                 {careerTop.map((r, idx) => (
                     <View key={r.player_name} style={recordStyles.dataRow}>
                         <Text style={[recordStyles.colRank, { color: colors.textSecondary }]}>{idx + 1}</Text>
-                        <Text style={[recordStyles.colName, { color: colors.text }]} numberOfLines={1}>
+                        <Text style={[recordStyles.colName, { color: colors.textPrimary }]} numberOfLines={1}>
                             {getFlag(r.nationality)} {r.player_name}
                         </Text>
                         <Text style={[recordStyles.colNum, { color: colors.primary }]}>{r.career_total}</Text>
@@ -575,7 +575,7 @@ const createStyles = (colors: any) =>
         title: {
             fontSize: 22,
             fontFamily: 'PoppinsBold',
-            color: colors.text,
+            color: colors.textPrimary,
         },
         subtitle: {
             fontSize: 12,
