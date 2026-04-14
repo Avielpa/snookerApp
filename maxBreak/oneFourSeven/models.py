@@ -1012,21 +1012,26 @@ class MatchPrediction(models.Model):
     Stores one prediction per device per match.
     Device can change their pick — row is upserted, not duplicated.
     Used to aggregate fan predictions and display percentage bars.
+
+    Uses match_db_id (MatchesOfAnEvent.id — Django internal PK) instead of
+    api_match_id, because snooker.org's api_match_id changes several times
+    per live match (on session breaks), which would reset vote counts.
+    The backend translates api_match_id → match_db_id on every request.
     """
-    device_id = models.CharField(max_length=64, db_index=True)
-    match_api_id = models.IntegerField(db_index=True)
-    player = models.IntegerField()  # 1 or 2
+    device_id    = models.CharField(max_length=64, db_index=True)
+    match_db_id  = models.IntegerField(db_index=True)  # MatchesOfAnEvent.id — stable PK
+    player       = models.IntegerField()  # 1 or 2
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together = ('device_id', 'match_api_id')
+        unique_together = ('device_id', 'match_db_id')
         verbose_name = "Match Prediction"
         verbose_name_plural = "Match Predictions"
 
     def __str__(self):
-        return f"Device {self.device_id[:8]}... picks player {self.player} in match {self.match_api_id}"
+        return f"Device {self.device_id[:8]}... picks player {self.player} in match_db {self.match_db_id}"
 
 
 # ================== MatchComment Model ==================

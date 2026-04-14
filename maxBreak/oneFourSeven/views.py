@@ -1959,14 +1959,28 @@ def device_favorites_view(request):
 
 # ======================== Predictions ========================
 
-def _prediction_aggregate(match_api_id: int, device_id: str = ''):
+def _api_id_to_db_id(match_api_id: int):
+    """
+    Translate a volatile snooker.org api_match_id to the stable internal
+    MatchesOfAnEvent.id (Django PK).  Returns None if the match is not in DB.
+
+    This is the key fix for the prediction-reset bug: api_match_id changes
+    multiple times per live match (on session breaks), but the internal id never
+    changes, so predictions stay attached to the same match throughout.
+    """
+    from .models import MatchesOfAnEvent
+    row = MatchesOfAnEvent.objects.filter(api_match_id=match_api_id).values('id').first()
+    return row['id'] if row else None
+
+
+def _prediction_aggregate(match_db_id: int, device_id: str = ''):
     """Return aggregated prediction counts and percentages for a match."""
     from .models import MatchPrediction
     from django.db.models import Count
 
     counts = (
         MatchPrediction.objects
-        .filter(match_api_id=match_api_id)
+        .filter(match_db_id=match_db_id)
         .values('player')
         .annotate(count=Count('id'))
     )
@@ -1977,8 +1991,7 @@ def _prediction_aggregate(match_api_id: int, device_id: str = ''):
     user_pick = None
     if device_id:
         try:
-            from .models import MatchPrediction
-            user_pick = MatchPrediction.objects.get(device_id=device_id, match_api_id=match_api_id).player
+            user_pick = MatchPrediction.objects.get(device_id=device_id, match_db_id=match_db_id).player
         except Exception:
             pass
 
@@ -1998,30 +2011,37 @@ def match_predict_view(request):
     """Submit or update a prediction. Body: {device_id, match_api_id, player}"""
     from .models import MatchPrediction
 
-    device_id = request.data.get('device_id', '').strip()
+    device_id    = request.data.get('device_id', '').strip()
     match_api_id = request.data.get('match_api_id')
-    player = request.data.get('player')
+    player       = request.data.get('player')
 
     if not device_id:
         return Response({'error': 'device_id is required'}, status=status.HTTP_400_BAD_REQUEST)
     if match_api_id is None or player not in (1, 2):
         return Response({'error': 'match_api_id and player (1 or 2) are required'}, status=status.HTTP_400_BAD_REQUEST)
 
+    match_db_id = _api_id_to_db_id(int(match_api_id))
+    if match_db_id is None:
+        return Response({'error': 'Match not found'}, status=status.HTTP_404_NOT_FOUND)
+
     MatchPrediction.objects.update_or_create(
         device_id=device_id,
-        match_api_id=int(match_api_id),
+        match_db_id=match_db_id,
         defaults={'player': int(player)},
     )
 
-    return Response(_prediction_aggregate(int(match_api_id), device_id), status=status.HTTP_200_OK)
+    return Response(_prediction_aggregate(match_db_id, device_id), status=status.HTTP_200_OK)
 
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def match_predict_stats_view(request, match_api_id: int):
     """Fetch prediction stats for a match. Optional query param: ?device_id=xxx"""
+    match_db_id = _api_id_to_db_id(match_api_id)
+    if match_db_id is None:
+        return Response({'error': 'Match not found'}, status=status.HTTP_404_NOT_FOUND)
     device_id = request.query_params.get('device_id', '').strip()
-    return Response(_prediction_aggregate(match_api_id, device_id), status=status.HTTP_200_OK)
+    return Response(_prediction_aggregate(match_db_id, device_id), status=status.HTTP_200_OK)
 
 
 # ================== Match Comments Views ==================
