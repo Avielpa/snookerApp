@@ -12,7 +12,7 @@
 //   TNT     — UCexJsWmC7rvfRaqK8MF3JFA  (TNT Sports Snooker)
 //   Mubeen  — UCb4vVvFCy29IC-9soDMQgCw
 //   SASA    — UC7Fu3Qlk9IfFWA2bpfYF7GA
-//   Shachar — UCC7zF2g2XmvzXLP--sGj2BQ  (Shachar Tabuch)
+//   Shachar — UCC7zF2g2XmvzXLP--sGj2BQ  (Shachar Rodberg)
 //
 // Quota: playlistItems.list = 1 unit. Free tier = 10,000 units/day.
 // API key rotation: run `eas secret:create --scope project --name EXPO_PUBLIC_YOUTUBE_API_KEY --value NEW_KEY --force`
