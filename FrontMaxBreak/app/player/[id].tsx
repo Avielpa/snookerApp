@@ -44,6 +44,7 @@ interface PlayerData {
     season_stats?: { matches: number; wins: number; season: number | null } | null;
     frame_stats?: { frames_won: number; frames_lost: number; frames_played: number; frame_pct: number } | null;
     finals_record?: { finals_reached: number; finals_won: number; finals_pct: number } | null;
+    semi_final_record?: { reached: number; won: number; pct: number } | null;
     deciding_frames?: { deciding_played: number; deciding_won: number; deciding_pct: number } | null;
     career_best_ranking?: number | null;
     seasons_in_top16?: number | null;
@@ -489,25 +490,109 @@ export default function PlayerDetailsScreen(): React.ReactElement {
                             return total > 0 ? `${Math.round((w / total) * 100)}%` : 'N/A';
                         })()}
                     />
-                    {(player?.frame_stats?.frames_played ?? 0) > 0 && (
-                        <InfoRow
-                            icon="grid-outline"
-                            label="Frame Win Rate"
-                            value={`${player?.frame_stats?.frame_pct?.toFixed(1) ?? 0}%`}
-                        />
-                    )}
-                    {(player?.deciding_frames?.deciding_played ?? 0) > 0 && (
-                        <InfoRow
-                            icon="pulse-outline"
-                            label="Clutch Frames %"
-                            value={`${(player?.deciding_frames?.deciding_pct ?? 0).toFixed(1)}%`}
-                        />
-                    )}
                     {(player?.best_win_streak ?? 0) > 0 && (
                         <InfoRow
                             icon="flame-outline"
                             label="Best Win Streak"
                             value={String(player?.best_win_streak)}
+                        />
+                    )}
+                </GlassCard>
+            )}
+
+            {/* Frame Stats */}
+            {(player?.frame_stats?.frames_played ?? 0) > 0 && (
+                <GlassCard style={styles.infoCard}>
+                    <Text style={styles.sectionTitle}>Frame Statistics</Text>
+                    <InfoRow
+                        icon="grid-outline"
+                        label="Frames Played"
+                        value={String(player?.frame_stats?.frames_played ?? 0)}
+                    />
+                    <InfoRow
+                        icon="checkmark-circle-outline"
+                        label="Frames Won"
+                        value={String(player?.frame_stats?.frames_won ?? 0)}
+                    />
+                    <InfoRow
+                        icon="close-circle-outline"
+                        label="Frames Lost"
+                        value={String(player?.frame_stats?.frames_lost ?? 0)}
+                    />
+                    <InfoRow
+                        icon="pie-chart-outline"
+                        label="Frame Win Rate"
+                        value={`${(player?.frame_stats?.frame_pct ?? 0).toFixed(1)}%`}
+                    />
+                    {(player?.deciding_frames?.deciding_played ?? 0) > 0 && (
+                        <InfoRow
+                            icon="pulse-outline"
+                            label="Clutch Frames %"
+                            value={`${(player?.deciding_frames?.deciding_pct ?? 0).toFixed(1)}% (${player?.deciding_frames?.deciding_played} deciders)`}
+                        />
+                    )}
+                </GlassCard>
+            )}
+
+            {/* Finals & Semi-Finals Record */}
+            {(player?.finals_record?.finals_reached ?? 0) > 0 && (
+                <GlassCard style={styles.infoCard}>
+                    <Text style={styles.sectionTitle}>Finals Record</Text>
+                    <InfoRow
+                        icon="trophy-outline"
+                        label="Finals Reached"
+                        value={String(player?.finals_record?.finals_reached ?? 0)}
+                    />
+                    <InfoRow
+                        icon="trophy"
+                        label="Finals Won"
+                        value={String(player?.finals_record?.finals_won ?? 0)}
+                    />
+                    <InfoRow
+                        icon="pie-chart-outline"
+                        label="Finals Win Rate"
+                        value={`${(player?.finals_record?.finals_pct ?? 0).toFixed(1)}%`}
+                    />
+                    {(player?.semi_final_record?.reached ?? 0) > 0 && (
+                        <>
+                            <InfoRow
+                                icon="medal-outline"
+                                label="Semi-Finals Reached"
+                                value={String(player?.semi_final_record?.reached ?? 0)}
+                            />
+                            <InfoRow
+                                icon="pie-chart-outline"
+                                label="Semi-Finals Win Rate"
+                                value={`${(player?.semi_final_record?.pct ?? 0).toFixed(1)}%`}
+                            />
+                        </>
+                    )}
+                </GlassCard>
+            )}
+
+            {/* Ranking */}
+            {((player?.career_best_ranking ?? 0) > 0 || (player?.seasons_in_top16 ?? 0) > 0 || player?.recent_win_pct != null) && (
+                <GlassCard style={styles.infoCard}>
+                    <Text style={styles.sectionTitle}>Ranking & Form</Text>
+                    {(player?.career_best_ranking ?? 0) > 0 && (
+                        <InfoRow
+                            icon="star-outline"
+                            label="Career Best Ranking"
+                            value={`#${player?.career_best_ranking}`}
+                        />
+                    )}
+                    {(player?.seasons_in_top16 ?? 0) > 0 && (
+                        <InfoRow
+                            icon="podium-outline"
+                            label="Seasons in Top 16"
+                            value={String(player?.seasons_in_top16)}
+                        />
+                    )}
+                    {player?.recent_win_pct != null && (
+                        <InfoRow
+                            icon="trending-up-outline"
+                            label="Recent Win % (3 seasons)"
+                            value={`${(player.recent_win_pct).toFixed(1)}%`}
                         />
                     )}
                 </GlassCard>
