@@ -5,12 +5,10 @@ import {
     Text,
     TextInput,
     TouchableOpacity,
-    FlatList,
+    ScrollView,
     ActivityIndicator,
     Alert,
     StyleSheet,
-    KeyboardAvoidingView,
-    Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -34,8 +32,6 @@ export function CommentsTab({ matchApiId, colors }: CommentsTabProps) {
     const [text, setText] = useState('');
     const [editingName, setEditingName] = useState(false);
     const nameInputRef = useRef<TextInput>(null);
-
-    const s = styles(colors);
 
     // Load device ID and saved author name on mount
     useEffect(() => {
@@ -65,16 +61,14 @@ export function CommentsTab({ matchApiId, colors }: CommentsTabProps) {
 
     const saveAuthorName = async (name: string) => {
         setAuthorName(name);
-        try {
-            await AsyncStorage.setItem(AUTHOR_NAME_KEY, name);
-        } catch {}
+        try { await AsyncStorage.setItem(AUTHOR_NAME_KEY, name); } catch {}
     };
 
     const handlePost = async () => {
         const trimmedName = authorName.trim();
         const trimmedText = text.trim();
         if (!trimmedName) {
-            Alert.alert('Name required', 'Please enter your display name.');
+            Alert.alert('Name required', 'Please enter your display name first.');
             return;
         }
         if (!trimmedText) return;
@@ -82,16 +76,14 @@ export function CommentsTab({ matchApiId, colors }: CommentsTabProps) {
             Alert.alert('Too long', 'Comment must be 1000 characters or fewer.');
             return;
         }
-
         setPosting(true);
         try {
             await saveAuthorName(trimmedName);
             const newComment = await postComment(matchApiId, deviceId, trimmedName, trimmedText);
             setComments(prev => [newComment, ...prev]);
             setText('');
-        } catch (e) {
+        } catch {
             Alert.alert('Error', 'Could not post comment. Please try again.');
-            logger.error('[CommentsTab] post failed', e);
         } finally {
             setPosting(false);
         }
@@ -101,8 +93,7 @@ export function CommentsTab({ matchApiId, colors }: CommentsTabProps) {
         Alert.alert('Delete comment', 'Remove this comment?', [
             { text: 'Cancel', style: 'cancel' },
             {
-                text: 'Delete',
-                style: 'destructive',
+                text: 'Delete', style: 'destructive',
                 onPress: async () => {
                     try {
                         await deleteComment(matchApiId, commentId, deviceId);
@@ -116,29 +107,17 @@ export function CommentsTab({ matchApiId, colors }: CommentsTabProps) {
     };
 
     const handleLike = async (commentId: number) => {
-        // Optimistic update
-        setComments(prev =>
-            prev.map(c => {
-                if (c.id !== commentId) return c;
-                const willLike = !c.liked_by_me;
-                return {
-                    ...c,
-                    liked_by_me: willLike,
-                    likes_count: c.likes_count + (willLike ? 1 : -1),
-                };
-            }),
-        );
+        setComments(prev => prev.map(c => {
+            if (c.id !== commentId) return c;
+            const willLike = !c.liked_by_me;
+            return { ...c, liked_by_me: willLike, likes_count: c.likes_count + (willLike ? 1 : -1) };
+        }));
         try {
             const result = await toggleLike(matchApiId, commentId, deviceId);
-            setComments(prev =>
-                prev.map(c =>
-                    c.id === commentId
-                        ? { ...c, liked_by_me: result.liked, likes_count: result.likes_count }
-                        : c,
-                ),
-            );
+            setComments(prev => prev.map(c =>
+                c.id === commentId ? { ...c, liked_by_me: result.liked, likes_count: result.likes_count } : c
+            ));
         } catch {
-            // Revert optimistic update on failure
             fetchComments();
         }
     };
@@ -154,59 +133,21 @@ export function CommentsTab({ matchApiId, colors }: CommentsTabProps) {
         return d.toLocaleDateString();
     };
 
-    const renderComment = ({ item }: { item: Comment }) => (
-        <View style={s.commentCard}>
-            <View style={s.commentHeader}>
-                <View style={s.commentAuthorRow}>
-                    <View style={s.avatar}>
-                        <Text style={s.avatarText}>{item.author_name.charAt(0).toUpperCase()}</Text>
-                    </View>
-                    <View>
-                        <Text style={s.authorName}>{item.author_name}</Text>
-                        <Text style={s.commentTime}>{formatTime(item.created_at)}</Text>
-                    </View>
-                </View>
-                <View style={s.commentActions}>
-                    <TouchableOpacity style={s.likeButton} onPress={() => handleLike(item.id)} activeOpacity={0.7}>
-                        <Ionicons
-                            name={item.liked_by_me ? 'heart' : 'heart-outline'}
-                            size={16}
-                            color={item.liked_by_me ? colors.primary : colors.textSecondary}
-                        />
-                        {item.likes_count > 0 && (
-                            <Text style={[s.likeCount, item.liked_by_me && { color: colors.primary }]}>
-                                {item.likes_count}
-                            </Text>
-                        )}
-                    </TouchableOpacity>
-                    {item.is_mine && (
-                        <TouchableOpacity onPress={() => handleDelete(item.id)} activeOpacity={0.7} style={s.deleteButton}>
-                            <Ionicons name="trash-outline" size={15} color={colors.textMuted} />
-                        </TouchableOpacity>
-                    )}
-                </View>
-            </View>
-            <Text style={s.commentText}>{item.text}</Text>
-        </View>
-    );
-
     return (
-        <KeyboardAvoidingView
-            style={s.container}
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-            keyboardVerticalOffset={100}
-        >
-            {/* Compose area */}
-            <View style={s.composeCard}>
+        <ScrollView showsVerticalScrollIndicator={false}>
+            {/* ── Compose area ── */}
+            <View style={[s.card, { marginBottom: 12 }]}>
+                {/* Name row */}
                 <TouchableOpacity
                     style={s.nameRow}
                     onPress={() => { setEditingName(true); setTimeout(() => nameInputRef.current?.focus(), 50); }}
                     activeOpacity={0.8}
                 >
+                    <Ionicons name="person-circle-outline" size={16} color={colors.textSecondary} />
                     {editingName ? (
                         <TextInput
                             ref={nameInputRef}
-                            style={s.nameInput}
+                            style={[s.nameInput, { color: colors.textPrimary, borderBottomColor: colors.primary }]}
                             value={authorName}
                             onChangeText={setAuthorName}
                             onBlur={async () => {
@@ -219,19 +160,19 @@ export function CommentsTab({ matchApiId, colors }: CommentsTabProps) {
                             returnKeyType="done"
                         />
                     ) : (
-                        <View style={s.nameDisplay}>
-                            <Ionicons name="person-circle-outline" size={16} color={colors.textSecondary} />
-                            <Text style={s.nameDisplayText} numberOfLines={1}>
-                                {authorName || 'Tap to set your name'}
-                            </Text>
-                            <Ionicons name="pencil-outline" size={12} color={colors.textMuted} style={{ marginLeft: 4 }} />
-                        </View>
+                        <Text style={[s.nameText, { color: authorName ? colors.textSecondary : colors.textMuted }]}>
+                            {authorName || 'Tap to set your name'}
+                        </Text>
+                    )}
+                    {!editingName && (
+                        <Ionicons name="pencil-outline" size={12} color={colors.textMuted} style={{ marginLeft: 4 }} />
                     )}
                 </TouchableOpacity>
 
+                {/* Text input + Send */}
                 <View style={s.inputRow}>
                     <TextInput
-                        style={s.textInput}
+                        style={[s.textInput, { color: colors.textPrimary }]}
                         value={text}
                         onChangeText={setText}
                         placeholder="Write a comment..."
@@ -240,188 +181,189 @@ export function CommentsTab({ matchApiId, colors }: CommentsTabProps) {
                         maxLength={1000}
                     />
                     <TouchableOpacity
-                        style={[s.postButton, (!text.trim() || posting) && s.postButtonDisabled]}
+                        style={[s.sendBtn, { backgroundColor: colors.primary, opacity: (!text.trim() || posting) ? 0.4 : 1 }]}
                         onPress={handlePost}
                         disabled={!text.trim() || posting}
                         activeOpacity={0.7}
                     >
-                        {posting ? (
-                            <ActivityIndicator size="small" color="#fff" />
-                        ) : (
-                            <Ionicons name="send" size={18} color="#fff" />
-                        )}
+                        {posting
+                            ? <ActivityIndicator size="small" color="#fff" />
+                            : <Ionicons name="send" size={18} color="#fff" />
+                        }
                     </TouchableOpacity>
                 </View>
             </View>
 
-            {/* Comments list */}
+            {/* ── Comments list ── */}
             {loading ? (
                 <ActivityIndicator color={colors.primary} style={{ marginTop: 32 }} />
             ) : comments.length === 0 ? (
-                <View style={s.emptyState}>
+                <View style={s.empty}>
                     <Ionicons name="chatbubbles-outline" size={40} color={colors.textMuted} />
-                    <Text style={s.emptyText}>No comments yet</Text>
-                    <Text style={s.emptySubText}>Be the first to share your thoughts!</Text>
+                    <Text style={[s.emptyTitle, { color: colors.textSecondary }]}>No comments yet</Text>
+                    <Text style={[s.emptySub, { color: colors.textMuted }]}>Be the first to share your thoughts!</Text>
                 </View>
             ) : (
-                <FlatList
-                    data={comments}
-                    keyExtractor={item => String(item.id)}
-                    renderItem={renderComment}
-                    contentContainerStyle={{ paddingBottom: 24 }}
-                    showsVerticalScrollIndicator={false}
-                />
+                comments.map(item => (
+                    <View key={item.id} style={[s.card, { marginBottom: 8 }]}>
+                        {/* Header */}
+                        <View style={s.commentHeader}>
+                            <View style={s.authorRow}>
+                                <View style={s.avatar}>
+                                    <Text style={s.avatarLetter}>
+                                        {item.author_name.charAt(0).toUpperCase()}
+                                    </Text>
+                                </View>
+                                <View>
+                                    <Text style={[s.authorName, { color: colors.textPrimary }]}>{item.author_name}</Text>
+                                    <Text style={[s.timeText, { color: colors.textMuted }]}>{formatTime(item.created_at)}</Text>
+                                </View>
+                            </View>
+                            <View style={s.actionRow}>
+                                <TouchableOpacity style={s.likeBtn} onPress={() => handleLike(item.id)} activeOpacity={0.7}>
+                                    <Ionicons
+                                        name={item.liked_by_me ? 'heart' : 'heart-outline'}
+                                        size={16}
+                                        color={item.liked_by_me ? colors.primary : colors.textSecondary}
+                                    />
+                                    {item.likes_count > 0 && (
+                                        <Text style={[s.likeCount, { color: item.liked_by_me ? colors.primary : colors.textSecondary }]}>
+                                            {item.likes_count}
+                                        </Text>
+                                    )}
+                                </TouchableOpacity>
+                                {item.is_mine && (
+                                    <TouchableOpacity onPress={() => handleDelete(item.id)} activeOpacity={0.7} style={{ padding: 4 }}>
+                                        <Ionicons name="trash-outline" size={15} color={colors.textMuted} />
+                                    </TouchableOpacity>
+                                )}
+                            </View>
+                        </View>
+                        {/* Body */}
+                        <Text style={[s.commentText, { color: colors.textPrimary }]}>{item.text}</Text>
+                    </View>
+                ))
             )}
-        </KeyboardAvoidingView>
+            <View style={{ height: 24 }} />
+        </ScrollView>
     );
 }
 
-const styles = (colors: any) =>
-    StyleSheet.create({
-        container: {
-            flex: 1,
-            paddingHorizontal: 12,
-            paddingTop: 12,
-        },
-        composeCard: {
-            backgroundColor: colors.cardBackground,
-            borderRadius: 12,
-            padding: 12,
-            marginBottom: 12,
-            borderWidth: 1,
-            borderColor: 'rgba(255,183,77,0.15)',
-        },
-        nameRow: {
-            marginBottom: 8,
-        },
-        nameDisplay: {
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 6,
-        },
-        nameDisplayText: {
-            color: colors.textSecondary,
-            fontSize: 13,
-            fontFamily: 'PoppinsMedium',
-            flex: 1,
-        },
-        nameInput: {
-            color: colors.textPrimary,
-            fontSize: 13,
-            fontFamily: 'PoppinsMedium',
-            borderBottomWidth: 1,
-            borderBottomColor: colors.primary,
-            paddingVertical: 2,
-        },
-        inputRow: {
-            flexDirection: 'row',
-            alignItems: 'flex-end',
-            gap: 8,
-        },
-        textInput: {
-            flex: 1,
-            color: colors.textPrimary,
-            fontSize: 14,
-            fontFamily: 'Poppins',
-            backgroundColor: 'rgba(255,255,255,0.05)',
-            borderRadius: 8,
-            paddingHorizontal: 12,
-            paddingVertical: 8,
-            maxHeight: 100,
-            minHeight: 40,
-        },
-        postButton: {
-            backgroundColor: colors.primary,
-            borderRadius: 8,
-            width: 40,
-            height: 40,
-            alignItems: 'center',
-            justifyContent: 'center',
-        },
-        postButtonDisabled: {
-            opacity: 0.4,
-        },
-        commentCard: {
-            backgroundColor: colors.cardBackground,
-            borderRadius: 10,
-            padding: 12,
-            marginBottom: 8,
-            borderWidth: 1,
-            borderColor: 'rgba(255,255,255,0.06)',
-        },
-        commentHeader: {
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'flex-start',
-            marginBottom: 6,
-        },
-        commentAuthorRow: {
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 8,
-            flex: 1,
-        },
-        avatar: {
-            width: 30,
-            height: 30,
-            borderRadius: 15,
-            backgroundColor: 'rgba(255,183,77,0.25)',
-            alignItems: 'center',
-            justifyContent: 'center',
-        },
-        avatarText: {
-            color: '#FFB74D',
-            fontSize: 14,
-            fontFamily: 'PoppinsBold',
-        },
-        authorName: {
-            color: colors.textPrimary,
-            fontSize: 13,
-            fontFamily: 'PoppinsMedium',
-        },
-        commentTime: {
-            color: colors.textMuted,
-            fontSize: 11,
-            fontFamily: 'Poppins',
-        },
-        commentActions: {
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 8,
-        },
-        likeButton: {
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 3,
-            padding: 4,
-        },
-        likeCount: {
-            color: colors.textSecondary,
-            fontSize: 12,
-            fontFamily: 'PoppinsMedium',
-        },
-        deleteButton: {
-            padding: 4,
-        },
-        commentText: {
-            color: colors.textPrimary,
-            fontSize: 14,
-            fontFamily: 'Poppins',
-            lineHeight: 20,
-        },
-        emptyState: {
-            alignItems: 'center',
-            paddingTop: 48,
-            gap: 8,
-        },
-        emptyText: {
-            color: colors.textSecondary,
-            fontSize: 16,
-            fontFamily: 'PoppinsMedium',
-        },
-        emptySubText: {
-            color: colors.textMuted,
-            fontSize: 13,
-            fontFamily: 'Poppins',
-        },
-    });
+const s = StyleSheet.create({
+    card: {
+        backgroundColor: 'rgba(255,255,255,0.08)',
+        borderRadius: 12,
+        padding: 12,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.12)',
+    },
+    nameRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 10,
+    },
+    nameText: {
+        fontSize: 13,
+        fontFamily: 'PoppinsMedium',
+        marginLeft: 6,
+        flex: 1,
+    },
+    nameInput: {
+        fontSize: 13,
+        fontFamily: 'PoppinsMedium',
+        marginLeft: 6,
+        flex: 1,
+        borderBottomWidth: 1,
+        paddingVertical: 2,
+    },
+    inputRow: {
+        flexDirection: 'row',
+        alignItems: 'flex-end',
+    },
+    textInput: {
+        flex: 1,
+        fontSize: 14,
+        fontFamily: 'Poppins',
+        backgroundColor: 'rgba(255,255,255,0.05)',
+        borderRadius: 8,
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        maxHeight: 100,
+        minHeight: 40,
+        marginRight: 8,
+    },
+    sendBtn: {
+        borderRadius: 8,
+        width: 40,
+        height: 40,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    empty: {
+        alignItems: 'center',
+        paddingTop: 48,
+    },
+    emptyTitle: {
+        fontSize: 16,
+        fontFamily: 'PoppinsMedium',
+        marginTop: 8,
+    },
+    emptySub: {
+        fontSize: 13,
+        fontFamily: 'Poppins',
+        marginTop: 4,
+    },
+    commentHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+        marginBottom: 6,
+    },
+    authorRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        flex: 1,
+    },
+    avatar: {
+        width: 30,
+        height: 30,
+        borderRadius: 15,
+        backgroundColor: 'rgba(255,183,77,0.2)',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginRight: 8,
+    },
+    avatarLetter: {
+        color: '#FFB74D',
+        fontSize: 14,
+        fontFamily: 'PoppinsBold',
+    },
+    authorName: {
+        fontSize: 13,
+        fontFamily: 'PoppinsMedium',
+    },
+    timeText: {
+        fontSize: 11,
+        fontFamily: 'Poppins',
+    },
+    actionRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    likeBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 4,
+        marginRight: 4,
+    },
+    likeCount: {
+        fontSize: 12,
+        fontFamily: 'PoppinsMedium',
+        marginLeft: 3,
+    },
+    commentText: {
+        fontSize: 14,
+        fontFamily: 'Poppins',
+        lineHeight: 20,
+    },
+});

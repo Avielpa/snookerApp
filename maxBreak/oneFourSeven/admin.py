@@ -70,10 +70,10 @@ class OtherTourMatchAdmin(admin.ModelAdmin):
 
 @admin.register(MatchComment)
 class MatchCommentAdmin(admin.ModelAdmin):
-    list_display  = ('id', 'author_name', 'match_api_id', 'text_preview', 'created_at', 'is_deleted')
+    list_display  = ('id', 'author_name', 'match_db_id', 'text_preview', 'created_at', 'is_deleted')
     list_filter   = ('is_deleted', 'created_at')
     search_fields = ('author_name', 'text', 'device_id')
-    readonly_fields = ('device_id', 'match_api_id', 'created_at')
+    readonly_fields = ('device_id', 'match_db_id', 'created_at')
     actions = ['restore_comments', 'hard_delete_comments']
 
     def text_preview(self, obj):

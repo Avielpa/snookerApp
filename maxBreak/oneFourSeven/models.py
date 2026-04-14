@@ -1040,8 +1040,13 @@ class MatchComment(models.Model):
     Stores fan comments on a match. Identified by device_id (no login required).
     author_name is a display name chosen by the user (stored client-side in AsyncStorage).
     is_deleted supports soft delete so admins can moderate without losing data.
+
+    Uses match_db_id (MatchesOfAnEvent.id — Django internal PK) for the same reason
+    as MatchPrediction: snooker.org api_match_id changes on session breaks, which
+    would orphan comments. The backend translates api_match_id → match_db_id on
+    every request so the frontend never needs to change.
     """
-    match_api_id = models.IntegerField(db_index=True)
+    match_db_id  = models.IntegerField(db_index=True)  # MatchesOfAnEvent.id — stable PK
     device_id    = models.CharField(max_length=200, db_index=True)
     author_name  = models.CharField(max_length=100)
     text         = models.TextField()
@@ -1054,7 +1059,7 @@ class MatchComment(models.Model):
         verbose_name_plural = "Match Comments"
 
     def __str__(self):
-        return f"{self.author_name} on match {self.match_api_id}: {self.text[:50]}"
+        return f"{self.author_name} on match_db {self.match_db_id}: {self.text[:50]}"
 
 
 class CommentLike(models.Model):

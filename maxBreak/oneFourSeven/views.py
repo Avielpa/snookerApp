@@ -2057,8 +2057,12 @@ def match_comments_view(request, match_api_id: int):
     from .models import MatchComment
     from .serializers import MatchCommentSerializer
 
+    match_db_id = _api_id_to_db_id(match_api_id)
+    if match_db_id is None:
+        return Response({'error': 'Match not found'}, status=status.HTTP_404_NOT_FOUND)
+
     if request.method == 'GET':
-        comments = MatchComment.objects.filter(match_api_id=match_api_id, is_deleted=False)
+        comments = MatchComment.objects.filter(match_db_id=match_db_id, is_deleted=False)
         serializer = MatchCommentSerializer(comments, many=True, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -2077,7 +2081,7 @@ def match_comments_view(request, match_api_id: int):
         return Response({'error': 'Comment must be 1000 characters or fewer'}, status=status.HTTP_400_BAD_REQUEST)
 
     comment = MatchComment.objects.create(
-        match_api_id=match_api_id,
+        match_db_id=match_db_id,
         device_id=device_id,
         author_name=author_name,
         text=text,
@@ -2099,8 +2103,12 @@ def match_comment_delete_view(request, match_api_id: int, comment_id: int):
     if not device_id:
         return Response({'error': 'device_id is required'}, status=status.HTTP_400_BAD_REQUEST)
 
+    match_db_id = _api_id_to_db_id(match_api_id)
+    if match_db_id is None:
+        return Response({'error': 'Match not found'}, status=status.HTTP_404_NOT_FOUND)
+
     try:
-        comment = MatchComment.objects.get(id=comment_id, match_api_id=match_api_id, is_deleted=False)
+        comment = MatchComment.objects.get(id=comment_id, match_db_id=match_db_id, is_deleted=False)
     except MatchComment.DoesNotExist:
         return Response({'error': 'Comment not found'}, status=status.HTTP_404_NOT_FOUND)
 
@@ -2126,8 +2134,12 @@ def match_comment_like_view(request, match_api_id: int, comment_id: int):
     if not device_id:
         return Response({'error': 'device_id is required'}, status=status.HTTP_400_BAD_REQUEST)
 
+    match_db_id = _api_id_to_db_id(match_api_id)
+    if match_db_id is None:
+        return Response({'error': 'Match not found'}, status=status.HTTP_404_NOT_FOUND)
+
     try:
-        comment = MatchComment.objects.get(id=comment_id, match_api_id=match_api_id, is_deleted=False)
+        comment = MatchComment.objects.get(id=comment_id, match_db_id=match_db_id, is_deleted=False)
     except MatchComment.DoesNotExist:
         return Response({'error': 'Comment not found'}, status=status.HTTP_404_NOT_FOUND)
 
