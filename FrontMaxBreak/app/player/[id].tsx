@@ -45,6 +45,10 @@ interface PlayerData {
     frame_stats?: { frames_won: number; frames_lost: number; frames_played: number; frame_pct: number } | null;
     finals_record?: { finals_reached: number; finals_won: number; finals_pct: number } | null;
     deciding_frames?: { deciding_played: number; deciding_won: number; deciding_pct: number } | null;
+    career_best_ranking?: number | null;
+    seasons_in_top16?: number | null;
+    best_win_streak?: number | null;
+    recent_win_pct?: number | null;
 }
 
 interface TabConfig {
@@ -382,6 +386,22 @@ export default function PlayerDetailsScreen(): React.ReactElement {
                 />
             </View>
 
+            {/* Career Best & Top 16 */}
+            <View style={styles.statsGrid}>
+                <StatCard
+                    icon="ribbon-outline"
+                    title="Career Best Rank"
+                    value={player?.career_best_ranking ? `#${player.career_best_ranking}` : 'N/A'}
+                    subtitle="All time"
+                />
+                <StatCard
+                    icon="star-outline"
+                    title="Seasons in Top 16"
+                    value={player?.seasons_in_top16 ?? 0}
+                    subtitle="Elite seasons"
+                />
+            </View>
+
             {/* Personal Information */}
             <GlassCard style={styles.infoCard}>
                 <Text style={styles.sectionTitle}>Personal Information</Text>
@@ -448,15 +468,15 @@ export default function PlayerDetailsScreen(): React.ReactElement {
             {/* Career W/L — only shown if match history data exists */}
             {((player?.career_wins ?? 0) + (player?.career_losses ?? 0)) > 0 && (
                 <GlassCard style={styles.infoCard}>
-                    <Text style={styles.sectionTitle}>W/L Record (since 2024)</Text>
+                    <Text style={styles.sectionTitle}>Career Record</Text>
                     <InfoRow
                         icon="checkmark-circle-outline"
-                        label="Wins"
+                        label="Career Wins"
                         value={String(player?.career_wins ?? 0)}
                     />
                     <InfoRow
                         icon="close-circle-outline"
-                        label="Losses"
+                        label="Career Losses"
                         value={String(player?.career_losses ?? 0)}
                     />
                     <InfoRow
@@ -469,6 +489,27 @@ export default function PlayerDetailsScreen(): React.ReactElement {
                             return total > 0 ? `${Math.round((w / total) * 100)}%` : 'N/A';
                         })()}
                     />
+                    {(player?.frame_stats?.frames_played ?? 0) > 0 && (
+                        <InfoRow
+                            icon="grid-outline"
+                            label="Frame Win Rate"
+                            value={`${player?.frame_stats?.frame_pct?.toFixed(1) ?? 0}%`}
+                        />
+                    )}
+                    {(player?.deciding_frames?.deciding_played ?? 0) > 0 && (
+                        <InfoRow
+                            icon="pulse-outline"
+                            label="Clutch Frames %"
+                            value={`${(player?.deciding_frames?.deciding_pct ?? 0).toFixed(1)}%`}
+                        />
+                    )}
+                    {(player?.best_win_streak ?? 0) > 0 && (
+                        <InfoRow
+                            icon="flame-outline"
+                            label="Best Win Streak"
+                            value={String(player?.best_win_streak)}
+                        />
+                    )}
                 </GlassCard>
             )}
 

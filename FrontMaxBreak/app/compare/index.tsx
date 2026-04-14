@@ -317,11 +317,11 @@ const ComparisonView = ({ data, onChangeP1, onChangeP2, colors }: {
                 <Div colors={colors} />
                 <StatRow label="Ranking Titles" p1Val={fmt(p1.NumRankingTitles)} p2Val={fmt(p2.NumRankingTitles)} winner={higherWins(p1.NumRankingTitles, p2.NumRankingTitles)} colors={colors} />
                 <Div colors={colors} />
+                <StatRow label="Titles per Season" p1Val={fmtDecimal(p1.titles_per_season, 2)} p2Val={fmtDecimal(p2.titles_per_season, 2)} winner={higherWins(p1.titles_per_season, p2.titles_per_season)} colors={colors} />
+                <Div colors={colors} />
                 <StatRow label="Seasons in Top 16" p1Val={fmt(p1.seasons_in_top16)} p2Val={fmt(p2.seasons_in_top16)} winner={higherWins(p1.seasons_in_top16, p2.seasons_in_top16)} colors={colors} />
                 <Div colors={colors} />
                 <StatRow label="Prize (Season)" p1Val={fmtMoney(p1.prize_money_this_year)} p2Val={fmtMoney(p2.prize_money_this_year)} winner={higherWins(p1.prize_money_this_year, p2.prize_money_this_year)} colors={colors} />
-                <Div colors={colors} />
-                <StatRow label="Prize per Match" p1Val={fmtMoney(p1.prize_per_match)} p2Val={fmtMoney(p2.prize_per_match)} winner={higherWins(p1.prize_per_match, p2.prize_per_match)} colors={colors} />
             </SectionCard>
 
             {/* ── Section 3: Career Record ── */}
@@ -336,22 +336,16 @@ const ComparisonView = ({ data, onChangeP1, onChangeP2, colors }: {
                 <Div colors={colors} />
                 <StatRow label="Frame Win %" p1Val={fmtPct(p1.frame_stats?.frame_pct)} p2Val={fmtPct(p2.frame_stats?.frame_pct)} winner={higherWins(p1.frame_stats?.frame_pct, p2.frame_stats?.frame_pct)} colors={colors} />
                 <Div colors={colors} />
-                <StatRow label="Avg Frames/Match" p1Val={fmtDecimal(p1.avg_frames_per_match, 1)} p2Val={fmtDecimal(p2.avg_frames_per_match, 1)} winner="tie" colors={colors} />
+                <StatRow label="Matches per Season" p1Val={fmtDecimal(p1.matches_per_season, 1)} p2Val={fmtDecimal(p2.matches_per_season, 1)} winner={higherWins(p1.matches_per_season, p2.matches_per_season)} colors={colors} />
                 <Div colors={colors} />
                 <StatRow label="Best Win Streak" p1Val={fmt(p1.best_win_streak)} p2Val={fmt(p2.best_win_streak)} winner={higherWins(p1.best_win_streak, p2.best_win_streak)} colors={colors} />
             </SectionCard>
 
             {/* ── Section 4: Big Match Performance ── */}
             <SectionCard title="Big Match Performance" icon="flame-outline" colors={colors}>
-                <StatRow label="Finals Reached" p1Val={fmt(p1.finals_record?.finals_reached)} p2Val={fmt(p2.finals_record?.finals_reached)} winner={higherWins(p1.finals_record?.finals_reached, p2.finals_record?.finals_reached)} colors={colors} />
+                <StatRow label="Career Win %" p1Val={fmtPct(p1.career_win_pct)} p2Val={fmtPct(p2.career_win_pct)} winner={higherWins(p1.career_win_pct, p2.career_win_pct)} colors={colors} />
                 <Div colors={colors} />
-                <StatRow label="Finals Won" p1Val={fmt(p1.finals_record?.finals_won)} p2Val={fmt(p2.finals_record?.finals_won)} winner={higherWins(p1.finals_record?.finals_won, p2.finals_record?.finals_won)} colors={colors} />
-                <Div colors={colors} />
-                <StatRow label="Finals Win %" p1Val={fmtPct(p1.finals_record?.finals_pct)} p2Val={fmtPct(p2.finals_record?.finals_pct)} winner={higherWins(p1.finals_record?.finals_pct, p2.finals_record?.finals_pct)} colors={colors} />
-                <Div colors={colors} />
-                <StatRow label="Semi-Finals" p1Val={fmt(p1.semi_final_record?.reached)} p2Val={fmt(p2.semi_final_record?.reached)} winner={higherWins(p1.semi_final_record?.reached, p2.semi_final_record?.reached)} colors={colors} />
-                <Div colors={colors} />
-                <StatRow label="Semi-Final Win %" p1Val={fmtPct(p1.semi_final_record?.pct)} p2Val={fmtPct(p2.semi_final_record?.pct)} winner={higherWins(p1.semi_final_record?.pct, p2.semi_final_record?.pct)} colors={colors} />
+                <StatRow label="Recent Win % (3 seasons)" p1Val={fmtPct(p1.recent_win_pct)} p2Val={fmtPct(p2.recent_win_pct)} winner={higherWins(p1.recent_win_pct, p2.recent_win_pct)} colors={colors} />
                 <Div colors={colors} />
                 <StatRow
                     label="Clutch Frames %"

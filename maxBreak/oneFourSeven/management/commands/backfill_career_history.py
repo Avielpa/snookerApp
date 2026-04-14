@@ -221,6 +221,7 @@ class Command(BaseCommand):
                 event_max_round[eid] = rnd
 
         # ── Save matches ─────────────────────────────────────────────────────
+        close_old_connections()  # reconnect after the API sleep
         saved = 0
         for m in matches_data:
             try:

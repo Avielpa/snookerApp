@@ -883,126 +883,78 @@ def tour_details_view(request, event_id):
         return Response({"error": "Internal server error while fetching external details."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-def _build_h2h_response(p1_int, p2_int, raw_matches):
-    """Build the processed response dict from a raw match list."""
-    import json as _json
-    if not isinstance(raw_matches, list):
-        return {
-            'Player1ID': p1_int, 'Player2ID': p2_int,
-            'Player1Wins': 0, 'Player2Wins': 0, 'TotalMeetings': 0,
-            'LastMeeting': None, 'LastResult': None, 'Matches': []
-        }
-
-    p1_wins = sum(1 for m in raw_matches if m.get('WinnerID') == p1_int)
-    p2_wins = sum(1 for m in raw_matches if m.get('WinnerID') == p2_int)
-    total   = len(raw_matches)
-
-    player_names_map = get_player_names({p1_int, p2_int})
-    p1_name = player_names_map.get(p1_int, f"Player {p1_int}")
-    p2_name = player_names_map.get(p2_int, f"Player {p2_int}")
-
-    last_meeting = last_result = None
-    if raw_matches:
-        last_match = raw_matches[0]
-        last_meeting = last_match.get('StartDate') or last_match.get('ScheduledDate')
-        if last_match.get('WinnerID') == p1_int:
-            last_result = f"{p1_name} won {last_match.get('Score1', 0)}-{last_match.get('Score2', 0)}"
-        elif last_match.get('WinnerID') == p2_int:
-            last_result = f"{p2_name} won {last_match.get('Score2', 0)}-{last_match.get('Score1', 0)}"
-
-    return {
-        'Player1ID': p1_int, 'Player1Name': p1_name,
-        'Player2ID': p2_int, 'Player2Name': p2_name,
-        'Player1Wins': p1_wins, 'Player2Wins': p2_wins,
-        'TotalMeetings': total,
-        'LastMeeting': last_meeting, 'LastResult': last_result,
-        'Matches': raw_matches,
-    }
-
-
-H2H_CACHE_TTL_HOURS = 24
-
-
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def h2h_view(request, player1_id, player2_id):
     """
-    Returns H2H statistics between two players.
-    Results are cached in H2HCache for 24 hours to respect snooker.org's
-    10 req/min rate limit regardless of concurrent users.
+    Returns H2H statistics between two players, computed entirely from
+    PlayerMatchHistory in our DB. No external API calls.
     """
-    import json as _json
-    from django.utils import timezone as _tz
-    from datetime import timedelta
-
-    logger.info(f"H2H request: P1={player1_id} vs P2={player2_id}")
-
     try:
         p1_int = int(player1_id)
         p2_int = int(player2_id)
     except (ValueError, TypeError):
         return Response({"error": "Invalid Player ID format."}, status=status.HTTP_400_BAD_REQUEST)
 
-    # Normalise: always store/lookup with lower ID first
-    lo, hi = min(p1_int, p2_int), max(p1_int, p2_int)
-    swapped = (p1_int != lo)   # remember if we need to swap wins in response
+    from django.db.models import Q
 
-    # --- Cache lookup ---
-    cutoff = _tz.now() - timedelta(hours=H2H_CACHE_TTL_HOURS)
-    try:
-        cached = H2HCache.objects.get(player1_id=lo, player2_id=hi)
-        if cached.fetched_at >= cutoff:
-            logger.debug(f"H2H cache HIT for {lo} vs {hi}")
-            raw_matches = _json.loads(cached.raw_json)
-            response = _build_h2h_response(p1_int, p2_int, raw_matches)
-            return Response(response)
-        logger.debug(f"H2H cache STALE for {lo} vs {hi} — re-fetching")
-    except H2HCache.DoesNotExist:
-        logger.debug(f"H2H cache MISS for {lo} vs {hi} — fetching from snooker.org")
-        cached = None
+    # All finished matches between these two players
+    matches = list(
+        PlayerMatchHistory.objects.filter(
+            status=3
+        ).filter(
+            Q(player1_id=p1_int, player2_id=p2_int) |
+            Q(player1_id=p2_int, player2_id=p1_int)
+        ).order_by('-end_date', '-start_date', '-api_match_id')
+    )
 
-    # --- Fetch from snooker.org (all tours, all seasons) ---
-    try:
-        h2h_data = fetch_h2h_data(lo, hi)
-    except Exception as e:
-        logger.error(f"Error fetching H2H for {lo} vs {hi}: {e}", exc_info=True)
-        # If we have stale cache, return it rather than showing an error
-        if cached is not None:
-            logger.warning(f"Returning stale H2H cache for {lo} vs {hi} due to fetch error")
-            raw_matches = _json.loads(cached.raw_json)
-            return Response(_build_h2h_response(p1_int, p2_int, raw_matches))
-        return Response({"error": "Internal server error while fetching H2H data."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    p1_wins = sum(1 for m in matches if m.winner_id == p1_int)
+    p2_wins = sum(1 for m in matches if m.winner_id == p2_int)
+    total = len(matches)
 
-    if h2h_data is None:
-        if cached is not None:
-            logger.warning(f"Returning stale H2H cache for {lo} vs {hi} — API returned None")
-            raw_matches = _json.loads(cached.raw_json)
-            return Response(_build_h2h_response(p1_int, p2_int, raw_matches))
-        return Response({"error": f"Could not retrieve H2H data for players {p1_int} and {p2_int}."}, status=status.HTTP_404_NOT_FOUND)
+    player_names_map = get_player_names({p1_int, p2_int})
+    p1_name = player_names_map.get(p1_int, f"Player {p1_int}")
+    p2_name = player_names_map.get(p2_int, f"Player {p2_int}")
 
-    raw_matches = h2h_data if isinstance(h2h_data, list) else []
+    last_meeting = last_result = None
+    if matches:
+        last = matches[0]
+        last_meeting = (last.end_date or last.start_date or last.scheduled_date)
+        if last_meeting:
+            last_meeting = last_meeting.isoformat()
+        # Scores from p1's perspective
+        if last.player1_id == p1_int:
+            p1_score, p2_score = last.score1, last.score2
+        else:
+            p1_score, p2_score = last.score2, last.score1
+        if last.winner_id == p1_int:
+            last_result = f"{p1_name} won {p1_score}-{p2_score}"
+        elif last.winner_id == p2_int:
+            last_result = f"{p2_name} won {p2_score}-{p1_score}"
 
-    # --- Save to cache ---
-    try:
-        H2HCache.objects.update_or_create(
-            player1_id=lo,
-            player2_id=hi,
-            defaults={
-                'total':      len(raw_matches),
-                'p1_wins':    sum(1 for m in raw_matches if m.get('WinnerID') == lo),
-                'p2_wins':    sum(1 for m in raw_matches if m.get('WinnerID') == hi),
-                'raw_json':   _json.dumps(raw_matches),
-                'fetched_at': _tz.now(),
-            }
-        )
-        logger.debug(f"H2H cache saved for {lo} vs {hi} ({len(raw_matches)} matches)")
-    except Exception as e:
-        logger.error(f"Failed to save H2H cache for {lo} vs {hi}: {e}", exc_info=True)
-        # Non-fatal — still return the data even if cache write fails
+    match_list = []
+    for m in matches:
+        match_list.append({
+            'ID': m.api_match_id,
+            'EventName': m.event_name,
+            'RoundName': m.round_name,
+            'Player1ID': m.player1_id,
+            'Player2ID': m.player2_id,
+            'Score1': m.score1,
+            'Score2': m.score2,
+            'WinnerID': m.winner_id,
+            'Season': m.season,
+            'EndDate': m.end_date.isoformat() if m.end_date else None,
+        })
 
-    response = _build_h2h_response(p1_int, p2_int, raw_matches)
-    logger.debug(f"H2H result for {p1_int} vs {p2_int}: {response['Player1Wins']}-{response['Player2Wins']} ({response['TotalMeetings']} meetings)")
-    return Response(response)
+    return Response({
+        'Player1ID': p1_int, 'Player1Name': p1_name,
+        'Player2ID': p2_int, 'Player2Name': p2_name,
+        'Player1Wins': p1_wins, 'Player2Wins': p2_wins,
+        'TotalMeetings': total,
+        'LastMeeting': last_meeting, 'LastResult': last_result,
+        'Matches': match_list,
+    })
 
 
 # --- Debug/Status Views ---

@@ -32,6 +32,7 @@ export interface Player {
     career_best_ranking?: number | null;
     seasons_in_top16?: number | null;
     best_win_streak?: number | null;
+    recent_win_pct?: number | null;
     Active: boolean | null
 }
 

@@ -32,10 +32,13 @@ export interface ComparePlayer extends Player {
     seasons_in_top16?: number | null;
     best_win_streak?: number | null;
     season_stats?: { matches: number; wins: number; season: number | null } | null;
+    recent_win_pct?: number | null;
     // Derived
     centuries_per_match?: number | null;
     avg_frames_per_match?: number | null;
     prize_per_match?: number | null;
+    titles_per_season?: number | null;
+    matches_per_season?: number | null;
     // Century data merged from /stats/centuries/
     century_season_current?: number | null;
     century_season_prev1?: number | null;
@@ -86,10 +89,11 @@ function enrichPlayer(player: Player, centuries: CenturyEntry[]): ComparePlayer 
     const careerCenturies = centuryData.century_career_total ?? null;
     const framesPlayed = player.frame_stats?.frames_played ?? null;
     const seasonMatches = player.season_stats?.matches ?? null;
+    const years_as_pro = computeYearsAsPro(player.FirstSeasonAsPro);
     return {
         ...player,
         age: computeAge(player.Born),
-        years_as_pro: computeYearsAsPro(player.FirstSeasonAsPro),
+        years_as_pro,
         career_win_pct: total > 0 ? Math.round((wins / total) * 1000) / 10 : null,
         centuries_per_match: careerCenturies != null && total > 0
             ? Math.round((careerCenturies / total) * 100) / 100 : null,
@@ -97,6 +101,10 @@ function enrichPlayer(player: Player, centuries: CenturyEntry[]): ComparePlayer 
             ? Math.round((framesPlayed / total) * 10) / 10 : null,
         prize_per_match: player.prize_money_this_year != null && seasonMatches && seasonMatches > 0
             ? Math.round(player.prize_money_this_year / seasonMatches) : null,
+        titles_per_season: (player.NumRankingTitles ?? 0) > 0 && years_as_pro
+            ? Math.round((player.NumRankingTitles! / years_as_pro) * 100) / 100 : null,
+        matches_per_season: total > 0 && years_as_pro
+            ? Math.round((total / years_as_pro) * 10) / 10 : null,
         ...centuryData,
     };
 }

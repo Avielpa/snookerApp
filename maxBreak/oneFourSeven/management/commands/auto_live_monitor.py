@@ -54,6 +54,7 @@ class Command(BaseCommand):
         self.last_monthly_run = None            # Track last month monthly updates ran (YYYY-MM string)
         self.last_news_fetch = None             # Track last news RSS fetch time
         self.last_player_history_run = None     # Track last date player history updated during active tour
+        self.pretournament_processed = set()    # Track event IDs already pre-synced (new-players-only)
         # Push notification dedup sets (reset at midnight UTC)
         self.notified_live = set()              # api_match_ids already notified as live
         self.notified_result = set()            # api_match_ids already notified as finished
@@ -101,9 +102,13 @@ class Command(BaseCommand):
                     self.stdout.write('[ACTIVE] ACTIVE TOURNAMENTS FOUND - Starting live updates')
                     self._run_live_updates()
 
-                    # During active tournaments: update player match history at 1am UTC
+                    # During active tournaments: smart career history sync at 4-5am UTC
                     if self._check_player_history_update():
                         self.stdout.write('[AUTOMATION] Player history update completed')
+
+                    # 1 day before tournament starts: backfill new players only
+                    if self._check_pretournament_update():
+                        self.stdout.write('[AUTOMATION] Pre-tournament new-player sync completed')
 
                     # Use short interval during active periods
                     next_check = active_interval
@@ -483,25 +488,51 @@ class Command(BaseCommand):
     
     def _check_player_history_update(self) -> bool:
         """
-        During active tournaments: update player match history at 1am UTC.
+        During active tournaments: smart career history sync at 4-5am UTC.
+        Full backfill for new top-128 entrants; current season only for existing players.
         Runs once per day when a tournament is active.
         """
         current_time = timezone.now()
 
-        # 1am UTC window (0–2 inclusive)
-        if 0 <= current_time.hour <= 2:
+        # 4-5am UTC window
+        if 4 <= current_time.hour <= 5:
             today = current_time.date()
             if self.last_player_history_run != today:
-                self.stdout.write('[PLAYER_HISTORY] Running 1am player match history update...')
+                self.stdout.write('[PLAYER_HISTORY] Running 4am career history sync...')
                 try:
-                    call_command('update_player_details', '--top', '128')
-                    self.stdout.write('[SUCCESS] Player match history updated')
+                    call_command('sync_career_history', '--top', '128')
+                    self.stdout.write('[SUCCESS] Career history sync completed')
                 except Exception as e:
-                    logger.error(f'Player history update failed: {e}')
-                    self.stdout.write(f'[FAILED] Player history update failed: {e}')
+                    logger.error(f'Career history sync failed: {e}')
+                    self.stdout.write(f'[FAILED] Career history sync failed: {e}')
                 self.last_player_history_run = today
                 return True
 
+        return False
+
+    def _check_pretournament_update(self) -> bool:
+        """
+        1 day before a tournament starts: backfill career history for new top-128 players only.
+        Skips existing players (fast). Deduped per event ID.
+        """
+        try:
+            tomorrow = (timezone.now() + timedelta(days=1)).date()
+            upcoming = Event.objects.filter(StartDate=tomorrow)
+            for event in upcoming:
+                if event.ID not in self.pretournament_processed:
+                    self.stdout.write(
+                        f'[PRETOUR] Tournament starting tomorrow: {event.Name} — syncing new players'
+                    )
+                    try:
+                        call_command('sync_career_history', '--top', '128', '--new-players-only')
+                        self.stdout.write(f'[PRETOUR] New-player sync complete for {event.Name}')
+                    except Exception as e:
+                        logger.error(f'Pre-tournament sync failed for event {event.ID}: {e}')
+                        self.stdout.write(f'[PRETOUR] Sync failed: {e}')
+                    self.pretournament_processed.add(event.ID)
+                    return True
+        except Exception as e:
+            logger.error(f'_check_pretournament_update error: {e}')
         return False
 
     def _update_upcoming_matches_fallback(self):
@@ -796,13 +827,13 @@ class Command(BaseCommand):
                 except Exception as e:
                     self.stdout.write(f'[WARNING] Failed to update players: {str(e)}')
 
-                # Update player details (photos and match history) for top players
+                # Smart career history sync: full backfill for new top-128 entrants, current season for existing
                 try:
-                    self.stdout.write(f'[PLAYER_DETAILS] Updating top 128 player photos and match history')
-                    call_command('update_player_details', '--top', '128')
-                    self.stdout.write(f'[SUCCESS] Updated player details')
+                    self.stdout.write(f'[CAREER_SYNC] Running post-tournament career history sync for top 128')
+                    call_command('sync_career_history', '--top', '128')
+                    self.stdout.write(f'[SUCCESS] Career history sync completed')
                 except Exception as e:
-                    self.stdout.write(f'[WARNING] Failed to update player details: {str(e)}')
+                    self.stdout.write(f'[WARNING] Career history sync failed: {str(e)}')
 
                 # Mark tournament as processed to avoid duplicate updates
                 self.processed_tournament_ends.add(tournament.ID)
