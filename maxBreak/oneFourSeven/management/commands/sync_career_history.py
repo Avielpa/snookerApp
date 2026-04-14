@@ -174,17 +174,17 @@ class Command(BaseCommand):
                 round_name = _infer_round_name(round_number, max_rnd)
 
                 PlayerMatchHistory.objects.update_or_create(
-                    api_match_id=m.get('ID'),
                     player_id=player.ID,
+                    event_id=event_id,
+                    round_number=round_number,
+                    player1_id=m.get('Player1ID'),
+                    player2_id=m.get('Player2ID'),
                     defaults={
-                        'event_id': event_id,
+                        'api_match_id': m.get('ID'),
                         'event_name': self._event_name(event_id),
-                        'round_number': round_number,
                         'round_name': round_name,
-                        'player1_id': m.get('Player1ID'),
                         'player1_name': self._player_name(m.get('Player1ID')),
                         'score1': m.get('Score1'),
-                        'player2_id': m.get('Player2ID'),
                         'player2_name': self._player_name(m.get('Player2ID')),
                         'score2': m.get('Score2'),
                         'winner_id': m.get('WinnerID'),

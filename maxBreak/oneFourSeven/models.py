@@ -825,8 +825,10 @@ class PlayerMatchHistory(models.Model):
             models.Index(fields=['status', 'scheduled_date']),
             models.Index(fields=['api_match_id']),
         ]
-        # Ensure unique matches per player
-        unique_together = [['api_match_id', 'player_id']]
+        # Logical key: a player appears in exactly one match per round per event
+        # (player1_id + player2_id identify the opponents; round_number + event_id identify position)
+        # api_match_id is NOT in the key — it rotates on session breaks and was causing duplicates.
+        unique_together = [['player_id', 'event_id', 'round_number', 'player1_id', 'player2_id']]
 
 
 # ================== News Article Model ==================

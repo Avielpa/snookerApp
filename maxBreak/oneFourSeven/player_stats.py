@@ -42,9 +42,9 @@ def get_win_streak(player_id: int) -> int:
         from oneFourSeven.models import PlayerMatchHistory
         matches = (
             PlayerMatchHistory.objects
-            .filter(player_id=player_id, status=3)
-            .order_by('-end_date', '-start_date', '-api_match_id')
-            [:30]
+            .filter(player_id=player_id, status=3, winner_id__isnull=False)
+            .order_by('-scheduled_date', '-api_match_id')
+            [:50]
         )
         streak = 0
         for m in matches:
