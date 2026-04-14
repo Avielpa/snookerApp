@@ -128,34 +128,61 @@ def get_frame_stats(player_id: int) -> dict:
         return {'frames_won': 0, 'frames_lost': 0, 'frames_played': 0, 'frame_pct': 0}
 
 
+def _get_single_elim_event_rounds() -> dict:
+    """
+    Returns {event_id: max_round} for events whose max round has exactly
+    1 distinct match (= proper single-elimination final exists).
+    Cached at module level after first call.
+    """
+    from django.db.models import Max, Count
+    from oneFourSeven.models import PlayerMatchHistory
+
+    # max round per event
+    event_max = {
+        r['event_id']: r['max_rnd']
+        for r in PlayerMatchHistory.objects
+        .values('event_id')
+        .annotate(max_rnd=Max('round_number'))
+    }
+
+    # count distinct matches at max round per event
+    valid = {}
+    for row in (
+        PlayerMatchHistory.objects
+        .values('event_id', 'round_number')
+        .annotate(n=Count('api_match_id', distinct=True))
+    ):
+        eid = row['event_id']
+        if row['round_number'] == event_max.get(eid) and row['n'] == 1:
+            valid[eid] = event_max[eid]
+    return valid
+
+
 def get_finals_record(player_id: int) -> dict:
     """
-    Returns how many finals the player has reached and won (career).
-
-    Uses the TRUE max round per event (across ALL players) so that a player
-    who lost in qualifying round 3 is never mistakenly counted as a finalist.
+    Returns how many finals the player has reached and won.
+    Only counts events whose max round has exactly 1 match (single-elimination final).
+    Excludes qualifier events.
     """
     try:
-        from django.db.models import Max, OuterRef, Subquery, F
         from oneFourSeven.models import PlayerMatchHistory
 
-        # True max round per event across all players in the DB
-        true_max_subquery = (
+        valid_events = _get_single_elim_event_rounds()  # {event_id: max_round}
+
+        rows = (
             PlayerMatchHistory.objects
-            .filter(event_id=OuterRef('event_id'))
-            .values('event_id')
-            .annotate(max_rnd=Max('round_number'))
-            .values('max_rnd')
+            .filter(player_id=player_id, status=3, event_id__in=valid_events.keys())
+            .exclude(event_name__icontains='Qualif')
+            .values('event_id', 'round_number', 'winner_id')
         )
 
-        finals = (
-            PlayerMatchHistory.objects
-            .filter(player_id=player_id, status=3)
-            .annotate(true_max=Subquery(true_max_subquery))
-            .filter(round_number=F('true_max'))
-        )
-        reached = finals.count()
-        won = finals.filter(winner_id=player_id).count()
+        reached = won = 0
+        for r in rows:
+            if r['round_number'] == valid_events.get(r['event_id']):
+                reached += 1
+                if r['winner_id'] == player_id:
+                    won += 1
+
         return {
             'finals_reached': reached,
             'finals_won': won,
@@ -195,29 +222,42 @@ def get_deciding_frames(player_id: int) -> dict:
 def get_semi_final_record(player_id: int) -> dict:
     """
     Semi-final appearances and wins (career).
-
-    Uses true max round per event so the semi-final = (true_max - 1).
+    Uses the same valid single-elimination events as get_finals_record.
+    Semi-final = max_round - 1, and that round must have exactly 2 matches.
     """
     try:
-        from django.db.models import Max, OuterRef, Subquery, F
+        from django.db.models import Count
         from oneFourSeven.models import PlayerMatchHistory
 
-        true_max_subquery = (
+        valid_events = _get_single_elim_event_rounds()  # {event_id: max_round}
+
+        # Build {event_id: sf_round} only for events where sf round has exactly 2 matches
+        sf_round_counts = {
+            r['event_id']: r['n']
+            for r in (
+                PlayerMatchHistory.objects
+                .filter(event_id__in=valid_events.keys())
+                .values('event_id', 'round_number')
+                .annotate(n=Count('api_match_id', distinct=True))
+            )
+            if r['round_number'] == valid_events.get(r['event_id'], -1) - 1
+        }
+        valid_sf_events = {eid: valid_events[eid] - 1 for eid, n in sf_round_counts.items() if n == 2}
+
+        rows = (
             PlayerMatchHistory.objects
-            .filter(event_id=OuterRef('event_id'))
-            .values('event_id')
-            .annotate(max_rnd=Max('round_number'))
-            .values('max_rnd')
+            .filter(player_id=player_id, status=3, event_id__in=valid_sf_events.keys())
+            .exclude(event_name__icontains='Qualif')
+            .values('event_id', 'round_number', 'winner_id')
         )
 
-        qs = (
-            PlayerMatchHistory.objects
-            .filter(player_id=player_id, status=3)
-            .annotate(true_max=Subquery(true_max_subquery))
-            .filter(round_number=F('true_max') - 1)
-        )
-        reached = qs.count()
-        won = qs.filter(winner_id=player_id).count()
+        reached = won = 0
+        for r in rows:
+            if r['round_number'] == valid_sf_events.get(r['event_id']):
+                reached += 1
+                if r['winner_id'] == player_id:
+                    won += 1
+
         return {'reached': reached, 'won': won, 'pct': round(won / reached * 100, 1) if reached else 0}
     except Exception as e:
         logger.error(f'[player_stats] get_semi_final_record failed for {player_id}: {e}')
