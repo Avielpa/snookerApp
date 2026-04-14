@@ -223,6 +223,26 @@ def get_seasons_in_top16(player_id: int) -> int:
         return 0
 
 
+def get_recent_win_pct(player_id: int, seasons: int = 3) -> float | None:
+    """Win % over the last N seasons (finished matches only)."""
+    try:
+        from oneFourSeven.models import PlayerMatchHistory
+        from datetime import datetime
+        current = datetime.now().year - 1
+        recent_seasons = list(range(current - seasons + 1, current + 1))
+        matches = PlayerMatchHistory.objects.filter(
+            player_id=player_id, season__in=recent_seasons, status=3
+        )
+        total = matches.count()
+        if total == 0:
+            return None
+        wins = matches.filter(winner_id=player_id).count()
+        return round(wins / total * 100, 1)
+    except Exception as e:
+        logger.error(f'[player_stats] get_recent_win_pct failed for {player_id}: {e}')
+        return None
+
+
 def get_best_win_streak(player_id: int) -> int:
     """Career best consecutive match win streak."""
     try:
