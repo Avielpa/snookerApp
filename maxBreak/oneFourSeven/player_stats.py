@@ -131,13 +131,28 @@ def get_frame_stats(player_id: int) -> dict:
 def get_finals_record(player_id: int) -> dict:
     """
     Returns how many finals the player has reached and won (career).
+
+    Uses the TRUE max round per event (across ALL players) so that a player
+    who lost in qualifying round 3 is never mistakenly counted as a finalist.
     """
     try:
+        from django.db.models import Max, OuterRef, Subquery, F
         from oneFourSeven.models import PlayerMatchHistory
-        finals = PlayerMatchHistory.objects.filter(
-            player_id=player_id,
-            status=3,
-            round_name__iexact='Final',
+
+        # True max round per event across all players in the DB
+        true_max_subquery = (
+            PlayerMatchHistory.objects
+            .filter(event_id=OuterRef('event_id'))
+            .values('event_id')
+            .annotate(max_rnd=Max('round_number'))
+            .values('max_rnd')
+        )
+
+        finals = (
+            PlayerMatchHistory.objects
+            .filter(player_id=player_id, status=3)
+            .annotate(true_max=Subquery(true_max_subquery))
+            .filter(round_number=F('true_max'))
         )
         reached = finals.count()
         won = finals.filter(winner_id=player_id).count()
@@ -178,11 +193,28 @@ def get_deciding_frames(player_id: int) -> dict:
 
 
 def get_semi_final_record(player_id: int) -> dict:
-    """Semi-final appearances and wins (career)."""
+    """
+    Semi-final appearances and wins (career).
+
+    Uses true max round per event so the semi-final = (true_max - 1).
+    """
     try:
+        from django.db.models import Max, OuterRef, Subquery, F
         from oneFourSeven.models import PlayerMatchHistory
-        qs = PlayerMatchHistory.objects.filter(
-            player_id=player_id, status=3, round_name__icontains='Semi',
+
+        true_max_subquery = (
+            PlayerMatchHistory.objects
+            .filter(event_id=OuterRef('event_id'))
+            .values('event_id')
+            .annotate(max_rnd=Max('round_number'))
+            .values('max_rnd')
+        )
+
+        qs = (
+            PlayerMatchHistory.objects
+            .filter(player_id=player_id, status=3)
+            .annotate(true_max=Subquery(true_max_subquery))
+            .filter(round_number=F('true_max') - 1)
         )
         reached = qs.count()
         won = qs.filter(winner_id=player_id).count()
