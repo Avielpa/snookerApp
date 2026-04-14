@@ -13,7 +13,7 @@ export const FormDots = ({ form }: FormDotsProps) => {
         <View style={styles.container}>
             <Text style={styles.label}>Recent Form</Text>
             <View style={styles.dotsRow}>
-                {form.slice(0, 10).map((result, i) => (
+                {[...form.slice(0, 10)].reverse().map((result, i) => (
                     <View
                         key={i}
                         style={[styles.dot, result === 'W' ? styles.win : styles.loss]}
