@@ -12,7 +12,7 @@
 //   TNT     — UCexJsWmC7rvfRaqK8MF3JFA  (TNT Sports Snooker)
 //   Mubeen  — UCb4vVvFCy29IC-9soDMQgCw
 //   SASA    — UC7Fu3Qlk9IfFWA2bpfYF7GA
-//   Hendry  — UCgjgqMmeaVhtHNIYjf4xHjw  (Stephen Hendry)
+//   Shachar — UCC7zF2g2XmvzXLP--sGj2BQ  (Shachar Tabuch)
 //
 // Quota: playlistItems.list = 1 unit. Free tier = 10,000 units/day.
 // API key rotation: run `eas secret:create --scope project --name EXPO_PUBLIC_YOUTUBE_API_KEY --value NEW_KEY --force`
@@ -24,7 +24,7 @@ const WST_CHANNEL_ID    = 'UC5lTEvtwu6SR3LMSmU9VZ2Q';
 const TNT_CHANNEL_ID    = 'UCexJsWmC7rvfRaqK8MF3JFA';
 const MUBEEN_CHANNEL_ID = 'UCb4vVvFCy29IC-9soDMQgCw';
 const SASA_CHANNEL_ID   = 'UC7Fu3Qlk9IfFWA2bpfYF7GA';
-const HENDRY_CHANNEL_ID = 'UCgjgqMmeaVhtHNIYjf4xHjw';
+const SHACHAR_CHANNEL_ID = 'UCC7zF2g2XmvzXLP--sGj2BQ';
 
 // Key is injected at build time via EAS Secrets (never hardcoded).
 // To rotate: run `eas secret:create --scope project --name EXPO_PUBLIC_YOUTUBE_API_KEY --value NEW_KEY --force`
@@ -150,4 +150,4 @@ export const fetchTNT     = () => fetchWithCache('highlights_tnt',    () => fetc
 // Creators tab channels
 export const fetchMubeen  = () => fetchWithCache('highlights_mubeen', () => fetchChannelVideos(MUBEEN_CHANNEL_ID, 'Mubeen'));
 export const fetchSASA    = () => fetchWithCache('highlights_sasa',   () => fetchChannelVideos(SASA_CHANNEL_ID,   'SASA'));
-export const fetchHendry  = () => fetchWithCache('highlights_hendry', () => fetchChannelVideos(HENDRY_CHANNEL_ID, 'Hendry'));
+export const fetchShachar = () => fetchWithCache('highlights_shachar', () => fetchChannelVideos(SHACHAR_CHANNEL_ID, 'Shachar'));

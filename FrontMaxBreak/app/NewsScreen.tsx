@@ -21,19 +21,19 @@ import {
     fetchTNT,
     fetchMubeen,
     fetchSASA,
-    fetchHendry,
+    fetchShachar,
     filterHighlightsByTournament,
 } from '../services/highlightsService';
 import { fetchAllNews } from '../services/newsService';
 
 type Tab = 'news' | 'highlights' | 'creators';
 type HighlightSubTab = 'wst' | 'tnt';
-type CreatorsSubTab = 'mubeen' | 'sasa' | 'hendry';
+type CreatorsSubTab = 'mubeen' | 'sasa' | 'shachar';
 
 const TAB_LABELS: Record<Tab, string> = { news: 'NEWS', highlights: 'HIGHLIGHTS', creators: 'CREATORS' };
 const HIGHLIGHT_SUB_LABELS: Record<HighlightSubTab, string> = { wst: 'WST', tnt: 'TNT SPORTS' };
-const CREATORS_SUB_LABELS: Record<CreatorsSubTab, string> = { mubeen: 'MUBEEN', sasa: 'SASA', hendry: 'STEPHEN' };
-const CREATORS_BADGE: Record<CreatorsSubTab, string> = { mubeen: 'MUBEEN', sasa: 'SASA', hendry: 'STEPHEN' };
+const CREATORS_SUB_LABELS: Record<CreatorsSubTab, string> = { mubeen: 'MUBEEN', sasa: 'SASA', shachar: 'SHACHAR' };
+const CREATORS_BADGE: Record<CreatorsSubTab, string> = { mubeen: 'MUBEEN', sasa: 'SASA', shachar: 'SHACHAR' };
 
 // ─── Static components ────────────────────────────────────────────────────────
 
@@ -126,7 +126,7 @@ export default function NewsScreen() {
     const [creatorsSubTab, setCreatorsSubTab] = useState<CreatorsSubTab>('mubeen');
 
     // Fetched tracking via ref — avoids stale closure issues in useCallback
-    const fetched = useRef({ wst: false, tnt: false, mubeen: false, sasa: false, hendry: false });
+    const fetched = useRef({ wst: false, tnt: false, mubeen: false, sasa: false, shachar: false });
 
     // ── News ─────────────────────────────────────────────────────────────────
     const [articles, setArticles] = useState<NewsArticle[]>([]);
@@ -155,10 +155,10 @@ export default function NewsScreen() {
     const [sasaLoading, setSasaLoading] = useState(false);
     const [sasaRefreshing, setSasaRefreshing] = useState(false);
 
-    // ── Creators: Hendry ─────────────────────────────────────────────────────
-    const [hendryHighlights, setHendryHighlights] = useState<Highlight[]>([]);
-    const [hendryLoading, setHendryLoading] = useState(false);
-    const [hendryRefreshing, setHendryRefreshing] = useState(false);
+    // ── Creators: Shachar ────────────────────────────────────────────────────
+    const [shacharHighlights, setShacharHighlights] = useState<Highlight[]>([]);
+    const [shacharLoading, setShacharLoading] = useState(false);
+    const [shacharRefreshing, setShacharRefreshing] = useState(false);
 
     // ── Load functions ───────────────────────────────────────────────────────
 
@@ -218,14 +218,14 @@ export default function NewsScreen() {
         }
     }, []);
 
-    const loadHendry = useCallback(async (isRefresh = false) => {
-        if (isRefresh) setHendryRefreshing(true); else setHendryLoading(true);
+    const loadShachar = useCallback(async (isRefresh = false) => {
+        if (isRefresh) setShacharRefreshing(true); else setShacharLoading(true);
         try {
-            setHendryHighlights(await fetchHendry());
-            fetched.current.hendry = true;
+            setShacharHighlights(await fetchShachar());
+            fetched.current.shachar = true;
         } finally {
-            setHendryLoading(false);
-            setHendryRefreshing(false);
+            setShacharLoading(false);
+            setShacharRefreshing(false);
         }
     }, []);
 
@@ -249,8 +249,8 @@ export default function NewsScreen() {
         setCreatorsSubTab(sub);
         if (sub === 'mubeen' && !fetched.current.mubeen) loadMubeen();
         if (sub === 'sasa'   && !fetched.current.sasa)   loadSasa();
-        if (sub === 'hendry' && !fetched.current.hendry) loadHendry();
-    }, [loadMubeen, loadSasa, loadHendry]);
+        if (sub === 'shachar' && !fetched.current.shachar) loadShachar();
+    }, [loadMubeen, loadSasa, loadShachar]);
 
     // ── Derived state ────────────────────────────────────────────────────────
 
@@ -263,11 +263,11 @@ export default function NewsScreen() {
     const onHighlightRefresh = highlightSubTab === 'wst' ? () => loadWst(true) : () => loadTnt(true);
 
     const creatorsLoading = creatorsSubTab === 'mubeen' ? mubeenLoading
-        : creatorsSubTab === 'sasa' ? sasaLoading : hendryLoading;
+        : creatorsSubTab === 'sasa' ? sasaLoading : shacharLoading;
     const creatorsRefreshing = creatorsSubTab === 'mubeen' ? mubeenRefreshing
-        : creatorsSubTab === 'sasa' ? sasaRefreshing : hendryRefreshing;
+        : creatorsSubTab === 'sasa' ? sasaRefreshing : shacharRefreshing;
     const onCreatorsRefresh = creatorsSubTab === 'mubeen' ? () => loadMubeen(true)
-        : creatorsSubTab === 'sasa' ? () => loadSasa(true) : () => loadHendry(true);
+        : creatorsSubTab === 'sasa' ? () => loadSasa(true) : () => loadShachar(true);
 
     const isLoading = activeTab === 'news' ? newsLoading
         : activeTab === 'highlights' ? highlightLoading : creatorsLoading;
@@ -375,7 +375,7 @@ export default function NewsScreen() {
             ) : (
                 <View style={styles.flex}>
                     <SubTabRow
-                        tabs={['mubeen', 'sasa', 'hendry'] as CreatorsSubTab[]}
+                        tabs={['mubeen', 'sasa', 'shachar'] as CreatorsSubTab[]}
                         labels={CREATORS_SUB_LABELS}
                         activeTab={creatorsSubTab}
                         onPress={handleCreatorsSubTabPress}
@@ -385,7 +385,7 @@ export default function NewsScreen() {
                         data={
                             creatorsSubTab === 'mubeen' ? mubeenHighlights
                             : creatorsSubTab === 'sasa'  ? sasaHighlights
-                            : hendryHighlights
+                            : shacharHighlights
                         }
                         keyExtractor={(item) => item.videoId}
                         renderItem={({ item }) => (
