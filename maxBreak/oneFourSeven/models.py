@@ -1079,3 +1079,35 @@ class CommentLike(models.Model):
     def __str__(self):
         return f"Device {self.device_id[:8]}... liked comment {self.comment_id}"
 
+
+# ================== Per-Frame Score Model ==================
+
+class MatchFrameScore(models.Model):
+    """
+    Stores per-frame point breakdowns for completed matches.
+    Populated by the fetch_frame_scores management command (sourced from CueTracker).
+    The view only reads from this table — no live scraping on user requests.
+    """
+    match = models.ForeignKey(
+        MatchesOfAnEvent,
+        on_delete=models.CASCADE,
+        related_name='frame_scores_ct',
+        # Uses Django auto PK (api_match_id is not unique in DB)
+    )
+    frame_number = models.IntegerField()
+    player1_points = models.IntegerField()
+    player2_points = models.IntegerField()
+    player1_break = models.IntegerField(null=True, blank=True)  # highest break if ≥50, else null
+    player2_break = models.IntegerField(null=True, blank=True)
+    winner = models.IntegerField()  # 1 = Player1 won this frame, 2 = Player2
+    source = models.CharField(max_length=50, default='cuetracker')
+
+    class Meta:
+        unique_together = ('match', 'frame_number')
+        ordering = ['frame_number']
+        verbose_name = "Match Frame Score"
+        verbose_name_plural = "Match Frame Scores"
+
+    def __str__(self):
+        return f"Match {self.match_id} Frame {self.frame_number}: {self.player1_points}-{self.player2_points}"
+

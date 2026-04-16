@@ -8,6 +8,7 @@ from .views_stats import (
     stats_tour_winners_view,
     stats_title_leaders_view,
 )
+from .views_frame_scores import match_frame_scores_view
 from .views import (
     # Generic List Views
     EventList,
@@ -156,6 +157,9 @@ urlpatterns = [
     # --- Predictions ---
     path('matches/predict/', match_predict_view, name='match-predict'),
     path('matches/<int:match_api_id>/predict/', match_predict_stats_view, name='match-predict-stats'),
+
+    # --- Per-Frame Scores ---
+    path('matches/<int:match_api_id>/frame-scores/', match_frame_scores_view, name='match-frame-scores'),
 
     # --- Comments ---
     path('matches/<int:match_api_id>/comments/', match_comments_view, name='match-comments'),
