@@ -190,6 +190,23 @@ class Command(BaseCommand):
             logger.error(f'Startup player history sync failed: {e}')
             self.stdout.write(f'[STARTUP] Player history sync failed: {e}')
 
+        try:
+            from oneFourSeven.models import PlayerCareerStats
+            populated = PlayerCareerStats.objects.count()
+            if populated < 50:
+                self.stdout.write(
+                    f'[STARTUP] PlayerCareerStats has {populated} rows — running rebuild_player_stats...'
+                )
+                call_command('rebuild_player_stats')
+                self.stdout.write('[STARTUP] rebuild_player_stats completed')
+            else:
+                self.stdout.write(
+                    f'[STARTUP] PlayerCareerStats already populated ({populated} rows) — skipping rebuild'
+                )
+        except Exception as e:
+            logger.error(f'rebuild_player_stats startup check failed: {e}')
+            self.stdout.write(f'[STARTUP] rebuild_player_stats failed (non-fatal): {e}')
+
     def _has_active_matches(self, current_time):
         """Check if there are any tournaments currently in their date range."""
         today = current_time.date()
