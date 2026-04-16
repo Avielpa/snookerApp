@@ -67,6 +67,17 @@ class Player(models.Model):
         max_length=500, null=True, blank=True,
         help_text="Player photo URL from snooker.org"
     )
+    ct_slug = models.CharField(
+        max_length=150,
+        null=True,
+        blank=True,
+        help_text=(
+            "CueTracker URL slug for this player. "
+            "null = not yet tried. "
+            "'NOT_FOUND' = confirmed absent on CueTracker. "
+            "Any other value = working slug used directly (no re-derivation)."
+        )
+    )
 
     def __str__(self) -> str:
         """String representation of the Player object, typically the full name."""

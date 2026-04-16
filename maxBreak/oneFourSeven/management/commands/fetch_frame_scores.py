@@ -16,39 +16,90 @@ from bs4 import BeautifulSoup
 
 from django.core.management.base import BaseCommand
 
-from oneFourSeven.models import MatchesOfAnEvent, MatchFrameScore
+from oneFourSeven.models import MatchesOfAnEvent, MatchFrameScore, Player
 from oneFourSeven.views import get_player_names
 
 
 # ---------------------------------------------------------------------------
-# Module-level helpers (pure functions, easy to test in isolation)
+# Module-level helpers (pure functions, isolated from Django ORM)
 # ---------------------------------------------------------------------------
 
 def _to_ct_slug(name: str) -> str:
-    """Convert a player's full name to a CueTracker URL slug.
+    """Convert a player full name to a CueTracker URL slug.
 
-    Examples:
-        "Ronnie O'Sullivan" -> "ronnie-osullivan"
-        "Xu Si"             -> "xu-si"
-        "Neil Robertson"    -> "neil-robertson"
+    "Ronnie O'Sullivan" -> "ronnie-osullivan"
+    "Xu Si"             -> "xu-si"
     """
     name = name.lower()
     name = name.replace("\u2019", "").replace("'", "")  # curly + straight apostrophes
     name = re.sub(r"[^a-z0-9\s-]", "", name)            # remove other special chars
-    name = re.sub(r"\s+", "-", name.strip())             # spaces -> hyphens
+    name = re.sub(r"\s+", "-", name.strip())             # spaces → hyphens
     return name
 
 
-def _parse_frame_string(raw: str, swap: bool) -> list:
-    """Parse CueTracker frame string into a list of frame dicts.
+def _generate_slug_variants(name: str, surname_first: bool) -> list:
+    """Return ordered list of CueTracker slug candidates (most likely first).
 
-    Format:  "80(80)-8; 47-62; 71(61)-23"
-      - Each token is one frame: left_score(left_break)-right_score(right_break)
-      - Break in parentheses = highest break scored by that side in the frame
-      - Only stored if the break value exists in the string (≥ any value)
+    Handles two common mismatch cases:
+    - Middle initial in our DB:  "Mark J Williams" → also try "mark-williams"
+    - SurnameFirst name order:   "Lei Peifan"      → also try "peifan-lei"
+    """
+    variants = []
+    variants.append(_to_ct_slug(name))  # primary: as-is
+
+    parts = name.strip().split()
+    if surname_first:
+        # e.g. "Lei Peifan" (LastName=Lei, FirstName=Peifan) → try "peifan-lei"
+        if len(parts) == 2:
+            variants.append(_to_ct_slug(f"{parts[1]} {parts[0]}"))
+    else:
+        # e.g. "Mark J Williams" → try "mark-williams" (drop middle)
+        if len(parts) == 3:
+            variants.append(_to_ct_slug(f"{parts[0]} {parts[2]}"))
+        elif len(parts) > 3:
+            variants.append(_to_ct_slug(f"{parts[0]} {parts[-1]}"))
+
+    # Deduplicate while preserving order
+    seen = set()
+    return [v for v in variants if not (v in seen or seen.add(v))]
+
+
+def _name_tokens_match(our_name: str, ct_name: str) -> bool:
+    """True if every meaningful word in our_name appears in ct_name (case-insensitive, any order).
+
+    Single-character tokens (middle initials like "J") are ignored because
+    CueTracker often omits them. Requires at least 2 characters per token.
+
+    Handles:
+    - "Mark J Williams" vs "Mark Williams"       → True  (single-char "j" ignored)
+    - "Mark Williams"   vs "Mark John Williams"  → True  (middle name is extra, fine)
+    - "Lei Peifan"      vs "Peifan Lei"           → True  (order irrelevant)
+    - "Judd Trump"      vs "John Trump"           → False (different first name)
+    """
+    ct_lower = ct_name.lower()
+    tokens = [t for t in our_name.lower().split() if len(t) > 1]
+    return bool(tokens) and all(token in ct_lower for token in tokens)
+
+
+def _fetch_h2h_html(p1_slug: str, p2_slug: str) -> tuple:
+    """GET CueTracker H2H page. Returns (status_code, html). (0, '') on error."""
+    url = f"https://cuetracker.net/head-to-head/{p1_slug}/{p2_slug}"
+    try:
+        resp = requests.get(
+            url,
+            headers={"User-Agent": "Mozilla/5.0 (compatible; MaxBreakApp/1.0)"},
+            timeout=10,
+        )
+        return resp.status_code, resp.text
+    except Exception:
+        return 0, ""
+
+
+def _parse_frame_string(raw: str, swap: bool) -> list:
+    """Parse CueTracker frame string "80(80)-8; 47-62; 71(61)-23" into frame dicts.
 
     swap=False: CueTracker's left side = our Player1
-    swap=True:  CueTracker's left side = our Player2 (scores need to be flipped)
+    swap=True:  CueTracker's left side = our Player2 (flip sides)
     """
     pattern = re.compile(r"(\d+)(?:\((\d+)\))?-(\d+)(?:\((\d+)\))?")
     frames = []
@@ -79,30 +130,42 @@ def _parse_frame_string(raw: str, swap: bool) -> list:
     return frames
 
 
-def _parse_cuetracker_html(html: str, our_s1: int, our_s2: int) -> list:
-    """Find the matching match block on a CueTracker H2H page and parse its frames.
+def _parse_cuetracker_html(
+    html: str,
+    our_s1: int,
+    our_s2: int,
+    p1_name: str = "",
+    p2_name: str = "",
+) -> list:
+    """Find matching match block on a CueTracker H2H page and parse its frames.
 
     CueTracker HTML structure:
         <div class="match">
             <div class="player_1_score">10</div>  ← ALWAYS winner's score
             <div class="player_2_score">9</div>   ← ALWAYS loser's score
-            <div class="frame_scores">80(80)-8; 47-62; ...</div>
+            <div class="frame_scores">80(80)-8; ...</div>  ← underscore, not hyphen
+            (may also have player_1_name / player_2_name elements)
         </div>
 
-    IMPORTANT: CueTracker always shows the winner's score as player_1_score
-    regardless of which player appears in the URL. So we accept (s1,s2) OR (s2,s1).
+    Score matching: accept (our_s1, our_s2) OR (our_s2, our_s1) because
+    CueTracker always shows winner first regardless of URL player order.
 
-    Returns parsed frame list, or [] if no matching block found.
+    Name verification: when p1_name/p2_name provided and the block has name
+    elements, verify our name tokens appear in the CueTracker name. This
+    prevents false positives on score collisions.
+
+    Returns parsed frame list or [] if no match found.
     """
     soup = BeautifulSoup(html, "html.parser")
     match_divs = soup.find_all(class_="match")
 
     for div in match_divs:
-        ct_s1_el = div.find(class_="player_1_score")
-        ct_s2_el = div.find(class_="player_2_score")
-        frame_el = div.find(class_="frame_scores")  # underscore, not hyphen
+        ct_s1_el  = div.find(class_="player_1_score")
+        ct_s2_el  = div.find(class_="player_2_score")
+        frame_el  = div.find(class_="frame_scores")   # NOTE: underscore, not hyphen
         if not all([ct_s1_el, ct_s2_el, frame_el]):
             continue
+
         try:
             ct_s1 = int(ct_s1_el.get_text(strip=True))
             ct_s2 = int(ct_s2_el.get_text(strip=True))
@@ -113,10 +176,35 @@ def _parse_cuetracker_html(html: str, our_s1: int, our_s2: int) -> list:
         if not raw_frames:
             continue
 
+        # Score match — accept either ordering
         if ct_s1 == our_s1 and ct_s2 == our_s2:
-            return _parse_frame_string(raw_frames, swap=False)
+            swap = False
         elif ct_s1 == our_s2 and ct_s2 == our_s1:
-            return _parse_frame_string(raw_frames, swap=True)
+            swap = True
+        else:
+            continue
+
+        # Optional name verification
+        if p1_name or p2_name:
+            ct_p1_name_el = div.find(class_="player_1_name")
+            ct_p2_name_el = div.find(class_="player_2_name")
+            if ct_p1_name_el and ct_p2_name_el:
+                ct_p1_name = ct_p1_name_el.get_text(strip=True)
+                ct_p2_name = ct_p2_name_el.get_text(strip=True)
+                # swap=False: ct_p1 = our p1, ct_p2 = our p2
+                # swap=True:  ct_p1 = our p2, ct_p2 = our p1
+                if not swap:
+                    if p1_name and not _name_tokens_match(p1_name, ct_p1_name):
+                        continue
+                    if p2_name and not _name_tokens_match(p2_name, ct_p2_name):
+                        continue
+                else:
+                    if p2_name and not _name_tokens_match(p2_name, ct_p1_name):
+                        continue
+                    if p1_name and not _name_tokens_match(p1_name, ct_p2_name):
+                        continue
+
+        return _parse_frame_string(raw_frames, swap)
 
     return []
 
@@ -175,8 +263,6 @@ class Command(BaseCommand):
                 skipped += 1
             else:
                 failed += 1
-            # Be polite to CueTracker — don't hammer the server
-            time.sleep(0.5)
 
         self.stdout.write(
             self.style.SUCCESS(
@@ -189,46 +275,100 @@ class Command(BaseCommand):
 
         Returns: "ok" | "skip" | "fail"
         """
+        # 1. Load Player objects (need SurnameFirst + ct_slug)
+        players = {
+            p.ID: p
+            for p in Player.objects.filter(ID__in=[match.Player1ID, match.Player2ID])
+        }
+        p1_obj = players.get(match.Player1ID)
+        p2_obj = players.get(match.Player2ID)
+
+        if not p1_obj or not p2_obj:
+            self.stderr.write(f"  SKIP {match.api_match_id}: missing player record(s)")
+            return "skip"
+
+        # 2. Short-circuit if either player confirmed absent on CueTracker
+        if p1_obj.ct_slug == "NOT_FOUND" or p2_obj.ct_slug == "NOT_FOUND":
+            self.stderr.write(
+                f"  SKIP {match.api_match_id}: player(s) marked NOT_FOUND"
+            )
+            return "skip"
+
+        # 3. Get full names (handles SurnameFirst for Chinese/Eastern players)
         names_map = get_player_names({match.Player1ID, match.Player2ID})
         p1_name = names_map.get(match.Player1ID, "")
         p2_name = names_map.get(match.Player2ID, "")
 
         if not p1_name or not p2_name:
             self.stderr.write(
-                f"  SKIP match {match.api_match_id}: missing player name(s)"
+                f"  SKIP {match.api_match_id}: could not build player name(s)"
             )
             return "skip"
 
-        p1_slug = _to_ct_slug(p1_name)
-        p2_slug = _to_ct_slug(p2_name)
-        url = f"https://cuetracker.net/head-to-head/{p1_slug}/{p2_slug}"
+        # 4. Build slug candidate lists
+        # If stored slug exists → use it only (already verified to work)
+        # If null → generate variants to try
+        p1_candidates = (
+            [p1_obj.ct_slug]
+            if p1_obj.ct_slug
+            else _generate_slug_variants(p1_name, bool(p1_obj.SurnameFirst))
+        )
+        p2_candidates = (
+            [p2_obj.ct_slug]
+            if p2_obj.ct_slug
+            else _generate_slug_variants(p2_name, bool(p2_obj.SurnameFirst))
+        )
 
-        try:
-            resp = requests.get(
-                url,
-                headers={"User-Agent": "Mozilla/5.0 (compatible; MaxBreakApp/1.0)"},
-                timeout=10,
-            )
-        except Exception as e:
-            self.stderr.write(f"  FAIL match {match.api_match_id}: network error — {e}")
-            return "fail"
+        # 5. Try all p1 × p2 slug combinations
+        found_frames = []
+        used_p1_slug = None
+        used_p2_slug = None
 
-        if resp.status_code != 200:
+        for p1_slug in p1_candidates:
+            for p2_slug in p2_candidates:
+                status, html = _fetch_h2h_html(p1_slug, p2_slug)
+                if status == 200:
+                    frames = _parse_cuetracker_html(
+                        html,
+                        match.Score1,
+                        match.Score2,
+                        p1_name,
+                        p2_name,
+                    )
+                    if frames:
+                        found_frames = frames
+                        used_p1_slug = p1_slug
+                        used_p2_slug = p2_slug
+                        break
+                # Small delay between retries — be polite to CueTracker
+                if len(p1_candidates) + len(p2_candidates) > 2:
+                    time.sleep(0.3)
+            if found_frames:
+                break
+
+        # 6. No frames found after all combinations
+        if not found_frames:
+            # Do NOT mark NOT_FOUND — a 404 could be the OTHER player's fault.
+            # Players stay null; future matches will re-try them.
             self.stderr.write(
-                f"  FAIL match {match.api_match_id}: HTTP {resp.status_code} — {url}"
-            )
-            return "fail"
-
-        frames = _parse_cuetracker_html(resp.text, match.Score1, match.Score2)
-
-        if not frames:
-            self.stderr.write(
-                f"  SKIP match {match.api_match_id} ({p1_name} vs {p2_name} "
-                f"{match.Score1}-{match.Score2}): no matching block on CueTracker"
+                f"  SKIP {match.api_match_id} ({p1_name} vs {p2_name} "
+                f"{match.Score1}-{match.Score2}): not found on CueTracker"
             )
             return "skip"
 
-        # Delete existing rows for this match then re-insert
+        # 7. Persist the working slugs on Player records (only if newly discovered)
+        if not p1_obj.ct_slug:
+            Player.objects.filter(ID=p1_obj.ID).update(ct_slug=used_p1_slug)
+            self.stdout.write(
+                f"  Stored ct_slug for {p1_name}: {used_p1_slug}"
+            )
+        if not p2_obj.ct_slug:
+            Player.objects.filter(ID=p2_obj.ID).update(ct_slug=used_p2_slug)
+            self.stdout.write(
+                f"  Stored ct_slug for {p2_name}: {used_p2_slug}"
+            )
+
+        # 8. Save frames to DB (delete old rows first)
         MatchFrameScore.objects.filter(match=match).delete()
         MatchFrameScore.objects.bulk_create([
             MatchFrameScore(
@@ -241,11 +381,11 @@ class Command(BaseCommand):
                 winner=f["winner"],
                 source="cuetracker",
             )
-            for f in frames
+            for f in found_frames
         ])
 
         self.stdout.write(
-            f"  OK  match {match.api_match_id} ({p1_name} vs {p2_name} "
-            f"{match.Score1}-{match.Score2}) — {len(frames)} frames"
+            f"  OK  {match.api_match_id} ({p1_name} vs {p2_name} "
+            f"{match.Score1}-{match.Score2}) — {len(found_frames)} frames"
         )
         return "ok"
