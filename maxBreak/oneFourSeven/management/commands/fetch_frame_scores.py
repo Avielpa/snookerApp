@@ -16,7 +16,7 @@ from bs4 import BeautifulSoup
 
 from django.core.management.base import BaseCommand
 
-from oneFourSeven.models import MatchesOfAnEvent, MatchFrameScore, Player
+from oneFourSeven.models import MatchesOfAnEvent, MatchFrameScore, Player, Ranking
 from oneFourSeven.views import get_player_names
 
 
@@ -218,8 +218,8 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            "--limit", type=int, default=50,
-            help="Max number of matches to process per run (default: 50)",
+            "--limit", type=int, default=None,
+            help="Max number of matches to process (default: no limit)",
         )
         parser.add_argument(
             "--match-id", type=int, default=None,
@@ -228,6 +228,10 @@ class Command(BaseCommand):
         parser.add_argument(
             "--refetch", action="store_true",
             help="Re-fetch even if frame score data already exists",
+        )
+        parser.add_argument(
+            "--top-ranked", type=int, default=None,
+            help="Only process matches involving the top N ranked players (MoneyRankings, latest season)",
         )
 
     def handle(self, *args, **options):
@@ -248,14 +252,34 @@ class Command(BaseCommand):
         if options["match_id"]:
             qs = qs.filter(api_match_id=options["match_id"])
 
+        if options["top_ranked"]:
+            latest_season = (
+                Ranking.objects.filter(Type="MoneyRankings")
+                .order_by("-Season")
+                .values_list("Season", flat=True)
+                .first()
+            )
+            top_ids = list(
+                Ranking.objects.filter(Season=latest_season, Type="MoneyRankings")
+                .order_by("Position")[: options["top_ranked"]]
+                .values_list("Player_id", flat=True)
+            )
+            self.stdout.write(
+                f"Filtering to top {options['top_ranked']} players "
+                f"(season {latest_season}, {len(top_ids)} IDs found)"
+            )
+            qs = qs.filter(Player1ID__in=top_ids) | qs.filter(Player2ID__in=top_ids)
+            qs = qs.distinct()
+
         qs = qs.select_related("Event").order_by("-Event__Season", "-StartDate")
-        qs = qs[: options["limit"]]
+        if options["limit"]:
+            qs = qs[: options["limit"]]
 
         total = qs.count()
         self.stdout.write(f"Processing {total} matches...")
 
         success, skipped, failed = 0, 0, 0
-        for match in qs:
+        for i, match in enumerate(qs, start=1):
             result = self._fetch_and_save(match)
             if result == "ok":
                 success += 1
@@ -263,6 +287,9 @@ class Command(BaseCommand):
                 skipped += 1
             else:
                 failed += 1
+            # Progress every 50 matches
+            if i % 50 == 0:
+                self.stdout.write(f"  ... {i}/{total} processed (ok:{success} skip:{skipped} fail:{failed})")
 
         self.stdout.write(
             self.style.SUCCESS(
