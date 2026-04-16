@@ -737,3 +737,27 @@ export const submitPrediction = async (matchApiId: number, player: 1 | 2): Promi
         return null;
     }
 };
+
+// --- Per-Frame Scores ---
+
+export interface MatchFrameScore {
+    frame_number: number;
+    player1_points: number;
+    player2_points: number;
+    player1_break: number | null;
+    player2_break: number | null;
+    winner: 1 | 2;
+    source: string;
+}
+
+export const getMatchFrameScores = async (matchApiId: number): Promise<MatchFrameScore[]> => {
+    try {
+        const response = await api.get<{ frames: MatchFrameScore[] }>(
+            `matches/${matchApiId}/frame-scores/`,
+            { skipCache: true } as any,
+        );
+        return response.data.frames ?? [];
+    } catch {
+        return [];
+    }
+};

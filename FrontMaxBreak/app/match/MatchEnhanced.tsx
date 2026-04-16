@@ -14,7 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
 // Import services
-import { getMatchDetails, getHeadToHead, getMatchFormat as getApiMatchFormat, fetchPredictionStats, submitPrediction, PredictionStats } from '../../services/matchServices';
+import { getMatchDetails, getHeadToHead, getMatchFormat as getApiMatchFormat, fetchPredictionStats, submitPrediction, PredictionStats, getMatchFrameScores, MatchFrameScore } from '../../services/matchServices';
 import { getTournamentDetails } from '../../services/tourServices';
 import { apiCache, syncMatchDataToTournamentCache } from '../../services/api';
 import { logger } from '../../utils/logger';
@@ -67,6 +67,7 @@ export default function MatchEnhanced() {
   const [h2hData, setH2hData] = useState<H2HData | null>(null);
   const [h2hLoading, setH2hLoading] = useState<boolean>(false);
   const [realMatchFormat, setRealMatchFormat] = useState<string | null>(null);
+  const [ctFrameScores, setCtFrameScores] = useState<MatchFrameScore[]>([]);
 
   // Helper functions (must be defined before useMemo calls)
   const formatDuration = (minutes: number): string => {
@@ -476,6 +477,11 @@ export default function MatchEnhanced() {
           if (stats.user_pick) setUserPrediction(stats.user_pick);
         }
       });
+
+      // Fetch per-frame scores for completed matches
+      if (matchDetailsTyped.status_code === 3 && matchDetailsTyped.api_match_id) {
+        getMatchFrameScores(matchDetailsTyped.api_match_id).then(setCtFrameScores);
+      }
       
       // TEMPORARY: Re-enable sync to understand original issue
       if (matchDetailsTyped.api_match_id) {
@@ -687,6 +693,9 @@ export default function MatchEnhanced() {
         return (
           <FramesTab
             frameScores={frameScores}
+            ctFrameScores={ctFrameScores}
+            player1Name={matchDetails?.player1_name ?? ''}
+            player2Name={matchDetails?.player2_name ?? ''}
             matchStats={matchStats}
             styles={styles}
           />
