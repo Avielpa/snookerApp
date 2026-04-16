@@ -81,6 +81,125 @@ def _name_tokens_match(our_name: str, ct_name: str) -> bool:
     return bool(tokens) and all(token in ct_lower for token in tokens)
 
 
+def _fetch_player_page_html(slug: str) -> tuple:
+    """GET CueTracker player profile page. Returns (status_code, html). (0, '') on error."""
+    url = f"https://cuetracker.net/players/{slug}"
+    try:
+        resp = requests.get(
+            url,
+            headers={"User-Agent": "Mozilla/5.0 (compatible; MaxBreakApp/1.0)"},
+            timeout=10,
+        )
+        return resp.status_code, resp.text
+    except Exception:
+        return 0, ""
+
+
+def _parse_player_page(
+    html: str,
+    our_s1: int,
+    our_s2: int,
+    year: int,
+    known_is_p1: bool,
+    p1_name: str = "",
+    p2_name: str = "",
+    known_slug: str = "",
+) -> tuple:
+    """Find a match on a CueTracker player profile page and extract frames + opponent slug.
+
+    Player profile page structure:
+        <div class="match">
+            <div class="player_1_score">10</div>
+            <div class="player_2_score">9</div>
+            <div class="played_on">2026-04-05</div>
+            <div class="frame_scores">80(80)-8; ...</div>
+            <a href="/players/zhao-xintong/season/...">Zhao Xintong</a>  ← opponent link
+        </div>
+
+    known_is_p1=True  means the page owner is our Player1
+    known_is_p1=False means the page owner is our Player2
+
+    Returns (frames, opponent_slug) or ([], None) if not found.
+    The opponent_slug is extracted from the href of the player link in the block.
+    """
+    soup = BeautifulSoup(html, "html.parser")
+    match_divs = soup.find_all(class_="match")
+
+    for div in match_divs:
+        # Check year matches
+        played_el = div.find(class_="played_on")
+        if played_el:
+            played_text = played_el.get_text(strip=True)
+            if str(year) not in played_text:
+                continue
+
+        ct_s1_el = div.find(class_="player_1_score")
+        ct_s2_el = div.find(class_="player_2_score")
+        frame_el = div.find(class_="frame_scores")
+        if not all([ct_s1_el, ct_s2_el, frame_el]):
+            continue
+
+        try:
+            ct_s1 = int(ct_s1_el.get_text(strip=True))
+            ct_s2 = int(ct_s2_el.get_text(strip=True))
+        except ValueError:
+            continue
+
+        raw_frames = frame_el.get_text(strip=True)
+        if not raw_frames:
+            continue
+
+        # Score match (accept either order)
+        if ct_s1 == our_s1 and ct_s2 == our_s2:
+            swap = False
+        elif ct_s1 == our_s2 and ct_s2 == our_s1:
+            swap = True
+        else:
+            continue
+
+        # Optional name verification against name elements
+        ct_p1_name_el = div.find(class_="player_1_name")
+        ct_p2_name_el = div.find(class_="player_2_name")
+        if ct_p1_name_el and ct_p2_name_el and (p1_name or p2_name):
+            ct_p1_name = ct_p1_name_el.get_text(strip=True)
+            ct_p2_name = ct_p2_name_el.get_text(strip=True)
+            if not swap:
+                if p1_name and not _name_tokens_match(p1_name, ct_p1_name):
+                    continue
+                if p2_name and not _name_tokens_match(p2_name, ct_p2_name):
+                    continue
+            else:
+                if p2_name and not _name_tokens_match(p2_name, ct_p1_name):
+                    continue
+                if p1_name and not _name_tokens_match(p1_name, ct_p2_name):
+                    continue
+
+        # Extract opponent slug from any /players/{slug}/ link inside the block.
+        # CueTracker uses absolute URLs: https://cuetracker.net/players/{slug}/...
+        # Skip the page-owner's own slug (known_slug) if provided.
+        opponent_slug = None
+        for a_tag in div.find_all("a", href=True):
+            href = a_tag["href"]
+            m = re.search(r"/players/([^/?#]+)", href)
+            if m:
+                candidate = m.group(1)
+                if known_slug and candidate == known_slug:
+                    continue  # skip the page owner's own link
+                opponent_slug = candidate
+                break
+
+        frames = _parse_frame_string(raw_frames, swap)
+        if not frames:
+            continue
+
+        # Decide which slug belongs to p1/p2 based on known_is_p1 and swap.
+        # On the player's own page the known player is always one side; the
+        # opponent slug extracted above is for the OTHER player.
+        return frames, opponent_slug
+
+    return [], None
+
+
 def _fetch_h2h_html(p1_slug: str, p2_slug: str) -> tuple:
     """GET CueTracker H2H page. Returns (status_code, html). (0, '') on error."""
     url = f"https://cuetracker.net/head-to-head/{p1_slug}/{p2_slug}"
@@ -212,6 +331,15 @@ def _parse_cuetracker_html(
 # ---------------------------------------------------------------------------
 # Management command
 # ---------------------------------------------------------------------------
+
+def _safe(s: str) -> str:
+    """Return string with non-encodable chars replaced (safe for Windows cp1255 console)."""
+    try:
+        s.encode("cp1255")
+        return s
+    except (UnicodeEncodeError, LookupError):
+        return s.encode("ascii", "replace").decode("ascii")
+
 
 class Command(BaseCommand):
     help = "Fetch per-frame point data from CueTracker for completed matches"
@@ -373,26 +501,51 @@ class Command(BaseCommand):
             if found_frames:
                 break
 
-        # 6. No frames found after all combinations
+        # 6. No frames found via H2H — try player profile page fallback
+        if not found_frames:
+            found_frames, opp_slug, known_is_p1 = self._try_player_page_fallback(
+                match, p1_obj, p2_obj, p1_name, p2_name
+            )
+            if found_frames:
+                # Persist slugs: known player's slug is already stored.
+                # The opponent slug (discovered via their profile link) goes to the
+                # other player if they don't have one yet.
+                if known_is_p1:
+                    if not p2_obj.ct_slug and opp_slug:
+                        Player.objects.filter(ID=p2_obj.ID).update(ct_slug=opp_slug)
+                        p2_obj.ct_slug = opp_slug  # keep in-memory in sync
+                        self.stdout.write(f"  Stored ct_slug for {_safe(p2_name)} (via profile): {opp_slug}")
+                    used_p1_slug = p1_obj.ct_slug
+                    used_p2_slug = opp_slug
+                else:
+                    if not p1_obj.ct_slug and opp_slug:
+                        Player.objects.filter(ID=p1_obj.ID).update(ct_slug=opp_slug)
+                        p1_obj.ct_slug = opp_slug  # keep in-memory in sync
+                        self.stdout.write(f"  Stored ct_slug for {_safe(p1_name)} (via profile): {opp_slug}")
+                    used_p1_slug = opp_slug
+                    used_p2_slug = p2_obj.ct_slug
+
         if not found_frames:
             # Do NOT mark NOT_FOUND — a 404 could be the OTHER player's fault.
             # Players stay null; future matches will re-try them.
             self.stderr.write(
-                f"  SKIP {match.api_match_id} ({p1_name} vs {p2_name} "
+                f"  SKIP {match.api_match_id} ({_safe(p1_name)} vs {_safe(p2_name)} "
                 f"{match.Score1}-{match.Score2}): not found on CueTracker"
             )
             return "skip"
 
         # 7. Persist the working slugs on Player records (only if newly discovered)
-        if not p1_obj.ct_slug:
+        # Note: profile-page fallback already persists the opponent slug inline above.
+        # Here we only handle the H2H-path case (where slugs come from used_p1/p2_slug).
+        if not p1_obj.ct_slug and used_p1_slug:
             Player.objects.filter(ID=p1_obj.ID).update(ct_slug=used_p1_slug)
             self.stdout.write(
-                f"  Stored ct_slug for {p1_name}: {used_p1_slug}"
+                f"  Stored ct_slug for {_safe(p1_name)}: {used_p1_slug}"
             )
-        if not p2_obj.ct_slug:
+        if not p2_obj.ct_slug and used_p2_slug:
             Player.objects.filter(ID=p2_obj.ID).update(ct_slug=used_p2_slug)
             self.stdout.write(
-                f"  Stored ct_slug for {p2_name}: {used_p2_slug}"
+                f"  Stored ct_slug for {_safe(p2_name)}: {used_p2_slug}"
             )
 
         # 8. Save frames to DB (delete old rows first)
@@ -412,7 +565,70 @@ class Command(BaseCommand):
         ])
 
         self.stdout.write(
-            f"  OK  {match.api_match_id} ({p1_name} vs {p2_name} "
-            f"{match.Score1}-{match.Score2}) — {len(found_frames)} frames"
+            f"  OK  {match.api_match_id} ({_safe(p1_name)} vs {_safe(p2_name)} "
+            f"{match.Score1}-{match.Score2}) -- {len(found_frames)} frames"
         )
         return "ok"
+
+    def _try_player_page_fallback(
+        self,
+        match,
+        p1_obj,
+        p2_obj,
+        p1_name: str,
+        p2_name: str,
+    ) -> tuple:
+        """Try to find frame data by fetching the known player's CueTracker profile page.
+
+        Called when all H2H slug combinations failed. Looks for a player that
+        already has a confirmed ct_slug and fetches their profile page.
+
+        Returns (frames, opponent_slug, known_is_p1) or ([], None, None) if not found.
+        """
+        # Determine the match year for filtering (fall back to event season)
+        year = None
+        if match.StartDate:
+            year = match.StartDate.year
+        elif match.Event and match.Event.Season:
+            # Season string is like "2025-2026" — use the later year
+            try:
+                year = int(str(match.Event.Season).split("-")[-1])
+            except (ValueError, AttributeError):
+                pass
+
+        if not year:
+            return [], None, None
+
+        # Try known players in order: p1 first, then p2
+        candidates = []
+        if p1_obj.ct_slug and p1_obj.ct_slug != "NOT_FOUND":
+            candidates.append((p1_obj, True))   # (player_obj, known_is_p1)
+        if p2_obj.ct_slug and p2_obj.ct_slug != "NOT_FOUND":
+            candidates.append((p2_obj, False))
+
+        for known_player, known_is_p1 in candidates:
+            status, html = _fetch_player_page_html(known_player.ct_slug)
+            if status != 200:
+                continue
+
+            frames, opp_slug = _parse_player_page(
+                html,
+                match.Score1,
+                match.Score2,
+                year,
+                known_is_p1,
+                p1_name,
+                p2_name,
+                known_slug=known_player.ct_slug,
+            )
+            if frames:
+                self.stdout.write(
+                    f"  OK (profile) {match.api_match_id} ({_safe(p1_name)} vs {_safe(p2_name)} "
+                    f"{match.Score1}-{match.Score2}) via {known_player.ct_slug} -- "
+                    f"{len(frames)} frames"
+                )
+                return frames, opp_slug, known_is_p1
+
+            time.sleep(0.3)
+
+        return [], None, None

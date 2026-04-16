@@ -233,6 +233,9 @@ class Command(BaseCommand):
         # Send push notifications after match data is updated (never raises)
         self._send_match_notifications()
 
+        # Fetch frame scores for any newly completed matches (non-fatal)
+        self._try_fetch_frame_scores()
+
     def _send_match_notifications(self):
         """
         Send push notifications to devices with favourited players/matches.
@@ -608,6 +611,9 @@ class Command(BaseCommand):
                 logger.warning(f'Century stats scrape failed (data kept): {scrape_err}')
                 self.stdout.write(f'[WARNING] Century stats scrape failed: {scrape_err}')
 
+            # Fetch frame scores for all unfetched completed matches (catches overnight sessions)
+            self._try_fetch_frame_scores()
+
         except Exception as e:
             logger.error(f'Daily updates failed: {str(e)}')
             self.stdout.write(f'[FAILED] Daily updates failed: {str(e)}')
@@ -845,6 +851,20 @@ class Command(BaseCommand):
         except Exception as e:
             logger.error(f'Tournament end updates failed: {str(e)}')
             self.stdout.write(f'[FAILED] Tournament end updates failed: {str(e)}')
+
+    def _try_fetch_frame_scores(self):
+        """Fetch frame scores for all unfetched completed matches. Non-fatal.
+
+        All scraping logic lives in fetch_frame_scores.py — if CueTracker dies
+        or we switch to a paid API, only that file needs to change.
+        """
+        try:
+            self.stdout.write('[FRAMES] Fetching frame scores for completed matches...')
+            call_command('fetch_frame_scores', '--top-ranked', '128')
+            self.stdout.write('[FRAMES] Frame scores fetch completed')
+        except Exception as e:
+            logger.error(f'fetch_frame_scores error (non-fatal): {e}')
+            self.stdout.write(f'[FRAMES] Error (non-fatal): {e}')
 
     def _check_news_fetch(self):
         """Fetch news from RSS feeds every 2 hours."""

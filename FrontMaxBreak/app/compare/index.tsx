@@ -295,65 +295,9 @@ const ComparisonView = ({ data, onChangeP1, onChangeP2, colors }: {
                     colors={colors}
                 />
                 <Div colors={colors} />
-                <StatRow
-                    label="Career Best Rank"
-                    p1Val={p1.career_best_ranking ? `#${p1.career_best_ranking}` : '—'}
-                    p2Val={p2.career_best_ranking ? `#${p2.career_best_ranking}` : '—'}
-                    winner={lowerWins(p1.career_best_ranking, p2.career_best_ranking)}
-                    colors={colors}
-                />
-                <Div colors={colors} />
-                <StatRow
-                    label="Ranking Trend"
-                    p1Val={p1.ranking_trend?.delta != null
-                        ? (p1.ranking_trend.delta > 0 ? `↑${p1.ranking_trend.delta}` : p1.ranking_trend.delta < 0 ? `↓${Math.abs(p1.ranking_trend.delta)}` : '→')
-                        : '—'}
-                    p2Val={p2.ranking_trend?.delta != null
-                        ? (p2.ranking_trend.delta > 0 ? `↑${p2.ranking_trend.delta}` : p2.ranking_trend.delta < 0 ? `↓${Math.abs(p2.ranking_trend.delta)}` : '→')
-                        : '—'}
-                    winner={higherWins(p1.ranking_trend?.delta, p2.ranking_trend?.delta)}
-                    colors={colors}
-                />
-                <Div colors={colors} />
                 <StatRow label="Ranking Titles" p1Val={fmt(p1.NumRankingTitles)} p2Val={fmt(p2.NumRankingTitles)} winner={higherWins(p1.NumRankingTitles, p2.NumRankingTitles)} colors={colors} />
                 <Div colors={colors} />
-                <StatRow label="Titles per Season" p1Val={fmtDecimal(p1.titles_per_season, 2)} p2Val={fmtDecimal(p2.titles_per_season, 2)} winner={higherWins(p1.titles_per_season, p2.titles_per_season)} colors={colors} />
-                <Div colors={colors} />
-                <StatRow label="Seasons in Top 16" p1Val={fmt(p1.seasons_in_top16)} p2Val={fmt(p2.seasons_in_top16)} winner={higherWins(p1.seasons_in_top16, p2.seasons_in_top16)} colors={colors} />
-                <Div colors={colors} />
                 <StatRow label="Prize (Season)" p1Val={fmtMoney(p1.prize_money_this_year)} p2Val={fmtMoney(p2.prize_money_this_year)} winner={higherWins(p1.prize_money_this_year, p2.prize_money_this_year)} colors={colors} />
-            </SectionCard>
-
-            {/* ── Section 3: Career Record ── */}
-            <SectionCard title="Career Record" icon="trophy-outline" colors={colors}>
-                <StatRow label="Career Wins" p1Val={fmt(p1.career_wins)} p2Val={fmt(p2.career_wins)} winner={higherWins(p1.career_wins, p2.career_wins)} colors={colors} />
-                <Div colors={colors} />
-                <StatRow label="Career Losses" p1Val={fmt(p1.career_losses)} p2Val={fmt(p2.career_losses)} winner={lowerWins(p1.career_losses, p2.career_losses)} colors={colors} />
-                <Div colors={colors} />
-                <StatRow label="Match Win %" p1Val={fmtPct(p1.career_win_pct)} p2Val={fmtPct(p2.career_win_pct)} winner={higherWins(p1.career_win_pct, p2.career_win_pct)} colors={colors} />
-                <Div colors={colors} />
-                <StatRow label="Frames Won" p1Val={fmt(p1.frame_stats?.frames_won)} p2Val={fmt(p2.frame_stats?.frames_won)} winner={higherWins(p1.frame_stats?.frames_won, p2.frame_stats?.frames_won)} colors={colors} />
-                <Div colors={colors} />
-                <StatRow label="Frame Win %" p1Val={fmtPct(p1.frame_stats?.frame_pct)} p2Val={fmtPct(p2.frame_stats?.frame_pct)} winner={higherWins(p1.frame_stats?.frame_pct, p2.frame_stats?.frame_pct)} colors={colors} />
-                <Div colors={colors} />
-                <StatRow label="Matches per Season" p1Val={fmtDecimal(p1.matches_per_season, 1)} p2Val={fmtDecimal(p2.matches_per_season, 1)} winner={higherWins(p1.matches_per_season, p2.matches_per_season)} colors={colors} />
-                <Div colors={colors} />
-                <StatRow label="Best Win Streak" p1Val={fmt(p1.best_win_streak)} p2Val={fmt(p2.best_win_streak)} winner={higherWins(p1.best_win_streak, p2.best_win_streak)} colors={colors} />
-            </SectionCard>
-
-            {/* ── Section 4: Big Match Performance ── */}
-            <SectionCard title="Big Match Performance" icon="flame-outline" colors={colors}>
-                <StatRow label="Career Win %" p1Val={fmtPct(p1.career_win_pct)} p2Val={fmtPct(p2.career_win_pct)} winner={higherWins(p1.career_win_pct, p2.career_win_pct)} colors={colors} />
-                <Div colors={colors} />
-                <StatRow label="Recent Win % (3 seasons)" p1Val={fmtPct(p1.recent_win_pct)} p2Val={fmtPct(p2.recent_win_pct)} winner={higherWins(p1.recent_win_pct, p2.recent_win_pct)} colors={colors} />
-                <Div colors={colors} />
-                <StatRow
-                    label="Clutch Frames %"
-                    p1Val={fmtPct(p1.deciding_frames?.deciding_pct)}
-                    p2Val={fmtPct(p2.deciding_frames?.deciding_pct)}
-                    winner={higherWins(p1.deciding_frames?.deciding_pct, p2.deciding_frames?.deciding_pct)}
-                    colors={colors}
-                />
             </SectionCard>
 
             {/* ── Section 5: Breaks & Centuries ── */}
@@ -389,35 +333,6 @@ const ComparisonView = ({ data, onChangeP1, onChangeP2, colors }: {
                     )}
                     colors={colors}
                 />
-            </SectionCard>
-
-            {/* ── Section 7: Form ── */}
-            <SectionCard title="Current Form" icon="pulse-outline" colors={colors}>
-                <View style={styles.formRow}>
-                    <View style={styles.formDots}>
-                        {(p1.recent_form ?? []).slice(0, 10).map((r, i) => <FormDot key={i} result={r} colors={colors} />)}
-                        {!(p1.recent_form?.length) && <Text style={[styles.noData, { color: colors.textMuted }]}>—</Text>}
-                    </View>
-                    <Text style={[styles.formLabel, { color: colors.textMuted }]}>Last 10</Text>
-                    <View style={[styles.formDots, { justifyContent: 'flex-end' }]}>
-                        {(p2.recent_form ?? []).slice(0, 10).map((r, i) => <FormDot key={i} result={r} colors={colors} />)}
-                        {!(p2.recent_form?.length) && <Text style={[styles.noData, { color: colors.textMuted }]}>—</Text>}
-                    </View>
-                </View>
-                <Div colors={colors} />
-                <StatRow
-                    label="Current Streak"
-                    p1Val={p1.win_streak != null
-                        ? (p1.win_streak > 0 ? `${p1.win_streak}W` : p1.win_streak < 0 ? `${Math.abs(p1.win_streak)}L` : '—')
-                        : '—'}
-                    p2Val={p2.win_streak != null
-                        ? (p2.win_streak > 0 ? `${p2.win_streak}W` : p2.win_streak < 0 ? `${Math.abs(p2.win_streak)}L` : '—')
-                        : '—'}
-                    winner={higherWins(p1.win_streak, p2.win_streak)}
-                    colors={colors}
-                />
-                <Div colors={colors} />
-                <StatRow label="Best Streak (career)" p1Val={fmt(p1.best_win_streak, 'W')} p2Val={fmt(p2.best_win_streak, 'W')} winner={higherWins(p1.best_win_streak, p2.best_win_streak)} colors={colors} />
             </SectionCard>
 
             {/* ── Section 8: Head to Head ── */}

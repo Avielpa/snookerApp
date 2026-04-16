@@ -996,6 +996,51 @@ class CenturyRecord(models.Model):
         return f"{self.player_name} — {self.season_label}: {self.season_current} centuries"
 
 
+# ================== PlayerCareerStats Model ==================
+class PlayerCareerStats(models.Model):
+    """
+    Verified career statistics built from two authoritative sources:
+      - snooker.org t=4 API  → api_synced_at
+      - CueTracker career-total-statistics page  → ct_synced_at
+
+    Kept separate from Player so the source of every field is unambiguous.
+    titles_verified = True only when both sources agree on ranking title count.
+    Populated by the rebuild_player_stats management command.
+    """
+    player = models.OneToOneField(
+        Player, on_delete=models.CASCADE, related_name='career_stats'
+    )
+
+    # ── From CueTracker (clean aggregate data) ────────────────────────────
+    ct_frames_played      = models.IntegerField(null=True, blank=True)
+    ct_frames_won         = models.IntegerField(null=True, blank=True)
+    ct_career_prize_total = models.IntegerField(null=True, blank=True)  # GBP total career
+    ct_total_titles       = models.IntegerField(null=True, blank=True)  # all event wins
+    ct_ranking_titles     = models.IntegerField(null=True, blank=True)  # ranking wins only
+    ct_finals_reached     = models.IntegerField(null=True, blank=True)  # titles_won + runner_up
+    ct_career_best_rank   = models.IntegerField(null=True, blank=True)
+    ct_total_50plus       = models.IntegerField(null=True, blank=True)  # career 50+ breaks
+    ct_total_centuries    = models.IntegerField(null=True, blank=True)  # career centuries
+
+    # ── Cross-validation ──────────────────────────────────────────────────
+    titles_verified = models.BooleanField(null=True)
+    # True  = snooker.org NumRankingTitles == ct_ranking_titles → safe to show
+    # False = mismatch → show '—' on compare screen
+    # None  = not yet checked
+
+    # ── Timestamps ────────────────────────────────────────────────────────
+    api_synced_at = models.DateTimeField(null=True, blank=True)
+    ct_synced_at  = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = 'Player Career Stats'
+        verbose_name_plural = 'Player Career Stats'
+
+    def __str__(self):
+        synced = self.ct_synced_at.date() if self.ct_synced_at else 'never'
+        return f"{self.player} — career stats (CT synced: {synced})"
+
+
 # ================== DeviceToken Model ==================
 class DeviceToken(models.Model):
     """
