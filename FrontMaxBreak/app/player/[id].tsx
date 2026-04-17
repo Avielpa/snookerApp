@@ -512,16 +512,8 @@ export default function PlayerDetailsScreen(): React.ReactElement {
                         label="Finals Reached"
                         value={String(player?.finals_record?.finals_reached ?? 0)}
                     />
-                    <InfoRow
-                        icon="trophy"
-                        label="Finals Won"
-                        value={String(player?.finals_record?.finals_won ?? 0)}
-                    />
-                    <InfoRow
-                        icon="pie-chart-outline"
-                        label="Finals Win Rate"
-                        value={`${(player?.finals_record?.finals_pct ?? 0).toFixed(1)}%`}
-                    />
+                    {/* Finals Won / Win Rate removed — CT gives career finals_reached total only,
+                        not the won/lost split. Showing partial manual data here was misleading. */}
                     {(player?.semi_final_record?.reached ?? 0) > 0 && (
                         <>
                             <InfoRow

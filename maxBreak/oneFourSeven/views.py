@@ -732,17 +732,6 @@ def player_by_id_view(request, player_id):
         player_data['current_ranking_position'] = None
         player_data['prize_money_this_year'] = None
 
-    # Career W/L from match history (finished matches only, status=3)
-    try:
-        total = PlayerMatchHistory.objects.filter(player_id=player_id, status=3).count()
-        wins = PlayerMatchHistory.objects.filter(player_id=player_id, winner_id=player_id, status=3).count()
-        player_data['career_wins'] = wins
-        player_data['career_losses'] = total - wins
-    except Exception as e:
-        logger.error(f"Error fetching career stats for player {player_id}: {e}")
-        player_data['career_wins'] = None
-        player_data['career_losses'] = None
-
     # Recent form, win streak, ranking trend — safe: never breaks player loading
     try:
         from oneFourSeven.player_stats import (
@@ -801,6 +790,28 @@ def player_by_id_view(request, player_id):
     except Exception as e:
         logger.warning(f"[player_by_id_view] career_stats failed for {player_id}: {e}")
         player_data['career_stats'] = None
+
+    # Override manual calculations with CT data when available.
+    # CT career totals are more complete than PlayerMatchHistory (main tour only).
+    cs = player_data.get('career_stats') or {}
+    if cs.get('ct_synced_at'):
+        fp = cs.get('ct_frames_played')
+        fw = cs.get('ct_frames_won')
+        if fp and fw:
+            player_data['frame_stats'] = {
+                'frames_played': fp,
+                'frames_won':    fw,
+                'frames_lost':   fp - fw,
+                'frame_pct':     round((fw / fp) * 100, 1),
+            }
+
+        cbr = cs.get('ct_career_best_rank')
+        if cbr:
+            player_data['career_best_ranking'] = cbr
+
+        fr = cs.get('ct_finals_reached')
+        if fr is not None and isinstance(player_data.get('finals_record'), dict):
+            player_data['finals_record']['finals_reached'] = fr
 
     return Response(player_data)
 

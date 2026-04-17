@@ -97,29 +97,14 @@ function mergeCentury(player: Player, centuries: CenturyEntry[]): Partial<Compar
 }
 
 function enrichPlayer(player: Player, centuries: CenturyEntry[]): ComparePlayer {
-    const wins = player.career_wins ?? 0;
-    const losses = player.career_losses ?? 0;
-    const total = wins + losses;
     const centuryData = mergeCentury(player, centuries);
-    const careerCenturies = centuryData.century_career_total ?? null;
-    const framesPlayed = player.frame_stats?.frames_played ?? null;
-    const seasonMatches = player.season_stats?.matches ?? null;
     const years_as_pro = computeYearsAsPro(player.FirstSeasonAsPro);
     return {
         ...player,
         age: computeAge(player.Born),
         years_as_pro,
-        career_win_pct: total > 0 ? Math.round((wins / total) * 1000) / 10 : null,
-        centuries_per_match: careerCenturies != null && total > 0
-            ? Math.round((careerCenturies / total) * 100) / 100 : null,
-        avg_frames_per_match: framesPlayed != null && total > 0
-            ? Math.round((framesPlayed / total) * 10) / 10 : null,
-        prize_per_match: player.prize_money_this_year != null && seasonMatches && seasonMatches > 0
-            ? Math.round(player.prize_money_this_year / seasonMatches) : null,
-        titles_per_season: (player.NumRankingTitles ?? 0) > 0 && years_as_pro
-            ? Math.round((player.NumRankingTitles! / years_as_pro) * 100) / 100 : null,
-        matches_per_season: total > 0 && years_as_pro
-            ? Math.round((total / years_as_pro) * 10) / 10 : null,
+        // centuries_per_match removed — divisor was career_wins+losses from PlayerMatchHistory
+        // (main tour only), while CT has 27% more matches. Would show inflated rate.
         ...centuryData,
     };
 }

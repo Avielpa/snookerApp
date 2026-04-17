@@ -363,8 +363,6 @@ const ComparisonView = ({ data, onChangeP1, onChangeP2, colors }: {
                 <Div colors={colors} />
                 <StatRow label="Career Centuries" p1Val={fmt(p1.century_career_total)} p2Val={fmt(p2.century_career_total)} winner={higherWins(p1.century_career_total, p2.century_career_total)} colors={colors} />
                 <Div colors={colors} />
-                <StatRow label="Centuries/Match" p1Val={fmtDecimal(p1.centuries_per_match)} p2Val={fmtDecimal(p2.centuries_per_match)} winner={higherWins(p1.centuries_per_match, p2.centuries_per_match)} colors={colors} />
-                <Div colors={colors} />
                 {/* 50+ Breaks — from CueTracker */}
                 <StatRow
                     label="Career 50+"
