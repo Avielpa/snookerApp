@@ -378,12 +378,34 @@ export default function PlayerDetailsScreen(): React.ReactElement {
         }
     }, [playerId]);
 
-    // Fetch matches when matches tab is active
+    // Fetch matches on mount so form dots and streak stay in sync with the Matches tab
     useEffect(() => {
-        if (activeTab === 'matches' && matches.length === 0 && !matchesLoading) {
+        if (matches.length === 0 && !matchesLoading) {
             fetchPlayerMatches();
         }
-    }, [activeTab, fetchPlayerMatches, matches.length, matchesLoading]);
+    }, [fetchPlayerMatches, matches.length, matchesLoading]);
+
+    // Derive recent form and win streak directly from the same matches array the Matches tab shows
+    const recentForm = useMemo(() =>
+        matches
+            .filter(m => m.winner_id != null)
+            .slice(0, 10)
+            .map(m => (m.winner_id === playerId ? 'W' : 'L')),
+        [matches, playerId]
+    );
+
+    const winStreak = useMemo(() => {
+        const finished = matches.filter(m => m.winner_id != null);
+        let streak = 0;
+        for (const m of finished) {
+            const isWin = m.winner_id === playerId;
+            if (streak === 0) streak = isWin ? 1 : -1;
+            else if (streak > 0 && isWin) streak++;
+            else if (streak < 0 && !isWin) streak--;
+            else break;
+        }
+        return streak;
+    }, [matches, playerId]);
 
     // Tab content renderers
     const renderOverviewContent = () => (
@@ -467,12 +489,12 @@ export default function PlayerDetailsScreen(): React.ReactElement {
 
     const renderStatsContent = () => (
         <View style={styles.tabContent}>
-            {/* Current Form — only shown when backend returns data */}
-            {(!!player?.recent_form?.length || !!player?.win_streak) && (
+            {/* Current Form — derived from same matches the Matches tab shows */}
+            {(recentForm.length > 0 || winStreak !== 0) && (
                 <GlassCard style={styles.infoCard}>
                     <Text style={styles.sectionTitle}>Current Form</Text>
-                    <FormDots form={player?.recent_form ?? []} />
-                    <WinStreak streak={player?.win_streak ?? 0} />
+                    <FormDots form={recentForm} />
+                    <WinStreak streak={winStreak} />
                 </GlassCard>
             )}
 
