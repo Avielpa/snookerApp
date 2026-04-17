@@ -185,7 +185,9 @@
       "Bash(grep -v \"//\")",
       "Bash(grep -E \"\\\\.\\(tsx?|json\\)$\")",
       "Bash(grep -E \"\\\\.\\(tsx|ts\\)$\")",
-      "Bash(grep -n \"stat\\\\|Stat\\\\|win_streak\\\\|career\\\\|frame\\\\|final\\\\|century\\\\|season\" /c/Users/Aviel/vsprojects/snookerApp/FrontMaxBreak/app/player/[id].tsx)"
+      "Bash(grep -n \"stat\\\\|Stat\\\\|win_streak\\\\|career\\\\|frame\\\\|final\\\\|century\\\\|season\" /c/Users/Aviel/vsprojects/snookerApp/FrontMaxBreak/app/player/[id].tsx)",
+      "Bash(pip show *)",
+      "Bash(pkill -f \"manage.py runserver\")"
     ],
     "deny": [],
     "ask": [],

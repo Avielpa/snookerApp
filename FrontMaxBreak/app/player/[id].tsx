@@ -6,6 +6,7 @@ import {
     ScrollView,
     TouchableOpacity,
     RefreshControl,
+    Platform,
 } from 'react-native';
 import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
 import { getPlayerDetails, getPlayerMatchHistory, PlayerMatchHistoryItem, PlayerMatchHistoryResponse } from '../../services/matchServices';
@@ -150,12 +151,17 @@ export default function PlayerDetailsScreen(): React.ReactElement {
     const styles = createPlayerStyles(COLORS);
 
     // Small source attribution tag — tells users where the data comes from
+    // snooker.org tags are hidden on iOS (App Store requirement)
     const PlayerSourceTag = ({ source }: { source: 'snooker.org' | 'cuetracker.net' | 'mixed' }) => {
-        const tags = source === 'mixed'
+        const allTags = source === 'mixed'
             ? [{ label: 'snooker.org', color: COLORS.primary }, { label: 'cuetracker.net', color: '#4CAF50' }]
             : source === 'cuetracker.net'
                 ? [{ label: 'cuetracker.net', color: '#4CAF50' }]
                 : [{ label: 'snooker.org', color: COLORS.primary }];
+        const tags = Platform.OS === 'android'
+            ? allTags
+            : allTags.filter(t => t.label !== 'snooker.org');
+        if (tags.length === 0) return null;
         return (
             <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: 8, gap: 4 }}>
                 {tags.map(({ label, color }) => (

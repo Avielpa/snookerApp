@@ -10,6 +10,7 @@ import {
     ActivityIndicator,
     Image,
     StyleSheet,
+    Platform,
 } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -58,15 +59,20 @@ const fmtDecimal = (val: number | null | undefined, decimals = 2): string =>
  * Small source attribution badge shown at the bottom of stat cards.
  * Tells users where the data comes from without cluttering the UI.
  */
+// snooker.org tags are hidden on iOS (App Store requirement)
 const SourceTag = ({ source, colors }: {
     source: 'snooker.org' | 'cuetracker.net' | 'mixed';
     colors: any;
 }) => {
-    const tags = source === 'mixed'
+    const allTags = source === 'mixed'
         ? [{ label: 'snooker.org', color: colors.primary }, { label: 'cuetracker.net', color: '#4CAF50' }]
         : source === 'cuetracker.net'
             ? [{ label: 'cuetracker.net', color: '#4CAF50' }]
             : [{ label: 'snooker.org', color: colors.primary }];
+    const tags = Platform.OS === 'android'
+        ? allTags
+        : allTags.filter(t => t.label !== 'snooker.org');
+    if (tags.length === 0) return null;
     return (
         <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: 8, gap: 4 }}>
             {tags.map(({ label, color }) => (

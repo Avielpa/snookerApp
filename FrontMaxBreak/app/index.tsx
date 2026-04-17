@@ -2,11 +2,11 @@ import React, { useState, useMemo } from 'react';
 import {
     View,
     Text,
-    Image,
     FlatList,
     TouchableOpacity,
     RefreshControl,
     ScrollView,
+    Platform,
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -226,16 +226,22 @@ const HomeScreen = (): React.ReactElement | null => {
         <View style={styles.backgroundImage}>
             <SafeAreaView style={styles.container}>
                 <View style={styles.headerContainer}>
-                    <View style={{ alignItems: 'center', paddingVertical: 4 }}>
-                        <View style={{ width: 60, height: 60, borderRadius: 30, overflow: 'hidden' }}>
-                            <Image
-                                source={require('../assets/images/icon.png')}
-                                style={{ width: 60, height: 60 }}
-                                resizeMode="cover"
-                            />
-                        </View>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                        {tourName && <Text style={styles.tourTitle}>{tourName}</Text>}
+                        {Platform.OS === 'android' && (
+                            <View style={{
+                                marginLeft: 8,
+                                backgroundColor: 'rgba(0,0,0,0.45)',
+                                borderRadius: 6,
+                                paddingHorizontal: 5,
+                                paddingVertical: 2,
+                            }}>
+                                <Text style={{ color: COLORS.textMuted, fontSize: 9, fontFamily: 'Poppins' }}>
+                                    snooker.org
+                                </Text>
+                            </View>
+                        )}
                     </View>
-                    {tourName && <Text style={styles.tourTitle}>{tourName}</Text>}
                     {tournamentPrize && (
                         <View style={styles.prizeContainer}>
                             <Ionicons name="diamond-outline" size={14} color={COLORS.accentLight} />
