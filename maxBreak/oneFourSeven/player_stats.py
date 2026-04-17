@@ -14,15 +14,15 @@ logger = logging.getLogger(__name__)
 def get_recent_form(player_id: int, n: int = 10) -> list:
     """
     Returns last N finished match results as a list of 'W' or 'L'.
-    Ordered most-recent first.
+    Ordered most-recent first. Uses same sort as get_win_streak so dots match streak.
     Returns [] on any error.
     """
     try:
         from oneFourSeven.models import PlayerMatchHistory
         matches = (
             PlayerMatchHistory.objects
-            .filter(player_id=player_id, status=3)
-            .order_by('-end_date', '-start_date', '-api_match_id')
+            .filter(player_id=player_id, status=3, winner_id__isnull=False)
+            .order_by('-scheduled_date', '-api_match_id')
             [:n]
         )
         return ['W' if m.winner_id == player_id else 'L' for m in matches]
