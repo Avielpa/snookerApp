@@ -669,7 +669,15 @@ class Command(BaseCommand):
             # Update all ranking types (MoneyRankings, QTRankings, WomensRankings, etc.)
             call_command('update_rankings', '--ranking-type', 'all')
             self.stdout.write('[SUCCESS] Monthly rankings updated (all types)')
-            
+
+            # Refresh PlayerCareerStats from snooker.org t=4 + CueTracker (titles, prize, rank, etc.)
+            try:
+                call_command('rebuild_player_stats')
+                self.stdout.write('[SUCCESS] PlayerCareerStats refreshed')
+            except Exception as stats_err:
+                logger.warning(f'PlayerCareerStats monthly refresh failed (non-fatal): {stats_err}')
+                self.stdout.write(f'[WARNING] PlayerCareerStats refresh failed: {stats_err}')
+
         except Exception as e:
             logger.error(f'Monthly updates failed: {str(e)}')
             self.stdout.write(f'[FAILED] Monthly updates failed: {str(e)}')

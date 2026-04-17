@@ -778,6 +778,30 @@ def player_by_id_view(request, player_id):
         player_data['best_win_streak'] = 0
         player_data['recent_win_pct'] = None
 
+    # PlayerCareerStats — CT-verified career data (ct_synced_at=null means no CueTracker data)
+    try:
+        from oneFourSeven.models import PlayerCareerStats
+        cs = PlayerCareerStats.objects.filter(player_id=player_id).first()
+        if cs:
+            player_data['career_stats'] = {
+                'ct_frames_played':      cs.ct_frames_played,
+                'ct_frames_won':         cs.ct_frames_won,
+                'ct_career_prize_total': cs.ct_career_prize_total,
+                'ct_total_titles':       cs.ct_total_titles,
+                'ct_ranking_titles':     cs.ct_ranking_titles,
+                'ct_finals_reached':     cs.ct_finals_reached,
+                'ct_career_best_rank':   cs.ct_career_best_rank,
+                'ct_total_50plus':       cs.ct_total_50plus,
+                'ct_total_centuries':    cs.ct_total_centuries,
+                'titles_verified':       cs.titles_verified,
+                'ct_synced_at':          cs.ct_synced_at.isoformat() if cs.ct_synced_at else None,
+            }
+        else:
+            player_data['career_stats'] = None
+    except Exception as e:
+        logger.warning(f"[player_by_id_view] career_stats failed for {player_id}: {e}")
+        player_data['career_stats'] = None
+
     return Response(player_data)
 
 @api_view(['GET'])
