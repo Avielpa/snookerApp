@@ -466,39 +466,8 @@ export default function PlayerDetailsScreen(): React.ReactElement {
                 </GlassCard>
             )}
 
-            {/* Career W/L — only shown if match history data exists */}
-            {((player?.career_wins ?? 0) + (player?.career_losses ?? 0)) > 0 && (
-                <GlassCard style={styles.infoCard}>
-                    <Text style={styles.sectionTitle}>Career Record</Text>
-                    <InfoRow
-                        icon="checkmark-circle-outline"
-                        label="Career Wins"
-                        value={String(player?.career_wins ?? 0)}
-                    />
-                    <InfoRow
-                        icon="close-circle-outline"
-                        label="Career Losses"
-                        value={String(player?.career_losses ?? 0)}
-                    />
-                    <InfoRow
-                        icon="stats-chart-outline"
-                        label="Win Rate"
-                        value={(() => {
-                            const w = player?.career_wins ?? 0;
-                            const l = player?.career_losses ?? 0;
-                            const total = w + l;
-                            return total > 0 ? `${Math.round((w / total) * 100)}%` : 'N/A';
-                        })()}
-                    />
-                    {(player?.best_win_streak ?? 0) > 0 && (
-                        <InfoRow
-                            icon="flame-outline"
-                            label="Best Win Streak"
-                            value={String(player?.best_win_streak)}
-                        />
-                    )}
-                </GlassCard>
-            )}
+            {/* Career W/L removed — snooker.org only covers main tour (~1161 matches for Ronnie)
+                 while CueTracker shows 1582. Incomplete count misleads users. */}
 
             {/* Frame Stats */}
             {(player?.frame_stats?.frames_played ?? 0) > 0 && (
