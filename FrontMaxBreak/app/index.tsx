@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import {
     View,
     Text,
+    Image,
     FlatList,
     TouchableOpacity,
     RefreshControl,
@@ -225,7 +226,15 @@ const HomeScreen = (): React.ReactElement | null => {
         <View style={styles.backgroundImage}>
             <SafeAreaView style={styles.container}>
                 <View style={styles.headerContainer}>
-                    <Text style={styles.screenTitle}>Data source: Snooker.org</Text>
+                    <View style={{ alignItems: 'center', paddingVertical: 4 }}>
+                        <View style={{ width: 60, height: 60, borderRadius: 30, overflow: 'hidden' }}>
+                            <Image
+                                source={require('../assets/images/icon.png')}
+                                style={{ width: 60, height: 60 }}
+                                resizeMode="cover"
+                            />
+                        </View>
+                    </View>
                     {tourName && <Text style={styles.tourTitle}>{tourName}</Text>}
                     {tournamentPrize && (
                         <View style={styles.prizeContainer}>

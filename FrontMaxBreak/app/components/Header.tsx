@@ -1,26 +1,35 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, Image, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../contexts/ThemeContext';
 
-const Header = () => {  
+const Header = () => {
   const insets = useSafeAreaInsets();
   const { theme } = useTheme();
   const colors = theme.colors;
 
   return (
-    <View style={[styles.header, { 
+    <View style={[styles.header, {
       paddingTop: insets.top,
       backgroundColor: colors.cardBackground,
       borderBottomColor: colors.cardBorder,
     }]}>
       <View style={styles.headerRow}>
         <View style={styles.placeholderLeft} />
-        
-        <Text style={[styles.title, { color: colors.textHeader }]}>
-          MaxBreak147
-        </Text>
-        
+
+        <View style={styles.logoRow}>
+          <View style={styles.iconWrapper}>
+            <Image
+              source={require('../../assets/images/icon.png')}
+              style={styles.iconImage}
+              resizeMode="cover"
+            />
+          </View>
+          <Text style={[styles.title, { color: colors.textHeader }]}>
+            MaxBreak147
+          </Text>
+        </View>
+
         <View style={styles.rightSection} />
       </View>
     </View>
@@ -44,13 +53,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingVertical: 12,
+    paddingVertical: 10,
   },
   placeholderLeft: {
     width: 60,
   },
+  logoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  iconWrapper: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  iconImage: {
+    width: 32,
+    height: 32,
+  },
   title: {
-    fontSize: 24,
+    fontSize: 22,
     fontFamily: 'PoppinsBold',
     letterSpacing: 0.5,
     textShadowColor: 'rgba(255, 167, 38, 0.3)',
