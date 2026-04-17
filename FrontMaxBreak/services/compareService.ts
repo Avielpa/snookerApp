@@ -5,7 +5,22 @@ import { logger } from '../utils/logger';
 
 // ---- Types ----------------------------------------------------------------
 
+export interface CareerStats {
+    ct_frames_played:      number | null;
+    ct_frames_won:         number | null;
+    ct_career_prize_total: number | null;
+    ct_total_titles:       number | null;
+    ct_ranking_titles:     number | null;
+    ct_finals_reached:     number | null;
+    ct_career_best_rank:   number | null;
+    ct_total_50plus:       number | null;
+    ct_total_centuries:    number | null;
+    titles_verified:       boolean | null;
+    ct_synced_at:          string | null;  // ISO string — null means no CueTracker data
+}
+
 export interface ComparePlayer extends Player {
+    career_stats?: CareerStats | null;
     // Computed
     age?: number | null;
     years_as_pro?: number | null;

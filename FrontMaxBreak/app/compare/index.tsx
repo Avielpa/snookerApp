@@ -297,8 +297,65 @@ const ComparisonView = ({ data, onChangeP1, onChangeP2, colors }: {
                 <Div colors={colors} />
                 <StatRow label="Ranking Titles" p1Val={fmt(p1.NumRankingTitles)} p2Val={fmt(p2.NumRankingTitles)} winner={higherWins(p1.NumRankingTitles, p2.NumRankingTitles)} colors={colors} />
                 <Div colors={colors} />
+                {/* Career Best Rank — from CueTracker, only shown when CT data is available */}
+                <StatRow
+                    label="Career Best Rank"
+                    p1Val={p1.career_stats?.ct_synced_at ? (p1.career_stats.ct_career_best_rank != null ? `#${p1.career_stats.ct_career_best_rank}` : '—') : '—'}
+                    p2Val={p2.career_stats?.ct_synced_at ? (p2.career_stats.ct_career_best_rank != null ? `#${p2.career_stats.ct_career_best_rank}` : '—') : '—'}
+                    winner={lowerWins(
+                        p1.career_stats?.ct_synced_at ? p1.career_stats.ct_career_best_rank : null,
+                        p2.career_stats?.ct_synced_at ? p2.career_stats.ct_career_best_rank : null,
+                    )}
+                    colors={colors}
+                />
+                <Div colors={colors} />
                 <StatRow label="Prize (Season)" p1Val={fmtMoney(p1.prize_money_this_year)} p2Val={fmtMoney(p2.prize_money_this_year)} winner={higherWins(p1.prize_money_this_year, p2.prize_money_this_year)} colors={colors} />
+                <Div colors={colors} />
+                {/* Career Prize Total — from CueTracker */}
+                <StatRow
+                    label="Career Prize"
+                    p1Val={p1.career_stats?.ct_synced_at ? fmtMoney(p1.career_stats.ct_career_prize_total) : '—'}
+                    p2Val={p2.career_stats?.ct_synced_at ? fmtMoney(p2.career_stats.ct_career_prize_total) : '—'}
+                    winner={higherWins(
+                        p1.career_stats?.ct_synced_at ? p1.career_stats.ct_career_prize_total : null,
+                        p2.career_stats?.ct_synced_at ? p2.career_stats.ct_career_prize_total : null,
+                    )}
+                    colors={colors}
+                />
             </SectionCard>
+
+            {/* ── Section 3: Career Record (CT-sourced) ── */}
+            {(p1.career_stats?.ct_synced_at || p2.career_stats?.ct_synced_at) && (
+                <SectionCard title="Career Record" icon="trophy-outline" colors={colors}>
+                    <StatRow
+                        label="Finals Reached"
+                        p1Val={p1.career_stats?.ct_synced_at ? fmt(p1.career_stats.ct_finals_reached) : '—'}
+                        p2Val={p2.career_stats?.ct_synced_at ? fmt(p2.career_stats.ct_finals_reached) : '—'}
+                        winner={higherWins(
+                            p1.career_stats?.ct_synced_at ? p1.career_stats.ct_finals_reached : null,
+                            p2.career_stats?.ct_synced_at ? p2.career_stats.ct_finals_reached : null,
+                        )}
+                        colors={colors}
+                    />
+                    <Div colors={colors} />
+                    <StatRow
+                        label="Frame Win %"
+                        p1Val={p1.career_stats?.ct_synced_at && p1.career_stats.ct_frames_played
+                            ? fmtPct(Math.round(((p1.career_stats.ct_frames_won ?? 0) / p1.career_stats.ct_frames_played) * 1000) / 10)
+                            : '—'}
+                        p2Val={p2.career_stats?.ct_synced_at && p2.career_stats.ct_frames_played
+                            ? fmtPct(Math.round(((p2.career_stats.ct_frames_won ?? 0) / p2.career_stats.ct_frames_played) * 1000) / 10)
+                            : '—'}
+                        winner={higherWins(
+                            p1.career_stats?.ct_synced_at && p1.career_stats.ct_frames_played
+                                ? (p1.career_stats.ct_frames_won ?? 0) / p1.career_stats.ct_frames_played : null,
+                            p2.career_stats?.ct_synced_at && p2.career_stats.ct_frames_played
+                                ? (p2.career_stats.ct_frames_won ?? 0) / p2.career_stats.ct_frames_played : null,
+                        )}
+                        colors={colors}
+                    />
+                </SectionCard>
+            )}
 
             {/* ── Section 5: Breaks & Centuries ── */}
             <SectionCard title="Breaks & Centuries" icon="flash-outline" colors={colors}>
@@ -307,6 +364,18 @@ const ComparisonView = ({ data, onChangeP1, onChangeP2, colors }: {
                 <StatRow label="Career Centuries" p1Val={fmt(p1.century_career_total)} p2Val={fmt(p2.century_career_total)} winner={higherWins(p1.century_career_total, p2.century_career_total)} colors={colors} />
                 <Div colors={colors} />
                 <StatRow label="Centuries/Match" p1Val={fmtDecimal(p1.centuries_per_match)} p2Val={fmtDecimal(p2.centuries_per_match)} winner={higherWins(p1.centuries_per_match, p2.centuries_per_match)} colors={colors} />
+                <Div colors={colors} />
+                {/* 50+ Breaks — from CueTracker */}
+                <StatRow
+                    label="Career 50+"
+                    p1Val={p1.career_stats?.ct_synced_at ? fmt(p1.career_stats.ct_total_50plus) : '—'}
+                    p2Val={p2.career_stats?.ct_synced_at ? fmt(p2.career_stats.ct_total_50plus) : '—'}
+                    winner={higherWins(
+                        p1.career_stats?.ct_synced_at ? p1.career_stats.ct_total_50plus : null,
+                        p2.career_stats?.ct_synced_at ? p2.career_stats.ct_total_50plus : null,
+                    )}
+                    colors={colors}
+                />
                 <Div colors={colors} />
                 <StatRow label="This Season" p1Val={fmt(p1.century_season_current)} p2Val={fmt(p2.century_season_current)} winner={higherWins(p1.century_season_current, p2.century_season_current)} colors={colors} />
                 <Div colors={colors} />
