@@ -54,6 +54,7 @@ class Command(BaseCommand):
         self.last_monthly_run = None            # Track last month monthly updates ran (YYYY-MM string)
         self.last_news_fetch = None             # Track last news RSS fetch time
         self.last_player_history_run = None     # Track last date player history updated during active tour
+        self.last_stats_update_run = None       # Track last date nightly stats commands ran during active tour
         self.pretournament_processed = set()    # Track event IDs already pre-synced (new-players-only)
         # Push notification dedup sets (reset at midnight UTC)
         self.notified_live = set()              # api_match_ids already notified as live
@@ -105,6 +106,10 @@ class Command(BaseCommand):
                     # During active tournaments: smart career history sync at 4-5am UTC
                     if self._check_player_history_update():
                         self.stdout.write('[AUTOMATION] Player history update completed')
+
+                    # During active tournaments: centuries + player stats at 2-3am UTC
+                    if self._check_nightly_active_updates():
+                        self.stdout.write('[AUTOMATION] Nightly active-tour stats update completed')
 
                     # 1 day before tournament starts: backfill new players only
                     if self._check_pretournament_update():
@@ -530,6 +535,46 @@ class Command(BaseCommand):
 
         return False
 
+    def _check_nightly_active_updates(self) -> bool:
+        """
+        During active tournaments: run century stats + player stats at 2-3 AM UTC.
+        Targets only players with matches today (smart targeting).
+        Runs once per day.
+        """
+        current_time = timezone.now()
+
+        # 2-3 AM UTC window
+        if 2 <= current_time.hour <= 3:
+            today = current_time.date()
+            if self.last_stats_update_run != today:
+                self.stdout.write('[STATS] Running 2am active-tour stats update...')
+
+                try:
+                    call_command('fetch_ct_centuries')
+                    self.stdout.write('[SUCCESS] Century stats updated from CueTracker')
+                except Exception as e:
+                    logger.warning(f'fetch_ct_centuries failed (non-fatal): {e}')
+                    self.stdout.write(f'[WARNING] Century stats failed: {e}')
+
+                try:
+                    call_command('update_player_api_stats')
+                    self.stdout.write('[SUCCESS] Player API stats updated')
+                except Exception as e:
+                    logger.warning(f'update_player_api_stats failed (non-fatal): {e}')
+                    self.stdout.write(f'[WARNING] Player API stats failed: {e}')
+
+                try:
+                    call_command('update_player_ct_stats')
+                    self.stdout.write('[SUCCESS] Player CueTracker stats updated')
+                except Exception as e:
+                    logger.warning(f'update_player_ct_stats failed (non-fatal): {e}')
+                    self.stdout.write(f'[WARNING] Player CT stats failed: {e}')
+
+                self.last_stats_update_run = today
+                return True
+
+        return False
+
     def _check_pretournament_update(self) -> bool:
         """
         1 day before a tournament starts: backfill career history for new top-128 players only.
@@ -619,10 +664,10 @@ class Command(BaseCommand):
             call_command('sync_other_tours')
             self.stdout.write('[SUCCESS] Other tours synced')
 
-            # Scrape century and 147 stats from snookerinfo.co.uk
+            # Scrape century stats from CueTracker (replaces snookerinfo.co.uk)
             try:
-                call_command('scrape_century_stats')
-                self.stdout.write('[SUCCESS] Century stats scraped')
+                call_command('fetch_ct_centuries')
+                self.stdout.write('[SUCCESS] Century stats scraped from CueTracker')
             except Exception as scrape_err:
                 # Non-fatal: existing century data is kept even on failure
                 logger.warning(f'Century stats scrape failed (data kept): {scrape_err}')
