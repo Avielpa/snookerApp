@@ -36,8 +36,19 @@ interface PlayerData {
     NumMaximums?: number | null;
     current_ranking_position?: number | null;
     prize_money_this_year?: number | null;
-    career_wins?: number | null;
-    career_losses?: number | null;
+    career_stats?: {
+        ct_frames_played: number | null;
+        ct_frames_won: number | null;
+        ct_career_prize_total: number | null;
+        ct_total_titles: number | null;
+        ct_ranking_titles: number | null;
+        ct_finals_reached: number | null;
+        ct_career_best_rank: number | null;
+        ct_total_50plus: number | null;
+        ct_total_centuries: number | null;
+        titles_verified: boolean | null;
+        ct_synced_at: string | null;
+    } | null;
     recent_form?: string[] | null;
     win_streak?: number | null;
     ranking_trend?: { current: number | null; previous: number | null; delta: number | null } | null;
@@ -137,6 +148,29 @@ export default function PlayerDetailsScreen(): React.ReactElement {
 
     // Create styles with dynamic colors
     const styles = createPlayerStyles(COLORS);
+
+    // Small source attribution tag — tells users where the data comes from
+    const PlayerSourceTag = ({ source }: { source: 'snooker.org' | 'cuetracker.net' | 'mixed' }) => {
+        const tags = source === 'mixed'
+            ? [{ label: 'snooker.org', color: COLORS.primary }, { label: 'cuetracker.net', color: '#4CAF50' }]
+            : source === 'cuetracker.net'
+                ? [{ label: 'cuetracker.net', color: '#4CAF50' }]
+                : [{ label: 'snooker.org', color: COLORS.primary }];
+        return (
+            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: 8, gap: 4 }}>
+                {tags.map(({ label, color }) => (
+                    <View key={label} style={{
+                        flexDirection: 'row', alignItems: 'center',
+                        backgroundColor: color + '20', borderRadius: 6,
+                        paddingHorizontal: 6, paddingVertical: 2,
+                    }}>
+                        <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: color, marginRight: 3 }} />
+                        <Text style={{ fontSize: 9, fontFamily: 'PoppinsRegular', color, opacity: 0.9 }}>{label}</Text>
+                    </View>
+                ))}
+            </View>
+        );
+    };
 
     // Modern components
     const GlassCard = ({ children, style }: { children: React.ReactNode; style?: any }) => (
@@ -493,13 +527,7 @@ export default function PlayerDetailsScreen(): React.ReactElement {
                         label="Frame Win Rate"
                         value={`${(player?.frame_stats?.frame_pct ?? 0).toFixed(1)}%`}
                     />
-                    {(player?.deciding_frames?.deciding_played ?? 0) > 0 && (
-                        <InfoRow
-                            icon="pulse-outline"
-                            label="Clutch Frames %"
-                            value={`${(player?.deciding_frames?.deciding_pct ?? 0).toFixed(1)}% (${player?.deciding_frames?.deciding_played} deciders)`}
-                        />
-                    )}
+                    <PlayerSourceTag source="cuetracker.net" />
                 </GlassCard>
             )}
 
@@ -512,8 +540,6 @@ export default function PlayerDetailsScreen(): React.ReactElement {
                         label="Finals Reached"
                         value={String(player?.finals_record?.finals_reached ?? 0)}
                     />
-                    {/* Finals Won / Win Rate removed — CT gives career finals_reached total only,
-                        not the won/lost split. Showing partial manual data here was misleading. */}
                     {(player?.semi_final_record?.reached ?? 0) > 0 && (
                         <>
                             <InfoRow
@@ -528,18 +554,26 @@ export default function PlayerDetailsScreen(): React.ReactElement {
                             />
                         </>
                     )}
+                    <PlayerSourceTag source="cuetracker.net" />
                 </GlassCard>
             )}
 
-            {/* Ranking */}
-            {((player?.career_best_ranking ?? 0) > 0 || (player?.seasons_in_top16 ?? 0) > 0 || player?.recent_win_pct != null) && (
+            {/* Ranking & Career */}
+            {((player?.career_best_ranking ?? 0) > 0 || (player?.seasons_in_top16 ?? 0) > 0 || player?.recent_win_pct != null || player?.career_stats?.ct_career_prize_total != null) && (
                 <GlassCard style={styles.infoCard}>
-                    <Text style={styles.sectionTitle}>Ranking & Form</Text>
+                    <Text style={styles.sectionTitle}>Ranking & Career</Text>
                     {(player?.career_best_ranking ?? 0) > 0 && (
                         <InfoRow
                             icon="star-outline"
                             label="Career Best Ranking"
                             value={`#${player?.career_best_ranking}`}
+                        />
+                    )}
+                    {player?.career_stats?.ct_career_prize_total != null && (
+                        <InfoRow
+                            icon="cash-outline"
+                            label="Career Prize Money"
+                            value={`£${player.career_stats.ct_career_prize_total.toLocaleString()}`}
                         />
                     )}
                     {(player?.seasons_in_top16 ?? 0) > 0 && (
@@ -556,6 +590,7 @@ export default function PlayerDetailsScreen(): React.ReactElement {
                             value={`${(player.recent_win_pct).toFixed(1)}%`}
                         />
                     )}
+                    <PlayerSourceTag source="mixed" />
                 </GlassCard>
             )}
 

@@ -54,6 +54,35 @@ const fmtDecimal = (val: number | null | undefined, decimals = 2): string =>
 
 // ---- Sub-components --------------------------------------------------------
 
+/**
+ * Small source attribution badge shown at the bottom of stat cards.
+ * Tells users where the data comes from without cluttering the UI.
+ */
+const SourceTag = ({ source, colors }: {
+    source: 'snooker.org' | 'cuetracker.net' | 'mixed';
+    colors: any;
+}) => {
+    const tags = source === 'mixed'
+        ? [{ label: 'snooker.org', color: colors.primary }, { label: 'cuetracker.net', color: '#4CAF50' }]
+        : source === 'cuetracker.net'
+            ? [{ label: 'cuetracker.net', color: '#4CAF50' }]
+            : [{ label: 'snooker.org', color: colors.primary }];
+    return (
+        <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: 8, gap: 4 }}>
+            {tags.map(({ label, color }) => (
+                <View key={label} style={{
+                    flexDirection: 'row', alignItems: 'center',
+                    backgroundColor: color + '20', borderRadius: 6,
+                    paddingHorizontal: 6, paddingVertical: 2,
+                }}>
+                    <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: color, marginRight: 3 }} />
+                    <Text style={{ fontSize: 9, fontFamily: 'PoppinsRegular', color: color, opacity: 0.9 }}>{label}</Text>
+                </View>
+            ))}
+        </View>
+    );
+};
+
 const SectionCard = ({ title, icon, children, colors }: {
     title: string;
     icon: React.ComponentProps<typeof Ionicons>['name'];
@@ -322,6 +351,7 @@ const ComparisonView = ({ data, onChangeP1, onChangeP2, colors }: {
                     )}
                     colors={colors}
                 />
+                <SourceTag source="mixed" colors={colors} />
             </SectionCard>
 
             {/* ── Section 3: Career Record (CT-sourced) ── */}
@@ -354,6 +384,7 @@ const ComparisonView = ({ data, onChangeP1, onChangeP2, colors }: {
                         )}
                         colors={colors}
                     />
+                    <SourceTag source="cuetracker.net" colors={colors} />
                 </SectionCard>
             )}
 
@@ -378,6 +409,7 @@ const ComparisonView = ({ data, onChangeP1, onChangeP2, colors }: {
                 <StatRow label="This Season" p1Val={fmt(p1.century_season_current)} p2Val={fmt(p2.century_season_current)} winner={higherWins(p1.century_season_current, p2.century_season_current)} colors={colors} />
                 <Div colors={colors} />
                 <StatRow label="Last Season" p1Val={fmt(p1.century_season_prev1)} p2Val={fmt(p2.century_season_prev1)} winner={higherWins(p1.century_season_prev1, p2.century_season_prev1)} colors={colors} />
+                <SourceTag source="mixed" colors={colors} />
             </SectionCard>
 
             {/* ── Section 6: This Season ── */}
@@ -401,6 +433,9 @@ const ComparisonView = ({ data, onChangeP1, onChangeP2, colors }: {
                     colors={colors}
                 />
             </SectionCard>
+
+            {/* ── Section 7: This Season ── */}
+            {/* SourceTag already implicitly snooker.org — omitted, season stats are obvious */}
 
             {/* ── Section 8: Head to Head ── */}
             <SectionCard title="Head to Head" icon="people-outline" colors={colors}>
