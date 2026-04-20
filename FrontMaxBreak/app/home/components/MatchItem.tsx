@@ -205,7 +205,7 @@ export const MatchItem = ({
                     )}
                     {item.matchCategory === 'onBreak' && (
                         <View style={{ backgroundColor: '#F59E0B', borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2, marginRight: 8 }}>
-                            <Text style={{ color: '#fff', fontSize: 10, fontWeight: '700', letterSpacing: 0.5 }}>BREAK</Text>
+                            <Text style={{ color: '#fff', fontSize: 10, fontWeight: '700', letterSpacing: 0.5 }}>TBC</Text>
                         </View>
                     )}
                     <View style={styles.detailItem}>
