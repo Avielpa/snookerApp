@@ -215,7 +215,6 @@ const HomeScreen = (): React.ReactElement | null => {
     const filterButtons: FilterButton[] = [
         { label: 'Upcoming', value: 'upcoming', icon: ICONS.upcoming },
         { label: 'Live', value: 'livePlaying', icon: ICONS.livePlaying },
-        { label: 'Break', value: 'onBreak', icon: ICONS.onBreak },
         { label: 'Results', value: 'finished', icon: ICONS.finished },
         { label: 'Draw', value: 'draw', icon: 'git-branch-outline' },
         { label: 'Other Tours', value: 'otherTours', icon: 'trophy-outline' },

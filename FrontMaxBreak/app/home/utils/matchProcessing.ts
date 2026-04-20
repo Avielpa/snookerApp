@@ -157,40 +157,72 @@ export const processMatchesForList = (matches: Match[]): ListItem[] => {
     categories.finished.matches.sort(sortByRoundThenEndDateDesc);
 
     const processedList: ListItem[] = [];
-    const categoryOrder: MatchCategory[] = ['livePlaying', 'onBreak', 'upcoming', 'finished'];
+    const categoryOrder: MatchCategory[] = ['livePlaying', 'upcoming', 'finished'];
     let roundHeaderIndex = 0;
 
+    const pushMatchesWithRoundHeaders = (key: string, matches: MatchListItem[]) => {
+        let currentRound: number | null | undefined = -999;
+        matches.forEach((match: MatchListItem) => {
+            const matchRound = match.round ?? null;
+            if (matchRound !== currentRound) {
+                currentRound = matchRound;
+                processedList.push({
+                    type: 'roundHeader',
+                    roundName: getRoundName(currentRound),
+                    id: `roundHeader-${key}-${currentRound ?? 'unknown'}-${roundHeaderIndex++}`,
+                    round: currentRound,
+                });
+            }
+            processedList.push(match);
+        });
+    };
+
     categoryOrder.forEach((key: MatchCategory) => {
-        const category = categories[key];
-        
-        if (category.matches.length > 0) {
+        if (key === 'upcoming') {
+            const breakMatches = categories.onBreak.matches;
+            const upcomingMatches = categories.upcoming.matches;
+
+            if (breakMatches.length === 0 && upcomingMatches.length === 0) return;
+
             processedList.push({
                 type: 'statusHeader',
-                title: category.title,
-                iconName: category.icon,
-                id: `statusHeader-${key}`
+                title: 'Upcoming',
+                iconName: ICONS.upcoming,
+                id: 'statusHeader-upcoming',
             });
-            
-            let currentRound: number | null | undefined = -999;
-            
-            category.matches.forEach((match: MatchListItem) => {
-                const matchRound = match.round ?? null;
-                
-                if (matchRound !== currentRound) {
-                    currentRound = matchRound;
-                    const roundName = getRoundName(currentRound);
-                    const uniqueRoundHeaderId = `roundHeader-${key}-${currentRound ?? 'unknown'}-${roundHeaderIndex++}`;
-                    
+
+            if (breakMatches.length > 0) {
+                processedList.push({
+                    type: 'roundHeader',
+                    roundName: 'On Break',
+                    id: `roundHeader-onBreak-section-${roundHeaderIndex++}`,
+                    round: null,
+                });
+                pushMatchesWithRoundHeaders('onBreak', breakMatches);
+            }
+
+            if (upcomingMatches.length > 0) {
+                if (breakMatches.length > 0) {
                     processedList.push({
                         type: 'roundHeader',
-                        roundName: roundName,
-                        id: uniqueRoundHeaderId,
-                        round: currentRound,
+                        roundName: 'Upcoming',
+                        id: `roundHeader-upcoming-section-${roundHeaderIndex++}`,
+                        round: null,
                     });
                 }
-                
-                processedList.push(match);
-            });
+                pushMatchesWithRoundHeaders('upcoming', upcomingMatches);
+            }
+        } else {
+            const category = categories[key];
+            if (category.matches.length > 0) {
+                processedList.push({
+                    type: 'statusHeader',
+                    title: category.title,
+                    iconName: category.icon,
+                    id: `statusHeader-${key}`,
+                });
+                pushMatchesWithRoundHeaders(key, category.matches);
+            }
         }
     });
     
