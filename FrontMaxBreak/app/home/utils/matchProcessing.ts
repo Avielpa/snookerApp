@@ -194,7 +194,7 @@ export const processMatchesForList = (matches: Match[]): ListItem[] => {
             if (breakMatches.length > 0) {
                 processedList.push({
                     type: 'roundHeader',
-                    roundName: 'On Break',
+                    roundName: 'To Be Continued',
                     id: `roundHeader-onBreak-section-${roundHeaderIndex++}`,
                     round: null,
                 });
