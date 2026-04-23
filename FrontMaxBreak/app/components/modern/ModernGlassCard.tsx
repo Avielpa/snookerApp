@@ -55,7 +55,7 @@ const styles = StyleSheet.create({
     elevation: 3,                  // Less elevated (smaller cards)
   },
   gradient: {
-    padding: 8,
+    padding: 6,
   },
 });
 
