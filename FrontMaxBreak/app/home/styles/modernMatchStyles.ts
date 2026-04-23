@@ -60,7 +60,7 @@ export const createModernMatchStyles = (COLORS: any) => StyleSheet.create({
 
     // MATCH CARD CONTAINER
     matchItemContainer: {
-        marginVertical: 4,
+        marginVertical: 3,
         marginHorizontal: 8,
     },
 
@@ -76,13 +76,13 @@ export const createModernMatchStyles = (COLORS: any) => StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 6,
+        marginBottom: 4,
         marginTop: 2,
         direction: 'ltr',
     },
     playerName: {
         flex: 1,
-        fontSize: 13,
+        fontSize: 12,
         fontFamily: 'PoppinsSemiBold',
         color: COLORS.textPrimary,
         flexShrink: 1,
@@ -93,25 +93,25 @@ export const createModernMatchStyles = (COLORS: any) => StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        paddingHorizontal: 10,
-        minWidth: 90,
+        paddingHorizontal: 8,
+        minWidth: 72,
     },
 
     // INDIVIDUAL SCORE NUMBERS — big and bold
     scoreNumber: {
-        fontSize: 24,
+        fontSize: 19,
         fontFamily: 'PoppinsBold',
         color: '#FFB74D',
-        minWidth: 28,
+        minWidth: 22,
         textAlign: 'center',
     },
 
     // SCORE DASH / VS separator
     scoreDash: {
-        fontSize: 16,
+        fontSize: 13,
         fontFamily: 'PoppinsRegular',
         color: COLORS.textMuted,
-        marginHorizontal: 6,
+        marginHorizontal: 5,
     },
 
     // WINNER — bright amber for both name and score
@@ -127,8 +127,8 @@ export const createModernMatchStyles = (COLORS: any) => StyleSheet.create({
     detailsRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginTop: 8,
-        paddingTop: 6,
+        marginTop: 5,
+        paddingTop: 4,
         borderTopColor: 'rgba(26, 115, 58, 0.25)',
         borderTopWidth: 1,
     },
