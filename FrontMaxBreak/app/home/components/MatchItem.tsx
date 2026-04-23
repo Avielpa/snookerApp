@@ -132,20 +132,6 @@ export const MatchItem = ({
         >
             <ModernGlassCard style={styles.matchItemContainer} accentColor={accentColor}>
 
-                {/* Star button — only for upcoming/live matches */}
-                {isNotFinished && (
-                    <TouchableOpacity
-                        onPress={handleStarPress}
-                        style={{ position: 'absolute', top: 8, [I18nManager.isRTL ? 'left' : 'right']: 8, zIndex: 10, padding: 4 }}
-                        hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}
-                    >
-                        <Ionicons
-                            name={isStarred ? 'star' : 'star-outline'}
-                            size={16}
-                            color={isStarred ? '#F59E0B' : COLORS.textSecondary}
-                        />
-                    </TouchableOpacity>
-                )}
 
                 {/* Score-centered row: Name | Score — Score | Name */}
                 <View style={styles.scoreRow}>
@@ -212,6 +198,19 @@ export const MatchItem = ({
                         <Ionicons name={ICONS.calendar} size={11} color={COLORS.textSecondary} />
                         <Text style={styles.detailText}>{scheduledDate}</Text>
                     </View>
+                    {isNotFinished && (
+                        <TouchableOpacity
+                            onPress={handleStarPress}
+                            style={{ marginLeft: 'auto', padding: 2 }}
+                            hitSlop={{ top: 6, right: 6, bottom: 6, left: 6 }}
+                        >
+                            <Ionicons
+                                name={isStarred ? 'star' : 'star-outline'}
+                                size={11}
+                                color={isStarred ? '#F59E0B' : COLORS.textSecondary}
+                            />
+                        </TouchableOpacity>
+                    )}
                 </View>
             </ModernGlassCard>
         </TouchableOpacity>
