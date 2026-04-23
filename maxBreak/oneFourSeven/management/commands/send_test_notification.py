@@ -17,8 +17,8 @@ from django.core.management.base import BaseCommand
 from oneFourSeven.models import DeviceToken
 from oneFourSeven.push_notifications import send_expo_push
 
-ANNOUNCE_TITLE = '🏆 Crucible starts soon!'
-ANNOUNCE_BODY = 'Follow your players & matches now to get live updates from the World Championship'
+ANNOUNCE_TITLE = '🎱 World Championship is LIVE!'
+ANNOUNCE_BODY = 'Pick your favourite player, mark matches for alerts & use H2H in Stats to compare players'
 
 
 class Command(BaseCommand):

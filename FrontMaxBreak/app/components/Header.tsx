@@ -20,7 +20,7 @@ const Header = () => {
         <View style={styles.logoRow}>
           <View style={styles.iconWrapper}>
             <Image
-              source={require('../../assets/images/icon-circle.jpeg')}
+              source={require('../../assets/images/icon.png')}
               style={styles.iconImage}
               resizeMode="cover"
             />
