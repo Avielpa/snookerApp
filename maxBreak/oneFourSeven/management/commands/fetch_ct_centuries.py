@@ -66,11 +66,17 @@ def _parse_ct_centuries_page(html: str) -> list:
 
     for table in soup.find_all('table'):
         rows = table.find_all('tr')
-        if len(rows) < 2:
+        if not rows:
             continue
 
-        # Detect century-count column from header
-        header_cells = rows[0].find_all(['th', 'td'])
+        # Detect century-count column from <thead> th elements (no <tr> wrapper on cuetracker)
+        thead = table.find('thead')
+        if thead:
+            header_cells = thead.find_all(['th', 'td'])
+        else:
+            header_cells = rows[0].find_all(['th', 'td'])
+            rows = rows[1:]  # first row is header only if no thead
+
         headers = [c.get_text(strip=True).lower() for c in header_cells]
 
         century_col = None
@@ -79,7 +85,7 @@ def _parse_ct_centuries_page(html: str) -> list:
                 century_col = i
                 break
 
-        for row in rows[1:]:
+        for row in rows:
             cells = row.find_all('td')
             if not cells:
                 continue
