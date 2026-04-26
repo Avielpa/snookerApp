@@ -5,6 +5,7 @@ Run once manually to seed the DB, then auto_live_monitor keeps it updated every 
 Usage:
     python manage.py fetch_news
 """
+import html
 import re
 import urllib.request
 from email.utils import parsedate_to_datetime
@@ -101,7 +102,7 @@ class Command(BaseCommand):
 
                 items = re.findall(r'<item[\s>][\s\S]*?<\/item>', xml)
                 for item_xml in items[:10]:
-                    title = extract_text(item_xml, 'title')
+                    title = html.unescape(extract_text(item_xml, 'title'))
                     url = extract_link(item_xml)
                     if not title or not url:
                         continue

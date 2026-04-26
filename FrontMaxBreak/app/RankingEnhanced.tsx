@@ -17,93 +17,9 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 
-const COUNTRY_FLAGS: Record<string, string> = {
-  // British Isles — subdivision flags (🏴󠁧󠁢󠁥󠁮󠁧󁿢) don't render on most Android, using 🇬🇧
-  'England': '🇬🇧',
-  'Scotland': '🇬🇧',
-  'Wales': '🇬🇧',
-  'Northern Ireland': '🇬🇧',
-  'Ireland': '🇮🇪',
-  'United Kingdom': '🇬🇧',
-  // Asia
-  'China': '🇨🇳',
-  'Hong Kong': '🇭🇰',
-  'Thailand': '🇹🇭',
-  'India': '🇮🇳',
-  'Pakistan': '🇵🇰',
-  'Malaysia': '🇲🇾',
-  'Singapore': '🇸🇬',
-  'Indonesia': '🇮🇩',
-  'Japan': '🇯🇵',
-  'South Korea': '🇰🇷',
-  'Iran': '🇮🇷',
-  'Saudi Arabia': '🇸🇦',
-  'Qatar': '🇶🇦',
-  'Bahrain': '🇧🇭',
-  'United Arab Emirates': '🇦🇪',
-  'Kazakhstan': '🇰🇿',
-  'Myanmar': '🇲🇲',
-  'Philippines': '🇵🇭',
-  'Vietnam': '🇻🇳',
-  // Oceania
-  'Australia': '🇦🇺',
-  'New Zealand': '🇳🇿',
-  // Europe
-  'Belgium': '🇧🇪',
-  'Germany': '🇩🇪',
-  'Netherlands': '🇳🇱',
-  'France': '🇫🇷',
-  'Spain': '🇪🇸',
-  'Portugal': '🇵🇹',
-  'Italy': '🇮🇹',
-  'Greece': '🇬🇷',
-  'Malta': '🇲🇹',
-  'Cyprus': '🇨🇾',
-  'Switzerland': '🇨🇭',
-  'Austria': '🇦🇹',
-  'Sweden': '🇸🇪',
-  'Norway': '🇳🇴',
-  'Denmark': '🇩🇰',
-  'Finland': '🇫🇮',
-  'Iceland': '🇮🇸',
-  'Poland': '🇵🇱',
-  'Czech Republic': '🇨🇿',
-  'Slovakia': '🇸🇰',
-  'Hungary': '🇭🇺',
-  'Romania': '🇷🇴',
-  'Bulgaria': '🇧🇬',
-  'Lithuania': '🇱🇹',
-  'Latvia': '🇱🇻',
-  'Estonia': '🇪🇪',
-  'Ukraine': '🇺🇦',
-  'Russia': '🇷🇺',
-  'Belarus': '🇧🇾',
-  'Serbia': '🇷🇸',
-  'Croatia': '🇭🇷',
-  'Slovenia': '🇸🇮',
-  'Bosnia': '🇧🇦',
-  'Luxembourg': '🇱🇺',
-  'Turkey': '🇹🇷',
-  // Americas
-  'Canada': '🇨🇦',
-  'United States': '🇺🇸',
-  'USA': '🇺🇸',
-  'Brazil': '🇧🇷',
-  // Africa
-  'South Africa': '🇿🇦',
-  'Egypt': '🇪🇬',
-  'Nigeria': '🇳🇬',
-  'Morocco': '🇲🇦',
-  'Zimbabwe': '🇿🇼',
-  'Kenya': '🇰🇪',
-};
-
-const getFlag = (country?: string): string => {
-  if (!country) return '';
-  return COUNTRY_FLAGS[country] || '';  // empty string fallback — no broken globe emoji
-};
 
 // Import services
+import { getNationalityFlag } from '../utils/nationalityFlag';
 import { getRanking, RANKING_TYPES } from '../services/matchServices';
 import { api } from '../services/api';
 import { useRouter } from 'expo-router';
@@ -486,7 +402,7 @@ export default function RankingEnhanced() {
                 <Text style={styles.playerName} numberOfLines={1}>
                   {playerName}
                 </Text>
-                {item.country && getFlag(item.country) ? <Text style={styles.country}>{getFlag(item.country)}</Text> : null}
+                {item.country && getNationalityFlag(item.country) ? <Text style={styles.country}>{getNationalityFlag(item.country)}</Text> : null}
               </View>
               
               {/* Prize Money with Progress Bar */}
@@ -637,7 +553,7 @@ export default function RankingEnhanced() {
                   activeOpacity={0.7}
                 >
                   <Text style={[styles.countryChipText, active && styles.countryChipTextActive]}>
-                    {getFlag(country) ? `${getFlag(country)}  ${country}` : country}
+                    {getNationalityFlag(country) ? `${getNationalityFlag(country)}  ${country}` : country}
                   </Text>
                 </TouchableOpacity>
               );
