@@ -115,7 +115,7 @@ class Command(BaseCommand):
 
                     image_url = extract_image(item_xml)
 
-                    obj, created = NewsArticle.objects.get_or_create(
+                    obj, created = NewsArticle.objects.update_or_create(
                         url=url,
                         defaults={
                             'title': title,
@@ -126,9 +126,7 @@ class Command(BaseCommand):
                     )
                     if created:
                         new_count += 1
-                    elif force and image_url and not obj.image_url:
-                        obj.image_url = image_url
-                        obj.save(update_fields=['image_url'])
+                    else:
                         updated_count += 1
 
                 self.stdout.write(self.style.SUCCESS(f'  {source_name}: OK'))
