@@ -56,11 +56,11 @@ function inferRoundName(round: number): string {
 }
 
 // ─── Layout constants ─────────────────────────────────────────────────────────
-const CARD_W = 160;
-const CARD_H = 58;
+const CARD_W = 118;
+const CARD_H = 40;
 const BASE_SLOT = CARD_H + 8;
 const CONN_W = 22;
-const PILL_H = 68;
+const PILL_H = 50;
 const WIN_COLOR = '#FFA726';
 
 function getTop(roundIndex: number, matchIndex: number, firstRoundCount: number = 8): number {
@@ -354,23 +354,23 @@ const s = StyleSheet.create({
   },
   roundPill: {
     borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
     marginBottom: 0,
     justifyContent: 'center',
   },
   roundTitle: {
-    fontSize: 13,
+    fontSize: 10,
     fontFamily: 'PoppinsBold',
   },
   roundMeta: {
-    fontSize: 10,
+    fontSize: 8,
     fontFamily: 'PoppinsRegular',
     marginTop: 1,
   },
   matchCount: {
-    fontSize: 10,
+    fontSize: 8,
     fontFamily: 'PoppinsRegular',
     marginTop: 1,
   },
@@ -384,22 +384,22 @@ const s = StyleSheet.create({
   playerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 10,
-    gap: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 4,
+    gap: 3,
   },
   playerName: {
     flex: 1,
-    fontSize: 12,
+    fontSize: 9,
     fontFamily: 'PoppinsRegular',
   },
   normal: { color: '#FFFFFF' },
   tbd: { color: '#6B7280', fontStyle: 'italic' },
   loser: { opacity: 0.38 },
   score: {
-    fontSize: 13,
+    fontSize: 10,
     fontFamily: 'PoppinsBold',
-    minWidth: 18,
+    minWidth: 12,
     textAlign: 'right',
   },
   divider: {
