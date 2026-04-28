@@ -198,10 +198,11 @@ export const MatchItem = ({
                         <Ionicons name={ICONS.calendar} size={11} color={COLORS.textSecondary} />
                         <Text style={styles.detailText}>{scheduledDate}</Text>
                     </View>
+                    <View style={{ flex: 1 }} />
                     {isNotFinished && (
                         <TouchableOpacity
                             onPress={handleStarPress}
-                            style={{ marginLeft: 'auto', padding: 2 }}
+                            style={{ padding: 2 }}
                             hitSlop={{ top: 6, right: 6, bottom: 6, left: 6 }}
                         >
                             <Ionicons

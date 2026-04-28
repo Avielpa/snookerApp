@@ -3,10 +3,8 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
-  ScrollView,
   ActivityIndicator,
   TouchableOpacity,
-  RefreshControl,
   Alert,
 } from 'react-native';
 import { useLocalSearchParams, Stack } from 'expo-router';
@@ -814,19 +812,9 @@ export default function MatchEnhanced() {
       />
 
       {/* Tab Content */}
-      <ScrollView
-        style={styles.contentContainer}
-        refreshControl={
-          <RefreshControl
-            refreshing={isRefreshing}
-            onRefresh={() => loadData(true)}
-            tintColor={colors.primary}
-            colors={[colors.primary]}
-          />
-        }
-      >
+      <View style={styles.contentContainer}>
         {renderTabContent()}
-      </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }
