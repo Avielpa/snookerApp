@@ -41,7 +41,9 @@ async function writeCache(favs: Favorites): Promise<void> {
     cache = favs;
     try {
         await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(favs));
-    } catch {}
+    } catch (e) {
+        logger.error('[Favorites] Failed to persist to AsyncStorage', e);
+    }
 }
 
 /**
@@ -61,7 +63,9 @@ export async function loadFavorites(): Promise<Favorites> {
             playerIds: Array.from(new Set([...local.playerIds, ...serverPlayerIds])),
             matchIds: Array.from(new Set([...local.matchIds, ...serverMatchIds])),
         };
-        await writeCache(merged);
+        if (merged.playerIds.length > 0 || merged.matchIds.length > 0 || local.playerIds.length > 0 || local.matchIds.length > 0) {
+            await writeCache(merged);
+        }
         return merged;
     } catch (error) {
         logger.warn('[Favorites] Could not load from server, using local cache');

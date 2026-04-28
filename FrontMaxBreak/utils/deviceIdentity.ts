@@ -2,6 +2,7 @@
 // Generates and persists a stable UUID for this device (no sign-up required).
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { logger } from './logger';
 
 const DEVICE_ID_KEY = '@maxbreak_device_id';
 
@@ -18,20 +19,17 @@ let cachedDeviceId: string | null = null;
 export async function getOrCreateDeviceId(): Promise<string> {
     if (cachedDeviceId) return cachedDeviceId;
 
+    const newId = generateUUID();
     try {
         const stored = await AsyncStorage.getItem(DEVICE_ID_KEY);
         if (stored) {
             cachedDeviceId = stored;
             return stored;
         }
-
-        const newId = generateUUID();
         await AsyncStorage.setItem(DEVICE_ID_KEY, newId);
-        cachedDeviceId = newId;
-        return newId;
-    } catch {
-        // Fallback: in-memory ID if AsyncStorage fails
-        if (!cachedDeviceId) cachedDeviceId = generateUUID();
-        return cachedDeviceId;
+    } catch (e) {
+        logger.warn('[DeviceIdentity] AsyncStorage error, using in-memory UUID only', e);
     }
+    cachedDeviceId = newId;
+    return newId;
 }

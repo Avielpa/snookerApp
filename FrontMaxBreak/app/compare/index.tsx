@@ -69,9 +69,7 @@ const SourceTag = ({ source, colors }: {
         : source === 'cuetracker.net'
             ? [{ label: 'cuetracker.net', color: '#4CAF50' }]
             : [{ label: 'snooker.org', color: colors.primary }];
-    const tags = Platform.OS === 'android'
-        ? allTags
-        : allTags.filter(t => t.label !== 'snooker.org');
+    const tags = allTags;
     if (tags.length === 0) return null;
     return (
         <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: 8, gap: 4 }}>

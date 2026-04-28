@@ -1021,7 +1021,6 @@ class PlayerCareerStats(models.Model):
     ct_career_best_rank   = models.IntegerField(null=True, blank=True)
     ct_total_50plus       = models.IntegerField(null=True, blank=True)  # career 50+ breaks
     ct_total_centuries    = models.IntegerField(null=True, blank=True)  # career centuries
-
     # ── Cross-validation ──────────────────────────────────────────────────
     titles_verified = models.BooleanField(null=True)
     # True  = snooker.org NumRankingTitles == ct_ranking_titles → safe to show
