@@ -20,11 +20,15 @@
       "android": {
         "buildType": "apk"
       },
+      "ios": {
+        "buildConfiguration": "Release"
+      },
       "env": {
         "NODE_ENV": "production",
         "EXPO_PUBLIC_API_BASE_URL": "https://snookerapp.up.railway.app/oneFourSeven/",
         "DEBUG_LOGGING": "false",
-        "ANDROID_PACKAGE": "com.avielpahima.maxbreaksnooker.preview"
+        "ANDROID_PACKAGE": "com.avielpahima.maxbreaksnooker.preview",
+        "APP_VARIANT": "preview"
       }
     },
     "beta": {

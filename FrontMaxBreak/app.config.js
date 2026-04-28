@@ -3,7 +3,9 @@
 // app.json is still the source of truth — this file only overrides what changes per profile.
 const baseConfig = require('./app.json').expo;
 
-const isPreview = process.env.ANDROID_PACKAGE === 'com.avielpahima.maxbreaksnooker.preview';
+const isPreview =
+  process.env.ANDROID_PACKAGE === 'com.avielpahima.maxbreaksnooker.preview' ||
+  process.env.APP_VARIANT === 'preview';
 
 module.exports = {
   expo: {
@@ -13,6 +15,12 @@ module.exports = {
       ...baseConfig.android,
       package: process.env.ANDROID_PACKAGE || baseConfig.android.package,
       googleServicesFile: process.env.GOOGLE_SERVICES_JSON ?? (isPreview ? './google-services-preview.json' : baseConfig.android.googleServicesFile),
+    },
+    ios: {
+      ...baseConfig.ios,
+      bundleIdentifier: isPreview
+        ? 'com.avielpahima.maxbreaksnooker.preview'
+        : baseConfig.ios.bundleIdentifier,
     },
     plugins: [
       ...(baseConfig.plugins || []),
