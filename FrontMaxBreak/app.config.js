@@ -24,6 +24,7 @@ module.exports = {
     },
     plugins: [
       ...(baseConfig.plugins || []),
+      'expo-secure-store',
     ],
   },
 };

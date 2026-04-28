@@ -1,12 +1,18 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet } from 'react-native';
+import { View, Text, Image, StyleSheet, TouchableOpacity, Share, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../contexts/ThemeContext';
+import { getOrCreateDeviceId } from '../../utils/deviceIdentity';
 
 const Header = () => {
   const insets = useSafeAreaInsets();
   const { theme } = useTheme();
   const colors = theme.colors;
+
+  const handleCopyDeviceId = async () => {
+    const id = await getOrCreateDeviceId();
+    await Share.share({ message: id });
+  };
 
   return (
     <View style={[styles.header, {
@@ -30,7 +36,9 @@ const Header = () => {
           </Text>
         </View>
 
-        <View style={styles.rightSection} />
+        <TouchableOpacity style={styles.rightSection} onPress={handleCopyDeviceId}>
+          <Text style={{ color: colors.textMuted, fontSize: 18 }}>⚙</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );

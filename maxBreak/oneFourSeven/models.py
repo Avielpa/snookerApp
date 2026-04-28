@@ -1063,6 +1063,29 @@ class DeviceToken(models.Model):
         verbose_name_plural = "Device Tokens"
 
 
+# ================== NotifDedup Model ==================
+class NotifDedup(models.Model):
+    """
+    Persists push notification dedup so auto_live_monitor restarts don't re-send.
+    One row per (api_match_id, event_type, sent_date). Rows older than today are ignored.
+    """
+    LIVE = 'live'
+    RESULT = 'result'
+    UPCOMING = 'upcoming'
+    RESUME = 'resume'
+
+    api_match_id = models.CharField(max_length=64, db_index=True)
+    event_type   = models.CharField(max_length=16)
+    sent_date    = models.DateField(db_index=True)
+
+    class Meta:
+        unique_together = ('api_match_id', 'event_type', 'sent_date')
+        verbose_name = "Notification Dedup"
+
+    def __str__(self):
+        return f"{self.event_type} | match {self.api_match_id} | {self.sent_date}"
+
+
 # ================== MatchPrediction Model ==================
 class MatchPrediction(models.Model):
     """

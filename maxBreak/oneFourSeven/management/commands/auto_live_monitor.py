@@ -56,15 +56,9 @@ class Command(BaseCommand):
         self.last_player_history_run = None     # Track last date player history updated during active tour
         self.last_stats_update_run = None       # Track last date nightly stats commands ran during active tour
         self.pretournament_processed = set()    # Track event IDs already pre-synced (new-players-only)
-        # Push notification dedup sets (reset at midnight UTC)
-        self.notified_live = set()              # api_match_ids already notified as live
-        self.notified_result = set()            # api_match_ids already notified as finished
-        self.notified_upcoming = set()          # api_match_ids already sent 15-min warning
-        self.notified_resume = set()            # api_match_ids already notified as resumed from break
         self.currently_on_break = {}            # {db_pk: api_match_id} for matches at Status=2
                                                 # Keyed by DB pk (never changes) so match ID changes
                                                 # from snooker.org don't break resume detection
-        self.last_notif_reset = None            # date when sets were last cleared
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -264,17 +258,12 @@ class Command(BaseCommand):
         Called after each live update cycle. All errors are caught — never blocks updates.
         """
         try:
-            from oneFourSeven.models import DeviceToken, MatchesOfAnEvent, Player
+            from oneFourSeven.models import DeviceToken, MatchesOfAnEvent, Player, NotifDedup
             from oneFourSeven.push_notifications import send_expo_push
 
-            # Reset dedup sets at midnight UTC
             today = timezone.now().date()
-            if self.last_notif_reset != today:
-                self.notified_live.clear()
-                self.notified_result.clear()
-                self.notified_upcoming.clear()
-                self.notified_resume.clear()
-                self.last_notif_reset = today
+            # Clean up dedup rows older than today (runs cheaply — indexed on sent_date)
+            NotifDedup.objects.filter(sent_date__lt=today).delete()
 
             # --- Helper: get player name ---
             player_name_cache = {}
@@ -296,7 +285,11 @@ class Command(BaseCommand):
             live_matches = MatchesOfAnEvent.objects.filter(Status=1, StartDate__gte=recently_started)
             for match in live_matches:
                 mid = match.api_match_id
-                if mid is None or mid in self.notified_live:
+                if mid is None:
+                    continue
+                _, created = NotifDedup.objects.get_or_create(
+                    api_match_id=str(mid), event_type=NotifDedup.LIVE, sent_date=today)
+                if not created:
                     continue
 
                 p1_name = get_name(match.Player1ID)
@@ -335,8 +328,6 @@ class Command(BaseCommand):
                                        {'type': 'player_live', 'player_id': match.Player2ID, 'match_id': mid})
                         self.stdout.write(f'[NOTIFY] Player live: {p2_name} → {len(p2_tokens)} devices')
 
-                self.notified_live.add(mid)
-
             # --- Notify: matches that just finished (status=3, ended recently) ---
             finished_matches = MatchesOfAnEvent.objects.filter(
                 Status=3,
@@ -344,7 +335,11 @@ class Command(BaseCommand):
             )
             for match in finished_matches:
                 mid = match.api_match_id
-                if mid is None or mid in self.notified_result:
+                if mid is None:
+                    continue
+                _, created = NotifDedup.objects.get_or_create(
+                    api_match_id=str(mid), event_type=NotifDedup.RESULT, sent_date=today)
+                if not created:
                     continue
 
                 p1_name = get_name(match.Player1ID)
@@ -389,8 +384,6 @@ class Command(BaseCommand):
                                        {'type': 'player_result', 'player_id': match.Player2ID, 'match_id': mid})
                         self.stdout.write(f'[NOTIFY] Player result: {p2_name} {outcome} → {len(p2_tokens)} devices')
 
-                self.notified_result.add(mid)
-
             # --- Notify: matches starting in the next 5–30 minutes (15-min heads-up) ---
             now = timezone.now()
             window_start = now + timedelta(minutes=5)
@@ -402,7 +395,11 @@ class Command(BaseCommand):
             )
             for match in upcoming_matches:
                 mid = match.api_match_id
-                if mid is None or mid in self.notified_upcoming:
+                if mid is None:
+                    continue
+                _, created = NotifDedup.objects.get_or_create(
+                    api_match_id=str(mid), event_type=NotifDedup.UPCOMING, sent_date=today)
+                if not created:
                     continue
 
                 p1_name = get_name(match.Player1ID)
@@ -441,8 +438,6 @@ class Command(BaseCommand):
                                        {'type': 'player_upcoming', 'player_id': match.Player2ID, 'match_id': mid})
                         self.stdout.write(f'[NOTIFY] Upcoming player: {p2_name} → {len(p2_tokens)} devices')
 
-                self.notified_upcoming.add(mid)
-
             # --- Notify: matches that resumed from break (Status=2 → Status=1) ---
             # Track by DB pk (never changes) so api_match_id changes don't break detection.
 
@@ -461,7 +456,11 @@ class Command(BaseCommand):
                 )
                 for match in resumed_matches:
                     mid = match.api_match_id
-                    if mid is None or mid in self.notified_resume:
+                    if mid is None:
+                        continue
+                    _, created = NotifDedup.objects.get_or_create(
+                        api_match_id=str(mid), event_type=NotifDedup.RESUME, sent_date=today)
+                    if not created:
                         continue
 
                     p1_name = get_name(match.Player1ID)
@@ -501,8 +500,6 @@ class Command(BaseCommand):
                                            f'{p2_name} {s2}–{s1} {p1_name}',
                                            {'type': 'player_resumed', 'player_id': match.Player2ID, 'match_id': mid})
                             self.stdout.write(f'[NOTIFY] Resume: {p2_name} → {len(p2_tokens)} devices')
-
-                    self.notified_resume.add(mid)
 
             # Step 3: update on-break tracking for next cycle
             self.currently_on_break = current_on_break

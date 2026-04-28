@@ -1,9 +1,10 @@
 // _layout.tsx - Root Layout with Theme System
 import React, { useEffect } from 'react';
 import { ImageBackground, View, StyleSheet, StatusBar } from 'react-native';
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as Updates from 'expo-updates';
+import * as Notifications from 'expo-notifications';
 import { ThemeProvider, useTheme } from '../contexts/ThemeContext';
 import { logger } from '../utils/logger';
 import { api } from '../services/api';
@@ -22,6 +23,7 @@ const ThemedLayout = () => {
     const { theme } = useTheme();
     const colors = theme.colors;
     const device = useDeviceType();
+    const router = useRouter();
 
     // React to updates found by the automatic ON_LOAD check and apply immediately
     const { isUpdateAvailable } = Updates.useUpdates();
@@ -39,6 +41,17 @@ const ThemedLayout = () => {
         initPushNotifications();
         loadFavorites().catch(() => {}); // warm the in-memory cache
     }, []);
+
+    // Navigate to match screen when user taps a notification
+    useEffect(() => {
+        const sub = Notifications.addNotificationResponseListener((response) => {
+            const matchId = response.notification.request.content.data?.match_id;
+            if (matchId) {
+                router.push(`/match/${matchId}`);
+            }
+        });
+        return () => sub.remove();
+    }, [router]);
 
     // Test API connectivity on app start
     useEffect(() => {
