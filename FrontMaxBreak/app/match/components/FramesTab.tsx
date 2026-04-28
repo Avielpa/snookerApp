@@ -1,6 +1,6 @@
 // app/match/components/FramesTab.tsx
 import React from 'react';
-import { View, Text, ScrollView, FlatList } from 'react-native';
+import { View, Text, ScrollView, RefreshControl, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { FrameScoreCard } from './FrameScoreCard';
 import { FrameScore, MatchStats } from '../types';
@@ -13,6 +13,8 @@ interface FramesTabProps {
   player2Name: string;
   matchStats: MatchStats;
   styles: any;
+  isRefreshing: boolean;
+  onRefresh: () => void;
 }
 
 // Shorten to surname only for compact column headers
@@ -211,13 +213,20 @@ export function FramesTab({
   player2Name,
   matchStats,
   styles,
+  isRefreshing,
+  onRefresh,
 }: FramesTabProps) {
   const renderFrameScore = ({ item }: { item: FrameScore }) => (
     <FrameScoreCard frame={item} styles={styles} />
   );
 
   return (
-    <ScrollView showsVerticalScrollIndicator={false}>
+    <ScrollView
+      showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor="#FF8F00" colors={['#FF8F00']} />
+      }
+    >
       <View style={styles.framesContainer}>
         <Text style={styles.framesTitle}>
           {`Frame by Frame (${matchStats.completedFrames}/${matchStats.totalFrames})`}

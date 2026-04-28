@@ -1,6 +1,6 @@
 // app/match/components/OverviewTab.tsx
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Linking, Alert } from 'react-native';
+import { View, Text, ScrollView, RefreshControl, TouchableOpacity, Linking, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { LiveIndicator, ProgressBar } from '../../components/modern';
@@ -19,6 +19,8 @@ interface OverviewTabProps {
   p2Name: string;
   isFinished: boolean;
   predictionStats: PredictionStats | null;
+  isRefreshing: boolean;
+  onRefresh: () => void;
 }
 
 const BRAND_COLORS: Record<string, string> = {
@@ -45,6 +47,8 @@ export function OverviewTab({
   p2Name,
   isFinished,
   predictionStats,
+  isRefreshing,
+  onRefresh,
 }: OverviewTabProps) {
   const isLive = matchDetails?.status_code === 1;
   const isOnBreak = matchDetails?.status_code === 2;
@@ -70,7 +74,12 @@ export function OverviewTab({
   };
 
   return (
-    <ScrollView showsVerticalScrollIndicator={false}>
+    <ScrollView
+      showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor="#FF8F00" colors={['#FF8F00']} />
+      }
+    >
       {/* Match Status */}
       <View style={styles.statusCard}>
         <View style={styles.statusHeader}>

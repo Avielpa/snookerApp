@@ -1,6 +1,6 @@
 // app/match/components/StatsTab.tsx
 import React from 'react';
-import { View, Text, ScrollView } from 'react-native';
+import { View, Text, ScrollView, RefreshControl } from 'react-native';
 import { ProgressBar } from '../../components/modern';
 import { FrameScore, MatchStats } from '../types';
 
@@ -13,6 +13,8 @@ interface StatsTabProps {
   parseTimeString: (timeStr: string) => number;
   formatDuration: (minutes: number) => string;
   styles: any;
+  isRefreshing: boolean;
+  onRefresh: () => void;
 }
 
 export function StatsTab({
@@ -23,11 +25,18 @@ export function StatsTab({
   p2Name,
   parseTimeString,
   formatDuration,
-  styles
+  styles,
+  isRefreshing,
+  onRefresh,
 }: StatsTabProps) {
 
   return (
-    <ScrollView showsVerticalScrollIndicator={false}>
+    <ScrollView
+      showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor="#FF8F00" colors={['#FF8F00']} />
+      }
+    >
       {/* Match Format & Status */}
       <View style={styles.statsCard}>
         <Text style={styles.statsTitle}>Match Information</Text>

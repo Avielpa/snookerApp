@@ -191,7 +191,6 @@ export const createMatchStyles = (colors: any) => StyleSheet.create({
 
   // FRAMES - DARK, COMPACT GRID
   framesContainer: {
-    flex: 1,
   },
   framesTitle: {
     fontSize: 12,

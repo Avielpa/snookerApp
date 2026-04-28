@@ -6,6 +6,7 @@ import {
     TextInput,
     TouchableOpacity,
     ScrollView,
+    RefreshControl,
     ActivityIndicator,
     Alert,
     StyleSheet,
@@ -21,9 +22,11 @@ const AUTHOR_NAME_KEY = '@maxbreak_author_name';
 interface CommentsTabProps {
     matchApiId: number;
     colors: any;
+    isRefreshing: boolean;
+    onRefresh: () => void;
 }
 
-export function CommentsTab({ matchApiId, colors }: CommentsTabProps) {
+export function CommentsTab({ matchApiId, colors, isRefreshing, onRefresh }: CommentsTabProps) {
     const [comments, setComments] = useState<Comment[]>([]);
     const [loading, setLoading] = useState(true);
     const [posting, setPosting] = useState(false);
@@ -134,7 +137,12 @@ export function CommentsTab({ matchApiId, colors }: CommentsTabProps) {
     };
 
     return (
-        <ScrollView showsVerticalScrollIndicator={false}>
+        <ScrollView
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+                <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor="#FF8F00" colors={['#FF8F00']} />
+            }
+        >
             {/* ── Compose area ── */}
             <View style={[s.card, { marginBottom: 12 }]}>
                 {/* Name row */}

@@ -1,6 +1,6 @@
 // app/match/components/H2HTab.tsx
 import React from 'react';
-import { View, Text, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, RefreshControl, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ProgressBar } from '../../components/modern';
 import { H2HData } from '../types';
@@ -11,11 +11,18 @@ interface H2HTabProps {
   p1Name: string;
   p2Name: string;
   styles: any;
+  isRefreshing: boolean;
+  onRefresh: () => void;
 }
 
-export function H2HTab({ h2hData, h2hLoading, p1Name, p2Name, styles }: H2HTabProps) {
+export function H2HTab({ h2hData, h2hLoading, p1Name, p2Name, styles, isRefreshing, onRefresh }: H2HTabProps) {
   return (
-    <ScrollView showsVerticalScrollIndicator={false}>
+    <ScrollView
+      showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor="#FF8F00" colors={['#FF8F00']} />
+      }
+    >
       <View style={styles.h2hCard}>
         <Text style={styles.h2hTitle}>Head to Head</Text>
         <Text style={styles.h2hSubtitle}>

@@ -685,6 +685,8 @@ export default function MatchEnhanced() {
             p2Name={p2Name}
             isFinished={isFinished}
             predictionStats={predictionStats}
+            isRefreshing={isRefreshing}
+            onRefresh={() => loadData(true)}
           />
         );
 
@@ -697,6 +699,8 @@ export default function MatchEnhanced() {
             player2Name={matchDetails?.player2_name ?? ''}
             matchStats={matchStats}
             styles={styles}
+            isRefreshing={isRefreshing}
+            onRefresh={() => loadData(true)}
           />
         );
 
@@ -711,6 +715,8 @@ export default function MatchEnhanced() {
             parseTimeString={parseTimeString}
             formatDuration={formatDuration}
             styles={styles}
+            isRefreshing={isRefreshing}
+            onRefresh={() => loadData(true)}
           />
         );
 
@@ -722,6 +728,8 @@ export default function MatchEnhanced() {
             p1Name={p1Name}
             p2Name={p2Name}
             styles={styles}
+            isRefreshing={isRefreshing}
+            onRefresh={() => loadData(true)}
           />
         );
 
@@ -731,6 +739,8 @@ export default function MatchEnhanced() {
           <CommentsTab
             matchApiId={matchDetails.api_match_id}
             colors={colors}
+            isRefreshing={isRefreshing}
+            onRefresh={() => loadData(true)}
           />
         );
 
