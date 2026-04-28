@@ -3,6 +3,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
+  ScrollView,
   ActivityIndicator,
   TouchableOpacity,
   RefreshControl,
@@ -813,16 +814,19 @@ export default function MatchEnhanced() {
       />
 
       {/* Tab Content */}
-      <View style={styles.contentContainer}>
-        <RefreshControl
-          refreshing={isRefreshing}
-          onRefresh={() => loadData(true)}
-          tintColor={colors.primary}
-          colors={[colors.primary]}
-        >
-          {renderTabContent()}
-        </RefreshControl>
-      </View>
+      <ScrollView
+        style={styles.contentContainer}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={() => loadData(true)}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
+          />
+        }
+      >
+        {renderTabContent()}
+      </ScrollView>
     </SafeAreaView>
   );
 }
