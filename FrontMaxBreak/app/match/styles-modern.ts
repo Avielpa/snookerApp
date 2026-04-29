@@ -40,8 +40,10 @@ export const createMatchStyles = (colors: any) => StyleSheet.create({
 
   // PLAYER SCORE HEADER - DARK, COMPACT, CLEAR
   scoreHeader: {
-    margin: 10,
-    padding: 12,
+    marginHorizontal: 6,
+    marginTop: 2,
+    marginBottom: 4,
+    padding: 5,
     backgroundColor: 'rgba(0, 0, 0, 0.6)',
     borderRadius: 10,
     borderWidth: 1,
@@ -57,11 +59,11 @@ export const createMatchStyles = (colors: any) => StyleSheet.create({
     alignItems: 'center',
   },
   playerName: {
-    fontSize: 12,
+    fontSize: 10,
     fontFamily: 'PoppinsSemiBold',
     color: 'rgba(255, 255, 255, 0.85)',
     textAlign: 'center',
-    marginBottom: 6,
+    marginBottom: 1,
   },
   player1: {
     textAlign: 'left',
@@ -70,7 +72,7 @@ export const createMatchStyles = (colors: any) => StyleSheet.create({
     textAlign: 'right',
   },
   playerScore: {
-    fontSize: 24,
+    fontSize: 15,
     fontFamily: 'PoppinsBold',
     color: 'rgba(255, 255, 255, 0.9)',
   },
@@ -79,13 +81,13 @@ export const createMatchStyles = (colors: any) => StyleSheet.create({
   },
   vsContainer: {
     alignItems: 'center',
-    paddingHorizontal: 12,
+    paddingHorizontal: 6,
   },
   vsText: {
-    fontSize: 9,
+    fontSize: 8,
     fontFamily: 'PoppinsMedium',
     color: 'rgba(255, 255, 255, 0.4)',
-    marginTop: 4,
+    marginTop: 1,
   },
 
   // TABS - DARK, COMPACT, MODERN
