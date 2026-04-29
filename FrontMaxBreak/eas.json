@@ -82,8 +82,8 @@
     "production": {
       "ios": {
         "appleId": "avielpahima@gmail.com",
-        "ascAppId": "TO_BE_SET_AFTER_APP_STORE_CONNECT_SETUP",
-        "appleTeamId": "TO_BE_SET_AFTER_APPLE_DEVELOPER_ENROLLMENT"
+        "ascAppId": "6762826909",
+        "appleTeamId": "HPNS9888XR"
       },
       "android": {
         "serviceAccountKeyPath": "./google-play-service-account.json",
