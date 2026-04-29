@@ -74,15 +74,12 @@ const ThemedLayout = () => {
                 backgroundColor={colors.background}
             />
             <View style={[styles.background, { backgroundColor: colors.background }]}>
-                {device === 'phone' && <Header />}
+                {device !== 'tv' && <Header />}
 
                 <View style={styles.mainRow}>
-                    {device !== 'phone' && <SideNav device={device} />}
+                    {device === 'tv' && <SideNav device={device} />}
 
-                    <View style={[
-                        styles.contentArea,
-                        device === 'tablet' && styles.contentAreaTablet,
-                    ]}>
+                    <View style={styles.contentArea}>
                         <Stack
                             screenOptions={{
                                 headerShown: false,
@@ -95,7 +92,7 @@ const ThemedLayout = () => {
                     </View>
                 </View>
 
-                {device === 'phone' && <BottomBar />}
+                {device !== 'tv' && <BottomBar />}
             </View>
         </SafeAreaProvider>
     );
