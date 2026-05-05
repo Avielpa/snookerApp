@@ -24,10 +24,6 @@ maxBreak/staticfiles/
 maxBreak/media/
 *.sqlite3
 
-# ML model files (generated, not committed — run retrain_prediction_model to recreate)
-maxBreak/ml_models/*.pkl
-maxBreak/ml_models/*.json
-
 # OS
 .DS_Store
 Thumbs.db

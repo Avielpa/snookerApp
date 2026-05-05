@@ -156,9 +156,6 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Anthropic API key for AI match prediction narrative generation
-ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY', '')
-
 # Auto-start scheduler if Railway environment variable is set
 try:
     from . import scheduler_startup

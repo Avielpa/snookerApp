@@ -58,8 +58,6 @@ from .views import (
     match_comments_view,
     match_comment_delete_view,
     match_comment_like_view,
-    # AI Prediction
-    ai_prediction_view,
 )
 
 # --- DRF Router Setup ---
@@ -159,9 +157,6 @@ urlpatterns = [
     # --- Predictions ---
     path('matches/predict/', match_predict_view, name='match-predict'),
     path('matches/<int:match_api_id>/predict/', match_predict_stats_view, name='match-predict-stats'),
-
-    # --- AI Match Prediction ---
-    path('ai-prediction/<int:player1_id>/<int:player2_id>/', ai_prediction_view, name='ai-prediction'),
 
     # --- Per-Frame Scores ---
     path('matches/<int:match_api_id>/frame-scores/', match_frame_scores_view, name='match-frame-scores'),

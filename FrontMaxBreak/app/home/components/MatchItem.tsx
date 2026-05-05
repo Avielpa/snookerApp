@@ -199,16 +199,6 @@ export const MatchItem = ({
                         <Text style={styles.detailText}>{scheduledDate}</Text>
                     </View>
                     <View style={{ flex: 1 }} />
-                    {isNotFinished && item.player1_id && item.player2_id && (
-                        <TouchableOpacity
-                            style={styles.aiBadge}
-                            onPress={() => navigation.push(`/ai-insight/${item.api_match_id}`)}
-                            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                            accessibilityLabel="AI prediction insight"
-                        >
-                            <Text style={styles.aiBadgeText}>AI</Text>
-                        </TouchableOpacity>
-                    )}
                     {isNotFinished && (
                         <TouchableOpacity
                             onPress={handleStarPress}

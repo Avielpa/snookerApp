@@ -273,17 +273,6 @@ const MatchItem = React.memo(({ item, navigation }: { item: MatchListItem; navig
                 )}
                 <View style={styles.detailsRow}>
                     <View style={styles.detailItem}><Ionicons name={ICONS.calendar} size={14} color={COLORS.textSecondary} /><Text style={styles.detailText}>{date}</Text></View>
-                    <View style={{ flex: 1 }} />
-                    {item.status_code !== 3 && item.player1_id && item.player2_id && (
-                        <TouchableOpacity
-                            style={{ backgroundColor: '#1A733A', borderRadius: 10, paddingHorizontal: 6, paddingVertical: 2, marginRight: 6 }}
-                            onPress={() => navigation.push(`/ai-insight/${item.api_match_id}`)}
-                            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                            accessibilityLabel="AI prediction insight"
-                        >
-                            <Text style={{ color: '#FFFFFF', fontSize: 10, fontWeight: '700', letterSpacing: 0.5 }}>AI</Text>
-                        </TouchableOpacity>
-                    )}
                 </View>
             </View>
         </TouchableOpacity>
