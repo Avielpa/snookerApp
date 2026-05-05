@@ -2188,3 +2188,40 @@ def match_comment_like_view(request, match_api_id: int, comment_id: int):
     return Response({'liked': liked, 'likes_count': comment.likes.count()}, status=status.HTTP_200_OK)
 
 
+# ── AI PREDICTION ─────────────────────────────────────────────────────────────
+
+@api_view(['GET'])
+def ai_prediction_view(request, player1_id: int, player2_id: int):
+    """
+    GET /oneFourSeven/ai-prediction/<player1_id>/<player2_id>/
+
+    Returns XGBoost prediction + Claude narrative for a match between two players.
+    Results are cached for 1 hour (predictions don't change frequently).
+    Falls back to rule-based scoring if no trained model exists yet.
+    """
+    from django.core.cache import cache as django_cache
+
+    try:
+        p1 = Player.objects.get(ID=player1_id)
+        p2 = Player.objects.get(ID=player2_id)
+    except Player.DoesNotExist:
+        return Response({"error": "One or both player IDs not found."}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Cache key is order-independent so /97/2469 and /2469/97 share a cache entry
+    lo, hi = min(player1_id, player2_id), max(player1_id, player2_id)
+    cache_key = f"ai_pred_{lo}_{hi}"
+
+    cached = django_cache.get(cache_key)
+    if cached is not None:
+        return Response(cached)
+
+    from .ai_prediction import predict_match
+
+    p1_name = f"{p1.FirstName} {p1.LastName}".strip() or f"Player {player1_id}"
+    p2_name = f"{p2.FirstName} {p2.LastName}".strip() or f"Player {player2_id}"
+
+    result = predict_match(player1_id, player2_id, p1_name, p2_name)
+    django_cache.set(cache_key, result, 3600)
+    return Response(result)
+
+

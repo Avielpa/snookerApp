@@ -146,4 +146,19 @@ export const createModernMatchStyles = (COLORS: any) => StyleSheet.create({
         flexShrink: 1,
         opacity: 0.8,
     },
+
+    // AI Insight badge — shown on upcoming/live matches
+    aiBadge: {
+        backgroundColor: '#1A733A',
+        borderRadius: 10,
+        paddingHorizontal: 6,
+        paddingVertical: 2,
+        marginRight: 6,
+    },
+    aiBadgeText: {
+        color: '#FFFFFF',
+        fontSize: 10,
+        fontWeight: '700',
+        letterSpacing: 0.5,
+    },
 });
