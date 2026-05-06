@@ -4,6 +4,7 @@
 const baseConfig = require('./app.json').expo;
 
 const isPreview =
+  process.env.EAS_BUILD_PROFILE === 'preview' ||
   process.env.ANDROID_PACKAGE === 'com.avielpahima.maxbreaksnooker.preview' ||
   process.env.APP_VARIANT === 'preview';
 
@@ -13,7 +14,7 @@ module.exports = {
     name: isPreview ? 'MaxBreak (Preview)' : baseConfig.name,
     android: {
       ...baseConfig.android,
-      package: process.env.ANDROID_PACKAGE || baseConfig.android.package,
+      package: isPreview ? 'com.avielpahima.maxbreaksnooker.preview' : (process.env.ANDROID_PACKAGE || baseConfig.android.package),
       googleServicesFile: process.env.GOOGLE_SERVICES_JSON ?? (isPreview ? './google-services-preview.json' : baseConfig.android.googleServicesFile),
     },
     ios: {
