@@ -1515,39 +1515,51 @@ def other_tours_view(request):
     if tour_filter:
         events_qs = events_qs.filter(tour=tour_filter)
 
-    result = []
-    for event in events_qs:
-        matches = OtherTourMatch.objects.filter(event=event).order_by('round', 'number')
-        if not matches.exists():
-            continue
-        result.append({
-            'event_id': event.snooker_id,
-            'event_name': event.name,
-            'tour': event.tour,
-            'start_date': event.start_date,
-            'end_date': event.end_date,
-            'city': event.city,
-            'country': event.country,
-            'matches': [
-                {
-                    'id': m.snooker_id,
-                    'round': m.round,
-                    'number': m.number,
-                    'player1_id': m.player1_id,
-                    'player2_id': m.player2_id,
-                    'player1_name': m.player1_name,
-                    'player2_name': m.player2_name,
-                    'player1_nationality': m.player1_nationality,
-                    'player2_nationality': m.player2_nationality,
-                    'score1': m.score1,
-                    'score2': m.score2,
-                    'winner_id': m.winner_id,
-                    'status': m.status,
-                    'scheduled_date': m.scheduled_date,
-                }
-                for m in matches
-            ]
-        })
+    def build_result(qs):
+        out = []
+        for event in qs:
+            matches = OtherTourMatch.objects.filter(event=event).order_by('round', 'number')
+            if not matches.exists():
+                continue
+            out.append({
+                'event_id': event.snooker_id,
+                'event_name': event.name,
+                'tour': event.tour,
+                'start_date': event.start_date,
+                'end_date': event.end_date,
+                'city': event.city,
+                'country': event.country,
+                'matches': [
+                    {
+                        'id': m.snooker_id,
+                        'round': m.round,
+                        'number': m.number,
+                        'player1_id': m.player1_id,
+                        'player2_id': m.player2_id,
+                        'player1_name': m.player1_name,
+                        'player2_name': m.player2_name,
+                        'player1_nationality': m.player1_nationality,
+                        'player2_nationality': m.player2_nationality,
+                        'score1': m.score1,
+                        'score2': m.score2,
+                        'winner_id': m.winner_id,
+                        'status': m.status,
+                        'scheduled_date': m.scheduled_date,
+                    }
+                    for m in matches
+                ]
+            })
+        return out
+
+    result = build_result(events_qs)
+
+    # Fallback: during the May season-transition window the new season has no data yet.
+    # Show the previous season until fresh events are synced.
+    if not result:
+        prev_qs = OtherTourEvent.objects.filter(season=current_season - 1).order_by('-start_date')
+        if tour_filter:
+            prev_qs = prev_qs.filter(tour=tour_filter)
+        result = build_result(prev_qs)
 
     return Response(result)
 
