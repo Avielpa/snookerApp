@@ -252,6 +252,10 @@ export default function CalendarEnhanced() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchVisible, setSearchVisible] = useState(false);
   const [selectedTab, setSelectedTab] = useState<string>('main');
+  const [selectedSeason, setSelectedSeason] = useState<number>(() => {
+    const now = new Date();
+    return now.getMonth() < 5 ? now.getFullYear() - 1 : now.getFullYear();
+  });
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
@@ -296,13 +300,13 @@ export default function CalendarEnhanced() {
     });
   }, []);
 
-  const fetchTournaments = useCallback(async (tabType: string = 'main', isRefresh = false) => {
+  const fetchTournaments = useCallback(async (tabType: string = 'main', isRefresh = false, season: number = selectedSeason) => {
     if (!isRefresh) setLoading(true);
     setRefreshing(isRefresh);
     setError(null);
 
     try {
-      const response = await getCalendarByTab(tabType);
+      const response = await getCalendarByTab(tabType, season);
       if (!response) throw new Error(`Failed to load ${tabType} tournaments`);
 
       const combined = [
@@ -338,7 +342,7 @@ export default function CalendarEnhanced() {
     }
   }, [enhanceTournamentData]);
 
-  useEffect(() => { fetchTournaments(selectedTab); }, [selectedTab, fetchTournaments]);
+  useEffect(() => { fetchTournaments(selectedTab, false, selectedSeason); }, [selectedTab, selectedSeason, fetchTournaments]);
 
   const tabOptions: FilterOption[] = useMemo(() => [
     { id: 'main', label: 'Main Tours', icon: 'trophy-outline', color: colors.primary },
@@ -498,6 +502,26 @@ export default function CalendarEnhanced() {
         })}
       </View>
 
+      {/* Season toggle */}
+      <View style={[styles.seasonRow, { borderBottomColor: colors.cardBorder }]}>
+        {([{ season: 2025, label: '2025/26' }, { season: 2026, label: '2026/27' }] as const).map(({ season, label }) => (
+          <TouchableOpacity
+            key={season}
+            onPress={() => setSelectedSeason(season)}
+            activeOpacity={0.7}
+            style={[
+              styles.seasonBtn,
+              selectedSeason === season && { backgroundColor: colors.primary + '22', borderColor: colors.primary },
+              { borderColor: selectedSeason === season ? colors.primary : colors.cardBorder },
+            ]}
+          >
+            <Text style={[styles.seasonText, { color: selectedSeason === season ? colors.primary : colors.textMuted }]}>
+              {label}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
       {/* Status filter pills */}
       <View style={[styles.pillRow, { borderBottomColor: colors.cardBorder }]}>
         {statusOptions.map(opt => {
@@ -551,7 +575,7 @@ export default function CalendarEnhanced() {
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
-              onRefresh={() => fetchTournaments(selectedTab, true)}
+              onRefresh={() => fetchTournaments(selectedTab, true, selectedSeason)}
               tintColor={colors.primary}
               colors={[colors.primary]}
             />
@@ -620,6 +644,24 @@ const styles = StyleSheet.create({
   },
   segmentTextActive: {
     fontFamily: 'PoppinsBold',
+  },
+  seasonRow: {
+    flexDirection: 'row',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    gap: 8,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  seasonBtn: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  seasonText: {
+    fontSize: 12,
+    fontFamily: 'PoppinsMedium',
   },
   pillRow: {
     flexDirection: 'row',

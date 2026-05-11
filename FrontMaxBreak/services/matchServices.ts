@@ -502,13 +502,13 @@ export const getMatchFormat = async (roundId: number | null, season: number | nu
  * @param {number} retryAttempts - Number of retry attempts (for internal use)
  * @returns {Promise<any>} Calendar data with tab info or null on error
  */
-export const getCalendarByTab = async (tabType: string = 'main', retryAttempts: number = 0): Promise<any> => {
-    const urlPath = `calendar/${tabType}/`;
+export const getCalendarByTab = async (tabType: string = 'main', season?: number, retryAttempts: number = 0): Promise<any> => {
+    const urlPath = season ? `calendar/${tabType}/?season=${season}` : `calendar/${tabType}/`;
     const maxRetries = 3;
-    const retryDelay = 1000 * (retryAttempts + 1); // Progressive delay: 1s, 2s, 3s
-    
+    const retryDelay = 1000 * (retryAttempts + 1);
+
     logger.debug(`[MatchService] Fetching calendar data from ${urlPath} (attempt ${retryAttempts + 1}/${maxRetries + 1})...`);
-    
+
     try {
         const response = await api.get<any>(urlPath);
         
@@ -533,7 +533,7 @@ export const getCalendarByTab = async (tabType: string = 'main', retryAttempts: 
             logger.log(`[MatchService] Retrying calendar fetch in ${retryDelay}ms... (attempt ${retryAttempts + 1}/${maxRetries})`);
             
             await new Promise(resolve => setTimeout(resolve, retryDelay));
-            return getCalendarByTab(tabType, retryAttempts + 1);
+            return getCalendarByTab(tabType, season, retryAttempts + 1);
         }
         
         // Log final error after all retries exhausted
