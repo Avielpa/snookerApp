@@ -112,7 +112,7 @@ class Command(BaseCommand):
                 event_name = event.get('Name', '')
                 
                 # Keep ranking events, qualifying events, and invitational events
-                if event_type in ['Ranking', 'Qualifying', 'Invitational','Other', 'Q', 'Seniors', 'Amateur']:
+                if event_type in ['Ranking', 'Qualifying', 'Qualifying School', 'Invitational', 'Other', 'Q', 'Seniors', 'Amateur']:
                     # Exclude Championship League Stage events
                     if 'Championship League Stage' not in event_name:
                         filtered_events.append(event)

@@ -1011,13 +1011,13 @@ def calendar_tabs_view(request, tab_type='main'):
         # Get query parameters
         season_param = request.GET.get('season')
         target_season = int(season_param) if season_param else 2025
-        
+
         today = date.today()
         recent_cutoff = today - timedelta(days=365)  # Show all past tournaments in current season
-        
+
         # Filter tournaments based on tab type
         base_query = Event.objects.all()
-        
+
         if tab_type == 'main':
             base_query = base_query.filter(Tour='main')
             tab_name = 'Main Tours'
@@ -1026,9 +1026,10 @@ def calendar_tabs_view(request, tab_type='main'):
             tab_name = 'Other Tours'
         else:  # 'all'
             tab_name = 'All Tours'
-        
-        # Current season tournaments
-        current_season_events = base_query.filter(Season=target_season)
+
+        # Include target season + next to cover the May transition where events
+        # span the 2025/26 season (Season=2025) and new 2026 season (Season=2026).
+        current_season_events = base_query.filter(Season__in=[target_season, target_season + 1])
         
         # Categorize tournaments
         active_tournaments = []
