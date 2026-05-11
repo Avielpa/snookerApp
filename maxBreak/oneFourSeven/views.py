@@ -1027,9 +1027,13 @@ def calendar_tabs_view(request, tab_type='main'):
         else:  # 'all'
             tab_name = 'All Tours'
 
-        # Include target season + next to cover the May transition where events
-        # span the 2025/26 season (Season=2025) and new 2026 season (Season=2026).
-        current_season_events = base_query.filter(Season__in=[target_season, target_season + 1])
+        # Show the target season in full, plus any upcoming events from the next
+        # season (e.g. Q School May 2026 saved as Season=2026 while default is 2025).
+        from django.db.models import Q
+        current_season_events = base_query.filter(
+            Q(Season=target_season) |
+            Q(Season=target_season + 1, StartDate__gte=today)
+        )
         
         # Categorize tournaments
         active_tournaments = []
