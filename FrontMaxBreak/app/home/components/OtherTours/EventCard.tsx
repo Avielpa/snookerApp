@@ -123,7 +123,26 @@ export function EventCard({ event, defaultExpanded = false }: Props) {
 
             {/* Content */}
             {expanded && (
-                hasGroups
+                hasGroups && finishedCount === 0
+                    ? (
+                        <View style={{
+                            paddingHorizontal: 14,
+                            paddingVertical: 12,
+                            backgroundColor: 'rgba(255,255,255,0.03)',
+                            borderTopWidth: 0.5,
+                            borderTopColor: 'rgba(255,255,255,0.08)',
+                        }}>
+                            <Text style={{ color: '#6B7280', fontSize: 12, fontFamily: 'PoppinsRegular' }}>
+                                Draw published · {event.groups!.length} groups · No matches played yet
+                            </Text>
+                            {event.start_date && (
+                                <Text style={{ color: '#9CA3AF', fontSize: 11, fontFamily: 'PoppinsRegular', marginTop: 3 }}>
+                                    Starts {new Date(event.start_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                                </Text>
+                            )}
+                        </View>
+                    )
+                    : hasGroups
                     ? (event.groups ?? []).map(group => (
                         <View key={group.event_id}>
                             <TouchableOpacity
