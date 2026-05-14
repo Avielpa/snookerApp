@@ -56,7 +56,7 @@ router.push({
 **Key types**
 
 ```typescript
-type GamePhase   = 'reds' | 'colors'
+type GamePhase    = 'reds' | 'colors'
 type AwaitingType = 'red' | 'color'
 
 interface FrameSnapshot {
@@ -69,6 +69,7 @@ interface FrameSnapshot {
   awaiting: AwaitingType
   colorsRemaining: BallType[]   // shrinks in colors phase; full 6 in reds phase
   isFrameOver: boolean
+  freeBallActive: boolean       // true after declareFreesBall(); reset by every action
 }
 ```
 
@@ -76,12 +77,14 @@ interface FrameSnapshot {
 
 | Action | Effect |
 |---|---|
-| `potBall(ball)` | Adds points, updates awaiting/phase/redsRemaining |
-| `addExtraRed()` | For multiple reds on one shot — score +1, redsRemaining -1, awaiting stays `'color'` |
-| `endVisit()` | Switches player, resets `currentBreak` to 0, **awaiting carries over** |
-| `applyFoul(value, opponentPlays)` | Gives points to opponent; **awaiting is NEVER reset by a foul** |
+| `potBall(ball)` | Adds points, updates awaiting/phase/redsRemaining. **No-op if `freeBallActive`** |
+| `addExtraRed()` | For multiple reds on one shot — score +1, redsRemaining -1, awaiting stays `'color'`. **No-op if `freeBallActive`** |
+| `endVisit()` | Switches player, resets `currentBreak` to 0, **awaiting carries over**, resets `freeBallActive` |
+| `applyFoul(value, opponentPlays)` | Gives points to opponent; **awaiting is NEVER reset**; resets `freeBallActive` |
+| `declareFreesBall()` | Sets `freeBallActive = true`, pushes to history (undoable) |
+| `applyFreeBall(nominatedBall)` | Scores on-ball value, advances state correctly, resets `freeBallActive` |
 | `undo()` | Pops last snapshot from history stack |
-| `concede()` | Sets `isFrameOver = true` |
+| `concede()` | Sets `isFrameOver = true`, resets `freeBallActive` |
 | `confirmFrameEnd(winner, nextBreakerOverride?)` | Saves result, resets frame, increments frame number |
 
 **pointsOnTable formula**
@@ -98,8 +101,59 @@ colors phase:               sum of colorsRemaining values
 2. `potBall(color)` in reds phase (redsRemaining > 0) → awaiting = `'red'`
 3. `potBall(color)` in reds phase (redsRemaining === 0) → transitions to colors phase
 4. `endVisit()` → awaiting **carries over unchanged** to next player
-5. `applyFoul()` → awaiting **stays unchanged** (this was a bug — see below)
+5. `applyFoul()` → awaiting **stays unchanged**
 6. Colors phase: awaiting is irrelevant; only `colorsRemaining[0]` matters
+
+---
+
+## Free ball
+
+### When it applies
+
+After a foul, if the incoming player is snookered (can't hit both sides of the on-ball), they may be awarded a free ball. Any ball can be nominated as the free ball for that shot only.
+
+### UI flow
+
+1. `FoulModal` confirms foul value + who plays next
+2. If opponent plays, `game.tsx` shows an Alert: **"Free ball available?"**
+3. "Yes" → calls `declareFreesBall()` → `freeBallActive = true`
+4. `BallPad` detects `freeBallActive`: all 7 balls light up, status label reads **"Free ball — tap to nominate any ball"**
+5. Player taps any ball → `applyFreeBall(nominatedBall)` is called
+6. `freeBallActive` resets to `false`; break continues normally
+
+### Scoring rules (applyFreeBall)
+
+| Situation | Points scored | redsRemaining | Next awaiting |
+|---|---|---|---|
+| reds phase, `awaiting=red` | **1** (always — on-ball is red) | **unchanged** (free ball respotted) | `'color'` |
+| reds phase, `awaiting=color` | `BALL_VALUES[nominatedBall]` | unchanged | `'red'` (or colors phase if reds=0) |
+| colors phase | `BALL_VALUES[colorsRemaining[0]]` (on-color's value, NOT nominated ball's) | — | sequence advances (slice) |
+
+**Key invariant**: when the on-ball is a red and the free ball is potted, `redsRemaining` does NOT decrement. The nominated ball is respotted; the actual red is still on the table. This is the critical difference from `potBall('red')`.
+
+### getAvailableBalls when freeBallActive
+
+```typescript
+if (snap.freeBallActive) return [...COLORS_SEQUENCE, 'red']; // all 7 balls
+```
+
+`isFrameOver` still takes priority (returns `[]`).
+
+### Guards that protect other actions
+
+- `potBall` — returns `prev` immediately if `freeBallActive` (use `applyFreeBall` instead)
+- `addExtraRed` — returns `prev` immediately if `freeBallActive`
+- `endVisit`, `applyFoul`, `concede`, `addExtraRed` — all explicitly set `freeBallActive: false`
+- `declareFreesBall` and `applyFreeBall` are both undoable (each pushes to history)
+
+### Extra red button hidden during free ball
+
+`BallPad` hides the extra-red button when `freeBallActive` is true:
+
+```typescript
+const showExtraRed = phase === 'reds' && awaiting === 'color'
+  && redsRemaining > 0 && !trainMode && !freeBallActive;
+```
 
 ---
 
@@ -130,6 +184,7 @@ const newAwaiting: AwaitingType = snap.awaiting; // never reset by a foul
 | History tab | Separate "Training" tab in `history.tsx`, filtered by `m.mode === 'train'` |
 | Saves to storage | `StoredMatch` with `mode: 'train'`, `bestOf: null` |
 | Extra red button | Hidden in train mode (`showExtraRed = !trainMode`) |
+| Free ball | Works identically — same logic, no train-specific behaviour |
 
 ---
 
@@ -178,17 +233,18 @@ interface StoredMatch {
 
 ## Test suite
 
-Three test files at `FrontMaxBreak/` root — run with Node.js, no React needed:
+Four test files at `FrontMaxBreak/` root — run with Node.js, no React needed:
 
 ```bash
-node game_test.mjs    # 326 assertions, 29 sections — full match mode + game logic
-node train_test.mjs   # 51 assertions — train mode + computeTrainingStats
-node mega_test.mjs    # 430 assertions — edge cases train+match, all formulas
+node game_test.mjs      # 326 assertions, 29 sections — full match mode + game logic
+node train_test.mjs     # 51 assertions — train mode + computeTrainingStats
+node mega_test.mjs      # 430 assertions — edge cases train+match, all formulas
+node freeball_test.mjs  # 100 assertions — free ball in all situations
 ```
 
 **Run all:**
 ```bash
-node game_test.mjs && node train_test.mjs && node mega_test.mjs
+node game_test.mjs && node train_test.mjs && node mega_test.mjs && node freeball_test.mjs
 ```
 
 Expected: `✅ All N assertions passed` for each file. If any fail, fix before deploying.
@@ -199,7 +255,7 @@ Expected: `✅ All N assertions passed` for each file. If any fail, fix before d
 - Foul bug fix verified (awaiting=color preserved across foul)
 - addExtraRed: multiple consecutive, guard conditions, pointsOnTable updates
 - endVisit: preserves phase/redsRemaining/colorsRemaining/awaiting/scores
-- Undo: deep chains (10+ levels), after foul, after endVisit, after extra red
+- Undo: deep chains (10+ levels), after foul, after endVisit, after extra red, after declareFreesBall, after applyFreeBall
 - Match formats: BO1/BO3/BO5/BO7/BO9 — all win conditions, alternating breaker
 - Train mode: bestOf=9999 never ends, player 0 always breaks, sessionBest
 - computeTrainingStats: empty, thresholds (25/50), multi-session aggregation
@@ -207,12 +263,13 @@ Expected: `✅ All N assertions passed` for each file. If any fail, fix before d
 - 147 maximum break verified
 - 1-red, 2-red, 3-red, 6-red, 10-red, 15-red configurations
 - colorsRemaining immutability (old references unaffected by pots)
+- Free ball: all phases (reds awaiting=red, reds awaiting=color, colors), all nominated balls, redsRemaining invariant, pointsOnTable, undo chain, guard conditions, full frame sequences
 
 ---
 
 ## How to add a feature
 
-**New ball action** (e.g. free ball):
+**New ball action:**
 1. Add logic to `useSnookerGame.ts` — new `useCallback` function
 2. Export from `return { ..., newAction }`
 3. Destructure in `game.tsx`
@@ -226,7 +283,7 @@ Expected: `✅ All N assertions passed` for each file. If any fail, fix before d
 **Fixing a scoring bug**:
 1. Write a failing test first in `game_test.mjs`
 2. Fix the logic in `useSnookerGame.ts`
-3. Confirm all 807+ assertions still pass
+3. Confirm all 907+ assertions still pass
 4. Deploy: `npx eas update --channel preview --message "..."` then production
 
 ---
