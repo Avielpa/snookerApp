@@ -9,7 +9,7 @@ import { createEnhancedTabStyles } from './EnhancedTabStyles';
 interface FilterOption {
   id: string;
   label: string;
-  icon: keyof typeof Ionicons.glyphMap;
+  icon?: keyof typeof Ionicons.glyphMap;
   count?: number;
 }
 

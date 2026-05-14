@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity, Share, Alert } from 'react-native';
+import { View, Text, Image, StyleSheet, TouchableOpacity, Share } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
 import { useTheme } from '../../contexts/ThemeContext';
 import { getOrCreateDeviceId } from '../../utils/deviceIdentity';
 
@@ -21,7 +22,9 @@ const Header = () => {
       borderBottomColor: colors.cardBorder,
     }]}>
       <View style={styles.headerRow}>
-        <View style={styles.placeholderLeft} />
+        <TouchableOpacity style={styles.playBtn} onPress={() => router.push('/scoreboard' as any)}>
+          <Text style={[styles.playBtnText, { color: colors.primary }]}>▶ Play</Text>
+        </TouchableOpacity>
 
         <View style={styles.logoRow}>
           <View style={styles.iconWrapper}>
@@ -63,8 +66,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 10,
   },
-  placeholderLeft: {
+  playBtn: {
     width: 60,
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+  },
+  playBtnText: {
+    fontSize: 14,
+    fontFamily: 'PoppinsBold',
   },
   logoRow: {
     flexDirection: 'row',

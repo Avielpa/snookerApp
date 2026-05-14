@@ -9,7 +9,7 @@ import { logger } from '../utils/logger';
 interface FilterOption {
   id: string;
   label: string;
-  icon: keyof typeof Ionicons.glyphMap;
+  icon?: keyof typeof Ionicons.glyphMap;
 }
 
 interface DeviceAwareFilterButtonProps {
@@ -99,12 +99,14 @@ export const DeviceAwareFilterButton: React.FC<DeviceAwareFilterButtonProps> = (
         <View style={enhancedStyles.activeGlowOverlay} />
       )}
       
-      <Ionicons 
-        name={option.icon} 
-        size={12} // Smaller icon - SofaScore style
-        color={iconColor}
-        style={iconStyle}
-      />
+      {option.icon && (
+        <Ionicons
+          name={option.icon}
+          size={12}
+          color={iconColor}
+          style={iconStyle}
+        />
+      )}
       <Text style={textStyle}>
         {option.label}
       </Text>
