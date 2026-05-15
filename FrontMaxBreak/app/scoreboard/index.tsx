@@ -2,7 +2,7 @@ import React, { useState, useCallback } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Alert,
 } from 'react-native';
-import { router, useFocusEffect } from 'expo-router';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../contexts/ThemeContext';
 import { generateMatchId, loadDraft, clearDraft, GameDraft } from '../../services/gameStorage';
@@ -14,10 +14,11 @@ export default function ScoreboardSetup() {
   const { theme } = useTheme();
   const c = theme.colors;
   const insets = useSafeAreaInsets();
+  const prefill = useLocalSearchParams<{ prefillPlayer1?: string; prefillPlayer2?: string }>();
 
   const [mode, setMode] = useState<'match' | 'train'>('match');
-  const [player1, setPlayer1] = useState('Player 1');
-  const [player2, setPlayer2] = useState('Player 2');
+  const [player1, setPlayer1] = useState(prefill.prefillPlayer1?.trim() || 'Player 1');
+  const [player2, setPlayer2] = useState(prefill.prefillPlayer2?.trim() || 'Player 2');
   const [numberOfReds, setNumberOfReds] = useState<number>(15);
   const [bestOf, setBestOf] = useState<number | null>(null);
   const [isUnlimited, setIsUnlimited] = useState(false);
