@@ -19,7 +19,7 @@ export interface StoredMatch {
   isComplete: boolean;
   frameResults: FrameResult[];
   framesWon: [number, number];
-  mode?: 'match' | 'train';
+  mode?: 'match' | 'train' | 'unlimited';
 }
 
 export interface TrainingStats {
@@ -145,7 +145,7 @@ export function computeTrainingStats(matches: StoredMatch[], playerName: string)
 
 export function computePlayerStats(matches: StoredMatch[], playerName: string): PlayerStats {
   const relevant = matches.filter(
-    m => m.isComplete && (!m.mode || m.mode === 'match') &&
+    m => m.isComplete && (!m.mode || m.mode === 'match' || m.mode === 'unlimited') &&
       (m.player1Name === playerName || m.player2Name === playerName),
   );
 

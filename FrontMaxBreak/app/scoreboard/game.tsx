@@ -21,14 +21,15 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
   }>();
 
   const isTrainMode = params.bestOf === 'train';
+  const isUnlimitedMode = params.bestOf === 'unlimited';
 
   const config = {
     id: params.id,
     player1Name: params.player1,
     player2Name: params.player2,
     numberOfReds: parseInt(params.numberOfReds, 10),
-    // bestOf=9999 prevents auto match-end in training (target=5000 — never reachable)
-    bestOf: isTrainMode ? 9999 : (params.bestOf === 'single' ? null : parseInt(params.bestOf, 10)),
+    // bestOf=9999 prevents auto match-end in training/unlimited (target=5000 — never reachable)
+    bestOf: isTrainMode || isUnlimitedMode ? 9999 : (params.bestOf === 'single' ? null : parseInt(params.bestOf, 10)),
   };
 
   useKeepAwake();
@@ -116,7 +117,7 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
       isComplete: complete,
       frameResults: results,
       framesWon: fw,
-      mode: isTrainMode ? 'train' : 'match',
+      mode: isTrainMode ? 'train' : isUnlimitedMode ? 'unlimited' : 'match',
     };
     if (complete) stored.completedAt = new Date().toISOString();
     await saveMatch(stored);
@@ -168,6 +169,43 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
                 frameResults: state.frameResults,
                 framesWon: framesWon,
                 mode: 'train',
+              };
+              await saveMatch(stored);
+            }
+            router.replace('/scoreboard/history' as any);
+          },
+        },
+      ],
+    );
+  }
+
+  async function handleUnlimitedEndMatch() {
+    const framesCompleted = state.frameResults.length;
+    Alert.alert(
+      'End Match?',
+      framesCompleted > 0
+        ? `${framesCompleted} frame${framesCompleted !== 1 ? 's' : ''} completed. Save and exit?`
+        : 'No frames completed yet. Match will not be saved.',
+      [
+        { text: 'Keep playing', style: 'cancel' },
+        {
+          text: 'End Match',
+          style: 'default',
+          onPress: async () => {
+            matchSaved.current = true;
+            if (framesCompleted > 0) {
+              const stored: StoredMatch = {
+                id: config.id,
+                player1Name: config.player1Name,
+                player2Name: config.player2Name,
+                numberOfReds: config.numberOfReds,
+                bestOf: null,
+                startedAt: new Date().toISOString(),
+                completedAt: new Date().toISOString(),
+                isComplete: true,
+                frameResults: state.frameResults,
+                framesWon: framesWon,
+                mode: 'unlimited',
               };
               await saveMatch(stored);
             }
@@ -240,7 +278,7 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
           ) : (
             <>
               <Text style={[styles.frameLabel, { color: c.textMuted }]}>
-                Frame {frameNumber} · {config.bestOf === null ? 'Single Frame' : `Best of ${config.bestOf}`}
+                Frame {frameNumber} · {isUnlimitedMode ? 'Unlimited' : config.bestOf === null ? 'Single Frame' : `Best of ${config.bestOf}`}
               </Text>
               <Text style={[styles.frameScore, { color: c.textSecondary }]}>
                 {framesWon[0]} – {framesWon[1]}
@@ -249,9 +287,19 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
           )}
         </View>
 
-        <TouchableOpacity onPress={() => router.push('/scoreboard/rules' as any)}>
-          <Text style={{ color: c.textMuted, fontSize: 18 }}>📖</Text>
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
+          {isUnlimitedMode && (
+            <TouchableOpacity
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              onPress={handleUnlimitedEndMatch}
+            >
+              <Text style={{ color: c.textMuted, fontSize: 13, fontFamily: 'PoppinsBold' }}>End ⏹</Text>
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity onPress={() => router.push('/scoreboard/rules' as any)}>
+            <Text style={{ color: c.textMuted, fontSize: 18 }}>📖</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Points on table */}
@@ -369,7 +417,7 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
         const displayFW: [number, number] = [framesWon[0], framesWon[1]];
         displayFW[pendingWinner]++;
         const bestOfTarget = config.bestOf ? Math.ceil(config.bestOf / 2) : 1;
-        const isOver = !isTrainMode && (config.bestOf === null || displayFW[0] >= bestOfTarget || displayFW[1] >= bestOfTarget);
+        const isOver = !isTrainMode && !isUnlimitedMode && (config.bestOf === null || displayFW[0] >= bestOfTarget || displayFW[1] >= bestOfTarget);
         const mWinner: 0 | 1 = displayFW[0] > displayFW[1] ? 0 : 1;
         return (
           <FrameSummary

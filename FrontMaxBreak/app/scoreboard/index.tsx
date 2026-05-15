@@ -20,6 +20,7 @@ export default function ScoreboardSetup() {
   const [player2, setPlayer2] = useState('Player 2');
   const [numberOfReds, setNumberOfReds] = useState<number>(15);
   const [bestOf, setBestOf] = useState<number | null>(null);
+  const [isUnlimited, setIsUnlimited] = useState(false);
   const [draft, setDraft] = useState<GameDraft | null>(null);
 
   const isTrainMode = mode === 'train';
@@ -49,7 +50,7 @@ export default function ScoreboardSetup() {
         player1: player1.trim(),
         player2: isTrainMode ? '' : player2.trim(),
         numberOfReds: String(numberOfReds),
-        bestOf: isTrainMode ? 'train' : (bestOf === null ? 'single' : String(bestOf)),
+        bestOf: isTrainMode ? 'train' : isUnlimited ? 'unlimited' : (bestOf === null ? 'single' : String(bestOf)),
         mode,
       },
     });
@@ -201,26 +202,42 @@ export default function ScoreboardSetup() {
               key={String(bo)}
               style={[
                 styles.optionBtn,
-                { borderColor: bestOf === bo ? c.primary : c.cardBorder },
-                bestOf === bo && { backgroundColor: 'rgba(255,183,77,0.12)' },
+                { borderColor: !isUnlimited && bestOf === bo ? c.primary : c.cardBorder },
+                !isUnlimited && bestOf === bo && { backgroundColor: 'rgba(255,183,77,0.12)' },
               ]}
-              onPress={() => setBestOf(bo)}
+              onPress={() => { setBestOf(bo); setIsUnlimited(false); }}
             >
               <Text style={[
                 styles.optionBtnText,
-                { color: bestOf === bo ? c.primary : c.textSecondary },
+                { color: !isUnlimited && bestOf === bo ? c.primary : c.textSecondary },
                 { fontSize: bo === null ? 11 : 14 },
               ]}>
                 {bo === null ? '1 frame' : `BO${bo}`}
               </Text>
             </TouchableOpacity>
           ))}
+          <TouchableOpacity
+            style={[
+              styles.optionBtn,
+              { borderColor: isUnlimited ? c.primary : c.cardBorder },
+              isUnlimited && { backgroundColor: 'rgba(255,183,77,0.12)' },
+            ]}
+            onPress={() => setIsUnlimited(true)}
+          >
+            <Text style={[styles.optionBtnText, { color: isUnlimited ? c.primary : c.textSecondary, fontSize: 16 }]}>
+              ∞
+            </Text>
+          </TouchableOpacity>
         </View>
-        {bestOf !== null && (
+        {isUnlimited ? (
+          <Text style={[styles.meta, { color: c.textMuted }]}>
+            Play as many frames as you like
+          </Text>
+        ) : bestOf !== null ? (
           <Text style={[styles.meta, { color: c.textMuted }]}>
             First to {Math.ceil(bestOf / 2)} frame{Math.ceil(bestOf / 2) > 1 ? 's' : ''} wins
           </Text>
-        )}
+        ) : null}
       </View>
 
       {/* Start button */}

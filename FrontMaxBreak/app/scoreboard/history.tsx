@@ -21,7 +21,7 @@ export default function HistoryScreen() {
     loadAllMatches().then(setMatches).catch(() => {});
   }, []));
 
-  const matchHistory = matches.filter(m => !m.mode || m.mode === 'match');
+  const matchHistory = matches.filter(m => !m.mode || m.mode === 'match' || m.mode === 'unlimited');
   const trainSessions = matches.filter(m => m.mode === 'train');
 
   const matchPlayerNames = [...new Set(
