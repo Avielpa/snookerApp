@@ -4,6 +4,7 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { login, logout, register, getUser, isLoggedIn, AuthUser } from '../services/authService';
+import { syncOnLogin } from '../services/scoreboardSyncService';
 
 interface AuthContextValue {
   user: AuthUser | null;
@@ -39,7 +40,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    refresh().finally(() => setLoading(false));
+    refresh().then(async () => {
+      const logged = await isLoggedIn();
+      if (logged) syncOnLogin().catch(() => {});
+    }).finally(() => setLoading(false));
   }, [refresh]);
 
   const doLogin = useCallback(async (username: string, password: string) => {
