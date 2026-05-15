@@ -1,5 +1,6 @@
 # oneFourSeven/models.py
 from django.db import models
+from django.contrib.auth.models import User
 from django.utils import timezone # Keep for potential future use with default/auto_now
 import json
 
@@ -1188,4 +1189,28 @@ class MatchFrameScore(models.Model):
 
     def __str__(self):
         return f"Match {self.match_id} Frame {self.frame_number}: {self.player1_points}-{self.player2_points}"
+
+
+# ================== Scoreboard Cloud Sync Model ==================
+
+class ScoreboardMatch(models.Model):
+    """
+    Stores a user's local scoreboard match (full JSON blob) in the cloud.
+    Used for cross-device sync — the frontend pushes/pulls this data on login.
+    match_id is the frontend-generated UUID (from generateMatchId()).
+    """
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='scoreboard_matches')
+    match_id = models.CharField(max_length=64, db_index=True)
+    data = models.JSONField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('user', 'match_id')
+        ordering = ['-updated_at']
+        verbose_name = "Scoreboard Match"
+        verbose_name_plural = "Scoreboard Matches"
+
+    def __str__(self):
+        return f"{self.user.username} / {self.match_id}"
 

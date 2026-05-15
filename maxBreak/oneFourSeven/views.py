@@ -23,10 +23,11 @@ from rest_framework.response import Response # Use DRF Response
 from rest_framework_simplejwt.tokens import RefreshToken
 
 # Local Imports
-from .models import MatchesOfAnEvent, Player, Ranking, Event, RoundDetails, UpcomingMatch, PlayerMatchHistory, H2HCache
+from .models import MatchesOfAnEvent, Player, Ranking, Event, RoundDetails, UpcomingMatch, PlayerMatchHistory, H2HCache, ScoreboardMatch
 from .serializers import (
     EventSerializer, MatchesOfAnEventSerializer, PlayerSerializer,
-    RankingSerializer, UserSerializer, PlayerMatchHistorySerializer
+    RankingSerializer, UserSerializer, PlayerMatchHistorySerializer,
+    ScoreboardMatchSerializer,
 )
 # Import specific fetch functions from the refactored scraper
 from .scraper import (
@@ -2187,5 +2188,51 @@ def match_comment_like_view(request, match_api_id: int, comment_id: int):
         liked = True
 
     return Response({'liked': liked, 'likes_count': comment.likes.count()}, status=status.HTTP_200_OK)
+
+
+# ================== Scoreboard Cloud Sync Views ==================
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def scoreboard_matches_view(request):
+    """
+    GET  — return all matches the authenticated user has uploaded.
+    POST — upsert a single match (create or update by match_id).
+           Body: { match_id: str, data: object }
+    """
+    if request.method == 'GET':
+        matches = ScoreboardMatch.objects.filter(user=request.user)
+        serializer = ScoreboardMatchSerializer(matches, many=True)
+        return Response(serializer.data)
+
+    # POST — upsert
+    match_id = request.data.get('match_id', '').strip()
+    if not match_id:
+        return Response({'error': 'match_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+    data = request.data.get('data')
+    if data is None:
+        return Response({'error': 'data is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+    obj, created = ScoreboardMatch.objects.update_or_create(
+        user=request.user,
+        match_id=match_id,
+        defaults={'data': data},
+    )
+    serializer = ScoreboardMatchSerializer(obj)
+    return Response(serializer.data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
+
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def scoreboard_match_delete_view(request, match_id):
+    """
+    DELETE — remove a single match from the user's cloud storage.
+    """
+    try:
+        match = ScoreboardMatch.objects.get(user=request.user, match_id=match_id)
+    except ScoreboardMatch.DoesNotExist:
+        return Response({'error': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
+    match.delete()
+    return Response(status=status.HTTP_204_NO_CONTENT)
 
 

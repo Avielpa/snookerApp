@@ -59,6 +59,9 @@ from .views import (
     match_comments_view,
     match_comment_delete_view,
     match_comment_like_view,
+    # Scoreboard Cloud Sync Views
+    scoreboard_matches_view,
+    scoreboard_match_delete_view,
 )
 
 # --- DRF Router Setup ---
@@ -165,6 +168,10 @@ urlpatterns = [
     path('matches/<int:match_api_id>/comments/', match_comments_view, name='match-comments'),
     path('matches/<int:match_api_id>/comments/<int:comment_id>/', match_comment_delete_view, name='match-comment-delete'),
     path('matches/<int:match_api_id>/comments/<int:comment_id>/like/', match_comment_like_view, name='match-comment-like'),
+
+    # --- Scoreboard Cloud Sync ---
+    path('scoreboard/matches/', scoreboard_matches_view, name='scoreboard-matches'),
+    path('scoreboard/matches/<str:match_id>/', scoreboard_match_delete_view, name='scoreboard-match-delete'),
 
     # --- Debug URL ---
     # Debug endpoint for checking system status

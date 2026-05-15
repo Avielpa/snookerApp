@@ -3,7 +3,7 @@ from rest_framework import serializers
 from django.contrib.auth.models import User # Default Django user model
 
 # Import your application's models
-from .models import Event, Player, Ranking, MatchesOfAnEvent, PlayerMatchHistory, MatchComment
+from .models import Event, Player, Ranking, MatchesOfAnEvent, PlayerMatchHistory, MatchComment, ScoreboardMatch
 
 class PlayerSerializer(serializers.ModelSerializer):
     """
@@ -215,6 +215,18 @@ class PlayerMatchHistorySerializer(serializers.ModelSerializer):
             'season',
         ]
         read_only_fields = ['api_match_id', 'event_id', 'event_name']
+
+
+class ScoreboardMatchSerializer(serializers.ModelSerializer):
+    """
+    Serializes ScoreboardMatch instances for cloud sync.
+    'data' is the full StoredMatch JSON blob stored by the frontend.
+    'match_id' is the frontend UUID — the client supplies it on upload.
+    """
+    class Meta:
+        model = ScoreboardMatch
+        fields = ['match_id', 'data', 'created_at', 'updated_at']
+        read_only_fields = ['created_at', 'updated_at']
 
 
 
