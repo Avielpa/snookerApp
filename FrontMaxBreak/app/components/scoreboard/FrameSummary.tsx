@@ -41,7 +41,7 @@ export default function FrameSummary({
             </Text>
             {highestBreak[0] > 0 && (
               <Text style={[styles.subtext, { color: c.textSecondary }]}>
-                Best break: {highestBreak[0]}
+                Highest break: {highestBreak[0]}
               </Text>
             )}
             {sessionBest !== undefined && sessionBest > 0 && (
@@ -116,7 +116,7 @@ export default function FrameSummary({
                 </Text>
                 {highestBreak[p] > 0 && (
                   <Text style={[styles.meta, { color: c.textMuted }]}>
-                    Best break: {highestBreak[p]}
+                    Highest break: {highestBreak[p]}
                   </Text>
                 )}
                 <Text style={[styles.meta, { color: c.textMuted }]}>

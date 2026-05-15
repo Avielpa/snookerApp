@@ -252,7 +252,7 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
   const scoreDiff = snap.scores[0] - snap.scores[1];
   const leadText = scoreDiff === 0
     ? 'Level'
-    : `${playerNames[scoreDiff > 0 ? 0 : 1]} leads by ${Math.abs(scoreDiff)}`;
+    : `${playerNames[scoreDiff > 0 ? 0 : 1]} ahead · ${playerNames[scoreDiff > 0 ? 1 : 0]} ${Math.abs(scoreDiff)} behind`;
 
   return (
     <View style={[styles.root, { backgroundColor: c.background, paddingTop: insets.top }]}>
@@ -311,7 +311,7 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
 
       {/* Points on table */}
       <View style={[styles.pot, { backgroundColor: c.backgroundSecondary }]}>
-        <Text style={[styles.potLabel, { color: c.textMuted }]}>Points on table</Text>
+        <Text style={[styles.potLabel, { color: c.textMuted }]}>Points remaining</Text>
         <Text style={[styles.potValue, { color: c.primary }]}>{snap.pointsOnTable}</Text>
         {isTrainMode ? (
           snap.currentBreak > 0 && (
