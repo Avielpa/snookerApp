@@ -87,6 +87,11 @@ export default function AuthCard({ visible, onClose }: Props) {
             <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
               <View style={[styles.card, { backgroundColor: c.cardBackground, borderColor: c.cardBorder }]}>
 
+                {/* Close button — always visible */}
+                <TouchableOpacity style={styles.closeBtn} onPress={close} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                  <Text style={[styles.closeBtnText, { color: c.textMuted }]}>✕</Text>
+                </TouchableOpacity>
+
                 {loggedIn && user ? (
                   /* ── Logged-in state ──────────────────────────────── */
                   <>
@@ -182,7 +187,7 @@ export default function AuthCard({ visible, onClose }: Props) {
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.55)',
+    backgroundColor: 'rgba(0,0,0,0.82)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
@@ -192,7 +197,15 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 1,
     padding: 20,
+    paddingTop: 14,
     gap: 10,
+  },
+  closeBtn: {
+    alignSelf: 'flex-end',
+    marginBottom: -4,
+  },
+  closeBtnText: {
+    fontSize: 18,
   },
   heading: {
     fontSize: 18,
