@@ -1,5 +1,7 @@
 from django.contrib import admin
-from .models import MatchesOfAnEvent, Player, Event, Ranking, DeviceToken, OtherTourEvent, OtherTourMatch, OtherTourPlayer, MatchComment
+from django.contrib.auth.admin import UserAdmin
+from django.contrib.auth.models import User
+from .models import MatchesOfAnEvent, Player, Event, Ranking, DeviceToken, OtherTourEvent, OtherTourMatch, OtherTourPlayer, MatchComment, ScoreboardMatch
 
 @admin.register(Player)
 class PlayerAdmin(admin.ModelAdmin):
@@ -87,3 +89,45 @@ class MatchCommentAdmin(admin.ModelAdmin):
     @admin.action(description='Hard delete selected comments (permanent)')
     def hard_delete_comments(self, request, queryset):
         queryset.delete()
+
+
+@admin.register(ScoreboardMatch)
+class ScoreboardMatchAdmin(admin.ModelAdmin):
+    list_display = ('username', 'player1_display', 'player2_display', 'mode_display', 'match_id_short', 'created_at', 'updated_at')
+    search_fields = ('user__username', 'match_id')
+    list_filter = ('created_at',)
+    ordering = ('-created_at',)
+    readonly_fields = ('match_id', 'created_at', 'updated_at')
+
+    def username(self, obj):
+        return obj.user.username
+    username.short_description = 'User'
+    username.admin_order_field = 'user__username'
+
+    def player1_display(self, obj):
+        return obj.data.get('player1Name', '-')
+    player1_display.short_description = 'Player 1'
+
+    def player2_display(self, obj):
+        return obj.data.get('player2Name', '-') or '-'
+    player2_display.short_description = 'Player 2'
+
+    def mode_display(self, obj):
+        return obj.data.get('mode', 'match')
+    mode_display.short_description = 'Mode'
+
+    def match_id_short(self, obj):
+        return obj.match_id[:8] + '...'
+    match_id_short.short_description = 'Match ID'
+
+
+class SnookerUserAdmin(UserAdmin):
+    list_display = UserAdmin.list_display + ('match_count',)
+
+    def match_count(self, obj):
+        return obj.scoreboard_matches.count()
+    match_count.short_description = 'Matches stored'
+
+
+admin.site.unregister(User)
+admin.site.register(User, SnookerUserAdmin)

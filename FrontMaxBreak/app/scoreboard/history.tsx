@@ -28,53 +28,80 @@ export default function HistoryScreen() {
 
   // ── Rivalry card ────────────────────────────────────────────────────────────
 
+  function handleDeleteRivalry(r: RivalryGroup) {
+    Alert.alert(
+      'Delete rivalry?',
+      `All ${r.totalSessions} session${r.totalSessions !== 1 ? 's' : ''} between ${r.player1} and ${r.player2} will be removed. This cannot be undone.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete All', style: 'destructive',
+          onPress: async () => {
+            for (const m of r.matches) await deleteMatch(m.id);
+            setMatches(prev => prev.filter(m => !r.matches.some(rm => rm.id === m.id)));
+          },
+        },
+      ],
+    );
+  }
+
   function renderRivalry({ item: r }: { item: RivalryGroup }) {
     const p1Leads = r.matchesWon[0] > r.matchesWon[1];
     const p2Leads = r.matchesWon[1] > r.matchesWon[0];
 
     return (
-      <TouchableOpacity
-        style={[styles.card, { backgroundColor: c.cardBackground, borderColor: c.cardBorder }]}
-        onPress={() => router.push({
-          pathname: '/scoreboard/rivalry' as any,
-          params: { rivalryKey: r.key, player1: r.player1, player2: r.player2 },
-        })}
-        activeOpacity={0.75}
-      >
-        {/* Names + record */}
-        <View style={styles.rivalryRow}>
-          <View style={{ flex: 1 }}>
-            <View style={styles.rivalryNameRow}>
-              <Text style={[styles.rivalryName, { color: p1Leads ? c.primary : c.textPrimary }]} numberOfLines={1}>
-                {p1Leads ? '🏆 ' : ''}{r.player1}
-              </Text>
-              <View style={styles.rivalryScore}>
-                <Text style={[styles.rivalryScoreText, { color: c.textPrimary }]}>
-                  {r.matchesWon[0]}–{r.matchesWon[1]}
+      <View style={[styles.card, { backgroundColor: c.cardBackground, borderColor: c.cardBorder }]}>
+        {/* Tappable area → navigate into rivalry detail */}
+        <TouchableOpacity
+          onPress={() => router.push({
+            pathname: '/scoreboard/rivalry' as any,
+            params: { rivalryKey: r.key, player1: r.player1, player2: r.player2 },
+          })}
+          activeOpacity={0.75}
+        >
+          <View style={styles.rivalryRow}>
+            <View style={{ flex: 1 }}>
+              <View style={styles.rivalryNameRow}>
+                <Text style={[styles.rivalryName, { color: p1Leads ? c.primary : c.textPrimary }]} numberOfLines={1}>
+                  {p1Leads ? '🏆 ' : ''}{r.player1}
                 </Text>
-                <Text style={[styles.rivalryScoreSub, { color: c.textMuted }]}>sessions</Text>
+                <View style={styles.rivalryScore}>
+                  <Text style={[styles.rivalryScoreText, { color: c.textPrimary }]}>
+                    {r.matchesWon[0]}–{r.matchesWon[1]}
+                  </Text>
+                  <Text style={[styles.rivalryScoreSub, { color: c.textMuted }]}>sessions</Text>
+                </View>
+                <Text style={[styles.rivalryNameRight, { color: p2Leads ? c.primary : c.textPrimary }]} numberOfLines={1}>
+                  {r.player2}{p2Leads ? ' 🏆' : ''}
+                </Text>
               </View>
-              <Text style={[styles.rivalryNameRight, { color: p2Leads ? c.primary : c.textPrimary }]} numberOfLines={1}>
-                {r.player2}{p2Leads ? ' 🏆' : ''}
-              </Text>
-            </View>
 
-            {/* Sub stats */}
-            <View style={styles.rivalryMeta}>
-              <Text style={[styles.rivalryMetaText, { color: c.textMuted }]}>
-                Frames {r.framesWon[0]}–{r.framesWon[1]}
-              </Text>
-              <Text style={[styles.rivalryMetaText, { color: c.textMuted }]}>
-                {r.totalSessions} session{r.totalSessions !== 1 ? 's' : ''}
-              </Text>
-              <Text style={[styles.rivalryMetaText, { color: c.textMuted }]}>
-                {formatDate(r.lastPlayedAt)}
-              </Text>
+              <View style={styles.rivalryMeta}>
+                <Text style={[styles.rivalryMetaText, { color: c.textMuted }]}>
+                  Frames {r.framesWon[0]}–{r.framesWon[1]}
+                </Text>
+                <Text style={[styles.rivalryMetaText, { color: c.textMuted }]}>
+                  {r.totalSessions} session{r.totalSessions !== 1 ? 's' : ''}
+                </Text>
+                <Text style={[styles.rivalryMetaText, { color: c.textMuted }]}>
+                  {formatDate(r.lastPlayedAt)}
+                </Text>
+              </View>
             </View>
+            <Text style={[styles.rivalryChevron, { color: c.textMuted }]}>›</Text>
           </View>
-          <Text style={[styles.rivalryChevron, { color: c.textMuted }]}>›</Text>
+        </TouchableOpacity>
+
+        {/* Footer with delete */}
+        <View style={[styles.rivalryCardFooter, { borderTopColor: c.cardBorder }]}>
+          <TouchableOpacity
+            onPress={() => handleDeleteRivalry(r)}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Text style={[styles.rivalryDeleteText, { color: '#CC0000' }]}>Delete</Text>
+          </TouchableOpacity>
         </View>
-      </TouchableOpacity>
+      </View>
     );
   }
 
@@ -232,6 +259,8 @@ const styles = StyleSheet.create({
   list: { padding: 16, gap: 10 },
   card: { borderRadius: 12, borderWidth: 1, padding: 14, marginBottom: 2 },
   // Rivalry card
+  rivalryCardFooter: { borderTopWidth: 1, paddingTop: 8, marginTop: 6, alignItems: 'flex-end' },
+  rivalryDeleteText: { fontSize: 12, fontFamily: 'PoppinsBold' },
   rivalryRow: { flexDirection: 'row', alignItems: 'center' },
   rivalryNameRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
   rivalryName: { fontSize: 16, fontFamily: 'PoppinsBold', flex: 1 },

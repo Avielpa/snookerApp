@@ -3,14 +3,17 @@
 
 import React, { useCallback, useState } from 'react';
 import {
-  View, Text, FlatList, TouchableOpacity, StyleSheet, Alert,
+  View, Text, FlatList, TouchableOpacity, StyleSheet, Alert, Modal, TextInput,
 } from 'react-native';
 import { router, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../contexts/ThemeContext';
 import {
-  loadAllMatches, deleteMatch, StoredMatch, groupByRivalry, RivalryGroup,
+  loadAllMatches, loadMatch, deleteMatch, StoredMatch,
+  groupByRivalry, RivalryGroup, updateMatchPlayerNames,
 } from '../../services/gameStorage';
+import { uploadMatch } from '../../services/scoreboardSyncService';
+import { isLoggedIn } from '../../services/authService';
 
 export default function RivalryScreen() {
   const { theme } = useTheme();
@@ -22,6 +25,9 @@ export default function RivalryScreen() {
 
   const [rivalry, setRivalry] = useState<RivalryGroup | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [editingMatch, setEditingMatch] = useState<StoredMatch | null>(null);
+  const [editP1, setEditP1] = useState('');
+  const [editP2, setEditP2] = useState('');
 
   useFocusEffect(useCallback(() => {
     loadAllMatches().then(all => {
@@ -49,6 +55,42 @@ export default function RivalryScreen() {
         },
       },
     ]);
+  }
+
+  function openEdit(m: StoredMatch, r: RivalryGroup) {
+    const isP1 = m.player1Name.trim().toLowerCase() === r.player1.toLowerCase();
+    setEditP1(isP1 ? m.player1Name.trim() : m.player2Name.trim());
+    setEditP2(isP1 ? m.player2Name.trim() : m.player1Name.trim());
+    setEditingMatch(m);
+  }
+
+  async function handleSaveEdit() {
+    if (!editingMatch) return;
+    const p1 = editP1.trim();
+    const p2 = editP2.trim();
+    if (!p1 || !p2) return;
+
+    const r = rivalry!;
+    const isP1 = editingMatch.player1Name.trim().toLowerCase() === r.player1.toLowerCase();
+    const newP1Name = isP1 ? p1 : p2;
+    const newP2Name = isP1 ? p2 : p1;
+
+    const updated = await updateMatchPlayerNames(editingMatch.id, newP1Name, newP2Name);
+    setEditingMatch(null);
+
+    if (updated) {
+      isLoggedIn().then(logged => {
+        if (logged) uploadMatch(updated).catch(() => {});
+      });
+    }
+
+    // Reload rivalry — find group that still contains this match (key may have changed)
+    const matchId = editingMatch.id;
+    loadAllMatches().then(all => {
+      const groups = groupByRivalry(all);
+      const found = groups.find(g => g.matches.some(m => m.id === matchId));
+      setRivalry(found ?? null);
+    }).catch(() => {});
   }
 
   function startNewSession() {
@@ -80,7 +122,6 @@ export default function RivalryScreen() {
 
   const ListHeader = () => (
     <View style={{ marginBottom: 16 }}>
-      {/* Overall sessions record */}
       <View style={[styles.h2hCard, { backgroundColor: c.cardBackground, borderColor: c.cardBorder }]}>
         <View style={styles.h2hRow}>
           <View style={styles.h2hPlayer}>
@@ -101,7 +142,6 @@ export default function RivalryScreen() {
           </View>
         </View>
 
-        {/* Detailed stats grid */}
         <View style={[styles.divider, { backgroundColor: c.cardBorder }]} />
 
         {([
@@ -119,7 +159,6 @@ export default function RivalryScreen() {
         ))}
       </View>
 
-      {/* New session button */}
       <TouchableOpacity
         style={[styles.newSessionBtn, { backgroundColor: c.primary }]}
         onPress={startNewSession}
@@ -147,22 +186,29 @@ export default function RivalryScreen() {
 
     return (
       <View style={[styles.sessionCard, { backgroundColor: c.cardBackground, borderColor: c.cardBorder }]}>
-        {/* Header row — delete button lives here so it doesn't toggle expand */}
         <View style={styles.sessionHeader}>
           <Text style={[styles.sessionDate, { color: c.textMuted }]}>{formatDate(m.startedAt)}</Text>
           <Text style={[styles.sessionMeta, { color: c.textMuted }]}>
             {m.bestOf === null ? '1 frame' : m.bestOf === 9999 ? 'Unlimited' : `BO${m.bestOf}`} · {m.numberOfReds} reds
           </Text>
-          <TouchableOpacity
-            onPress={() => handleDelete(m.id)}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            style={styles.deleteBtn}
-          >
-            <Text style={[styles.deleteBtnText, { color: '#CC0000' }]}>Delete</Text>
-          </TouchableOpacity>
+          <View style={styles.sessionActions}>
+            <TouchableOpacity
+              onPress={() => openEdit(m, r)}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              style={styles.actionBtn}
+            >
+              <Text style={[styles.actionBtnText, { color: c.textMuted }]}>Edit</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => handleDelete(m.id)}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              style={styles.actionBtn}
+            >
+              <Text style={[styles.actionBtnText, { color: '#CC0000' }]}>Delete</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
-        {/* Tappable body — score + frame breakdown */}
         <TouchableOpacity
           onPress={() => hasFrames && setExpandedId(isExpanded ? null : m.id)}
           activeOpacity={hasFrames ? 0.8 : 1}
@@ -181,7 +227,6 @@ export default function RivalryScreen() {
 
           {hasFrames && (
             isExpanded ? (
-              // Full frame-by-frame table
               <View style={[styles.frameTable, { borderTopColor: c.cardBorder }]}>
                 <View style={[styles.frameTableHeaderRow, { borderBottomColor: c.cardBorder }]}>
                   <Text style={[styles.frameTableHeaderCell, { color: c.textMuted, flex: 0.6 }]}>Frame</Text>
@@ -261,6 +306,51 @@ export default function RivalryScreen() {
         ListHeaderComponent={<ListHeader />}
         ListEmptyComponent={<Text style={[styles.empty, { color: c.textMuted }]}>No sessions yet.</Text>}
       />
+
+      {/* ── Edit player names modal ── */}
+      <Modal visible={editingMatch !== null} transparent animationType="fade">
+        <View style={styles.editOverlay}>
+          <View style={[styles.editCard, { backgroundColor: c.backgroundSecondary, borderColor: c.cardBorder }]}>
+            <Text style={[styles.editTitle, { color: c.textPrimary }]}>Edit Player Names</Text>
+
+            <Text style={[styles.editLabel, { color: c.textMuted }]}>Player 1</Text>
+            <TextInput
+              style={[styles.editInput, { color: c.textPrimary, borderColor: c.cardBorder, backgroundColor: c.backgroundTertiary }]}
+              value={editP1}
+              onChangeText={setEditP1}
+              autoCapitalize="words"
+              returnKeyType="next"
+              placeholderTextColor={c.textMuted}
+            />
+
+            <Text style={[styles.editLabel, { color: c.textMuted }]}>Player 2</Text>
+            <TextInput
+              style={[styles.editInput, { color: c.textPrimary, borderColor: c.cardBorder, backgroundColor: c.backgroundTertiary }]}
+              value={editP2}
+              onChangeText={setEditP2}
+              autoCapitalize="words"
+              returnKeyType="done"
+              onSubmitEditing={handleSaveEdit}
+              placeholderTextColor={c.textMuted}
+            />
+
+            <View style={styles.editBtnRow}>
+              <TouchableOpacity
+                style={[styles.editBtn, { backgroundColor: c.backgroundTertiary }]}
+                onPress={() => setEditingMatch(null)}
+              >
+                <Text style={[styles.editBtnText, { color: c.textSecondary }]}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.editBtn, { backgroundColor: c.primary }]}
+                onPress={handleSaveEdit}
+              >
+                <Text style={[styles.editBtnText, { color: '#121212' }]}>Save</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -294,8 +384,11 @@ const styles = StyleSheet.create({
   // Session card
   sessionCard: { borderRadius: 12, borderWidth: 1, padding: 14, marginBottom: 8 },
   sessionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
-  sessionDate: { fontSize: 12 },
+  sessionDate: { fontSize: 12, flex: 1 },
   sessionMeta: { fontSize: 12 },
+  sessionActions: { flexDirection: 'row', gap: 10, marginLeft: 8 },
+  actionBtn: { paddingHorizontal: 2 },
+  actionBtnText: { fontSize: 12, fontFamily: 'PoppinsBold' },
   sessionScore: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
   sessionPlayer: { fontSize: 15, fontFamily: 'PoppinsBold', flex: 1 },
   sessionPlayerRight: { fontSize: 15, fontFamily: 'PoppinsBold', flex: 1, textAlign: 'right' },
@@ -303,8 +396,6 @@ const styles = StyleSheet.create({
   pillsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 4 },
   pill: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
   pillText: { fontSize: 11 },
-  deleteBtn: { paddingHorizontal: 4 },
-  deleteBtnText: { fontSize: 12, fontFamily: 'PoppinsBold' },
   // Frame detail table
   frameTable: { marginTop: 8, borderTopWidth: 1 },
   frameTableHeaderRow: { flexDirection: 'row', paddingVertical: 6, borderBottomWidth: 1 },
@@ -312,5 +403,14 @@ const styles = StyleSheet.create({
   frameTableRow: { flexDirection: 'row', paddingVertical: 6, borderBottomWidth: 1 },
   frameTableCell: { fontSize: 13 },
   expandHint: { fontSize: 11, textAlign: 'center', marginTop: 8 },
+  // Edit modal
+  editOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.75)', justifyContent: 'center', alignItems: 'center', padding: 24 },
+  editCard: { width: '100%', maxWidth: 360, borderRadius: 16, borderWidth: 1, padding: 24 },
+  editTitle: { fontSize: 17, fontFamily: 'PoppinsBold', marginBottom: 20, textAlign: 'center' },
+  editLabel: { fontSize: 12, marginBottom: 6 },
+  editInput: { borderWidth: 1, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, fontSize: 15, fontFamily: 'PoppinsRegular', marginBottom: 16 },
+  editBtnRow: { flexDirection: 'row', gap: 10, marginTop: 4 },
+  editBtn: { flex: 1, paddingVertical: 13, borderRadius: 10, alignItems: 'center' },
+  editBtnText: { fontFamily: 'PoppinsBold', fontSize: 15 },
   empty: { textAlign: 'center', marginTop: 60, fontSize: 14 },
 });

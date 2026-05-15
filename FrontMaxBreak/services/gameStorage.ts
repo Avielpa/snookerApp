@@ -245,6 +245,14 @@ export function groupByRivalry(matches: StoredMatch[]): RivalryGroup[] {
   );
 }
 
+export async function updateMatchPlayerNames(id: string, player1Name: string, player2Name: string): Promise<StoredMatch | null> {
+  const match = await loadMatch(id);
+  if (!match) return null;
+  const updated: StoredMatch = { ...match, player1Name: player1Name.trim(), player2Name: player2Name.trim() };
+  await saveMatch(updated);
+  return updated;
+}
+
 export function computePlayerStats(matches: StoredMatch[], playerName: string): PlayerStats {
   const relevant = matches.filter(
     m => m.isComplete && (!m.mode || m.mode === 'match' || m.mode === 'unlimited') &&
