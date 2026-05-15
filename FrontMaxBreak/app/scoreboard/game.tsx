@@ -7,6 +7,8 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { useGameContext } from '../../contexts/GameContext';
 import { useSnookerGame, BallType, getSnookersNeeded, GameState } from '../../hooks/useSnookerGame';
 import { saveMatch, saveDraft, loadDraft, clearDraft, GameDraft, StoredMatch } from '../../services/gameStorage';
+import { uploadMatch } from '../../services/scoreboardSyncService';
+import { isLoggedIn } from '../../services/authService';
 import PlayerCard from '../components/scoreboard/PlayerCard';
 import BallPad from '../components/scoreboard/BallPad';
 import FoulModal from '../components/scoreboard/FoulModal';
@@ -121,6 +123,11 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
     };
     if (complete) stored.completedAt = new Date().toISOString();
     await saveMatch(stored);
+    if (complete) {
+      isLoggedIn().then(logged => {
+        if (logged) uploadMatch(stored).catch(() => {});
+      });
+    }
   }
 
   function handleNextFrame() {

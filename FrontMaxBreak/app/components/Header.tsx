@@ -1,9 +1,10 @@
-import React from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity, Share } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, usePathname } from 'expo-router';
 import { useTheme } from '../../contexts/ThemeContext';
-import { getOrCreateDeviceId } from '../../utils/deviceIdentity';
+import { useAuth } from '../../contexts/AuthContext';
+import AuthCard from './AuthCard';
 
 const Header = () => {
   const insets = useSafeAreaInsets();
@@ -11,11 +12,8 @@ const Header = () => {
   const colors = theme.colors;
   const pathname = usePathname();
   const isInScoreboard = pathname.startsWith('/scoreboard');
-
-  const handleCopyDeviceId = async () => {
-    const id = await getOrCreateDeviceId();
-    await Share.share({ message: id });
-  };
+  const { loggedIn } = useAuth();
+  const [authVisible, setAuthVisible] = useState(false);
 
   return (
     <View style={[styles.header, {
@@ -46,10 +44,14 @@ const Header = () => {
           </Text>
         </View>
 
-        <TouchableOpacity style={styles.rightSection} onPress={handleCopyDeviceId}>
-          <Text style={{ color: colors.textMuted, fontSize: 18 }}>⚙</Text>
+        <TouchableOpacity style={styles.rightSection} onPress={() => setAuthVisible(true)}>
+          <Text style={{ color: loggedIn ? colors.primary : colors.textMuted, fontSize: 18 }}>
+            {loggedIn ? '👤' : '🔑'}
+          </Text>
         </TouchableOpacity>
       </View>
+
+      <AuthCard visible={authVisible} onClose={() => setAuthVisible(false)} />
     </View>
   );
 };

@@ -6,6 +6,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as Updates from 'expo-updates';
 import { ThemeProvider, useTheme } from '../contexts/ThemeContext';
 import { GameProvider } from '../contexts/GameContext';
+import { AuthProvider } from '../contexts/AuthContext';
 import { logger } from '../utils/logger';
 import { api } from '../services/api';
 import { initPushNotifications } from '../utils/notifications';
@@ -103,9 +104,11 @@ export default function RootLayout() {
     return (
         <ErrorBoundary>
             <ThemeProvider>
-                <GameProvider>
-                    <ThemedLayout />
-                </GameProvider>
+                <AuthProvider>
+                    <GameProvider>
+                        <ThemedLayout />
+                    </GameProvider>
+                </AuthProvider>
             </ThemeProvider>
         </ErrorBoundary>
     );
