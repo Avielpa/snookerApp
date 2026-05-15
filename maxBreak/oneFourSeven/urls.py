@@ -65,6 +65,8 @@ from .views import (
     # Account Deletion
     delete_account_view,
     account_deletion_page_view,
+    # Account Management
+    change_password_view,
 )
 
 # --- DRF Router Setup ---
@@ -176,8 +178,9 @@ urlpatterns = [
     path('scoreboard/matches/', scoreboard_matches_view, name='scoreboard-matches'),
     path('scoreboard/matches/<str:match_id>/', scoreboard_match_delete_view, name='scoreboard-match-delete'),
 
-    # --- Account Deletion ---
+    # --- Account Management ---
     path('auth/delete-account/', delete_account_view, name='delete-account'),
+    path('auth/change-password/', change_password_view, name='change-password'),
     path('account-deletion/', account_deletion_page_view, name='account-deletion-page'),
 
     # --- Debug URL ---

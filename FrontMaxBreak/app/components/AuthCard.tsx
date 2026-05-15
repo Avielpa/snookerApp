@@ -11,7 +11,7 @@ import axios from 'axios';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { syncOnLogin } from '../../services/scoreboardSyncService';
-import { getAuthHeader } from '../../services/authService';
+import { getAuthHeader, changePassword } from '../../services/authService';
 
 const API_BASE = process.env.EXPO_PUBLIC_API_BASE_URL || 'https://snookerapp.up.railway.app/oneFourSeven/';
 
@@ -34,11 +34,24 @@ export default function AuthCard({ visible, onClose }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const [showChangePw, setShowChangePw] = useState(false);
+  const [oldPw, setOldPw] = useState('');
+  const [newPw, setNewPw] = useState('');
+  const [confirmPw, setConfirmPw] = useState('');
+  const [pwError, setPwError] = useState('');
+  const [pwSuccess, setPwSuccess] = useState('');
+
   function resetForm() {
     setUsername('');
     setPassword('');
     setEmail('');
     setError('');
+    setShowChangePw(false);
+    setOldPw('');
+    setNewPw('');
+    setConfirmPw('');
+    setPwError('');
+    setPwSuccess('');
   }
 
   function close() {
@@ -109,6 +122,32 @@ export default function AuthCard({ visible, onClose }: Props) {
     );
   }
 
+  async function handleChangePassword() {
+    setPwError('');
+    setPwSuccess('');
+    if (!oldPw || !newPw || !confirmPw) {
+      setPwError('All fields are required.');
+      return;
+    }
+    if (newPw !== confirmPw) {
+      setPwError('New passwords do not match.');
+      return;
+    }
+    setLoading(true);
+    try {
+      await changePassword(oldPw, newPw);
+      setPwSuccess('Password changed successfully.');
+      setOldPw('');
+      setNewPw('');
+      setConfirmPw('');
+    } catch (e: any) {
+      const msg = e?.response?.data?.error || e?.message || 'Could not change password.';
+      setPwError(msg);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={close}>
       <TouchableWithoutFeedback onPress={close}>
@@ -133,23 +172,81 @@ export default function AuthCard({ visible, onClose }: Props) {
                     <Text style={[styles.syncNote, { color: c.textSecondary }]}>
                       Your match history syncs automatically across devices.
                     </Text>
-                    {loading ? (
-                      <ActivityIndicator color={c.primary} style={{ marginTop: 8 }} />
-                    ) : (
+
+                    {/* Change password section */}
+                    <TouchableOpacity
+                      onPress={() => { setShowChangePw(v => !v); setPwError(''); setPwSuccess(''); }}
+                      style={styles.deleteBtn}
+                    >
+                      <Text style={[styles.deleteBtnText, { color: c.textSecondary }]}>
+                        {showChangePw ? 'Cancel' : 'Change password'}
+                      </Text>
+                    </TouchableOpacity>
+
+                    {showChangePw && (
                       <>
-                        <TouchableOpacity
-                          style={[styles.btn, { backgroundColor: '#CC0000' }]}
-                          onPress={handleLogout}
-                        >
-                          <Text style={styles.btnText}>Log out</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={styles.deleteBtn}
-                          onPress={handleDeleteAccount}
-                        >
-                          <Text style={[styles.deleteBtnText, { color: c.textMuted }]}>Delete account</Text>
-                        </TouchableOpacity>
+                        <TextInput
+                          style={[styles.input, { color: c.textPrimary, borderColor: c.cardBorder }]}
+                          placeholder="Current password"
+                          placeholderTextColor={c.textMuted}
+                          value={oldPw}
+                          onChangeText={setOldPw}
+                          secureTextEntry
+                        />
+                        <TextInput
+                          style={[styles.input, { color: c.textPrimary, borderColor: c.cardBorder }]}
+                          placeholder="New password"
+                          placeholderTextColor={c.textMuted}
+                          value={newPw}
+                          onChangeText={setNewPw}
+                          secureTextEntry
+                        />
+                        <TextInput
+                          style={[styles.input, { color: c.textPrimary, borderColor: c.cardBorder }]}
+                          placeholder="Confirm new password"
+                          placeholderTextColor={c.textMuted}
+                          value={confirmPw}
+                          onChangeText={setConfirmPw}
+                          secureTextEntry
+                        />
+                        {!!pwError && (
+                          <Text style={[styles.error, { color: '#CC0000' }]}>{pwError}</Text>
+                        )}
+                        {!!pwSuccess && (
+                          <Text style={[styles.error, { color: '#4CAF50' }]}>{pwSuccess}</Text>
+                        )}
+                        {loading ? (
+                          <ActivityIndicator color={c.primary} style={{ marginTop: 4 }} />
+                        ) : (
+                          <TouchableOpacity
+                            style={[styles.btn, { backgroundColor: c.primary }]}
+                            onPress={handleChangePassword}
+                          >
+                            <Text style={styles.btnText}>Update password</Text>
+                          </TouchableOpacity>
+                        )}
                       </>
+                    )}
+
+                    {!showChangePw && (
+                      loading ? (
+                        <ActivityIndicator color={c.primary} style={{ marginTop: 8 }} />
+                      ) : (
+                        <>
+                          <TouchableOpacity
+                            style={[styles.btn, { backgroundColor: '#CC0000' }]}
+                            onPress={handleLogout}
+                          >
+                            <Text style={styles.btnText}>Log out</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            style={styles.deleteBtn}
+                            onPress={handleDeleteAccount}
+                          >
+                            <Text style={[styles.deleteBtnText, { color: c.textMuted }]}>Delete account</Text>
+                          </TouchableOpacity>
+                        </>
+                      )
                     )}
                   </>
                 ) : (

@@ -118,6 +118,15 @@ export async function getValidAccessToken(): Promise<string> {
   return newAccess;
 }
 
+export async function changePassword(oldPassword: string, newPassword: string): Promise<void> {
+  const token = await getValidAccessToken();
+  await axios.post(
+    `${API_BASE}auth/change-password/`,
+    { old_password: oldPassword, new_password: newPassword },
+    { headers: { Authorization: `Bearer ${token}` } },
+  );
+}
+
 /**
  * Returns an Authorization header value, or null if the user is not logged in.
  * Safe to call even when logged out.

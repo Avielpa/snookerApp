@@ -1,6 +1,8 @@
 # oneFourSeven/serializers.py
 from rest_framework import serializers
 from django.contrib.auth.models import User # Default Django user model
+from django.contrib.auth.password_validation import validate_password as django_validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
 
 # Import your application's models
 from .models import Event, Player, Ranking, MatchesOfAnEvent, PlayerMatchHistory, MatchComment, ScoreboardMatch
@@ -145,6 +147,13 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ['id', 'username', 'email', 'is_staff', 'is_active', 'date_joined', 'password']
         read_only_fields = ['id', 'is_staff', 'is_active', 'date_joined']
+
+    def validate_password(self, value):
+        try:
+            django_validate_password(value)
+        except DjangoValidationError as e:
+            raise serializers.ValidationError(list(e.messages))
+        return value
 
     def create(self, validated_data):
         password = validated_data.pop('password')
