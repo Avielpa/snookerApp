@@ -1,6 +1,7 @@
 # oneFourSeven/urls.py
 from django.urls import path, include
-from rest_framework import routers # Import DRF router
+from rest_framework import routers
+from rest_framework_simplejwt.views import TokenRefreshView
 
 # Import views from the current application (.)
 from .views_stats import (
@@ -77,8 +78,7 @@ urlpatterns = [
     # --- Authentication URLs ---
     path('auth/login/', login_view, name='token_obtain_pair'), # Use standard JWT name? Or custom 'login'
     path('auth/logout/', logout_view, name='logout'),
-    # Add refresh token URL if using SimpleJWT's refresh mechanism client-side
-    # path('auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 
     # --- Player URLs ---
     # List players filtered by sex ('M' or 'F')

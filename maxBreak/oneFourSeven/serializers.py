@@ -137,23 +137,21 @@ class MatchesOfAnEventSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     """
     Serializes the default Django User model.
-    Excludes sensitive fields like password hash.
+    Password is write-only: accepted on register, never returned in responses.
     """
+    password = serializers.CharField(write_only=True, required=True, min_length=8)
+
     class Meta:
         model = User
-        # Explicitly list fields to include for security
-        fields = [
-            'id',
-            'username',
-            'email',        # Include if needed, consider privacy
-            'first_name',
-            'last_name',
-            'is_staff',     # Useful for frontend role checks
-            'is_active',    # Useful for checking if user can log in
-            'date_joined'   # Informational
-         ]
-        # Ensure sensitive fields are never included
-        # exclude = ['password', 'user_permissions', 'groups', 'is_superuser'] # Alternative to 'fields'
+        fields = ['id', 'username', 'email', 'is_staff', 'is_active', 'date_joined', 'password']
+        read_only_fields = ['id', 'is_staff', 'is_active', 'date_joined']
+
+    def create(self, validated_data):
+        password = validated_data.pop('password')
+        user = User(**validated_data)
+        user.set_password(password)
+        user.save()
+        return user
 
 
 class MatchCommentSerializer(serializers.ModelSerializer):

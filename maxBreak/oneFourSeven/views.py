@@ -1723,13 +1723,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
     # --- Override Create for Password Hashing ---
     def perform_create(self, serializer):
-        """ Hash the password when creating a new user. """
-        # The serializer should handle validation (e.g., password confirmation) if needed
         user = serializer.save()
-        # Ensure password gets hashed properly if not handled by serializer implicitly
-        if 'password' in serializer.validated_data:
-             user.set_password(serializer.validated_data['password'])
-             user.save()
         logger.info(f"New user created: {user.username} (ID: {user.id})")
 
     # --- Add Logic for Own Record Access (Example - Needs more work) ---
@@ -1927,7 +1921,7 @@ def device_favorites_matches_view(request):
 
 
 @api_view(['GET'])
-@permission_classes([AllowAny])
+@permission_classes([IsAdminUser])
 def device_tokens_view(request):
     """List registered devices (debug). Returns device_id + token prefix + fav counts."""
     from .models import DeviceToken
