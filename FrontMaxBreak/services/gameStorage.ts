@@ -154,6 +154,8 @@ export interface RivalryGroup {
   matchesWon: [number, number];   // [p1 wins, p2 wins]
   framesWon: [number, number];
   highestBreak: [number, number];
+  avgBreak: [number, number];
+  avgPointsPerFrame: [number, number];
   totalSessions: number;
 }
 
@@ -194,6 +196,8 @@ export function groupByRivalry(matches: StoredMatch[]): RivalryGroup[] {
     );
 
     let mw1 = 0, mw2 = 0, fw1 = 0, fw2 = 0, hb1 = 0, hb2 = 0;
+    let abSum1 = 0, abCount1 = 0, abSum2 = 0, abCount2 = 0;
+    let ptsSum1 = 0, ptsSum2 = 0, frameCount = 0;
 
     for (const m of group) {
       const isP1 = m.player1Name.trim().toLowerCase() === p1.toLowerCase();
@@ -207,6 +211,13 @@ export function groupByRivalry(matches: StoredMatch[]): RivalryGroup[] {
       for (const fr of m.frameResults) {
         if (fr.highestBreak[myIdx] > hb1) hb1 = fr.highestBreak[myIdx];
         if (fr.highestBreak[oppIdx] > hb2) hb2 = fr.highestBreak[oppIdx];
+        const b1 = fr.highestBreak[myIdx];
+        const b2 = fr.highestBreak[oppIdx];
+        if (b1 > 0) { abSum1 += b1; abCount1++; }
+        if (b2 > 0) { abSum2 += b2; abCount2++; }
+        ptsSum1 += fr.scores[myIdx];
+        ptsSum2 += fr.scores[oppIdx];
+        frameCount++;
       }
     }
 
@@ -217,6 +228,14 @@ export function groupByRivalry(matches: StoredMatch[]): RivalryGroup[] {
       matchesWon: [mw1, mw2],
       framesWon: [fw1, fw2],
       highestBreak: [hb1, hb2],
+      avgBreak: [
+        abCount1 > 0 ? Math.round(abSum1 / abCount1) : 0,
+        abCount2 > 0 ? Math.round(abSum2 / abCount2) : 0,
+      ],
+      avgPointsPerFrame: [
+        frameCount > 0 ? Math.round(ptsSum1 / frameCount) : 0,
+        frameCount > 0 ? Math.round(ptsSum2 / frameCount) : 0,
+      ],
       totalSessions: group.length,
     });
   }

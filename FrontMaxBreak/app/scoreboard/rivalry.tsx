@@ -21,6 +21,7 @@ export default function RivalryScreen() {
   }>();
 
   const [rivalry, setRivalry] = useState<RivalryGroup | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   useFocusEffect(useCallback(() => {
     loadAllMatches().then(all => {
@@ -40,6 +41,7 @@ export default function RivalryScreen() {
         text: 'Delete', style: 'destructive',
         onPress: async () => {
           await deleteMatch(id);
+          setExpandedId(prev => prev === id ? null : prev);
           setRivalry(prev => prev
             ? { ...prev, matches: prev.matches.filter(m => m.id !== id), totalSessions: prev.totalSessions - 1 }
             : null,
@@ -78,7 +80,7 @@ export default function RivalryScreen() {
 
   const ListHeader = () => (
     <View style={{ marginBottom: 16 }}>
-      {/* Overall matches record */}
+      {/* Overall sessions record */}
       <View style={[styles.h2hCard, { backgroundColor: c.cardBackground, borderColor: c.cardBorder }]}>
         <View style={styles.h2hRow}>
           <View style={styles.h2hPlayer}>
@@ -90,7 +92,7 @@ export default function RivalryScreen() {
             <Text style={[styles.h2hBigScore, { color: c.textHeader }]}>
               {rivalry.matchesWon[0]}–{rivalry.matchesWon[1]}
             </Text>
-            <Text style={[styles.h2hCenterLabel, { color: c.textMuted }]}>matches</Text>
+            <Text style={[styles.h2hCenterLabel, { color: c.textMuted }]}>sessions</Text>
           </View>
 
           <View style={[styles.h2hPlayer, { alignItems: 'flex-end' }]}>
@@ -103,9 +105,11 @@ export default function RivalryScreen() {
         <View style={[styles.divider, { backgroundColor: c.cardBorder }]} />
 
         {([
-          ['Frames', `${rivalry.framesWon[0]}`, `${rivalry.framesWon[1]}`],
-          ['Best break', `${rivalry.highestBreak[0]}`, `${rivalry.highestBreak[1]}`],
-          ['Sessions', `${rivalry.totalSessions}`, ''],
+          ['Frames won', `${rivalry.framesWon[0]}`, `${rivalry.framesWon[1]}`],
+          ['Highest break', `${rivalry.highestBreak[0]}`, `${rivalry.highestBreak[1]}`],
+          ['Avg break', `${rivalry.avgBreak[0]}`, `${rivalry.avgBreak[1]}`],
+          ['Avg pts/frame', `${rivalry.avgPointsPerFrame[0]}`, `${rivalry.avgPointsPerFrame[1]}`],
+          ['Sessions played', `${rivalry.totalSessions}`, ''],
         ] as [string, string, string][]).map(([label, v1, v2]) => (
           <View key={label} style={styles.statRow}>
             <Text style={[styles.statRowValue, { color: c.primary, textAlign: 'left' }]}>{v1}</Text>
@@ -138,12 +142,12 @@ export default function RivalryScreen() {
     const [myIdx, oppIdx] = isP1 ? [0, 1] : [1, 0];
     const p1Won = m.framesWon[myIdx] > m.framesWon[oppIdx];
     const p2Won = m.framesWon[oppIdx] > m.framesWon[myIdx];
-    const bestBreak = m.frameResults.length > 0
-      ? Math.max(...m.frameResults.flatMap(fr => fr.highestBreak))
-      : 0;
+    const isExpanded = expandedId === m.id;
+    const hasFrames = m.frameResults.length > 0;
 
     return (
       <View style={[styles.sessionCard, { backgroundColor: c.cardBackground, borderColor: c.cardBorder }]}>
+        {/* Header row — delete button lives here so it doesn't toggle expand */}
         <View style={styles.sessionHeader}>
           <Text style={[styles.sessionDate, { color: c.textMuted }]}>{formatDate(m.startedAt)}</Text>
           <Text style={[styles.sessionMeta, { color: c.textMuted }]}>
@@ -158,33 +162,81 @@ export default function RivalryScreen() {
           </TouchableOpacity>
         </View>
 
-        <View style={styles.sessionScore}>
-          <Text style={[styles.sessionPlayer, { color: p1Won ? c.primary : c.textSecondary }]} numberOfLines={1}>
-            {p1Won ? '🏆 ' : ''}{r.player1}
-          </Text>
-          <Text style={[styles.sessionFrames, { color: c.textPrimary }]}>
-            {m.framesWon[myIdx]}–{m.framesWon[oppIdx]}
-          </Text>
-          <Text style={[styles.sessionPlayerRight, { color: p2Won ? c.primary : c.textSecondary }]} numberOfLines={1}>
-            {r.player2}{p2Won ? ' 🏆' : ''}
-          </Text>
-        </View>
-
-        {m.frameResults.length > 0 && (
-          <View style={styles.pillsRow}>
-            {m.frameResults.map(fr => (
-              <View key={fr.frameNumber} style={[styles.pill, { backgroundColor: c.backgroundTertiary }]}>
-                <Text style={[styles.pillText, { color: c.textMuted }]}>
-                  F{fr.frameNumber}: {fr.scores[isP1 ? 0 : 1]}–{fr.scores[isP1 ? 1 : 0]}
-                </Text>
-              </View>
-            ))}
+        {/* Tappable body — score + frame breakdown */}
+        <TouchableOpacity
+          onPress={() => hasFrames && setExpandedId(isExpanded ? null : m.id)}
+          activeOpacity={hasFrames ? 0.8 : 1}
+        >
+          <View style={styles.sessionScore}>
+            <Text style={[styles.sessionPlayer, { color: p1Won ? c.primary : c.textSecondary }]} numberOfLines={1}>
+              {p1Won ? '🏆 ' : ''}{r.player1}
+            </Text>
+            <Text style={[styles.sessionFrames, { color: c.textPrimary }]}>
+              {m.framesWon[myIdx]}–{m.framesWon[oppIdx]}
+            </Text>
+            <Text style={[styles.sessionPlayerRight, { color: p2Won ? c.primary : c.textSecondary }]} numberOfLines={1}>
+              {r.player2}{p2Won ? ' 🏆' : ''}
+            </Text>
           </View>
-        )}
 
-        {bestBreak > 0 && (
-          <Text style={[styles.bestBreak, { color: c.textMuted }]}>Highest break: {bestBreak}</Text>
-        )}
+          {hasFrames && (
+            isExpanded ? (
+              // Full frame-by-frame table
+              <View style={[styles.frameTable, { borderTopColor: c.cardBorder }]}>
+                <View style={[styles.frameTableHeaderRow, { borderBottomColor: c.cardBorder }]}>
+                  <Text style={[styles.frameTableHeaderCell, { color: c.textMuted, flex: 0.6 }]}>Frame</Text>
+                  <Text style={[styles.frameTableHeaderCell, { color: c.textMuted, flex: 1 }]}>{r.player1}</Text>
+                  <Text style={[styles.frameTableHeaderCell, { color: c.textMuted, flex: 1, textAlign: 'right' }]}>{r.player2}</Text>
+                  <Text style={[styles.frameTableHeaderCell, { color: c.textMuted, flex: 0.9, textAlign: 'right' }]}>H.Break</Text>
+                </View>
+                {m.frameResults.map(fr => {
+                  const p1WinsFrame = fr.winner === myIdx;
+                  const p2WinsFrame = fr.winner === oppIdx;
+                  const hb = Math.max(fr.highestBreak[0], fr.highestBreak[1]);
+                  return (
+                    <View key={fr.frameNumber} style={[styles.frameTableRow, { borderBottomColor: c.cardBorder }]}>
+                      <Text style={[styles.frameTableCell, { color: c.textMuted, flex: 0.6 }]}>F{fr.frameNumber}</Text>
+                      <Text style={[styles.frameTableCell, {
+                        color: p1WinsFrame ? c.primary : c.textSecondary,
+                        flex: 1,
+                        fontFamily: p1WinsFrame ? 'PoppinsBold' : undefined,
+                      }]}>
+                        {fr.scores[myIdx]}{p1WinsFrame ? ' ✓' : ''}
+                      </Text>
+                      <Text style={[styles.frameTableCell, {
+                        color: p2WinsFrame ? c.primary : c.textSecondary,
+                        flex: 1,
+                        textAlign: 'right',
+                        fontFamily: p2WinsFrame ? 'PoppinsBold' : undefined,
+                      }]}>
+                        {p2WinsFrame ? '✓ ' : ''}{fr.scores[oppIdx]}
+                      </Text>
+                      <Text style={[styles.frameTableCell, { color: c.textMuted, flex: 0.9, textAlign: 'right' }]}>
+                        {hb > 0 ? hb : '–'}
+                      </Text>
+                    </View>
+                  );
+                })}
+              </View>
+            ) : (
+              <View style={styles.pillsRow}>
+                {m.frameResults.map(fr => (
+                  <View key={fr.frameNumber} style={[styles.pill, { backgroundColor: c.backgroundTertiary }]}>
+                    <Text style={[styles.pillText, { color: c.textMuted }]}>
+                      F{fr.frameNumber}: {fr.scores[isP1 ? 0 : 1]}–{fr.scores[isP1 ? 1 : 0]}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            )
+          )}
+
+          {hasFrames && (
+            <Text style={[styles.expandHint, { color: c.textMuted }]}>
+              {isExpanded ? '▲ collapse' : '▼ frame details'}
+            </Text>
+          )}
+        </TouchableOpacity>
       </View>
     );
   }
@@ -251,8 +303,14 @@ const styles = StyleSheet.create({
   pillsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 4 },
   pill: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
   pillText: { fontSize: 11 },
-  bestBreak: { fontSize: 12, marginTop: 4 },
   deleteBtn: { paddingHorizontal: 4 },
   deleteBtnText: { fontSize: 12, fontFamily: 'PoppinsBold' },
+  // Frame detail table
+  frameTable: { marginTop: 8, borderTopWidth: 1 },
+  frameTableHeaderRow: { flexDirection: 'row', paddingVertical: 6, borderBottomWidth: 1 },
+  frameTableHeaderCell: { fontSize: 10, fontFamily: 'PoppinsBold' },
+  frameTableRow: { flexDirection: 'row', paddingVertical: 6, borderBottomWidth: 1 },
+  frameTableCell: { fontSize: 13 },
+  expandHint: { fontSize: 11, textAlign: 'center', marginTop: 8 },
   empty: { textAlign: 'center', marginTop: 60, fontSize: 14 },
 });

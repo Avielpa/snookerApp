@@ -52,7 +52,7 @@ export default function HistoryScreen() {
                 <Text style={[styles.rivalryScoreText, { color: c.textPrimary }]}>
                   {r.matchesWon[0]}–{r.matchesWon[1]}
                 </Text>
-                <Text style={[styles.rivalryScoreSub, { color: c.textMuted }]}>matches</Text>
+                <Text style={[styles.rivalryScoreSub, { color: c.textMuted }]}>sessions</Text>
               </View>
               <Text style={[styles.rivalryNameRight, { color: p2Leads ? c.primary : c.textPrimary }]} numberOfLines={1}>
                 {r.player2}{p2Leads ? ' 🏆' : ''}
