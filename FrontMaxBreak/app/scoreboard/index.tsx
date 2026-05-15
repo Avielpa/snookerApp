@@ -250,15 +250,19 @@ export default function ScoreboardSetup() {
         <Text style={styles.startBtnText}>Start Match</Text>
       </TouchableOpacity>
 
-      {/* Rules & History links */}
-      <View style={styles.linksRow}>
-        <TouchableOpacity onPress={() => router.push('/scoreboard/rules' as any)}>
-          <Text style={[styles.link, { color: c.textMuted }]}>📖 Rules Reference</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => router.push('/scoreboard/history' as any)}>
-          <Text style={[styles.link, { color: c.textMuted }]}>📊 Match History</Text>
-        </TouchableOpacity>
-      </View>
+      {/* Match History — prominent secondary button */}
+      <TouchableOpacity
+        style={[styles.historyBtn, { borderColor: c.primary }]}
+        onPress={() => router.push('/scoreboard/history' as any)}
+        activeOpacity={0.8}
+      >
+        <Text style={[styles.historyBtnText, { color: c.primary }]}>📊  Match History & Rivalries</Text>
+      </TouchableOpacity>
+
+      {/* Rules link */}
+      <TouchableOpacity style={styles.linksRow} onPress={() => router.push('/scoreboard/rules' as any)}>
+        <Text style={[styles.link, { color: c.textMuted }]}>📖 Rules Reference</Text>
+      </TouchableOpacity>
     </ScrollView>
   );
 }
@@ -340,9 +344,18 @@ const styles = StyleSheet.create({
     fontFamily: 'PoppinsBold',
     color: '#121212',
   },
+  historyBtn: {
+    borderWidth: 1.5,
+    borderRadius: 14,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  historyBtnText: {
+    fontSize: 15,
+    fontFamily: 'PoppinsBold',
+  },
   linksRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
+    alignItems: 'center',
     marginTop: 4,
   },
   link: {

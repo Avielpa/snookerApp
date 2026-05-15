@@ -43,31 +43,36 @@ export default function HistoryScreen() {
       >
         {/* Names + record */}
         <View style={styles.rivalryRow}>
-          <Text style={[styles.rivalryName, { color: p1Leads ? c.primary : c.textPrimary }]} numberOfLines={1}>
-            {p1Leads ? '🏆 ' : ''}{r.player1}
-          </Text>
-          <View style={styles.rivalryScore}>
-            <Text style={[styles.rivalryScoreText, { color: c.textPrimary }]}>
-              {r.matchesWon[0]}–{r.matchesWon[1]}
-            </Text>
-            <Text style={[styles.rivalryScoreSub, { color: c.textMuted }]}>matches</Text>
-          </View>
-          <Text style={[styles.rivalryNameRight, { color: p2Leads ? c.primary : c.textPrimary }]} numberOfLines={1}>
-            {r.player2}{p2Leads ? ' 🏆' : ''}
-          </Text>
-        </View>
+          <View style={{ flex: 1 }}>
+            <View style={styles.rivalryNameRow}>
+              <Text style={[styles.rivalryName, { color: p1Leads ? c.primary : c.textPrimary }]} numberOfLines={1}>
+                {p1Leads ? '🏆 ' : ''}{r.player1}
+              </Text>
+              <View style={styles.rivalryScore}>
+                <Text style={[styles.rivalryScoreText, { color: c.textPrimary }]}>
+                  {r.matchesWon[0]}–{r.matchesWon[1]}
+                </Text>
+                <Text style={[styles.rivalryScoreSub, { color: c.textMuted }]}>matches</Text>
+              </View>
+              <Text style={[styles.rivalryNameRight, { color: p2Leads ? c.primary : c.textPrimary }]} numberOfLines={1}>
+                {r.player2}{p2Leads ? ' 🏆' : ''}
+              </Text>
+            </View>
 
-        {/* Sub stats */}
-        <View style={styles.rivalryMeta}>
-          <Text style={[styles.rivalryMetaText, { color: c.textMuted }]}>
-            Frames {r.framesWon[0]}–{r.framesWon[1]}
-          </Text>
-          <Text style={[styles.rivalryMetaText, { color: c.textMuted }]}>
-            {r.totalSessions} session{r.totalSessions !== 1 ? 's' : ''}
-          </Text>
-          <Text style={[styles.rivalryMetaText, { color: c.textMuted }]}>
-            {formatDate(r.lastPlayedAt)}
-          </Text>
+            {/* Sub stats */}
+            <View style={styles.rivalryMeta}>
+              <Text style={[styles.rivalryMetaText, { color: c.textMuted }]}>
+                Frames {r.framesWon[0]}–{r.framesWon[1]}
+              </Text>
+              <Text style={[styles.rivalryMetaText, { color: c.textMuted }]}>
+                {r.totalSessions} session{r.totalSessions !== 1 ? 's' : ''}
+              </Text>
+              <Text style={[styles.rivalryMetaText, { color: c.textMuted }]}>
+                {formatDate(r.lastPlayedAt)}
+              </Text>
+            </View>
+          </View>
+          <Text style={[styles.rivalryChevron, { color: c.textMuted }]}>›</Text>
         </View>
       </TouchableOpacity>
     );
@@ -227,14 +232,16 @@ const styles = StyleSheet.create({
   list: { padding: 16, gap: 10 },
   card: { borderRadius: 12, borderWidth: 1, padding: 14, marginBottom: 2 },
   // Rivalry card
-  rivalryRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
-  rivalryName: { fontSize: 14, fontFamily: 'PoppinsBold', flex: 1 },
-  rivalryNameRight: { fontSize: 14, fontFamily: 'PoppinsBold', flex: 1, textAlign: 'right' },
+  rivalryRow: { flexDirection: 'row', alignItems: 'center' },
+  rivalryNameRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
+  rivalryName: { fontSize: 16, fontFamily: 'PoppinsBold', flex: 1 },
+  rivalryNameRight: { fontSize: 16, fontFamily: 'PoppinsBold', flex: 1, textAlign: 'right' },
   rivalryScore: { alignItems: 'center', marginHorizontal: 10 },
   rivalryScoreText: { fontSize: 22, fontFamily: 'PoppinsBold' },
   rivalryScoreSub: { fontSize: 9, marginTop: -2 },
   rivalryMeta: { flexDirection: 'row', justifyContent: 'space-between' },
-  rivalryMetaText: { fontSize: 11 },
+  rivalryMetaText: { fontSize: 12 },
+  rivalryChevron: { fontSize: 26, paddingLeft: 8, lineHeight: 32 },
   // Training card
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
   cardDate: { fontSize: 11 },

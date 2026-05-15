@@ -2,9 +2,10 @@
 
 ## What this feature is
 
-A full snooker scorekeeper built into the app. Two modes:
+A full snooker scorekeeper built into the app. Three modes:
 
-- **Match mode** — two players, tracks frames won, supports Best-of-N or single frame
+- **Match mode** — two players, tracks frames won, supports Best-of-N, single frame, or unlimited
+- **Unlimited mode** — same as match but no automatic end; user taps "End ⏹" when done
 - **Train mode** — solo practice, each break is one "frame", session never ends automatically
 
 ---
@@ -16,7 +17,8 @@ app/scoreboard/
   index.tsx          — setup screen (player names, reds, format, mode) + resume card
   game.tsx           — main game screen; default export is GameScreenWrapper (loads draft),
                        inner GameScreen holds all logic + useFocusEffect auto-save
-  history.tsx        — match/session history with tab toggle
+  history.tsx        — rivalry cards list (matches tab) + training sessions (training tab)
+  rivalry.tsx        — H2H detail screen: stats + session list + "New Session" button
   rules.tsx          — rules reference page
 
 app/components/scoreboard/
@@ -27,6 +29,8 @@ app/components/scoreboard/
 
 app/components/
   Header.tsx         — persistent header; shows "← Home" inside /scoreboard/*, "▶ Play" elsewhere
+                       Account button (🔑/👤) opens AuthCard modal
+  AuthCard.tsx       — login/register/logout modal card; calls syncOnLogin on success
   BottomBar.tsx      — bottom nav; intercepts taps with Alert when isGameActive=true
   SideNav.tsx        — TV/tablet nav; same interception as BottomBar
 
@@ -36,12 +40,13 @@ hooks/
 
 contexts/
   GameContext.tsx    — isGameActive / setGameActive; provider in _layout.tsx
+  AuthContext.tsx    — global JWT auth state (user, loggedIn, doLogin, doRegister, doLogout)
 
 services/
-  gameStorage.ts     — AsyncStorage read/write for matches, sessions, and draft
+  gameStorage.ts     — AsyncStorage read/write for matches, sessions, draft; groupByRivalry()
+  authService.ts     — JWT login/register/logout; tokens stored in SecureStore; auto-refresh
+  scoreboardSyncService.ts — uploadMatch, downloadMatches, mergeServerMatchesLocally, syncOnLogin
 ```
-
----
 
 ---
 
@@ -98,19 +103,22 @@ If the user navigated away while `isFrameOver=true` (FrameSummary was visible), 
 
 ## How a game starts (index.tsx → game.tsx)
 
-`index.tsx` collects: `player1`, `player2`, `numberOfReds`, `bestOf` (or `"single"` or `"train"`), then calls:
+`index.tsx` collects: `player1`, `player2`, `numberOfReds`, `bestOf`, then calls:
 
 ```
 router.push({
   pathname: '/scoreboard/game',
-  params: { id, player1, player2, numberOfReds, bestOf }
+  params: { id, player1, player2, numberOfReds, bestOf, mode }
 });
 ```
 
 `game.tsx` reads `params.bestOf`:
-- `"train"` → `isTrainMode = true`, config `bestOf = 9999` (target = 5000, never reachable)
-- `"single"` → `bestOf = null` (single frame, match over after 1 frame)
+- `"train"` → `isTrainMode = true`, config `bestOf = 9999`
+- `"unlimited"` → `isUnlimitedMode = true`, config `bestOf = 9999`
+- `"single"` → `bestOf = null` (single frame)
 - `"3"` / `"5"` / etc → `bestOf = parseInt(...)`
+
+`index.tsx` also accepts optional params `prefillPlayer1` / `prefillPlayer2` — used when navigating from the rivalry detail "New Session" button to pre-fill player names.
 
 ---
 
@@ -235,6 +243,18 @@ const newAwaiting: AwaitingType = snap.awaiting; // never reset by a foul
 
 ---
 
+## Unlimited mode specifics
+
+| Behaviour | Implementation |
+|---|---|
+| No automatic end | `bestOf=9999` → target = 5000, unreachable |
+| "End ⏹" button | Visible in game top-bar only when `isUnlimitedMode` |
+| `handleUnlimitedEndMatch` | Saves only completed frames; ignores current in-progress frame |
+| `StoredMatch.mode` | `'unlimited'` |
+| Counts in rivalry stats | Yes — filtered same as `'match'` in `groupByRivalry` and `computePlayerStats` |
+
+---
+
 ## Train mode specifics
 
 | Behaviour | Implementation |
@@ -272,21 +292,99 @@ Triggered by `useEffect` watching `snap.isFrameOver`. Passes:
 
 ---
 
+## Rivalry / H2H history
+
+### Concept
+Instead of a flat match list, completed matches are grouped by player pair into "rivalries".
+X vs Y and Y vs X are the same rivalry (key is alphabetically sorted lowercase names).
+
+### groupByRivalry (gameStorage.ts)
+- Filters `StoredMatch` to match/unlimited modes with both player names set
+- Groups by normalized pair key `"a|b"` (alphabetical)
+- Display names taken from the chronologically earliest session
+- Returns `RivalryGroup[]` sorted by most-recently-played
+
+```typescript
+interface RivalryGroup {
+  key: string                   // "a|b" normalized
+  player1: string               // display name
+  player2: string
+  matches: StoredMatch[]        // newest first
+  lastPlayedAt: string
+  matchesWon: [number, number]
+  framesWon: [number, number]
+  highestBreak: [number, number]
+  totalSessions: number
+}
+```
+
+### Navigation flow
+```
+history.tsx (rivalry cards)
+  → tap card → rivalry.tsx (H2H stats + session list)
+    → tap "New Session" → index.tsx with prefillPlayer1/prefillPlayer2 params
+      → game.tsx → back to history.tsx on end
+```
+
+### Deleting sessions
+Red "Delete" button on each session card in rivalry.tsx. Updates both local storage and in-memory state. Does not currently delete from cloud (backend) — cloud copy persists until next sync overwrites it.
+
+---
+
+## Cloud sync / Auth
+
+### Architecture
+- **Local-first**: AsyncStorage is always the primary store. Server is backup/sync.
+- **JWT auth**: `authService.ts` — tokens in SecureStore (encrypted), auto-refresh 30 seconds before expiry.
+- **Upload**: After each completed match, if logged in, `uploadMatch()` fires and forgets.
+- **Sync on login**: `syncOnLogin()` downloads server matches, merges by match ID (newer completedAt wins), then uploads all local matches.
+
+### Backend endpoints
+```
+POST   /oneFourSeven/auth/login/              → { access, refresh, user }
+POST   /oneFourSeven/users/                   → register
+POST   /oneFourSeven/auth/token/refresh/      → { access, refresh? }
+DELETE /oneFourSeven/auth/delete-account/     → 204 (IsAuthenticated)
+GET    /oneFourSeven/scoreboard/matches/      → list user's matches
+POST   /oneFourSeven/scoreboard/matches/      → upsert by match_id
+DELETE /oneFourSeven/scoreboard/matches/<id>/ → 204
+GET    /oneFourSeven/account-deletion/        → public HTML page (Google Play)
+```
+
+### ScoreboardMatch model (Django)
+```python
+class ScoreboardMatch(models.Model):
+    user     = ForeignKey(User, CASCADE, related_name='scoreboard_matches')
+    match_id = CharField(max_length=64, db_index=True)   # frontend UUID
+    data     = JSONField()                                # full StoredMatch blob
+    created_at / updated_at = auto timestamps
+    unique_together = ('user', 'match_id')
+```
+
+### Security
+- Access token: 60-minute lifetime
+- Refresh token: 30-day lifetime, rotates on use
+- Tokens stored in SecureStore (never AsyncStorage)
+- `device_tokens_view` locked to `IsAdminUser`
+- Account deletion is immediate and cascades all ScoreboardMatch records
+
+---
+
 ## Storage shape (gameStorage.ts)
 
 ```typescript
 interface StoredMatch {
-  id: string
+  id: string                              // UUID generated by generateMatchId()
   player1Name: string
   player2Name: string
   numberOfReds: number
   bestOf: number | null
-  startedAt: string         // ISO string
+  startedAt: string                       // ISO string
   completedAt?: string
   isComplete: boolean
   frameResults: FrameResult[]
   framesWon: [number, number]
-  mode?: 'match' | 'train'  // undefined = match (legacy)
+  mode?: 'match' | 'train' | 'unlimited' // undefined = match (legacy)
 }
 
 interface GameDraft {
@@ -295,10 +393,10 @@ interface GameDraft {
     player1: string
     player2: string
     numberOfReds: string   // string — raw URL params
-    bestOf: string         // string — raw URL params ('train' | 'single' | '3' | '5' | ...)
+    bestOf: string         // 'train' | 'unlimited' | 'single' | '3' | '5' | ...
   }
-  state: GameState         // full hook state, JSON-serializable
-  savedAt: string          // ISO string
+  state: GameState
+  savedAt: string
 }
 ```
 
@@ -307,7 +405,7 @@ Keys:
 - `sb_match_index` — ordered list of match IDs
 - `sb_draft` — single draft slot (only one game can be paused at a time)
 
-`computePlayerStats` filters out train sessions: `(!m.mode || m.mode === 'match')`.
+`computePlayerStats` and `groupByRivalry` filter out train sessions.
 `loadAllMatches` uses `sb_match_index` only — never reads `sb_draft`.
 
 ---
@@ -328,7 +426,7 @@ node freeball_test.mjs  # 100 assertions — free ball in all situations
 node game_test.mjs && node train_test.mjs && node mega_test.mjs && node freeball_test.mjs
 ```
 
-Expected: `✅ All N assertions passed` for each file. If any fail, fix before deploying.
+Expected: `✅ All N assertions passed` for each file — 907 total. If any fail, fix before deploying.
 
 **What's covered:**
 - Every ball value and awaiting transition
