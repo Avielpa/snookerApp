@@ -149,8 +149,12 @@ export default function RivalryScreen() {
           <Text style={[styles.sessionMeta, { color: c.textMuted }]}>
             {m.bestOf === null ? '1 frame' : m.bestOf === 9999 ? 'Unlimited' : `BO${m.bestOf}`} · {m.numberOfReds} reds
           </Text>
-          <TouchableOpacity onPress={() => handleDelete(m.id)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Text style={{ color: c.textMuted, fontSize: 15 }}>🗑</Text>
+          <TouchableOpacity
+            onPress={() => handleDelete(m.id)}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            style={styles.deleteBtn}
+          >
+            <Text style={[styles.deleteBtnText, { color: '#CC0000' }]}>Delete</Text>
           </TouchableOpacity>
         </View>
 
@@ -183,9 +187,6 @@ export default function RivalryScreen() {
         )}
       </View>
     );
-
-    // fix TS narrowing — r and rivalry are the same non-null object at this point
-    void r;
   }
 
   return (
@@ -251,5 +252,7 @@ const styles = StyleSheet.create({
   pill: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
   pillText: { fontSize: 10 },
   bestBreak: { fontSize: 11, marginTop: 4 },
+  deleteBtn: { paddingHorizontal: 4 },
+  deleteBtnText: { fontSize: 12, fontFamily: 'PoppinsBold' },
   empty: { textAlign: 'center', marginTop: 60, fontSize: 14 },
 });
