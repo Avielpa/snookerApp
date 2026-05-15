@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { GameState } from '../hooks/useSnookerGame';
 
 export interface FrameResult {
   frameNumber: number;
@@ -42,6 +43,32 @@ export interface PlayerStats {
 
 const MATCH_INDEX_KEY = 'sb_match_index';
 const MATCH_PREFIX = 'sb_match_';
+const DRAFT_KEY = 'sb_draft';
+
+export interface GameDraft {
+  params: {
+    id: string;
+    player1: string;
+    player2: string;
+    numberOfReds: string;
+    bestOf: string;
+  };
+  state: GameState;
+  savedAt: string;
+}
+
+export async function saveDraft(draft: GameDraft): Promise<void> {
+  await AsyncStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+}
+
+export async function loadDraft(): Promise<GameDraft | null> {
+  const raw = await AsyncStorage.getItem(DRAFT_KEY);
+  return raw ? JSON.parse(raw) : null;
+}
+
+export async function clearDraft(): Promise<void> {
+  await AsyncStorage.removeItem(DRAFT_KEY);
+}
 
 export function generateMatchId(): string {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {

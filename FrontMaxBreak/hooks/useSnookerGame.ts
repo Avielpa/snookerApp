@@ -110,8 +110,8 @@ export function getAvailableBalls(snap: FrameSnapshot): BallType[] {
   return COLORS_SEQUENCE;
 }
 
-export function useSnookerGame(config: MatchConfig) {
-  const [state, setState] = useState<GameState>(() => ({
+export function useSnookerGame(config: MatchConfig, initialState?: GameState) {
+  const [state, setState] = useState<GameState>(() => initialState ?? {
     config,
     framesWon: [0, 0],
     frameResults: [],
@@ -121,7 +121,7 @@ export function useSnookerGame(config: MatchConfig) {
     frameHighestBreak: [0, 0],
     isMatchOver: false,
     matchWinner: null,
-  }));
+  });
 
   const potBall = useCallback((ball: BallType) => {
     setState(prev => {

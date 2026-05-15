@@ -1,17 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useKeepAwake } from 'expo-keep-awake';
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
-import { useLocalSearchParams, router } from 'expo-router';
+import { useLocalSearchParams, router, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../contexts/ThemeContext';
-import { useSnookerGame, BallType, getSnookersNeeded } from '../../hooks/useSnookerGame';
-import { saveMatch, StoredMatch } from '../../services/gameStorage';
+import { useGameContext } from '../../contexts/GameContext';
+import { useSnookerGame, BallType, getSnookersNeeded, GameState } from '../../hooks/useSnookerGame';
+import { saveMatch, saveDraft, loadDraft, clearDraft, GameDraft, StoredMatch } from '../../services/gameStorage';
 import PlayerCard from '../components/scoreboard/PlayerCard';
 import BallPad from '../components/scoreboard/BallPad';
 import FoulModal from '../components/scoreboard/FoulModal';
 import FrameSummary from '../components/scoreboard/FrameSummary';
 
-export default function GameScreen() {
+function GameScreen({ initialState }: { initialState?: GameState }) {
   const { theme } = useTheme();
   const c = theme.colors;
   const insets = useSafeAreaInsets();
@@ -31,8 +32,46 @@ export default function GameScreen() {
   };
 
   useKeepAwake();
-  const { state, potBall, addExtraRed, endVisit, applyFoul, undo, concede, confirmFrameEnd, declareFreesBall, applyFreeBall } = useSnookerGame(config);
+  const { state, potBall, addExtraRed, endVisit, applyFoul, undo, concede, confirmFrameEnd, declareFreesBall, applyFreeBall } = useSnookerGame(config, initialState);
   const { current: snap, framesWon, frameNumber, frameHighestBreak, isMatchOver, matchWinner } = state;
+
+  const { setGameActive } = useGameContext();
+  const stateRef = useRef(state);
+  const matchSaved = useRef(false);
+
+  useEffect(() => { stateRef.current = state; }, [state]);
+
+  useFocusEffect(
+    useCallback(() => {
+      clearDraft().catch(() => {});
+      setGameActive(true);
+      return () => {
+        setGameActive(false);
+        if (!matchSaved.current) {
+          const s = stateRef.current;
+          const hasProgress =
+            s.frameResults.length > 0 ||
+            s.current.scores[0] > 0 ||
+            s.current.scores[1] > 0 ||
+            s.current.currentBreak > 0;
+          if (hasProgress) {
+            const draft: GameDraft = {
+              params: {
+                id: params.id,
+                player1: params.player1,
+                player2: params.player2,
+                numberOfReds: params.numberOfReds,
+                bestOf: params.bestOf,
+              },
+              state: s,
+              savedAt: new Date().toISOString(),
+            };
+            saveDraft(draft).catch(() => {});
+          }
+        }
+      };
+    }, []),
+  );
 
   const [showFoul, setShowFoul] = useState(false);
   const [showFrameSummary, setShowFrameSummary] = useState(false);
@@ -89,12 +128,14 @@ export default function GameScreen() {
   }
 
   async function handleEndMatch() {
+    matchSaved.current = true;
     setShowFrameSummary(false);
     await persistMatch(true);
     router.replace('/scoreboard/history' as any);
   }
 
   async function handleMatchOver() {
+    matchSaved.current = true;
     setShowFrameSummary(false);
     await persistMatch(true);
     router.replace('/scoreboard/history' as any);
@@ -113,6 +154,7 @@ export default function GameScreen() {
         {
           text: 'End Session', style: 'default',
           onPress: async () => {
+            matchSaved.current = true;
             if (breaksDone > 0) {
               const stored: StoredMatch = {
                 id: config.id,
@@ -350,6 +392,28 @@ export default function GameScreen() {
       })()}
     </View>
   );
+}
+
+export default function GameScreenWrapper() {
+  const params = useLocalSearchParams<{
+    id: string; player1: string; player2: string; numberOfReds: string; bestOf: string; mode: string;
+  }>();
+  const { theme } = useTheme();
+  const c = theme.colors;
+  const [ready, setReady] = useState(false);
+  const [draftState, setDraftState] = useState<GameState | undefined>(undefined);
+
+  useEffect(() => {
+    loadDraft().then(draft => {
+      if (draft && draft.params.id === params.id) {
+        setDraftState(draft.state);
+      }
+      setReady(true);
+    }).catch(() => setReady(true));
+  }, []);
+
+  if (!ready) return <View style={{ flex: 1, backgroundColor: c.background }} />;
+  return <GameScreen initialState={draftState} />;
 }
 
 const styles = StyleSheet.create({

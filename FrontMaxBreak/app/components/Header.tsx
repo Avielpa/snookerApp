@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity, Share } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { router, usePathname } from 'expo-router';
 import { useTheme } from '../../contexts/ThemeContext';
 import { getOrCreateDeviceId } from '../../utils/deviceIdentity';
 
@@ -9,6 +9,8 @@ const Header = () => {
   const insets = useSafeAreaInsets();
   const { theme } = useTheme();
   const colors = theme.colors;
+  const pathname = usePathname();
+  const isInScoreboard = pathname.startsWith('/scoreboard');
 
   const handleCopyDeviceId = async () => {
     const id = await getOrCreateDeviceId();
@@ -22,8 +24,13 @@ const Header = () => {
       borderBottomColor: colors.cardBorder,
     }]}>
       <View style={styles.headerRow}>
-        <TouchableOpacity style={styles.playBtn} onPress={() => router.push('/scoreboard' as any)}>
-          <Text style={[styles.playBtnText, { color: colors.primary }]}>▶ Play</Text>
+        <TouchableOpacity
+          style={styles.playBtn}
+          onPress={() => isInScoreboard ? router.push('/') : router.push('/scoreboard' as any)}
+        >
+          <Text style={[styles.playBtnText, { color: colors.primary }]}>
+            {isInScoreboard ? '← Home' : '▶ Play'}
+          </Text>
         </TouchableOpacity>
 
         <View style={styles.logoRow}>

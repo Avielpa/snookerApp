@@ -5,6 +5,7 @@ import { Stack } from 'expo-router';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as Updates from 'expo-updates';
 import { ThemeProvider, useTheme } from '../contexts/ThemeContext';
+import { GameProvider } from '../contexts/GameContext';
 import { logger } from '../utils/logger';
 import { api } from '../services/api';
 import { initPushNotifications } from '../utils/notifications';
@@ -102,7 +103,9 @@ export default function RootLayout() {
     return (
         <ErrorBoundary>
             <ThemeProvider>
-                <ThemedLayout />
+                <GameProvider>
+                    <ThemedLayout />
+                </GameProvider>
             </ThemeProvider>
         </ErrorBoundary>
     );

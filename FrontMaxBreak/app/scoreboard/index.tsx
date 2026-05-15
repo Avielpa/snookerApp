@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Alert,
 } from 'react-native';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../contexts/ThemeContext';
-import { generateMatchId } from '../../services/gameStorage';
+import { generateMatchId, loadDraft, clearDraft, GameDraft } from '../../services/gameStorage';
 
 const RED_OPTIONS = [6, 10, 15] as const;
 const BEST_OF_OPTIONS: (number | null)[] = [null, 3, 5, 7, 9, 11];
@@ -20,8 +20,15 @@ export default function ScoreboardSetup() {
   const [player2, setPlayer2] = useState('Player 2');
   const [numberOfReds, setNumberOfReds] = useState<number>(15);
   const [bestOf, setBestOf] = useState<number | null>(null);
+  const [draft, setDraft] = useState<GameDraft | null>(null);
 
   const isTrainMode = mode === 'train';
+
+  useFocusEffect(
+    useCallback(() => {
+      loadDraft().then(d => setDraft(d)).catch(() => setDraft(null));
+    }, []),
+  );
 
   function startMatch() {
     if (!player1.trim()) {
@@ -32,6 +39,8 @@ export default function ScoreboardSetup() {
       Alert.alert('Missing name', 'Please enter both player names.');
       return;
     }
+    clearDraft().catch(() => {});
+    setDraft(null);
     const id = generateMatchId();
     router.push({
       pathname: '/scoreboard/game' as any,
@@ -56,6 +65,39 @@ export default function ScoreboardSetup() {
     >
       <Text style={[styles.title, { color: c.textHeader }]}>Play Mode</Text>
       <Text style={[styles.subtitle, { color: c.textSecondary }]}>Set up your session</Text>
+
+      {/* Resume card — shown when a saved draft exists */}
+      {draft && (
+        <View style={[styles.resumeCard, { backgroundColor: c.cardBackground, borderColor: c.primary }]}>
+          <TouchableOpacity
+            style={styles.resumeMain}
+            onPress={() => router.push({ pathname: '/scoreboard/game' as any, params: draft.params })}
+            activeOpacity={0.8}
+          >
+            <Text style={[styles.resumeLabel, { color: c.primary }]}>
+              {draft.params.bestOf === 'train' ? '🎯 Resume Training' : '⚔️ Resume Match'}
+            </Text>
+            <Text style={[styles.resumeNames, { color: c.textPrimary }]}>
+              {draft.params.bestOf === 'train'
+                ? draft.params.player1
+                : `${draft.params.player1} vs ${draft.params.player2}`}
+            </Text>
+            <Text style={[styles.resumeMeta, { color: c.textMuted }]}>
+              {draft.params.bestOf === 'train'
+                ? `Break ${draft.state.frameNumber} · ${draft.params.numberOfReds} reds`
+                : `Frame ${draft.state.frameNumber} · ${draft.state.framesWon[0]}–${draft.state.framesWon[1]} frames`}
+              {'  ·  Tap to resume →'}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.resumeDismiss}
+            onPress={() => { clearDraft().catch(() => {}); setDraft(null); }}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Text style={[styles.resumeDismissText, { color: c.textMuted }]}>✕</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* Mode toggle */}
       <View style={[styles.modeToggle, { backgroundColor: c.backgroundSecondary, borderColor: c.cardBorder }]}>
@@ -304,5 +346,40 @@ const styles = StyleSheet.create({
   modeBtnText: {
     fontSize: 14,
     fontFamily: 'PoppinsBold',
+  },
+  resumeCard: {
+    borderRadius: 14,
+    borderWidth: 1.5,
+    flexDirection: 'row',
+    alignItems: 'center',
+    overflow: 'hidden',
+  },
+  resumeMain: {
+    flex: 1,
+    padding: 14,
+    gap: 2,
+  },
+  resumeLabel: {
+    fontSize: 11,
+    fontFamily: 'PoppinsBold',
+    letterSpacing: 0.5,
+  },
+  resumeNames: {
+    fontSize: 15,
+    fontFamily: 'PoppinsBold',
+  },
+  resumeMeta: {
+    fontSize: 11,
+    marginTop: 2,
+  },
+  resumeDismiss: {
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    alignSelf: 'stretch',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  resumeDismissText: {
+    fontSize: 16,
   },
 });

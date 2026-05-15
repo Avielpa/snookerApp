@@ -13,8 +13,9 @@ A full snooker scorekeeper built into the app. Two modes:
 
 ```
 app/scoreboard/
-  index.tsx          — setup screen (player names, reds, format, mode)
-  game.tsx           — main game screen (the scoreboard UI)
+  index.tsx          — setup screen (player names, reds, format, mode) + resume card
+  game.tsx           — main game screen; default export is GameScreenWrapper (loads draft),
+                       inner GameScreen holds all logic + useFocusEffect auto-save
   history.tsx        — match/session history with tab toggle
   rules.tsx          — rules reference page
 
@@ -24,12 +25,74 @@ app/components/scoreboard/
   FoulModal.tsx      — foul value picker + who plays next
   FrameSummary.tsx   — end-of-frame overlay (scores, winner, next/end options)
 
+app/components/
+  Header.tsx         — persistent header; shows "← Home" inside /scoreboard/*, "▶ Play" elsewhere
+  BottomBar.tsx      — bottom nav; intercepts taps with Alert when isGameActive=true
+  SideNav.tsx        — TV/tablet nav; same interception as BottomBar
+
 hooks/
   useSnookerGame.ts  — pure state machine, all game logic lives here
+                       accepts optional initialState?: GameState for resume
+
+contexts/
+  GameContext.tsx    — isGameActive / setGameActive; provider in _layout.tsx
 
 services/
-  gameStorage.ts     — AsyncStorage read/write for matches and sessions
+  gameStorage.ts     — AsyncStorage read/write for matches, sessions, and draft
 ```
+
+---
+
+---
+
+## Save & Resume
+
+### Problem solved
+Accidental navigation away from the game screen (tapping a bottom bar item) previously reset all game state with no warning.
+
+### Architecture
+
+**Draft storage** (`gameStorage.ts`):
+- Separate `sb_draft` AsyncStorage key — never touched by `loadAllMatches()` or history.tsx
+- `GameDraft` interface: `{ params, state: GameState, savedAt }`
+- `saveDraft / loadDraft / clearDraft`
+
+**Global game-active flag** (`contexts/GameContext.tsx`):
+- `isGameActive` / `setGameActive` — set true on screen focus, false on blur
+- Provider wraps `<ThemedLayout>` in `_layout.tsx`
+
+**Auto-save on blur** (`game.tsx` — `useFocusEffect`):
+- On focus: `clearDraft()` (in-memory is authoritative), `setGameActive(true)`
+- On blur: `setGameActive(false)`. If `matchSaved.current === false` AND game has progress (any score/break/frame result), saves a draft.
+- `matchSaved.current` is set to `true` before any intentional navigation (handleEndMatch, handleMatchOver, handleTrainEndSession "End Session" onPress). This prevents saving a draft when the user explicitly ends.
+- "Progress" check: `frameResults.length > 0 || scores[0] > 0 || scores[1] > 0 || currentBreak > 0` — prevents phantom resume cards from zero-state games.
+
+**Wrapper component** (`game.tsx`):
+- `GameScreenWrapper` (default export): loads draft on mount via `useEffect`; if `draft.params.id === params.id`, passes state as `initialState` to inner `GameScreen`. Shows blank background while loading (<50ms).
+- `GameScreen` (internal): receives `initialState?: GameState`, passes to `useSnookerGame(config, initialState)`.
+
+**Navigation interception** (`BottomBar.tsx`, `SideNav.tsx`):
+- Reads `isGameActive` from context
+- On tap: if active, shows `Alert("Game in progress — Leave / Stay")` before navigating
+- `alertActive` ref (per-component) prevents double-firing the alert
+
+**Contextual header button** (`Header.tsx`):
+- Uses `usePathname()`. Inside `/scoreboard/*` → shows `← Home` (navigates to `/`). Otherwise shows `▶ Play`.
+
+**Resume card** (`index.tsx`):
+- `useFocusEffect` reloads draft every time the setup screen gains focus
+- If draft exists: shows a card above the setup form with player names, mode, frame number
+- Tapping card → pushes to `/scoreboard/game` with `draft.params` (same id as draft → wrapper loads state)
+- "✕" dismiss button: calls `clearDraft()` + clears state
+- `startMatch()`: calls `clearDraft()` before generating new id (user chose not to resume)
+
+### What does NOT save a draft
+- Train sessions with no progress (zero score, no breaks, no completed frames)
+- After `handleEndMatch` / `handleMatchOver` / "End Session" in train mode
+- When `FrameSummary` shows and user taps "Next Frame" then navigates (isFrameOver resets, state is after confirmFrameEnd)
+
+### Resume with FrameSummary open
+If the user navigated away while `isFrameOver=true` (FrameSummary was visible), the draft captures that state. On resume, `useEffect` watching `snap.isFrameOver` fires on mount and re-shows FrameSummary. The user can then confirm the frame end as normal.
 
 ---
 
@@ -225,9 +288,27 @@ interface StoredMatch {
   framesWon: [number, number]
   mode?: 'match' | 'train'  // undefined = match (legacy)
 }
+
+interface GameDraft {
+  params: {
+    id: string
+    player1: string
+    player2: string
+    numberOfReds: string   // string — raw URL params
+    bestOf: string         // string — raw URL params ('train' | 'single' | '3' | '5' | ...)
+  }
+  state: GameState         // full hook state, JSON-serializable
+  savedAt: string          // ISO string
+}
 ```
 
+Keys:
+- `sb_match_<id>` — individual completed/in-progress match records
+- `sb_match_index` — ordered list of match IDs
+- `sb_draft` — single draft slot (only one game can be paused at a time)
+
 `computePlayerStats` filters out train sessions: `(!m.mode || m.mode === 'match')`.
+`loadAllMatches` uses `sb_match_index` only — never reads `sb_draft`.
 
 ---
 
@@ -283,7 +364,7 @@ Expected: `✅ All N assertions passed` for each file. If any fail, fix before d
 **Fixing a scoring bug**:
 1. Write a failing test first in `game_test.mjs`
 2. Fix the logic in `useSnookerGame.ts`
-3. Confirm all 907+ assertions still pass
+3. Confirm all 907 assertions still pass
 4. Deploy: `npx eas update --channel preview --message "..."` then production
 
 ---

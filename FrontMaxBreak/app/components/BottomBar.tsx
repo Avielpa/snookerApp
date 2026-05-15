@@ -1,9 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
 import { usePathname, useRouter } from "expo-router";
-import React from "react";
-import { TouchableOpacity, View, Text, StyleSheet } from "react-native";
+import React, { useRef } from "react";
+import { Alert, TouchableOpacity, View, Text, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "../../contexts/ThemeContext";
+import { useGameContext } from "../../contexts/GameContext";
 import { logger } from "../../utils/logger";
 
 
@@ -13,6 +14,8 @@ const BottomBar = () => {
     const pathname = usePathname();
     const insets = useSafeAreaInsets();
     const colors = useColors();
+    const { isGameActive } = useGameContext();
+    const alertActive = useRef(false);
 
     const navItems : {
         path: string;
@@ -63,6 +66,27 @@ const BottomBar = () => {
                         key={item.path}
                         style={[styles.bottomBarItem, isActive && styles.activeBottomBarItem]} 
                         onPress={() => {
+                            if (isGameActive) {
+                                if (alertActive.current) return;
+                                alertActive.current = true;
+                                Alert.alert(
+                                    'Game in progress',
+                                    'Leaving will pause your game. You can resume it later.',
+                                    [
+                                        { text: 'Stay', style: 'cancel', onPress: () => { alertActive.current = false; } },
+                                        {
+                                            text: 'Leave',
+                                            style: 'destructive',
+                                            onPress: () => {
+                                                alertActive.current = false;
+                                                logger.log(`[BottomBar] Leaving game, navigating to ${item.path}`);
+                                                router.push(item.path as any);
+                                            },
+                                        },
+                                    ],
+                                );
+                                return;
+                            }
                             logger.log(`[BottomBar] Navigating from ${pathname} to ${item.path}`);
                             router.push(item.path as any);
                         }}

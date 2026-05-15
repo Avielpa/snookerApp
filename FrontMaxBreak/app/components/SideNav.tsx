@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { usePathname, useRouter } from 'expo-router';
-import React from 'react';
-import { TouchableOpacity, View, Text, StyleSheet } from 'react-native';
+import React, { useRef } from 'react';
+import { Alert, TouchableOpacity, View, Text, StyleSheet } from 'react-native';
 import { useColors } from '../../contexts/ThemeContext';
+import { useGameContext } from '../../contexts/GameContext';
 import { DeviceType } from '../../hooks/useDeviceType';
 import { logger } from '../../utils/logger';
 
@@ -26,6 +27,8 @@ const SideNav: React.FC<SideNavProps> = ({ device }) => {
   const router = useRouter();
   const pathname = usePathname();
   const colors = useColors();
+  const { isGameActive } = useGameContext();
+  const alertActive = useRef(false);
   const isTV = device === 'tv';
   const styles = createStyles(colors, isTV);
 
@@ -43,6 +46,27 @@ const SideNav: React.FC<SideNavProps> = ({ device }) => {
             key={item.path}
             style={[styles.navItem, isActive && styles.navItemActive]}
             onPress={() => {
+              if (isGameActive) {
+                if (alertActive.current) return;
+                alertActive.current = true;
+                Alert.alert(
+                  'Game in progress',
+                  'Leaving will pause your game. You can resume it later.',
+                  [
+                    { text: 'Stay', style: 'cancel', onPress: () => { alertActive.current = false; } },
+                    {
+                      text: 'Leave',
+                      style: 'destructive',
+                      onPress: () => {
+                        alertActive.current = false;
+                        logger.log(`[SideNav] Leaving game, navigating to ${item.path}`);
+                        router.push(item.path as any);
+                      },
+                    },
+                  ],
+                );
+                return;
+              }
               logger.log(`[SideNav] Navigating to ${item.path}`);
               router.push(item.path as any);
             }}
