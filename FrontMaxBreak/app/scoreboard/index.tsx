@@ -5,7 +5,9 @@ import {
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { generateMatchId, loadDraft, clearDraft, GameDraft } from '../../services/gameStorage';
+import AuthCard from '../components/AuthCard';
 
 const RED_OPTIONS = [6, 10, 15] as const;
 const BEST_OF_OPTIONS: (number | null)[] = [null, 3, 5, 7, 9, 11];
@@ -15,6 +17,7 @@ export default function ScoreboardSetup() {
   const c = theme.colors;
   const insets = useSafeAreaInsets();
   const prefill = useLocalSearchParams<{ prefillPlayer1?: string; prefillPlayer2?: string }>();
+  const { loggedIn } = useAuth();
 
   const [mode, setMode] = useState<'match' | 'train'>('match');
   const [player1, setPlayer1] = useState(prefill.prefillPlayer1?.trim() || 'Player 1');
@@ -23,6 +26,7 @@ export default function ScoreboardSetup() {
   const [bestOf, setBestOf] = useState<number | null>(null);
   const [isUnlimited, setIsUnlimited] = useState(false);
   const [draft, setDraft] = useState<GameDraft | null>(null);
+  const [authVisible, setAuthVisible] = useState(false);
 
   const isTrainMode = mode === 'train';
 
@@ -259,10 +263,21 @@ export default function ScoreboardSetup() {
         <Text style={[styles.historyBtnText, { color: c.primary }]}>📊  Match History & Rivalries</Text>
       </TouchableOpacity>
 
+      {/* Cross-device sync hint — only when not signed in */}
+      {!loggedIn && (
+        <TouchableOpacity style={styles.syncBanner} onPress={() => setAuthVisible(true)} activeOpacity={0.75}>
+          <Text style={[styles.syncBannerText, { color: c.textMuted }]}>
+            🔒 Sign in to sync your stats across devices
+          </Text>
+        </TouchableOpacity>
+      )}
+
       {/* Rules link */}
       <TouchableOpacity style={styles.linksRow} onPress={() => router.push('/scoreboard/rules' as any)}>
         <Text style={[styles.link, { color: c.textMuted }]}>📖 Rules Reference</Text>
       </TouchableOpacity>
+
+      <AuthCard visible={authVisible} onClose={() => setAuthVisible(false)} />
     </ScrollView>
   );
 }
@@ -353,6 +368,13 @@ const styles = StyleSheet.create({
   historyBtnText: {
     fontSize: 15,
     fontFamily: 'PoppinsBold',
+  },
+  syncBanner: {
+    alignItems: 'center',
+    paddingVertical: 6,
+  },
+  syncBannerText: {
+    fontSize: 12,
   },
   linksRow: {
     alignItems: 'center',
