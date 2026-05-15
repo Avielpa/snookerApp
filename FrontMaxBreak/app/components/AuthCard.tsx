@@ -114,7 +114,7 @@ export default function AuthCard({ visible, onClose }: Props) {
       <TouchableWithoutFeedback onPress={close}>
         <View style={styles.overlay}>
           <TouchableWithoutFeedback>
-            <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+            <KeyboardAvoidingView behavior="padding" keyboardVerticalOffset={Platform.OS === 'android' ? 24 : 0}>
               <View style={[styles.card, { backgroundColor: c.cardBackground, borderColor: c.cardBorder }]}>
 
                 {/* Close button — always visible */}
@@ -230,8 +230,9 @@ const styles = StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.82)',
-    justifyContent: 'center',
+    justifyContent: 'flex-end',
     alignItems: 'center',
+    paddingBottom: 40,
     padding: 24,
   },
   card: {
