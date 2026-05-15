@@ -2236,3 +2236,87 @@ def scoreboard_match_delete_view(request, match_id):
     return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+# ================== Account Deletion ==================
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def delete_account_view(request):
+    """
+    DELETE — permanently delete the authenticated user's account.
+    All ScoreboardMatch records cascade-delete automatically.
+    """
+    user = request.user
+    user.delete()
+    return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+from django.http import HttpResponse
+
+def account_deletion_page_view(request):
+    """
+    Public HTML page required by Google Play Store.
+    Explains how users can request account deletion.
+    """
+    html = """<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MaxBreak147 — Account Deletion</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+           max-width: 640px; margin: 48px auto; padding: 0 24px;
+           background: #121212; color: #E0E0E0; line-height: 1.7; }
+    h1 { color: #FFB74D; font-size: 1.6rem; margin-bottom: 4px; }
+    h2 { color: #FFB74D; font-size: 1.1rem; margin-top: 32px; }
+    p  { color: #B0B0B0; }
+    ol, ul { color: #B0B0B0; padding-left: 20px; }
+    li { margin-bottom: 8px; }
+    .tag { display: inline-block; background: #1E1E1E; border: 1px solid #333;
+           border-radius: 6px; padding: 2px 10px; font-size: 0.85rem; color: #888; }
+    .note { background: #1A1A1A; border-left: 3px solid #FFB74D;
+            padding: 12px 16px; border-radius: 4px; margin-top: 12px; }
+    a { color: #FFB74D; }
+  </style>
+</head>
+<body>
+  <h1>MaxBreak147</h1>
+  <p class="tag">Account &amp; Data Deletion</p>
+
+  <h2>How to delete your account</h2>
+  <ol>
+    <li>Open the <strong>MaxBreak147</strong> app on your device.</li>
+    <li>Tap the <strong>account icon (👤)</strong> in the top-right corner of the header.</li>
+    <li>Scroll to the bottom of the card and tap <strong>"Delete account"</strong>.</li>
+    <li>Confirm the deletion in the prompt that appears.</li>
+  </ol>
+  <p>Your account and all associated cloud data will be permanently deleted immediately.</p>
+
+  <h2>What gets deleted</h2>
+  <ul>
+    <li>Your account credentials (username, email, hashed password)</li>
+    <li>All match history synced to the cloud</li>
+  </ul>
+
+  <h2>What is not deleted</h2>
+  <ul>
+    <li>Match history stored <em>locally on your device</em> — this is kept in your device's app storage and is not accessible to us. You can remove it by uninstalling the app or clearing the app's data from your device settings.</li>
+  </ul>
+
+  <h2>Retention period</h2>
+  <p>Deletion is <strong>immediate and permanent</strong>. No data is retained after account deletion.</p>
+
+  <div class="note">
+    <strong>Can't access the app?</strong><br>
+    Email us at <a href="mailto:aviel107pahima@gmail.com">aviel107pahima@gmail.com</a> with the subject
+    <em>"Account Deletion Request"</em> and include your username. We will delete your account within 7 days.
+  </div>
+
+  <p style="margin-top: 48px; font-size: 0.8rem; color: #555;">
+    Developer: Aviel Pahima &nbsp;·&nbsp; MaxBreak147
+  </p>
+</body>
+</html>"""
+    return HttpResponse(html, content_type='text/html; charset=utf-8')
+
+

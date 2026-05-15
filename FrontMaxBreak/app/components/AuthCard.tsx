@@ -5,11 +5,15 @@
 import React, { useState } from 'react';
 import {
   Modal, View, Text, TextInput, TouchableOpacity, ActivityIndicator,
-  StyleSheet, KeyboardAvoidingView, Platform, TouchableWithoutFeedback,
+  StyleSheet, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Alert,
 } from 'react-native';
+import axios from 'axios';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { syncOnLogin } from '../../services/scoreboardSyncService';
+import { getAuthHeader } from '../../services/authService';
+
+const API_BASE = process.env.EXPO_PUBLIC_API_BASE_URL || 'https://snookerapp.up.railway.app/oneFourSeven/';
 
 type Tab = 'login' | 'register';
 
@@ -79,6 +83,32 @@ export default function AuthCard({ visible, onClose }: Props) {
     close();
   }
 
+  function handleDeleteAccount() {
+    Alert.alert(
+      'Delete account?',
+      'This will permanently delete your account and all match history saved to the cloud. This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete', style: 'destructive',
+          onPress: async () => {
+            setLoading(true);
+            try {
+              const header = await getAuthHeader();
+              await axios.delete(`${API_BASE}auth/delete-account/`, { headers: { Authorization: header! } });
+              await doLogout();
+              close();
+            } catch {
+              Alert.alert('Error', 'Could not delete account. Please try again.');
+            } finally {
+              setLoading(false);
+            }
+          },
+        },
+      ],
+    );
+  }
+
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={close}>
       <TouchableWithoutFeedback onPress={close}>
@@ -103,12 +133,24 @@ export default function AuthCard({ visible, onClose }: Props) {
                     <Text style={[styles.syncNote, { color: c.textSecondary }]}>
                       Your match history syncs automatically across devices.
                     </Text>
-                    <TouchableOpacity
-                      style={[styles.btn, { backgroundColor: '#CC0000' }]}
-                      onPress={handleLogout}
-                    >
-                      <Text style={styles.btnText}>Log out</Text>
-                    </TouchableOpacity>
+                    {loading ? (
+                      <ActivityIndicator color={c.primary} style={{ marginTop: 8 }} />
+                    ) : (
+                      <>
+                        <TouchableOpacity
+                          style={[styles.btn, { backgroundColor: '#CC0000' }]}
+                          onPress={handleLogout}
+                        >
+                          <Text style={styles.btnText}>Log out</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={styles.deleteBtn}
+                          onPress={handleDeleteAccount}
+                        >
+                          <Text style={[styles.deleteBtnText, { color: c.textMuted }]}>Delete account</Text>
+                        </TouchableOpacity>
+                      </>
+                    )}
                   </>
                 ) : (
                   /* ── Login / Register tabs ────────────────────────── */
@@ -264,5 +306,14 @@ const styles = StyleSheet.create({
     fontFamily: 'PoppinsBold',
     fontSize: 14,
     color: '#121212',
+  },
+  deleteBtn: {
+    alignItems: 'center',
+    paddingVertical: 8,
+    marginTop: 2,
+  },
+  deleteBtnText: {
+    fontSize: 12,
+    textDecorationLine: 'underline',
   },
 });
