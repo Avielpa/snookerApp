@@ -27,6 +27,7 @@ export default function ScoreboardSetup() {
   const [isUnlimited, setIsUnlimited] = useState(false);
   const [draft, setDraft] = useState<GameDraft | null>(null);
   const [authVisible, setAuthVisible] = useState(false);
+  const [bannerDismissed, setBannerDismissed] = useState(false);
 
   const isTrainMode = mode === 'train';
 
@@ -71,6 +72,28 @@ export default function ScoreboardSetup() {
     >
       <Text style={[styles.title, { color: c.textHeader }]}>Play Mode</Text>
       <Text style={[styles.subtitle, { color: c.textSecondary }]}>Set up your session</Text>
+
+      {/* Sign-in nudge — dismissible, shown when logged out */}
+      {!loggedIn && !bannerDismissed && (
+        <View style={[styles.signInBanner, { backgroundColor: c.cardBackground, borderColor: c.primary }]}>
+          <Text style={[styles.signInBannerText, { color: c.textPrimary }]}>
+            Sign in to sync sessions across devices
+          </Text>
+          <TouchableOpacity
+            onPress={() => setAuthVisible(true)}
+            style={[styles.signInBannerBtn, { backgroundColor: c.primary }]}
+          >
+            <Text style={styles.signInBannerBtnText}>Sign In</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => setBannerDismissed(true)}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            style={{ paddingLeft: 6 }}
+          >
+            <Text style={{ color: c.textMuted, fontSize: 16 }}>✕</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* Resume card — shown when a saved draft exists */}
       {draft && (
@@ -263,15 +286,6 @@ export default function ScoreboardSetup() {
         <Text style={[styles.historyBtnText, { color: c.primary }]}>📊  Match History & Rivalries</Text>
       </TouchableOpacity>
 
-      {/* Cross-device sync hint — only when not signed in */}
-      {!loggedIn && (
-        <TouchableOpacity style={styles.syncBanner} onPress={() => setAuthVisible(true)} activeOpacity={0.75}>
-          <Text style={[styles.syncBannerText, { color: c.textMuted }]}>
-            🔒 Sign in to sync your stats across devices
-          </Text>
-        </TouchableOpacity>
-      )}
-
       {/* Rules link */}
       <TouchableOpacity style={styles.linksRow} onPress={() => router.push('/scoreboard/rules' as any)}>
         <Text style={[styles.link, { color: c.textMuted }]}>📖 Rules Reference</Text>
@@ -369,12 +383,28 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontFamily: 'PoppinsBold',
   },
-  syncBanner: {
+  signInBanner: {
+    flexDirection: 'row',
     alignItems: 'center',
+    borderRadius: 12,
+    borderWidth: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    gap: 8,
+  },
+  signInBannerText: {
+    flex: 1,
+    fontSize: 13,
+  },
+  signInBannerBtn: {
+    borderRadius: 8,
+    paddingHorizontal: 12,
     paddingVertical: 6,
   },
-  syncBannerText: {
+  signInBannerBtnText: {
     fontSize: 12,
+    fontFamily: 'PoppinsBold',
+    color: '#121212',
   },
   linksRow: {
     alignItems: 'center',

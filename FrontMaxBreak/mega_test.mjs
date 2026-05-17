@@ -1273,6 +1273,139 @@ section('SECTION T8 — Train undo within break');
 }
 
 // ═══════════════════════════════════════════════════════════════
+// SECTION G22 — addExtraRed: cascade to zero reds + phase transition
+// ═══════════════════════════════════════════════════════════════
+section('SECTION G22 — addExtraRed cascade to zero + phase transition');
+{
+  // 2-red game: pot red, addExtraRed → redsRemaining=0, awaiting=color
+  let g=makeGame(2,null);
+  g=applyPot(g,'red'); // reds=1, awaiting=color
+  g=applyExtraRed(g);  // reds=0, score=2, awaiting still color
+  assert('G22.1: score=2 after red+extraRed',g.current.scores[0]===2);
+  assert('G22.2: redsRemaining=0 after extraRed',g.current.redsRemaining===0);
+  assert('G22.3: awaiting still color',g.current.awaiting==='color');
+  assert('G22.4: pointsOnTable=7+0*8+27=34',g.current.pointsOnTable===34);
+  // Potting a color when reds=0 in reds phase → colors phase
+  g=applyPot(g,'pink');
+  assert('G22.5: after color with reds=0: phase=colors',g.current.phase==='colors');
+  assert('G22.6: colorsRemaining is full COLORS_SEQUENCE',g.current.colorsRemaining.length===6);
+  assert('G22.7: score=2+6=8',g.current.scores[0]===8);
+  // addExtraRed guard: redsRemaining=0 should throw
+  let threw=false;
+  try { applyExtraRed(g); } catch(e) { threw=true; }
+  assert('G22.8: addExtraRed with reds=0 throws',threw===true);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SECTION G23 — Undo restores isFrameOver from concede
+// ═══════════════════════════════════════════════════════════════
+section('SECTION G23 — Undo restores isFrameOver from concede');
+{
+  let g=makeGame(15,5);
+  g=applyPot(g,'red');g=applyPot(g,'black'); // score=8, awaiting=red
+  const scoreBefore=g.current.scores[0];
+  const awaitingBefore=g.current.awaiting;
+  g=applyConcede(g); // isFrameOver=true
+  assert('G23.1: concede sets isFrameOver=true',g.current.isFrameOver===true);
+  assert('G23.2: concede does not change scores',g.current.scores[0]===scoreBefore);
+  g=applyUndo(g); // undo concede
+  assert('G23.3: undo concede restores isFrameOver=false',g.current.isFrameOver===false);
+  assert('G23.4: undo concede restores awaiting',g.current.awaiting===awaitingBefore);
+  assert('G23.5: can pot red again after undo',g.current.scores[0]===scoreBefore);
+  // Pot red successfully after undo
+  g=applyPot(g,'red');
+  assert('G23.6: pot red after undo-concede succeeds',g.current.redsRemaining===13);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SECTION G24 — endVisit in colors phase preserves colorsRemaining
+// ═══════════════════════════════════════════════════════════════
+section('SECTION G24 — endVisit in colors phase preserves colorsRemaining');
+{
+  // Get to colors phase in a 1-red game
+  let g=makeGame(1,5);
+  g=applyPot(g,'red'); // reds=0, awaiting=color
+  g=applyPot(g,'black'); // colors phase starts, colorsRemaining=[yellow,green,brown,blue,pink,black]
+  assert('G24.1: phase=colors after 1-red game reds phase ends',g.current.phase==='colors');
+  g=applyPot(g,'yellow'); // colorsRemaining=[green,brown,blue,pink,black]
+  assert('G24.2: after yellow: colorsRemaining len=5',g.current.colorsRemaining.length===5);
+  const colsBefore=[...g.current.colorsRemaining];
+  // endVisit in colors phase
+  g=applyEndVisit(g);
+  assert('G24.3: endVisit in colors: phase still colors',g.current.phase==='colors');
+  assert('G24.4: endVisit in colors: colorsRemaining unchanged',JSON.stringify(g.current.colorsRemaining)===JSON.stringify(colsBefore));
+  assert('G24.5: endVisit in colors: P1 plays',g.current.currentPlayer===1);
+  // P1 must pot green (next in sequence)
+  g=applyPot(g,'green');
+  assert('G24.6: P1 pots green successfully',g.current.colorsRemaining.length===4);
+  // Cannot pot yellow again (no longer first in sequence)
+  let threw=false;
+  try { applyPot(g,'yellow'); } catch(e) { threw=true; }
+  assert('G24.7: cannot pot yellow when green is next',threw===true);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SECTION G25 — frameHighestBreak tracks per-player across visits
+// ═══════════════════════════════════════════════════════════════
+section('SECTION G25 — frameHighestBreak per-player tracking');
+{
+  let g=makeGame(15,5);
+  // P0 builds 15 (red+black+red+pink = 1+7+1+6)
+  g=applyPot(g,'red');g=applyPot(g,'black');g=applyPot(g,'red');g=applyPot(g,'pink');
+  assert('G25.1: P0 break=15',g.current.currentBreak===15);
+  assert('G25.2: frameHighestBreak[0]=15',g.frameHighestBreak[0]===15);
+  assert('G25.3: frameHighestBreak[1]=0',g.frameHighestBreak[1]===0);
+  g=applyEndVisit(g);
+  assert('G25.4: after endVisit: frameHighestBreak[0] stays 15',g.frameHighestBreak[0]===15);
+  // P1 builds 20 (red+black+red+black+red+pink = 1+7+1+7+1+... wait, let's do red+black+red+black = 1+7+1+7=16, then red+pink=1+6=7 → 23)
+  g=applyPot(g,'red');g=applyPot(g,'black');g=applyPot(g,'red');g=applyPot(g,'black');
+  assert('G25.5: P1 break=16',g.current.currentBreak===16);
+  assert('G25.6: frameHighestBreak[1]=16',g.frameHighestBreak[1]===16);
+  // Extend P1 break
+  g=applyPot(g,'red');g=applyPot(g,'pink');
+  assert('G25.7: P1 break=23',g.current.currentBreak===23);
+  assert('G25.8: frameHighestBreak[1] updated to 23',g.frameHighestBreak[1]===23);
+  // Confirm frame end and check result
+  g=applyConcede(g);
+  g=confirmFrameEnd(g,1);
+  const lastResult=g.frameResults[0];
+  assert('G25.9: frameResult.highestBreak[0]=15',lastResult.highestBreak[0]===15);
+  assert('G25.10: frameResult.highestBreak[1]=23',lastResult.highestBreak[1]===23);
+  // Fresh frame: frameHighestBreak resets
+  assert('G25.11: frameHighestBreak resets after confirmFrameEnd',g.frameHighestBreak[0]===0&&g.frameHighestBreak[1]===0);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SECTION G26 — BO9 deciding frame (4-4 tie)
+// ═══════════════════════════════════════════════════════════════
+section('SECTION G26 — BO9 deciding frame (4-4 tie)');
+{
+  let g=makeGame(15,9);
+  // Alternate wins: P0 wins frames 1,3,5,7 → 4 wins; P1 wins 2,4,6,8 → 4 wins
+  for(let i=0;i<8;i++){
+    const winner=i%2===0?0:1;
+    g=applyPot(g,'red');g=applyConcede(g);
+    g=confirmFrameEnd(g,winner);
+  }
+  assert('G26.1: after 8 frames, framesWon=[4,4]',g.framesWon[0]===4&&g.framesWon[1]===4);
+  assert('G26.2: isMatchOver=false at 4-4',g.isMatchOver===false);
+  assert('G26.3: matchWinner=null at 4-4',g.matchWinner===null);
+  assert('G26.4: frameNumber=9 (deciding frame)',g.frameNumber===9);
+  // P0 wins the decider
+  g=applyPot(g,'red');g=applyConcede(g);
+  g=confirmFrameEnd(g,0);
+  assert('G26.5: P0 wins decider: isMatchOver=true',g.isMatchOver===true);
+  assert('G26.6: matchWinner=0',g.matchWinner===0);
+  assert('G26.7: framesWon[0]=5',g.framesWon[0]===5);
+
+  // Same but P1 wins decider
+  let g2=makeGame(15,9);
+  for(let i=0;i<8;i++){const w=i%2===0?0:1;g2=applyPot(g2,'red');g2=applyConcede(g2);g2=confirmFrameEnd(g2,w);}
+  g2=applyPot(g2,'red');g2=applyConcede(g2);g2=confirmFrameEnd(g2,1);
+  assert('G26.8: P1 wins decider: matchWinner=1',g2.matchWinner===1);
+}
+
+// ═══════════════════════════════════════════════════════════════
 // Final summary
 // ═══════════════════════════════════════════════════════════════
 const sep='═'.repeat(60);

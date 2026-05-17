@@ -20,6 +20,9 @@ import { getNationalityFlag } from '../../utils/nationalityFlag';
 import { FormDots } from '../components/stats/FormDots';
 import { WinStreak } from '../components/stats/WinStreak';
 import { isPlayerFavouriteSync, isPlayerFavouriteAsync, togglePlayerFavourite } from '../../services/favoritesService';
+import { useAuth } from '../../contexts/AuthContext';
+import AuthCard from '../components/AuthCard';
+import { shouldShowSignupNudge, markSignupNudgeShown } from '../../services/signupNudgeService';
 
 // Enhanced interfaces
 interface PlayerData {
@@ -128,6 +131,9 @@ export default function PlayerDetailsScreen(): React.ReactElement {
     const [isStarred, setIsStarred] = useState(
         playerId ? isPlayerFavouriteSync(playerId) : false
     );
+    const [authVisible, setAuthVisible] = useState(false);
+    const [nudgeVisible, setNudgeVisible] = useState(false);
+    const { loggedIn } = useAuth();
     const COLORS = usePlayerColors();
     const router = useRouter();
 
@@ -145,7 +151,14 @@ export default function PlayerDetailsScreen(): React.ReactElement {
         if (!playerId) return;
         const newVal = await togglePlayerFavourite(playerId);
         setIsStarred(newVal);
-    }, [playerId]);
+        if (newVal && !loggedIn) {
+            const show = await shouldShowSignupNudge();
+            if (show) {
+                setNudgeVisible(true);
+                markSignupNudgeShown().catch(() => {});
+            }
+        }
+    }, [playerId, loggedIn]);
 
     // Create styles with dynamic colors
     const styles = createPlayerStyles(COLORS);
@@ -982,7 +995,36 @@ export default function PlayerDetailsScreen(): React.ReactElement {
                     ),
                 }}
             />
+            {nudgeVisible && (
+                <View style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    backgroundColor: COLORS.cardBackground,
+                    borderBottomWidth: 1,
+                    borderBottomColor: COLORS.primary,
+                    paddingVertical: 10,
+                    paddingHorizontal: 14,
+                    gap: 8,
+                }}>
+                    <Text style={{ flex: 1, fontSize: 13, color: COLORS.textPrimary }}>
+                        Sign in to sync favorites across devices
+                    </Text>
+                    <TouchableOpacity
+                        onPress={() => { setNudgeVisible(false); setAuthVisible(true); }}
+                        style={{ backgroundColor: COLORS.primary, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6 }}
+                    >
+                        <Text style={{ fontSize: 12, fontFamily: 'PoppinsBold', color: '#121212' }}>Sign In</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        onPress={() => setNudgeVisible(false)}
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    >
+                        <Text style={{ color: COLORS.textMuted, fontSize: 16 }}>✕</Text>
+                    </TouchableOpacity>
+                </View>
+            )}
             {content}
+            <AuthCard visible={authVisible} onClose={() => setAuthVisible(false)} />
         </SafeAreaView>
     );
 }

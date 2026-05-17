@@ -339,6 +339,26 @@ Red "Delete" button on each session card in rivalry.tsx. Updates both local stor
 - **Upload**: After each completed match, if logged in, `uploadMatch()` fires and forgets.
 - **Sync on login**: `syncOnLogin()` downloads server matches, merges by match ID (newer completedAt wins), then uploads all local matches.
 
+### Sign-in nudge UI
+
+Two in-app nudges encourage logged-out users to create an account:
+
+**Scoreboard setup screen** (`app/scoreboard/index.tsx`):
+- A dismissible card-style banner appears near the top of the setup form when `!loggedIn`
+- "Sign In" button opens `AuthCard`. "✕" dismisses for the current session (`bannerDismissed` state).
+- Reappears next time the setup screen is opened while still logged out.
+
+**Player profile screen** (`app/player/[id].tsx`):
+- After a logged-out user taps ★ to favorite a player for the **first time**, a dismissible banner slides in below the header.
+- One-time flag: `@maxbreak_signup_nudge_shown` in AsyncStorage — nudge never shown again after dismissed or after "Sign In" is tapped.
+- "Sign In" tapped → dismisses banner + opens `AuthCard`. "✕" → dismisses only.
+
+**Service** (`services/signupNudgeService.ts`):
+- `shouldShowSignupNudge()` — reads AsyncStorage, returns `true` only if key absent (never shown).
+- `markSignupNudgeShown()` — writes `'true'` to the key. Best-effort (no throw on error).
+- `resetSignupNudge()` — removes the key (for testing / account deletion flows).
+- `NUDGE_KEY = '@maxbreak_signup_nudge_shown'`
+
 ### Backend endpoints
 ```
 POST   /oneFourSeven/auth/login/              → { access, refresh, user }
@@ -417,7 +437,7 @@ Four test files at `FrontMaxBreak/` root — run with Node.js, no React needed:
 ```bash
 node game_test.mjs      # 326 assertions, 29 sections — full match mode + game logic
 node train_test.mjs     # 51 assertions — train mode + computeTrainingStats
-node mega_test.mjs      # 430 assertions — edge cases train+match, all formulas
+node mega_test.mjs      # 470 assertions — edge cases train+match, all formulas (sections G22–G26 added)
 node freeball_test.mjs  # 100 assertions — free ball in all situations
 ```
 
@@ -426,7 +446,7 @@ node freeball_test.mjs  # 100 assertions — free ball in all situations
 node game_test.mjs && node train_test.mjs && node mega_test.mjs && node freeball_test.mjs
 ```
 
-Expected: `✅ All N assertions passed` for each file — 907 total. If any fail, fix before deploying.
+Expected: `✅ All N assertions passed` for each file — 947 total. If any fail, fix before deploying.
 
 **What's covered:**
 - Every ball value and awaiting transition
