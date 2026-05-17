@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, Image, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, usePathname } from 'expo-router';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { useGameContext } from '../../contexts/GameContext';
 import AuthCard from './AuthCard';
 
 const Header = () => {
@@ -13,7 +14,23 @@ const Header = () => {
   const pathname = usePathname();
   const isInScoreboard = pathname.startsWith('/scoreboard');
   const { loggedIn } = useAuth();
+  const { isGameActive } = useGameContext();
   const [authVisible, setAuthVisible] = useState(false);
+
+  const handleHomePress = () => {
+    if (isInScoreboard && isGameActive) {
+      Alert.alert(
+        'Game in progress',
+        'Leave and save for later?',
+        [
+          { text: 'Stay', style: 'cancel' },
+          { text: 'Leave', style: 'destructive', onPress: () => router.push('/') },
+        ]
+      );
+    } else {
+      isInScoreboard ? router.push('/') : router.push('/scoreboard' as any);
+    }
+  };
 
   return (
     <View style={[styles.header, {
@@ -24,7 +41,7 @@ const Header = () => {
       <View style={styles.headerRow}>
         <TouchableOpacity
           style={styles.playBtn}
-          onPress={() => isInScoreboard ? router.push('/') : router.push('/scoreboard' as any)}
+          onPress={handleHomePress}
         >
           <Text style={[styles.playBtnText, { color: colors.primary }]}>
             {isInScoreboard ? '← Home' : '▶ Play'}

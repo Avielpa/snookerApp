@@ -64,8 +64,16 @@ export default function AuthCard({ visible, onClose }: Props) {
       setError('Username and password are required.');
       return;
     }
+    if (tab === 'register' && /[^a-zA-Z0-9@.+\-_]/.test(username.trim())) {
+      setError('Username may only contain letters, numbers, and @/./+/-/_ — no spaces.');
+      return;
+    }
     if (tab === 'register' && password.length < 8) {
       setError('Password must be at least 8 characters.');
+      return;
+    }
+    if (tab === 'register' && /^\d+$/.test(password)) {
+      setError('Password cannot be entirely numbers.');
       return;
     }
     setLoading(true);
@@ -150,10 +158,13 @@ export default function AuthCard({ visible, onClose }: Props) {
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={close}>
-      <TouchableWithoutFeedback onPress={close}>
-        <View style={styles.overlay}>
-          <TouchableWithoutFeedback>
-            <KeyboardAvoidingView behavior="padding" keyboardVerticalOffset={Platform.OS === 'android' ? 24 : 0}>
+      <KeyboardAvoidingView
+        style={styles.kavWrapper}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <TouchableWithoutFeedback onPress={close}>
+          <View style={styles.overlay}>
+            <TouchableWithoutFeedback>
               <View style={[styles.card, { backgroundColor: c.cardBackground, borderColor: c.cardBorder }]}>
 
                 {/* Close button — always visible */}
@@ -279,6 +290,11 @@ export default function AuthCard({ visible, onClose }: Props) {
                       autoCorrect={false}
                     />
                     {tab === 'register' && (
+                      <Text style={[styles.pwHint, { color: c.textMuted }]}>
+                        No spaces — letters, numbers, and @/./+/-/_ only
+                      </Text>
+                    )}
+                    {tab === 'register' && (
                       <TextInput
                         style={[styles.input, { color: c.textPrimary, borderColor: c.cardBorder }]}
                         placeholder="Email (optional)"
@@ -297,6 +313,11 @@ export default function AuthCard({ visible, onClose }: Props) {
                       onChangeText={setPassword}
                       secureTextEntry
                     />
+                    {tab === 'register' && (
+                      <Text style={[styles.pwHint, { color: c.textMuted }]}>
+                        8+ chars · not all numbers · avoid common passwords (e.g. "password1", "12345678")
+                      </Text>
+                    )}
 
                     {!!error && (
                       <Text style={[styles.error, { color: '#CC0000' }]}>{error}</Text>
@@ -315,15 +336,18 @@ export default function AuthCard({ visible, onClose }: Props) {
                   </>
                 )}
               </View>
-            </KeyboardAvoidingView>
-          </TouchableWithoutFeedback>
-        </View>
-      </TouchableWithoutFeedback>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
+  kavWrapper: {
+    flex: 1,
+  },
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.82)',
@@ -389,6 +413,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 9,
     fontSize: 14,
+  },
+  pwHint: {
+    fontSize: 11,
+    marginTop: -6,
+    lineHeight: 16,
   },
   error: {
     fontSize: 12,
