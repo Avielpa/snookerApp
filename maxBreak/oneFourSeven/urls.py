@@ -52,6 +52,11 @@ from .views import (
     device_tokens_view,
     device_send_test_view,
     refresh_round_details_view,
+    # User Favorites / Device Link Views
+    user_link_device_view,
+    user_favorites_view,
+    user_favorites_players_view,
+    user_favorites_matches_view,
     # Prediction Views
     match_predict_view,
     match_predict_stats_view,
@@ -161,6 +166,12 @@ urlpatterns = [
     path('device/tokens/', device_tokens_view, name='device-tokens'),
     path('device/send-test/', device_send_test_view, name='device-send-test'),
     path('device/refresh-round-details/', refresh_round_details_view, name='refresh-round-details'),
+
+    # --- User Favorites / Device Link ---
+    path('user/link-device/', user_link_device_view, name='user-link-device'),
+    path('user/favorites/', user_favorites_view, name='user-favorites'),
+    path('user/favorites/players/', user_favorites_players_view, name='user-favorites-players'),
+    path('user/favorites/matches/', user_favorites_matches_view, name='user-favorites-matches'),
 
     # --- Predictions ---
     path('matches/predict/', match_predict_view, name='match-predict'),

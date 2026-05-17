@@ -5,6 +5,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { api } from './api';
 import { getOrCreateDeviceId } from '../utils/deviceIdentity';
+import { getAuthHeader } from './authService';
 import { logger } from '../utils/logger';
 
 const CACHE_KEY = '@maxbreak_favorites';
@@ -53,24 +54,39 @@ async function writeCache(favs: Favorites): Promise<void> {
 export async function loadFavorites(): Promise<Favorites> {
     // Always read local cache first so we never lose locally-saved stars
     const local = await readCache();
+    const allPlayerIds = new Set(local.playerIds);
+    const allMatchIds = new Set(local.matchIds);
+
+    // Load from device UUID endpoint
     try {
         const deviceId = await getOrCreateDeviceId();
         const response = await api.get(`device/favorites/?device_id=${deviceId}`);
-        const serverPlayerIds: number[] = (response.data.player_ids ?? []).map(Number);
-        const serverMatchIds: number[] = (response.data.match_ids ?? []).map(Number);
-        // Merge: union of local + server (server may be empty for unregistered devices)
-        const merged: Favorites = {
-            playerIds: Array.from(new Set([...local.playerIds, ...serverPlayerIds])),
-            matchIds: Array.from(new Set([...local.matchIds, ...serverMatchIds])),
-        };
-        if (merged.playerIds.length > 0 || merged.matchIds.length > 0 || local.playerIds.length > 0 || local.matchIds.length > 0) {
-            await writeCache(merged);
-        }
-        return merged;
-    } catch (error) {
-        logger.warn('[Favorites] Could not load from server, using local cache');
-        return local;
+        (response.data.player_ids ?? []).map(Number).forEach((id: number) => allPlayerIds.add(id));
+        (response.data.match_ids ?? []).map(Number).forEach((id: number) => allMatchIds.add(id));
+    } catch {
+        logger.warn('[Favorites] Could not load device favorites from server');
     }
+
+    // Load from user account endpoint if logged in (cross-device sync)
+    try {
+        const authHeader = await getAuthHeader();
+        if (authHeader) {
+            const response = await api.get('user/favorites/', { headers: { Authorization: authHeader } });
+            (response.data.player_ids ?? []).map(Number).forEach((id: number) => allPlayerIds.add(id));
+            (response.data.match_ids ?? []).map(Number).forEach((id: number) => allMatchIds.add(id));
+        }
+    } catch {
+        logger.warn('[Favorites] Could not load user favorites from server');
+    }
+
+    const merged: Favorites = {
+        playerIds: Array.from(allPlayerIds),
+        matchIds: Array.from(allMatchIds),
+    };
+    if (merged.playerIds.length > 0 || merged.matchIds.length > 0 || local.playerIds.length > 0 || local.matchIds.length > 0) {
+        await writeCache(merged);
+    }
+    return merged;
 }
 
 /**
@@ -79,12 +95,15 @@ export async function loadFavorites(): Promise<Favorites> {
 export async function savePlayerFavorites(playerIds: number[]): Promise<void> {
     const current = await readCache();
     await writeCache({ ...current, playerIds });
-    try {
-        const deviceId = await getOrCreateDeviceId();
-        await api.patch('device/favorites/players/', { device_id: deviceId, player_ids: playerIds });
-    } catch (error) {
-        logger.warn('[Favorites] Could not sync player favorites to server');
-    }
+    const [deviceId, authHeader] = await Promise.all([getOrCreateDeviceId(), getAuthHeader()]);
+    await Promise.allSettled([
+        api.patch('device/favorites/players/', { device_id: deviceId, player_ids: playerIds })
+            .catch(() => logger.warn('[Favorites] Could not sync player favorites to device endpoint')),
+        authHeader
+            ? api.patch('user/favorites/players/', { player_ids: playerIds }, { headers: { Authorization: authHeader } })
+                .catch(() => logger.warn('[Favorites] Could not sync player favorites to user endpoint'))
+            : Promise.resolve(),
+    ]);
 }
 
 /**
@@ -93,12 +112,15 @@ export async function savePlayerFavorites(playerIds: number[]): Promise<void> {
 export async function saveMatchFavorites(matchIds: number[]): Promise<void> {
     const current = await readCache();
     await writeCache({ ...current, matchIds });
-    try {
-        const deviceId = await getOrCreateDeviceId();
-        await api.patch('device/favorites/matches/', { device_id: deviceId, match_ids: matchIds });
-    } catch (error) {
-        logger.warn('[Favorites] Could not sync match favorites to server');
-    }
+    const [deviceId, authHeader] = await Promise.all([getOrCreateDeviceId(), getAuthHeader()]);
+    await Promise.allSettled([
+        api.patch('device/favorites/matches/', { device_id: deviceId, match_ids: matchIds })
+            .catch(() => logger.warn('[Favorites] Could not sync match favorites to device endpoint')),
+        authHeader
+            ? api.patch('user/favorites/matches/', { match_ids: matchIds }, { headers: { Authorization: authHeader } })
+                .catch(() => logger.warn('[Favorites] Could not sync match favorites to user endpoint'))
+            : Promise.resolve(),
+    ]);
 }
 
 // ---- Synchronous helpers (use in-memory cache) ----

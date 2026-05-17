@@ -258,8 +258,8 @@ class Command(BaseCommand):
         Called after each live update cycle. All errors are caught — never blocks updates.
         """
         try:
-            from oneFourSeven.models import DeviceToken, MatchesOfAnEvent, Player, NotifDedup
-            from oneFourSeven.push_notifications import send_expo_push
+            from oneFourSeven.models import MatchesOfAnEvent, Player, NotifDedup
+            from oneFourSeven.push_notifications import send_expo_push, get_tokens_for_match, get_tokens_for_player
 
             today = timezone.now().date()
             # Clean up dedup rows older than today (runs cheaply — indexed on sent_date)
@@ -296,8 +296,7 @@ class Command(BaseCommand):
                 p2_name = get_name(match.Player2ID)
 
                 # Devices following this specific match
-                match_devices = DeviceToken.objects.filter(favorite_match_ids__contains=[mid])
-                match_tokens = [d.push_token for d in match_devices if d.push_token]
+                match_tokens = get_tokens_for_match(mid)
                 if match_tokens:
                     send_expo_push(match_tokens, '🎱 Live Now',
                                    f'{p1_name} vs {p2_name}',
@@ -306,10 +305,7 @@ class Command(BaseCommand):
 
                 # Devices following Player 1
                 if match.Player1ID:
-                    p1_devices = DeviceToken.objects.filter(
-                        favorite_player_ids__contains=[match.Player1ID]
-                    )
-                    p1_tokens = [d.push_token for d in p1_devices if d.push_token]
+                    p1_tokens = get_tokens_for_player(match.Player1ID)
                     if p1_tokens:
                         send_expo_push(p1_tokens, '🎱 Now Live',
                                        f'{p1_name} vs {p2_name}',
@@ -318,10 +314,7 @@ class Command(BaseCommand):
 
                 # Devices following Player 2
                 if match.Player2ID:
-                    p2_devices = DeviceToken.objects.filter(
-                        favorite_player_ids__contains=[match.Player2ID]
-                    )
-                    p2_tokens = [d.push_token for d in p2_devices if d.push_token]
+                    p2_tokens = get_tokens_for_player(match.Player2ID)
                     if p2_tokens:
                         send_expo_push(p2_tokens, '🎱 Now Live',
                                        f'{p2_name} vs {p1_name}',
@@ -348,8 +341,7 @@ class Command(BaseCommand):
                 s2 = match.Score2 if match.Score2 is not None else 0
 
                 # Match followers
-                match_devices = DeviceToken.objects.filter(favorite_match_ids__contains=[mid])
-                match_tokens = [d.push_token for d in match_devices if d.push_token]
+                match_tokens = get_tokens_for_match(mid)
                 if match_tokens:
                     send_expo_push(match_tokens, '✅ Result',
                                    f'{p1_name} {s1} – {s2} {p2_name}',
@@ -359,10 +351,7 @@ class Command(BaseCommand):
                 # Player 1 followers
                 if match.Player1ID:
                     won = match.WinnerID == match.Player1ID
-                    p1_devices = DeviceToken.objects.filter(
-                        favorite_player_ids__contains=[match.Player1ID]
-                    )
-                    p1_tokens = [d.push_token for d in p1_devices if d.push_token]
+                    p1_tokens = get_tokens_for_player(match.Player1ID)
                     if p1_tokens:
                         outcome = 'won' if won else 'lost'
                         send_expo_push(p1_tokens, f'✅ {p1_name} {outcome}',
@@ -373,10 +362,7 @@ class Command(BaseCommand):
                 # Player 2 followers
                 if match.Player2ID:
                     won = match.WinnerID == match.Player2ID
-                    p2_devices = DeviceToken.objects.filter(
-                        favorite_player_ids__contains=[match.Player2ID]
-                    )
-                    p2_tokens = [d.push_token for d in p2_devices if d.push_token]
+                    p2_tokens = get_tokens_for_player(match.Player2ID)
                     if p2_tokens:
                         outcome = 'won' if won else 'lost'
                         send_expo_push(p2_tokens, f'✅ {p2_name} {outcome}',
@@ -406,8 +392,7 @@ class Command(BaseCommand):
                 p2_name = get_name(match.Player2ID)
 
                 # Match followers
-                match_devices = DeviceToken.objects.filter(favorite_match_ids__contains=[mid])
-                match_tokens = [d.push_token for d in match_devices if d.push_token]
+                match_tokens = get_tokens_for_match(mid)
                 if match_tokens:
                     send_expo_push(match_tokens, '⏰ Starting Soon',
                                    f'{p1_name} vs {p2_name} in ~15 min',
@@ -416,10 +401,7 @@ class Command(BaseCommand):
 
                 # Player 1 followers
                 if match.Player1ID:
-                    p1_devices = DeviceToken.objects.filter(
-                        favorite_player_ids__contains=[match.Player1ID]
-                    )
-                    p1_tokens = [d.push_token for d in p1_devices if d.push_token]
+                    p1_tokens = get_tokens_for_player(match.Player1ID)
                     if p1_tokens:
                         send_expo_push(p1_tokens, '⏰ Starting Soon',
                                        f'{p1_name} vs {p2_name} in ~15 min',
@@ -428,10 +410,7 @@ class Command(BaseCommand):
 
                 # Player 2 followers
                 if match.Player2ID:
-                    p2_devices = DeviceToken.objects.filter(
-                        favorite_player_ids__contains=[match.Player2ID]
-                    )
-                    p2_tokens = [d.push_token for d in p2_devices if d.push_token]
+                    p2_tokens = get_tokens_for_player(match.Player2ID)
                     if p2_tokens:
                         send_expo_push(p2_tokens, '⏰ Starting Soon',
                                        f'{p2_name} vs {p1_name} in ~15 min',
@@ -469,8 +448,7 @@ class Command(BaseCommand):
                     s2 = match.Score2 if match.Score2 is not None else 0
 
                     # Match followers
-                    match_devices = DeviceToken.objects.filter(favorite_match_ids__contains=[mid])
-                    match_tokens = [d.push_token for d in match_devices if d.push_token]
+                    match_tokens = get_tokens_for_match(mid)
                     if match_tokens:
                         send_expo_push(match_tokens, '▶️ Match Resumed',
                                        f'{p1_name} {s1}–{s2} {p2_name}',
@@ -479,10 +457,7 @@ class Command(BaseCommand):
 
                     # Player 1 followers
                     if match.Player1ID:
-                        p1_devices = DeviceToken.objects.filter(
-                            favorite_player_ids__contains=[match.Player1ID]
-                        )
-                        p1_tokens = [d.push_token for d in p1_devices if d.push_token]
+                        p1_tokens = get_tokens_for_player(match.Player1ID)
                         if p1_tokens:
                             send_expo_push(p1_tokens, '▶️ Match Resumed',
                                            f'{p1_name} {s1}–{s2} {p2_name}',
@@ -491,10 +466,7 @@ class Command(BaseCommand):
 
                     # Player 2 followers
                     if match.Player2ID:
-                        p2_devices = DeviceToken.objects.filter(
-                            favorite_player_ids__contains=[match.Player2ID]
-                        )
-                        p2_tokens = [d.push_token for d in p2_devices if d.push_token]
+                        p2_tokens = get_tokens_for_player(match.Player2ID)
                         if p2_tokens:
                             send_expo_push(p2_tokens, '▶️ Match Resumed',
                                            f'{p2_name} {s2}–{s1} {p1_name}',

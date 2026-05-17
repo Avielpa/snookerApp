@@ -1994,6 +1994,71 @@ def device_favorites_view(request):
         return Response({'player_ids': [], 'match_ids': []})
 
 
+# ======================== User Favorites / Device Link ========================
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def user_link_device_view(request):
+    """Link a device UUID to the authenticated user account. Body: {device_id}"""
+    from .models import DeviceToken
+    device_id = request.data.get('device_id', '').strip()
+    if not device_id:
+        return Response({'error': 'device_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+    try:
+        device, _ = DeviceToken.objects.get_or_create(device_id=device_id)
+        device.user = request.user
+        device.save(update_fields=['user', 'updated_at'])
+        return Response({'status': 'linked'})
+    except Exception as e:
+        logger.error(f'Error linking device to user: {e}')
+        return Response({'error': 'Internal error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def user_favorites_view(request):
+    """Return favourites for the authenticated user."""
+    from .models import UserFavorite
+    fav, _ = UserFavorite.objects.get_or_create(user=request.user)
+    return Response({'player_ids': fav.favorite_player_ids, 'match_ids': fav.favorite_match_ids})
+
+
+@api_view(['PATCH'])
+@permission_classes([IsAuthenticated])
+def user_favorites_players_view(request):
+    """Replace the authenticated user's favourite player IDs. Body: {player_ids}"""
+    from .models import UserFavorite
+    player_ids = request.data.get('player_ids', [])
+    if not isinstance(player_ids, list):
+        return Response({'error': 'player_ids must be a list'}, status=status.HTTP_400_BAD_REQUEST)
+    try:
+        fav, _ = UserFavorite.objects.get_or_create(user=request.user)
+        fav.favorite_player_ids = [int(pid) for pid in player_ids if pid is not None]
+        fav.save(update_fields=['favorite_player_ids', 'updated_at'])
+        return Response({'status': 'ok', 'player_ids': fav.favorite_player_ids})
+    except Exception as e:
+        logger.error(f'Error updating user player favourites: {e}')
+        return Response({'error': 'Internal error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['PATCH'])
+@permission_classes([IsAuthenticated])
+def user_favorites_matches_view(request):
+    """Replace the authenticated user's favourite match IDs. Body: {match_ids}"""
+    from .models import UserFavorite
+    match_ids = request.data.get('match_ids', [])
+    if not isinstance(match_ids, list):
+        return Response({'error': 'match_ids must be a list'}, status=status.HTTP_400_BAD_REQUEST)
+    try:
+        fav, _ = UserFavorite.objects.get_or_create(user=request.user)
+        fav.favorite_match_ids = [int(mid) for mid in match_ids if mid is not None]
+        fav.save(update_fields=['favorite_match_ids', 'updated_at'])
+        return Response({'status': 'ok', 'match_ids': fav.favorite_match_ids})
+    except Exception as e:
+        logger.error(f'Error updating user match favourites: {e}')
+        return Response({'error': 'Internal error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 # ======================== Predictions ========================
 
 def _api_id_to_db_id(match_api_id: int):

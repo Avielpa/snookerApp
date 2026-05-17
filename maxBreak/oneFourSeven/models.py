@@ -1052,6 +1052,7 @@ class DeviceToken(models.Model):
     push_error = models.TextField(blank=True, default='')  # diagnostic: why token is missing
     favorite_player_ids = models.JSONField(default=list)   # player IDs from player profile stars
     favorite_match_ids = models.JSONField(default=list)    # api_match_ids from match card stars
+    user = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name='devices')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -1085,6 +1086,26 @@ class NotifDedup(models.Model):
 
     def __str__(self):
         return f"{self.event_type} | match {self.api_match_id} | {self.sent_date}"
+
+
+# ================== UserFavorite Model ==================
+class UserFavorite(models.Model):
+    """
+    Stores favourite players and matches for a registered user.
+    Enables cross-device sync: any device linked to the same user account
+    receives notifications for these favourites.
+    """
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='favorites')
+    favorite_player_ids = models.JSONField(default=list)
+    favorite_match_ids = models.JSONField(default=list)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Favorites for {self.user.username} ({len(self.favorite_player_ids)} players, {len(self.favorite_match_ids)} matches)"
+
+    class Meta:
+        verbose_name = "User Favorite"
+        verbose_name_plural = "User Favorites"
 
 
 # ================== MatchPrediction Model ==================

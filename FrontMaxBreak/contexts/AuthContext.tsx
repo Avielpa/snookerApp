@@ -3,8 +3,10 @@
 // All components that need to know if the user is logged in use this context.
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { login, logout, register, getUser, isLoggedIn, AuthUser } from '../services/authService';
+import { login, logout, register, getUser, isLoggedIn, linkDevice, AuthUser } from '../services/authService';
 import { syncOnLogin } from '../services/scoreboardSyncService';
+import { loadFavorites } from '../services/favoritesService';
+import { getOrCreateDeviceId } from '../utils/deviceIdentity';
 
 interface AuthContextValue {
   user: AuthUser | null;
@@ -39,23 +41,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const _postLoginSync = useCallback(async () => {
+    syncOnLogin().catch(() => {});
+    getOrCreateDeviceId()
+      .then((deviceId) => linkDevice(deviceId).catch(() => {}))
+      .catch(() => {});
+    loadFavorites().catch(() => {});
+  }, []);
+
   useEffect(() => {
     refresh().then(async () => {
       const logged = await isLoggedIn();
-      if (logged) syncOnLogin().catch(() => {});
+      if (logged) _postLoginSync();
     }).finally(() => setLoading(false));
-  }, [refresh]);
+  }, [refresh, _postLoginSync]);
 
   const doLogin = useCallback(async (username: string, password: string) => {
     const u = await login(username, password);
     setUser(u);
-  }, []);
+    _postLoginSync();
+  }, [_postLoginSync]);
 
   const doRegister = useCallback(async (username: string, password: string, email = '') => {
     await register(username, password, email);
     const u = await login(username, password);
     setUser(u);
-  }, []);
+    _postLoginSync();
+  }, [_postLoginSync]);
 
   const doLogout = useCallback(async () => {
     await logout();

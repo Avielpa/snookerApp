@@ -17,6 +17,44 @@ EXPO_PUSH_URL    = 'https://exp.host/--/api/v2/push/send'
 EXPO_RECEIPT_URL = 'https://exp.host/--/api/v2/push/getReceipts'
 
 
+def get_tokens_for_match(match_id):
+    """
+    Return a deduplicated list of push tokens for all devices that have
+    favorited this match — covers both UUID-only devices and user-linked devices
+    whose UserFavorite includes this match.
+    """
+    from oneFourSeven.models import DeviceToken
+    uuid_tokens = set(
+        DeviceToken.objects.filter(favorite_match_ids__contains=[match_id])
+        .exclude(push_token='').values_list('push_token', flat=True)
+    )
+    user_tokens = set(
+        DeviceToken.objects.filter(
+            user__favorites__favorite_match_ids__contains=[match_id]
+        ).exclude(push_token='').values_list('push_token', flat=True)
+    )
+    return list(uuid_tokens | user_tokens)
+
+
+def get_tokens_for_player(player_id):
+    """
+    Return a deduplicated list of push tokens for all devices that have
+    favorited this player — covers both UUID-only devices and user-linked devices
+    whose UserFavorite includes this player.
+    """
+    from oneFourSeven.models import DeviceToken
+    uuid_tokens = set(
+        DeviceToken.objects.filter(favorite_player_ids__contains=[player_id])
+        .exclude(push_token='').values_list('push_token', flat=True)
+    )
+    user_tokens = set(
+        DeviceToken.objects.filter(
+            user__favorites__favorite_player_ids__contains=[player_id]
+        ).exclude(push_token='').values_list('push_token', flat=True)
+    )
+    return list(uuid_tokens | user_tokens)
+
+
 def send_expo_push(tokens, title, body, data=None):
     if not tokens:
         return

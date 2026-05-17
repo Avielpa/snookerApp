@@ -118,6 +118,15 @@ export async function getValidAccessToken(): Promise<string> {
   return newAccess;
 }
 
+export async function linkDevice(deviceId: string): Promise<void> {
+  const token = await getValidAccessToken();
+  await axios.post(
+    `${API_BASE}user/link-device/`,
+    { device_id: deviceId },
+    { headers: { Authorization: `Bearer ${token}` } },
+  );
+}
+
 export async function changePassword(oldPassword: string, newPassword: string): Promise<void> {
   const token = await getValidAccessToken();
   await axios.post(
