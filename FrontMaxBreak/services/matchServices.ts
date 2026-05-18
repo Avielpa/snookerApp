@@ -169,18 +169,36 @@ export const getPlayerDetails = async (playerId: number | string | undefined | n
         try {
             const numericPlayerId = typeof playerId === 'string' ? parseInt(playerId, 10) : playerId;
             if (typeof numericPlayerId === 'number' && !isNaN(numericPlayerId) && numericPlayerId > 0) {
-                // Basic player data structure for display
-                // Create safe fallback player that won't cause crashes
+                // Fallback player with safe defaults for all optional stat fields
                 const fallbackPlayer: Player = {
                     ID: numericPlayerId,
-                    FirstName: `Player`,
+                    FirstName: 'Player',
                     LastName: `${numericPlayerId}`,
                     MiddleName: '',
-                    Nationality: 'Unknown',
-                    Sex: 'M',
-                    Photo: '',
+                    Nationality: null,
+                    Sex: null,
+                    Photo: null,
                     ShortName: `P${numericPlayerId}`,
-                    Active: true,
+                    Active: null,
+                    Born: null,
+                    FirstSeasonAsPro: null,
+                    LastSeasonAsPro: null,
+                    NumRankingTitles: null,
+                    NumMaximums: null,
+                    current_ranking_position: null,
+                    prize_money_this_year: null,
+                    recent_form: [],
+                    win_streak: 0,
+                    ranking_trend: { current: null, previous: null, delta: null },
+                    season_stats: { matches: 0, wins: 0, season: null },
+                    frame_stats: { frames_won: 0, frames_lost: 0, frames_played: 0, frame_pct: 0 },
+                    finals_record: { finals_reached: 0, finals_won: 0, finals_pct: 0 },
+                    deciding_frames: { deciding_played: 0, deciding_won: 0, deciding_pct: 0 },
+                    semi_final_record: { reached: 0, won: 0, pct: 0 },
+                    career_best_ranking: null,
+                    seasons_in_top16: null,
+                    best_win_streak: null,
+                    recent_win_pct: null,
                 };
                 
                 logger.debug(`[MatchService] Using fallback player data for ID: ${playerId}`);

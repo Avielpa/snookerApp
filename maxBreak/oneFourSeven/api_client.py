@@ -145,6 +145,28 @@ class SnookerAPIClient:
         params = {'t': T_EVENT_DETAILS, 'e': event_id}
         return self._make_request(params)
 
+    def fetch_player_by_id(self, player_id: int) -> Optional[Dict]:
+        """Fetch a single player by ID using the T_PLAYER_INFO endpoint."""
+        logger.info(f"Fetching single player ID {player_id} from snooker.org")
+        params = {'t': T_PLAYER_INFO, 'pl': player_id}
+        data = self._make_request(params)
+        if not data:
+            return None
+        if isinstance(data, list):
+            for item in data:
+                try:
+                    if int(item.get('ID', 0)) == player_id:
+                        return item
+                except (ValueError, TypeError):
+                    continue
+            return None
+        if isinstance(data, dict):
+            try:
+                if int(data.get('ID', 0)) == player_id:
+                    return data
+            except (ValueError, TypeError):
+                pass
+        return None
 
     def fetch_head_to_head(self, player1_id: int, player2_id: int, season: int = -1, tour: str = None) -> Optional[Union[List, Dict]]:
         """Fetch head-to-head statistics between two players.
@@ -181,5 +203,6 @@ fetch_players_data = api_client.fetch_players
 fetch_ranking_data = api_client.fetch_rankings
 fetch_event_matches_data = api_client.fetch_event_matches
 fetch_event_details_data = api_client.fetch_event_details
+fetch_player_by_id_data = api_client.fetch_player_by_id
 fetch_h2h_data = api_client.fetch_head_to_head
 fetch_round_details_data = api_client.fetch_round_details

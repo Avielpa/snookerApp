@@ -697,7 +697,27 @@ def player_by_id_view(request, player_id):
     Includes current season ranking position and prize money earned this year.
     """
     logger.debug(f"Request received for player ID: {player_id}")
-    player_instance = get_object_or_404(Player, ID=player_id)
+    try:
+        player_instance = Player.objects.get(ID=player_id)
+    except Player.DoesNotExist:
+        # Trigger a background fetch so next pull-to-refresh shows real data
+        import threading
+        def _bg_fetch_player(pid):
+            try:
+                from oneFourSeven.scraper import fetch_player_by_id_data, save_players
+                api_data = fetch_player_by_id_data(pid)
+                if api_data:
+                    save_players([api_data])
+                    logger.info(f"[on-demand] Saved player {pid} from snooker.org")
+                else:
+                    logger.info(f"[on-demand] Player {pid} not found on snooker.org")
+            except Exception as e:
+                logger.warning(f"[on-demand] fetch failed for player {pid}: {e}")
+        threading.Thread(target=_bg_fetch_player, args=(player_id,), daemon=True).start()
+        return Response(
+            {'error': 'Player data not yet available. Pull to refresh in a moment.'},
+            status=status.HTTP_404_NOT_FOUND
+        )
     serializer = PlayerSerializer(player_instance)
     player_data = serializer.data
 

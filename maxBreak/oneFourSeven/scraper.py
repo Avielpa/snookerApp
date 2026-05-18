@@ -17,7 +17,8 @@ from .api_client import (
     fetch_event_matches_data,
     fetch_event_details_data,
     fetch_h2h_data,
-    fetch_round_details_data
+    fetch_round_details_data,
+    fetch_player_by_id_data,
 )
 
 from .data_savers import (
@@ -85,6 +86,7 @@ __all__ = [
     'fetch_event_details_data',
     'fetch_h2h_data',
     'fetch_round_details_data',
+    'fetch_player_by_id_data',
     
     # Data processing functions
     'save_players',

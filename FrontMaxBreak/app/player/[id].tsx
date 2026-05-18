@@ -1,5 +1,5 @@
 // app/player/[id].tsx - Modern Player Profile with Tabs
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import {
     View,
     Text,
@@ -128,6 +128,8 @@ export default function PlayerDetailsScreen(): React.ReactElement {
     const [matches, setMatches] = useState<PlayerMatchHistoryItem[]>([]);
     const [matchesLoading, setMatchesLoading] = useState(false);
     const [matchesError, setMatchesError] = useState<string | null>(null);
+    const [isUnknownPlayer, setIsUnknownPlayer] = useState(false);
+    const hasInitiallyFetchedMatches = useRef(false);
     const [isStarred, setIsStarred] = useState(
         playerId ? isPlayerFavouriteSync(playerId) : false
     );
@@ -323,6 +325,9 @@ export default function PlayerDetailsScreen(): React.ReactElement {
             if (playerData && typeof playerData === 'object' && playerData.ID === playerId) {
                 setPlayer(playerData);
                 setError(null);
+                // Detect fallback player (no real data yet — backend returned 404)
+                const isFallback = playerData.FirstName === 'Player' && playerData.LastName === String(playerId);
+                setIsUnknownPlayer(isFallback);
                 logger.log(`[PlayerProfile] Successfully loaded player data`);
             } else {
                 setError(`Player details could not be retrieved for ID: ${playerId}.`);
@@ -389,12 +394,14 @@ export default function PlayerDetailsScreen(): React.ReactElement {
         }
     }, [playerId]);
 
-    // Fetch matches on mount so form dots and streak stay in sync with the Matches tab
+    // Fetch matches once on mount so form dots and streak stay in sync with the Matches tab.
+    // Uses a ref to prevent re-fetching when empty matches are returned (avoids infinite loop).
     useEffect(() => {
-        if (matches.length === 0 && !matchesLoading) {
+        if (!hasInitiallyFetchedMatches.current) {
+            hasInitiallyFetchedMatches.current = true;
             fetchPlayerMatches();
         }
-    }, [fetchPlayerMatches, matches.length, matchesLoading]);
+    }, [fetchPlayerMatches]);
 
     // Derive recent form and win streak directly from the same matches array the Matches tab shows
     const recentForm = useMemo(() =>
@@ -828,17 +835,28 @@ export default function PlayerDetailsScreen(): React.ReactElement {
     );
 
     const renderTabContent = () => {
-        switch (activeTab) {
-            case 'overview':
-                return renderOverviewContent();
-            case 'matches':
-                return renderMatchesContent();
-            case 'stats':
-                return renderStatsContent();
-            case 'career':
-                return renderCareerContent();
-            default:
-                return renderOverviewContent();
+        try {
+            switch (activeTab) {
+                case 'overview':
+                    return renderOverviewContent();
+                case 'matches':
+                    return renderMatchesContent();
+                case 'stats':
+                    return renderStatsContent();
+                case 'career':
+                    return renderCareerContent();
+                default:
+                    return renderOverviewContent();
+            }
+        } catch (e) {
+            logger.error('[PlayerProfile] Tab render error:', e);
+            return (
+                <View style={styles.emptyState}>
+                    <Ionicons name="alert-circle-outline" size={40} color={COLORS.textMuted} />
+                    <Text style={styles.emptyText}>No data available for this player</Text>
+                    <Text style={styles.emptySubtext}>Pull to refresh</Text>
+                </View>
+            );
         }
     };
 
@@ -928,8 +946,27 @@ export default function PlayerDetailsScreen(): React.ReactElement {
                     ))}
                 </View>
 
+                {/* No-data banner for players not yet in the database */}
+                {isUnknownPlayer && (
+                    <View style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        backgroundColor: 'rgba(255, 165, 0, 0.15)',
+                        borderBottomWidth: 1,
+                        borderBottomColor: 'rgba(255, 165, 0, 0.4)',
+                        paddingVertical: 8,
+                        paddingHorizontal: 14,
+                        gap: 8,
+                    }}>
+                        <Ionicons name="information-circle-outline" size={16} color="rgba(255, 165, 0, 0.9)" />
+                        <Text style={{ flex: 1, fontSize: 12, color: 'rgba(255, 165, 0, 0.9)' }}>
+                            No data available for this player yet. Pull to refresh in a moment.
+                        </Text>
+                    </View>
+                )}
+
                 {/* Tab Content */}
-                <ScrollView 
+                <ScrollView
                     style={styles.scrollContainer}
                     refreshControl={
                         <RefreshControl
