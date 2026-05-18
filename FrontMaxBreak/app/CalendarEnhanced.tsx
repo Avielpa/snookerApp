@@ -18,6 +18,8 @@ import * as Haptics from 'expo-haptics';
 import { getCalendarByTab } from '../services/matchServices';
 import { logger } from '../utils/logger';
 import { useColors } from '../contexts/ThemeContext';
+import { useSeasonSelector, dateToSeasonYear, seasonDisplayLabel } from '../hooks/useSeasonSelector';
+import SeasonPicker from '../components/SeasonPicker';
 
 interface Tournament {
   ID: number;
@@ -260,6 +262,16 @@ export default function CalendarEnhanced() {
   const router = useRouter();
   const colors = useColors();
 
+  const availableSeasons = useMemo(() =>
+    [...new Set(
+      allTournaments
+        .filter(t => t.StartDate)
+        .map(t => dateToSeasonYear(t.StartDate!))
+    )].sort((a, b) => b - a),
+  [allTournaments]);
+
+  const { selectedSeason, setSelectedSeason } = useSeasonSelector(availableSeasons);
+
   const enhanceTournamentData = useCallback((tournaments: Tournament[]): Tournament[] => {
     const now = new Date();
     now.setHours(0, 0, 0, 0);
@@ -361,6 +373,9 @@ export default function CalendarEnhanced() {
   useEffect(() => {
     let filtered = [...allTournaments];
 
+    // Season filter — events with null StartDate pass through (never hidden)
+    filtered = filtered.filter(t => !t.StartDate || dateToSeasonYear(t.StartDate) === selectedSeason);
+
     if (selectedStatus !== 'all') {
       filtered = selectedStatus === 'active'
         ? filtered.filter(t => t.isLive)
@@ -388,7 +403,7 @@ export default function CalendarEnhanced() {
     });
 
     setFilteredTournaments(filtered);
-  }, [allTournaments, selectedStatus, searchQuery]);
+  }, [allTournaments, selectedStatus, searchQuery, selectedSeason]);
 
   const handleTabPress = (tabId: string) => {
     if (tabId !== selectedTab) setSelectedTab(tabId);
@@ -498,6 +513,15 @@ export default function CalendarEnhanced() {
         })}
       </View>
 
+      {/* Season selector */}
+      <View style={[styles.seasonRow, { borderBottomColor: colors.cardBorder }]}>
+        <SeasonPicker
+          seasons={availableSeasons}
+          selected={selectedSeason}
+          onSelect={setSelectedSeason}
+        />
+      </View>
+
       {/* Status filter pills */}
       <View style={[styles.pillRow, { borderBottomColor: colors.cardBorder }]}>
         {statusOptions.map(opt => {
@@ -534,7 +558,9 @@ export default function CalendarEnhanced() {
         <View style={styles.emptyContainer}>
           <Ionicons name="calendar-outline" size={48} color={colors.textMuted} />
           <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-            {searchQuery ? 'No tournaments match your search.' : 'No tournaments available.'}
+            {searchQuery
+              ? 'No tournaments match your search.'
+              : `No tournaments found for ${seasonDisplayLabel(selectedSeason)}.\nTry selecting a different season.`}
           </Text>
         </View>
       ) : (
@@ -620,6 +646,11 @@ const styles = StyleSheet.create({
   },
   segmentTextActive: {
     fontFamily: 'PoppinsBold',
+  },
+  seasonRow: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   pillRow: {
     flexDirection: 'row',

@@ -21,6 +21,14 @@ import {
     TourWinnersData,
     TitleLeadersData,
 } from '../services/statsService';
+import {
+    useSeasonSelector,
+    centuriesSeasonParam,
+    statsSeasonParam,
+    seasonDisplayLabel,
+    getCurrentSeasonYear,
+} from '../hooks/useSeasonSelector';
+import SeasonPicker from '../components/SeasonPicker';
 
 // ---- Helpers ---------------------------------------------------------------
 
@@ -463,6 +471,11 @@ const TABS: { key: TabKey; label: string; icon: React.ComponentProps<typeof Ioni
 
 // ---- Main Screen -----------------------------------------------------------
 
+const STATS_SEASONS = Array.from(
+    { length: getCurrentSeasonYear() - 2018 },
+    (_, i) => getCurrentSeasonYear() - i
+);
+
 export default function StatsScreen() {
     const colors = useColors();
     const router = useRouter();
@@ -474,17 +487,19 @@ export default function StatsScreen() {
     const [tourWinnersData, setTourWinnersData] = useState<TourWinnersData | null>(null);
     const [titleLeadersData, setTitleLeadersData] = useState<TitleLeadersData | null>(null);
 
+    const { selectedSeason, setSelectedSeason } = useSeasonSelector(STATS_SEASONS);
+
     const loadAll = useCallback(async () => {
-        logger.log('[Stats] Loading all stats data...');
+        logger.log(`[Stats] Loading stats for season ${selectedSeason}...`);
         const [centuries, winners, leaders] = await Promise.all([
-            fetchCenturies('2025-26'),
-            fetchTourWinners(2025),
-            fetchTitleLeaders(2025),
+            fetchCenturies(centuriesSeasonParam(selectedSeason)),
+            fetchTourWinners(statsSeasonParam(selectedSeason)),
+            fetchTitleLeaders(statsSeasonParam(selectedSeason)),
         ]);
         setCenturiesData(centuries);
         setTourWinnersData(winners);
         setTitleLeadersData(leaders);
-    }, []);
+    }, [selectedSeason]);
 
     useEffect(() => {
         setLoading(true);
@@ -497,6 +512,11 @@ export default function StatsScreen() {
         setRefreshing(false);
     }, [loadAll]);
 
+    const allEmpty = !loading &&
+        (centuriesData?.count ?? 0) === 0 &&
+        (tourWinnersData?.count ?? 0) === 0 &&
+        (titleLeadersData?.count ?? 0) === 0;
+
     const styles = createStyles(colors);
 
     return (
@@ -504,7 +524,16 @@ export default function StatsScreen() {
             {/* Page header */}
             <View style={styles.header}>
                 <Text style={styles.title}>Season Stats</Text>
-                <Text style={styles.subtitle}>2025-26 season</Text>
+                <SeasonPicker
+                    seasons={STATS_SEASONS}
+                    selected={selectedSeason}
+                    onSelect={setSelectedSeason}
+                />
+                {allEmpty && (
+                    <Text style={[styles.noDataText, { color: colors.textMuted }]}>
+                        {`No data available for ${seasonDisplayLabel(selectedSeason)}`}
+                    </Text>
+                )}
             </View>
 
             {/* Tab bar */}
@@ -577,11 +606,10 @@ const createStyles = (colors: any) =>
             fontFamily: 'PoppinsBold',
             color: colors.textPrimary,
         },
-        subtitle: {
+        noDataText: {
             fontSize: 12,
             fontFamily: 'PoppinsRegular',
-            color: colors.textSecondary,
-            marginTop: 2,
+            marginTop: 6,
         },
         tabBar: {
             flexDirection: 'row',
