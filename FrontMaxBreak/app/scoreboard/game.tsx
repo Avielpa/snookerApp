@@ -347,6 +347,7 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
             highestBreak={frameHighestBreak[0]}
             isActive={snap.currentPlayer === 0}
             isLeft
+            onEndVisit={snap.currentPlayer === 1 ? endVisit : undefined}
           />
           <PlayerCard
             name={playerNames[1]}
@@ -356,6 +357,7 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
             highestBreak={frameHighestBreak[1]}
             isActive={snap.currentPlayer === 1}
             isLeft={false}
+            onEndVisit={snap.currentPlayer === 0 ? endVisit : undefined}
           />
         </View>
       )}
@@ -398,6 +400,7 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
         awaiting={snap.awaiting}
         colorsRemaining={snap.colorsRemaining}
         redsRemaining={snap.redsRemaining}
+        currentBreak={snap.currentBreak}
         onPot={(ball: BallType) => potBall(ball)}
         onExtraRed={addExtraRed}
         onMiss={isTrainMode ? concede : endVisit}

@@ -81,8 +81,21 @@ function applyExtraRed(state) {
 
 function applyEndVisit(state) {
   const snap = state.current;
-  // awaiting carries over — the next player must continue from same awaiting state
-  return { ...state, current: { ...snap, currentPlayer: snap.currentPlayer===0?1:0, currentBreak:0 }, history:[...state.history,snap] };
+  let newPhase = snap.phase;
+  let newAwaiting = snap.awaiting;
+  let newColorsRemaining = [...snap.colorsRemaining];
+  if (snap.phase === 'reds') {
+    if (snap.redsRemaining === 0 && snap.awaiting === 'color') {
+      // Last red was potted, player missed color — incoming player starts colors phase
+      newPhase = 'colors';
+      newColorsRemaining = [...COLORS_SEQUENCE];
+    } else {
+      // Normal miss: incoming player pots a red next
+      newAwaiting = 'red';
+    }
+  }
+  const newPot = calcPointsOnTable(newPhase, snap.redsRemaining, newAwaiting, newColorsRemaining);
+  return { ...state, current: { ...snap, currentPlayer: snap.currentPlayer===0?1:0, currentBreak:0, phase:newPhase, awaiting:newAwaiting, colorsRemaining:newColorsRemaining, pointsOnTable:newPot }, history:[...state.history,snap] };
 }
 
 // Fixed version: awaiting = snap.awaiting always (not reset based on redsRemaining)
@@ -159,35 +172,36 @@ section('SECTION 1 — Basic ball potting');
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// SECTION 2 — AWAITING STATE CARRIES ACROSS VISITS (correct snooker rule)
+// SECTION 2 — END VISIT RESETS AWAITING TO RED (correct snooker rule)
 // ═══════════════════════════════════════════════════════════════════════════════
-section('SECTION 2 — Awaiting carries across visits (the reported "bug" — is correct behavior)');
+section('SECTION 2 — endVisit resets awaiting to red (incoming player pots red)');
 {
   let g = makeGame(15);
 
-  // Player 0 pots red, then ends visit without potting a color
+  // Player 0 pots red then ends visit without potting a color
   g = applyPot(g,'red'); // P0 pots red, awaiting='color'
   assert('P0 potted red, awaiting=color', g.current.awaiting === 'color');
 
-  g = applyEndVisit(g); // P0 misses color
+  g = applyEndVisit(g); // P0 misses color — turn switches
   assert('after endVisit: player switches to P1', g.current.currentPlayer === 1);
-  assert('after endVisit: awaiting still color (P1 must pot a color)', g.current.awaiting === 'color');
+  assert('after endVisit: awaiting resets to red (P1 must pot a red)', g.current.awaiting === 'red');
   assert('after endVisit: redsRemaining = 14 (red stays off)', g.current.redsRemaining === 14);
   assert('after endVisit: break resets to 0', g.current.currentBreak === 0);
 
-  // P1 can only pot colors
+  // P1 must pot a red next — colours are NOT available
   const avail = getAvailableBalls(g.current);
-  assert('P1 cannot pot red', !avail.includes('red'));
-  assert('P1 can pot black', avail.includes('black'));
+  assert('P1 must pot red (not free colour)', avail.includes('red'));
+  assert('P1 cannot pot colour before red', !avail.includes('black'));
 
-  // P1 pots blue
-  g = applyPot(g,'blue'); // 5 pts to P1
-  assert('P1 scores 5 after potting blue', g.current.scores[1] === 5);
-  assert('after P1 pots blue: awaiting = red', g.current.awaiting === 'red');
+  // P1 pots red
+  g = applyPot(g,'red');
+  assert('P1 score after red = 1', g.current.scores[1] === 1);
+  assert('P1 pots red: redsRemaining = 13', g.current.redsRemaining === 13);
+  assert('after P1 pots red: awaiting = color', g.current.awaiting === 'color');
 
-  // P1 can now pot a red
+  // P1 can now pot a colour
   const avail2 = getAvailableBalls(g.current);
-  assert('P1 can now pot a red', avail2.includes('red'));
+  assert('P1 can pot black after potting red', avail2.includes('black'));
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -440,14 +454,15 @@ section('SECTION 8 — End visit edge cases');
   assert('P1 pots red: redsRemaining=13', g2.current.redsRemaining === 13);
   assert('P1 pots red: P1 score=1', g2.current.scores[1] === 1);
 
-  // End visit with 0 reds remaining (awaiting=color after last red) — other player pots color
+  // End visit after last red (redsRemaining=0, awaiting=color) — P1 starts directly in colors phase
   let g3 = makeGame(1);
   g3 = applyPot(g3,'red'); // last red, redsRemaining=0, awaiting=color
   g3 = applyEndVisit(g3);
-  assert('endVisit after last red: P1 must pot color', g3.current.awaiting === 'color');
-  assert('endVisit after last red: redsRemaining still 0', g3.current.redsRemaining === 0);
-  g3 = applyPot(g3,'blue'); // free color
-  assert('P1 pots blue (free color): transitions to colors phase', g3.current.phase === 'colors');
+  assert('endVisit after last red: enters colors phase directly', g3.current.phase === 'colors');
+  assert('endVisit after last red: colorsRemaining has 6', g3.current.colorsRemaining.length === 6);
+  assert('endVisit after last red: yellow is first in sequence', g3.current.colorsRemaining[0] === 'yellow');
+  g3 = applyPot(g3,'yellow'); // P1 pots first color in sequence
+  assert('P1 pots yellow (no free colour): score 2', g3.current.scores[1] === 2);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

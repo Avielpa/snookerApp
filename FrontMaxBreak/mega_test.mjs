@@ -58,7 +58,13 @@ function applyExtraRed(state) {
 }
 function applyEndVisit(state) {
   const snap=state.current;
-  return {...state,current:{...snap,currentPlayer:snap.currentPlayer===0?1:0,currentBreak:0},history:[...state.history,snap]};
+  let newPhase=snap.phase,newAwaiting=snap.awaiting,newColorsRemaining=[...snap.colorsRemaining];
+  if(snap.phase==='reds'){
+    if(snap.redsRemaining===0&&snap.awaiting==='color'){newPhase='colors';newColorsRemaining=[...COLORS_SEQUENCE];}
+    else{newAwaiting='red';}
+  }
+  const newPot=calcPointsOnTable(newPhase,snap.redsRemaining,newAwaiting,newColorsRemaining);
+  return {...state,current:{...snap,currentPlayer:snap.currentPlayer===0?1:0,currentBreak:0,phase:newPhase,awaiting:newAwaiting,colorsRemaining:newColorsRemaining,pointsOnTable:newPot},history:[...state.history,snap]};
 }
 function applyFoul(state, foulValue, opponentPlays=true) {
   const snap=state.current;
@@ -524,21 +530,21 @@ section('SECTION G4 — awaiting state after every action');
   g=applyPot(g,'red');
   assert('G4.4: red→awaiting=color again',g.current.awaiting==='color');
 
-  // endVisit after red → P1 must pot color
+  // endVisit after red → awaiting resets to red (incoming player must pot red)
   g=applyEndVisit(g);
-  assert('G4.5: endVisit after red: awaiting stays color',g.current.awaiting==='color');
-
-  // Foul when awaiting=color → stays color
-  g=applyFoul(g,4,true);
-  assert('G4.6: foul preserves awaiting=color',g.current.awaiting==='color');
-
-  // P0 pots color → awaiting=red
-  g=applyPot(g,'pink');
-  assert('G4.7: color pot→awaiting=red',g.current.awaiting==='red');
+  assert('G4.5: endVisit after red: awaiting resets to red',g.current.awaiting==='red');
 
   // Foul when awaiting=red → stays red
   g=applyFoul(g,4,true);
-  assert('G4.8: foul preserves awaiting=red',g.current.awaiting==='red');
+  assert('G4.6: foul preserves awaiting=red',g.current.awaiting==='red');
+
+  // Pot red → awaiting=color
+  g=applyPot(g,'red');
+  assert('G4.7: red pot→awaiting=color',g.current.awaiting==='color');
+
+  // Foul when awaiting=color → stays color
+  g=applyFoul(g,4,true);
+  assert('G4.8: foul preserves awaiting=color',g.current.awaiting==='color');
 
   // Run out of reds: pot last red → awaiting=color
   let g2=makeGame(1);
@@ -600,12 +606,12 @@ section('SECTION G5 — endVisit preserves all state fields');
   assert('G5.12: colorsRemaining unchanged after endVisit in colors',JSON.stringify(g2.current.colorsRemaining)===JSON.stringify(colsBefore));
   assert('G5.13: phase still colors after endVisit',g2.current.phase==='colors');
 
-  // endVisit when awaiting=color (red already potted)
+  // endVisit when awaiting=color (red already potted) — resets to red
   let g3=makeGame(15);
   g3=applyPot(g3,'red');
   assert('G5.14: awaiting=color before endVisit',g3.current.awaiting==='color');
   g3=applyEndVisit(g3);
-  assert('G5.15: awaiting stays color after endVisit',g3.current.awaiting==='color');
+  assert('G5.15: awaiting resets to red after endVisit',g3.current.awaiting==='red');
 }
 
 // ═══════════════════════════════════════════════════════════════

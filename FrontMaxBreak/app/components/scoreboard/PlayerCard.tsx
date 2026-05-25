@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { useTheme } from '../../../contexts/ThemeContext';
 
 interface Props {
@@ -10,21 +11,24 @@ interface Props {
   highestBreak: number;
   isActive: boolean;
   isLeft: boolean;
+  onEndVisit?: () => void;
 }
 
 export default function PlayerCard({
-  name, score, framesWon, currentBreak, highestBreak, isActive, isLeft,
+  name, score, framesWon, currentBreak, highestBreak, isActive, isLeft, onEndVisit,
 }: Props) {
   const { theme } = useTheme();
   const c = theme.colors;
 
-  return (
-    <View style={[
-      styles.card,
-      { backgroundColor: isActive ? 'rgba(255,183,77,0.12)' : c.cardBackground },
-      { borderColor: isActive ? c.primary : c.cardBorder },
-      isLeft ? styles.borderRight : styles.borderLeft,
-    ]}>
+  const cardStyle = [
+    styles.card,
+    { backgroundColor: isActive ? 'rgba(255,183,77,0.12)' : c.cardBackground },
+    { borderColor: isActive ? c.primary : c.cardBorder },
+    isLeft ? styles.borderRight : styles.borderLeft,
+  ];
+
+  const content = (
+    <>
       {isActive && (
         <View style={[styles.activeDot, { backgroundColor: c.primary }]} />
       )}
@@ -57,8 +61,29 @@ export default function PlayerCard({
           <Text style={[styles.value, { color: c.textMuted }]}>{highestBreak}</Text>
         </View>
       )}
-    </View>
+
+      {onEndVisit && (
+        <Text style={[styles.endVisitHint, { color: c.textMuted }]}>tap · end visit</Text>
+      )}
+    </>
   );
+
+  if (onEndVisit) {
+    return (
+      <TouchableOpacity
+        style={cardStyle}
+        activeOpacity={0.7}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          onEndVisit();
+        }}
+      >
+        {content}
+      </TouchableOpacity>
+    );
+  }
+
+  return <View style={cardStyle}>{content}</View>;
 }
 
 const styles = StyleSheet.create({
@@ -115,5 +140,10 @@ const styles = StyleSheet.create({
     color: '#121212',
     fontSize: 12,
     fontFamily: 'PoppinsBold',
+  },
+  endVisitHint: {
+    fontSize: 10,
+    marginTop: 6,
+    opacity: 0.6,
   },
 });
