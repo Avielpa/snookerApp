@@ -194,15 +194,34 @@ export function useSnookerGame(config: MatchConfig, initialState?: GameState) {
   }, []);
 
   const endVisit = useCallback(() => {
-    // Player misses — switch turn, reset break; awaiting state carries over
     setState(prev => {
       if (prev.isMatchOver || prev.current.isFrameOver) return prev;
       const snap = prev.current;
+
+      let newPhase: GamePhase = snap.phase;
+      let newAwaiting: AwaitingType = snap.awaiting;
+      let newColorsRemaining = [...snap.colorsRemaining];
+
+      if (snap.phase === 'reds') {
+        if (snap.redsRemaining === 0 && snap.awaiting === 'color') {
+          // Last red was potted but player missed the color — incoming player starts colors phase
+          newPhase = 'colors';
+          newColorsRemaining = [...COLORS_SEQUENCE];
+        } else {
+          // Normal miss after potting a red — incoming player pots a red next
+          newAwaiting = 'red';
+        }
+      }
+
       const newSnapshot: FrameSnapshot = {
         ...snap,
         currentPlayer: snap.currentPlayer === 0 ? 1 : 0,
         currentBreak: 0,
         freeBallActive: false,
+        phase: newPhase,
+        awaiting: newAwaiting,
+        colorsRemaining: newColorsRemaining,
+        pointsOnTable: calcPointsOnTable(newPhase, snap.redsRemaining, newAwaiting, newColorsRemaining),
       };
       return { ...prev, current: newSnapshot, history: [...prev.history, snap] };
     });
