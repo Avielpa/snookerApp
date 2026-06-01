@@ -7,6 +7,7 @@ import {
     RefreshControl,
     ScrollView,
     Platform,
+    TextInput,
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -46,6 +47,7 @@ const HomeScreen = (): React.ReactElement | null => {
     const [activeFilter, setActiveFilter] = useState<ActiveFilterType>('upcoming');
     const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
     const hasAutoSwitchedToLive = React.useRef(false);
+    const hasAutoSwitchedToResults = React.useRef(false);
     const navigation = useRouter();
 
     const toggleSection = React.useCallback((sectionId: string) => {
@@ -78,6 +80,8 @@ const HomeScreen = (): React.ReactElement | null => {
     } = useHomeData();
 
     const { matches: otherLiveMatches } = useOtherLiveMatches(currentTournamentId);
+    const [searchQuery, setSearchQuery] = useState('')
+
 
     // Auto-collapse Results only when there are live/upcoming matches
     // During tournament gaps (only finished matches), keep Results expanded
@@ -99,6 +103,26 @@ const HomeScreen = (): React.ReactElement | null => {
         if (hasLive) {
             setActiveFilter('livePlaying');
             hasAutoSwitchedToLive.current = true;
+        }
+    }, [processedListData]);
+
+    // Auto-switch to Results tab during off-season (Priority 3 fallback: only finished matches).
+    // Only switches once per session — user can freely change tabs afterwards.
+    // Skips if live already took over (live has priority).
+    React.useEffect(() => {
+        if (hasAutoSwitchedToResults.current) return;
+        if (hasAutoSwitchedToLive.current) return;
+        if (processedListData.length === 0) return;
+        const hasActiveMatch = processedListData.some(
+            item => item.type === 'match' &&
+                (item.matchCategory === 'livePlaying' || item.matchCategory === 'onBreak' || item.matchCategory === 'upcoming')
+        );
+        const hasFinished = processedListData.some(
+            item => item.type === 'match' && item.matchCategory === 'finished'
+        );
+        if (!hasActiveMatch && hasFinished) {
+            setActiveFilter('finished');
+            hasAutoSwitchedToResults.current = true;
         }
     }, [processedListData]);
 
@@ -177,6 +201,17 @@ const HomeScreen = (): React.ReactElement | null => {
         }
         return result;
     }, [processedListData, activeFilter, collapsedSections]);
+
+    const displayData = searchQuery.trim() === ''
+        ? filteredListData
+        : filteredListData.filter(item => {
+            if (item.type !== 'match') return true;
+            const q = searchQuery.toLowerCase();
+            return (
+                item.player1_name?.toLowerCase().includes(q) ||
+                item.player2_name?.toLowerCase().includes(q)
+            );
+        });
 
     // rawMatches for DrawTab comes directly from useHomeData (unprocessed, no dedup)
 
@@ -299,6 +334,21 @@ const HomeScreen = (): React.ReactElement | null => {
                 )}
                 
                 <View style={styles.listArea}>
+
+                    <TextInput
+                        value={searchQuery}
+                        onChangeText={setSearchQuery}
+                        placeholder='Search Player'
+                        placeholderTextColor={COLORS.textMuted}
+                        style={{
+                            backgroundColor: COLORS.cardBackground,
+                            color: COLORS.textPrimary,
+                            fontSize: 7,
+                            borderRadius: 8,
+                            marginBottom: 8,
+                            padding: 10,
+                        }}/>
+
                     {loading && filteredListData.length === 0 ? (
                         <LoadingComponent COLORS={COLORS} styles={styles} />
                     ) : error ? (
@@ -320,7 +370,7 @@ const HomeScreen = (): React.ReactElement | null => {
                         <OtherToursTab colors={COLORS} />
                     ) : (
                         <FlatList
-                            data={filteredListData}
+                            data={displayData}
                             renderItem={renderListItem}
                             keyExtractor={(item: ListItem) => {
                                 if (item.type === 'match') {

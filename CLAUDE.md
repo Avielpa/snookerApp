@@ -169,19 +169,20 @@ Key files: `app/scoreboard/`, `app/components/scoreboard/`, `hooks/useSnookerGam
 Five test files at `FrontMaxBreak/` root — run with Node.js, no React needed:
 
 ```bash
-node game_test.mjs      # 326 assertions — full match mode + game logic (29 sections)
-node train_test.mjs     # 51 assertions  — train mode + computeTrainingStats
-node mega_test.mjs      # 470 assertions — edge cases train+match, all formulas
-node freeball_test.mjs  # 100 assertions — free ball in all situations
-node stats_test.mjs     # 48 assertions  — avgPointsPerFrame in groupByRivalry
+node game_test.mjs           # 328 assertions — full match mode + game logic (29 sections)
+node train_test.mjs          # 51 assertions  — train mode + computeTrainingStats
+node mega_test.mjs           # 470 assertions — edge cases train+match, all formulas
+node freeball_test.mjs       # 100 assertions — free ball in all situations
+node stats_test.mjs          # 48 assertions  — avgPointsPerFrame in groupByRivalry
+node offseason_tab_test.mjs  # 42 assertions  — off-season Results tab auto-switch logic
 ```
 
 **Run all:**
 ```bash
-node game_test.mjs && node train_test.mjs && node mega_test.mjs && node freeball_test.mjs && node stats_test.mjs
+node game_test.mjs && node train_test.mjs && node mega_test.mjs && node freeball_test.mjs && node stats_test.mjs && node offseason_tab_test.mjs
 ```
 
-Expected: `✅ All N assertions passed` for each file — **995 total**. Fix any failures before deploying.
+Expected: `✅ All N assertions passed` for each file — **1039 total**. Fix any failures before deploying.
 
 ## Claude Working Rules
 
