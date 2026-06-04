@@ -9,6 +9,7 @@ interface Props {
   awaiting: AwaitingType;
   colorsRemaining: BallType[];
   redsRemaining: number;
+  currentBreak: number;
   onPot: (ball: BallType) => void;
   onExtraRed: () => void;
   onMiss: () => void;
@@ -24,7 +25,7 @@ interface Props {
 const ALL_BALLS: BallType[] = ['red', 'yellow', 'green', 'brown', 'blue', 'pink', 'black'];
 
 export default function BallPad({
-  phase, awaiting, colorsRemaining, redsRemaining, onPot, onExtraRed, onMiss, onFoul, onUndo, onConcede, canUndo, trainMode, freeBallActive, onFreeBall,
+  phase, awaiting, colorsRemaining, redsRemaining, currentBreak, onPot, onExtraRed, onMiss, onFoul, onUndo, onConcede, canUndo, trainMode, freeBallActive, onFreeBall,
 }: Props) {
   const { theme } = useTheme();
   const c = theme.colors;
@@ -60,7 +61,11 @@ export default function BallPad({
   })();
 
   // True when multiple reds may have been potted simultaneously on the same shot
-  const showExtraRed = phase === 'reds' && awaiting === 'color' && redsRemaining > 0 && !trainMode && !freeBallActive;
+  // Only show after the current player has actually potted a red this visit (currentBreak > 0).
+  // Without this guard, awaiting='color' carried over from the previous player's visit would
+  // incorrectly show the extra-red button at the start of the new player's turn.
+  const showExtraRed = phase === 'reds' && awaiting === 'color' && redsRemaining > 0
+    && currentBreak > 0 && !trainMode && !freeBallActive;
 
   return (
     <View style={[styles.container, { backgroundColor: c.backgroundSecondary }]}>

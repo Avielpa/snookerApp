@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useKeepAwake } from 'expo-keep-awake';
-import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert, AppState } from 'react-native';
 import { useLocalSearchParams, router, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -44,34 +44,49 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
 
   useEffect(() => { stateRef.current = state; }, [state]);
 
+  // Shared helper: writes draft to AsyncStorage if the game has progress and hasn't
+  // been intentionally saved. Called on navigation-away blur AND on app backgrounding,
+  // so force-close / battery-death / child pressing the home button are all covered.
+  const saveDraftIfNeeded = useCallback(() => {
+    if (matchSaved.current) return;
+    const s = stateRef.current;
+    const hasProgress =
+      s.frameResults.length > 0 ||
+      s.current.scores[0] > 0 ||
+      s.current.scores[1] > 0 ||
+      s.current.currentBreak > 0;
+    if (hasProgress) {
+      const draft: GameDraft = {
+        params: {
+          id: params.id,
+          player1: params.player1,
+          player2: params.player2,
+          numberOfReds: params.numberOfReds,
+          bestOf: params.bestOf,
+        },
+        state: s,
+        savedAt: new Date().toISOString(),
+      };
+      saveDraft(draft).catch(() => {});
+    }
+  }, []);
+
+  // Save draft when the OS moves the app to background (covers force-close, battery death,
+  // home button press). The blur handler below covers intentional in-app navigation.
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', nextState => {
+      if (nextState === 'background') saveDraftIfNeeded();
+    });
+    return () => sub.remove();
+  }, []);
+
   useFocusEffect(
     useCallback(() => {
       clearDraft().catch(() => {});
       setGameActive(true);
       return () => {
         setGameActive(false);
-        if (!matchSaved.current) {
-          const s = stateRef.current;
-          const hasProgress =
-            s.frameResults.length > 0 ||
-            s.current.scores[0] > 0 ||
-            s.current.scores[1] > 0 ||
-            s.current.currentBreak > 0;
-          if (hasProgress) {
-            const draft: GameDraft = {
-              params: {
-                id: params.id,
-                player1: params.player1,
-                player2: params.player2,
-                numberOfReds: params.numberOfReds,
-                bestOf: params.bestOf,
-              },
-              state: s,
-              savedAt: new Date().toISOString(),
-            };
-            saveDraft(draft).catch(() => {});
-          }
-        }
+        saveDraftIfNeeded();
       };
     }, []),
   );
@@ -191,7 +206,7 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
     Alert.alert(
       'End Match?',
       framesCompleted > 0
-        ? `${framesCompleted} frame${framesCompleted !== 1 ? 's' : ''} completed. Save and exit?`
+        ? `${framesCompleted} frame${framesCompleted !== 1 ? 's' : ''} completed. Current frame in progress will be discarded. Save and exit?`
         : 'No frames completed yet. Match will not be saved.',
       [
         { text: 'Keep playing', style: 'cancel' },
@@ -223,9 +238,46 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
     );
   }
 
-  function handleFoulConfirm(value: number, opponentPlays: boolean) {
+  async function handleAbandonMatch() {
+    const framesCompleted = state.frameResults.length;
+    Alert.alert(
+      'End Match?',
+      framesCompleted > 0
+        ? `${framesCompleted} frame${framesCompleted !== 1 ? 's' : ''} completed. Save results and exit?`
+        : 'No frames completed yet. Exit without saving?',
+      [
+        { text: 'Keep playing', style: 'cancel' },
+        {
+          text: framesCompleted > 0 ? 'Save & Exit' : 'Exit',
+          style: 'default',
+          onPress: async () => {
+            matchSaved.current = true;
+            if (framesCompleted > 0) {
+              const stored: StoredMatch = {
+                id: config.id,
+                player1Name: config.player1Name,
+                player2Name: config.player2Name,
+                numberOfReds: config.numberOfReds,
+                bestOf: config.bestOf,
+                startedAt: new Date().toISOString(),
+                completedAt: new Date().toISOString(),
+                isComplete: false,
+                frameResults: state.frameResults,
+                framesWon: framesWon,
+                mode: 'match',
+              };
+              await saveMatch(stored);
+            }
+            router.replace('/scoreboard/history' as any);
+          },
+        },
+      ],
+    );
+  }
+
+  function handleFoulConfirm(value: number, opponentPlays: boolean, redsAccidentallyPotted: number) {
     setShowFoul(false);
-    applyFoul(value, opponentPlays);
+    applyFoul(value, opponentPlays, redsAccidentallyPotted);
     if (opponentPlays) {
       Alert.alert(
         'Free ball?',
@@ -295,10 +347,10 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
         </View>
 
         <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
-          {isUnlimitedMode && (
+          {!isTrainMode && (
             <TouchableOpacity
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              onPress={handleUnlimitedEndMatch}
+              onPress={isUnlimitedMode ? handleUnlimitedEndMatch : handleAbandonMatch}
             >
               <Text style={{ color: c.textMuted, fontSize: 13, fontFamily: 'PoppinsBold' }}>End ⏹</Text>
             </TouchableOpacity>
@@ -419,6 +471,8 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
         visible={showFoul}
         foulingPlayer={playerNames[snap.currentPlayer]}
         opponentName={isTrainMode ? playerNames[0] : playerNames[snap.currentPlayer === 0 ? 1 : 0]}
+        phase={snap.phase}
+        redsRemaining={snap.redsRemaining}
         onConfirm={handleFoulConfirm}
         onCancel={() => setShowFoul(false)}
       />

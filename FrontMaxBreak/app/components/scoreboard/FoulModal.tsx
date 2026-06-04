@@ -6,7 +6,9 @@ interface Props {
   visible: boolean;
   foulingPlayer: string;
   opponentName: string;
-  onConfirm: (value: number, opponentPlays: boolean) => void;
+  phase: 'reds' | 'colors';
+  redsRemaining: number;
+  onConfirm: (value: number, opponentPlays: boolean, redsAccidentallyPotted: number) => void;
   onCancel: () => void;
 }
 
@@ -18,17 +20,30 @@ const FOUL_LABELS: Record<number, string> = {
   7: '7 pts  (black involved)',
 };
 
-export default function FoulModal({ visible, foulingPlayer, opponentName, onConfirm, onCancel }: Props) {
+export default function FoulModal({ visible, foulingPlayer, opponentName, phase, redsRemaining, onConfirm, onCancel }: Props) {
   const { theme } = useTheme();
   const c = theme.colors;
   const [selected, setSelected] = useState<number>(4);
   const [opponentPlays, setOpponentPlays] = useState(true);
+  const [redsAccidentallyPotted, setRedsAccidentallyPotted] = useState(0);
 
   function handleConfirm() {
-    onConfirm(selected, opponentPlays);
+    onConfirm(selected, opponentPlays, redsAccidentallyPotted);
     setSelected(4);
     setOpponentPlays(true);
+    setRedsAccidentallyPotted(0);
   }
+
+  function handleCancel() {
+    setSelected(4);
+    setOpponentPlays(true);
+    setRedsAccidentallyPotted(0);
+    onCancel();
+  }
+
+  const showRedPicker = phase === 'reds' && redsRemaining > 0;
+  const maxRedOptions = Math.min(redsRemaining, 3);
+  const redOptions = Array.from({ length: maxRedOptions + 1 }, (_, i) => i); // [0, 1, ..., maxRedOptions]
 
   return (
     <Modal visible={visible} transparent animationType="fade">
@@ -84,10 +99,35 @@ export default function FoulModal({ visible, foulingPlayer, opponentName, onConf
             </TouchableOpacity>
           </View>
 
+          {showRedPicker && (
+            <View>
+              <Text style={[styles.sectionLabel, { color: c.textMuted, marginTop: 14 }]}>
+                Reds accidentally potted?
+              </Text>
+              <View style={styles.redPickerRow}>
+                {redOptions.map(n => (
+                  <TouchableOpacity
+                    key={n}
+                    style={[
+                      styles.redPickerBtn,
+                      { borderColor: redsAccidentallyPotted === n ? c.error : c.cardBorder },
+                      redsAccidentallyPotted === n && { backgroundColor: 'rgba(248,113,113,0.12)' },
+                    ]}
+                    onPress={() => setRedsAccidentallyPotted(n)}
+                  >
+                    <Text style={[styles.redPickerText, { color: redsAccidentallyPotted === n ? c.error : c.textSecondary }]}>
+                      {n}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          )}
+
           <View style={styles.btnRow}>
             <TouchableOpacity
               style={[styles.btn, { backgroundColor: c.backgroundTertiary }]}
-              onPress={onCancel}
+              onPress={handleCancel}
             >
               <Text style={{ color: c.textSecondary, fontFamily: 'PoppinsBold' }}>Cancel</Text>
             </TouchableOpacity>
@@ -156,6 +196,23 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingVertical: 10,
     alignItems: 'center',
+  },
+  redPickerRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 4,
+  },
+  redPickerBtn: {
+    width: 48,
+    height: 40,
+    borderWidth: 1,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  redPickerText: {
+    fontSize: 16,
+    fontFamily: 'PoppinsBold',
   },
   btnRow: {
     flexDirection: 'row',

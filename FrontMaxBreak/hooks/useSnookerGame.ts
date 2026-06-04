@@ -227,7 +227,7 @@ export function useSnookerGame(config: MatchConfig, initialState?: GameState) {
     });
   }, []);
 
-  const applyFoul = useCallback((foulValue: number, opponentPlays: boolean) => {
+  const applyFoul = useCallback((foulValue: number, opponentPlays: boolean, redsAccidentallyPotted: number = 0) => {
     setState(prev => {
       if (prev.isMatchOver || prev.current.isFrameOver) return prev;
       const snap = prev.current;
@@ -240,6 +240,8 @@ export function useSnookerGame(config: MatchConfig, initialState?: GameState) {
       // If a red was potted before the foul (awaiting='color'), the next player still
       // owes a colour. Only reset if awaiting was already 'red'.
       const newAwaiting: AwaitingType = snap.awaiting;
+      // Reds accidentally potted on a foul stay off the table (reds are never respotted).
+      const newRedsRemaining = Math.max(0, snap.redsRemaining - redsAccidentallyPotted);
 
       const newSnapshot: FrameSnapshot = {
         ...snap,
@@ -247,6 +249,8 @@ export function useSnookerGame(config: MatchConfig, initialState?: GameState) {
         currentBreak: 0,
         currentPlayer: newPlayer,
         awaiting: newAwaiting,
+        redsRemaining: newRedsRemaining,
+        pointsOnTable: calcPointsOnTable(snap.phase, newRedsRemaining, newAwaiting, snap.colorsRemaining),
         freeBallActive: false,
       };
 
@@ -345,10 +349,15 @@ export function useSnookerGame(config: MatchConfig, initialState?: GameState) {
           }
         }
       } else {
-        // Colors phase: scores the on-color's value; sequence advances as if it was potted
+        // Colors phase: always scores the on-color's value.
+        // If the player nominated the actual on-ball they are potting it directly —
+        // the sequence advances. Otherwise the nominated ball respots and the
+        // on-ball stays next (colorsRemaining unchanged).
         scoreValue = BALL_VALUES[newColorsRemaining[0]];
-        newColorsRemaining = newColorsRemaining.slice(1);
-        if (newColorsRemaining.length === 0) isFrameOver = true;
+        if (nominatedBall === newColorsRemaining[0]) {
+          newColorsRemaining = newColorsRemaining.slice(1);
+          if (newColorsRemaining.length === 0) isFrameOver = true;
+        }
       }
 
       const newScores: [number, number] = [snap.scores[0], snap.scores[1]];

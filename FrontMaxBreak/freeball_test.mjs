@@ -135,10 +135,14 @@ function applyFreeBall(state, nominatedBall) {
       }
     }
   } else {
-    // Colors phase: scores on-color value, advances sequence
+    // Colors phase: always scores the on-color's value.
+    // Sequence advances only when the player nominated the actual on-ball.
+    // Otherwise the nominated ball respots and the on-ball stays next.
     scoreValue = BALL_VALUES[newColorsRemaining[0]];
-    newColorsRemaining = newColorsRemaining.slice(1);
-    if (newColorsRemaining.length === 0) isFrameOver = true;
+    if (nominatedBall === newColorsRemaining[0]) {
+      newColorsRemaining = newColorsRemaining.slice(1);
+      if (newColorsRemaining.length === 0) isFrameOver = true;
+    }
   }
 
   const newScores = [...snap.scores]; newScores[snap.currentPlayer] += scoreValue;
@@ -341,7 +345,7 @@ section('SECTION 5 — Free ball in colors phase');
 
   let g3 = setupFreeBallColorsPhase();
   g3 = applyFreeBall(g3, 'pink');
-  assert('28. after free ball in colors: colorsRemaining advances (yellow removed)', g3.current.colorsRemaining[0] === 'green');
+  assert('28. after free ball in colors (nominated pink ≠ on yellow): on-ball stays next', g3.current.colorsRemaining[0] === 'yellow');
 
   let g4 = setupFreeBallColorsPhase();
   g4 = applyFreeBall(g4, 'red');
@@ -349,7 +353,7 @@ section('SECTION 5 — Free ball in colors phase');
 
   let g5 = setupFreeBallColorsPhase();
   g5 = applyFreeBall(g5, 'blue');
-  assert('30. after free ball (on=yellow): next on-ball is green', g5.current.colorsRemaining[0] === 'green');
+  assert('30. after free ball (nominated blue ≠ on yellow): on-ball yellow stays next', g5.current.colorsRemaining[0] === 'yellow');
 
   let g5b = setupFreeBallColorsPhase();
   g5b = applyFreeBall(g5b, 'red');
@@ -433,10 +437,10 @@ section('SECTION 6 — Free ball on last color (black): frame ends');
   }
 
   let g = setupFreeBallOnBlack();
-  g = applyFreeBall(g, 'red'); // nominate red, but scores black (7)
-  assert('36. free ball on black: isFrameOver=true', g.current.isFrameOver === true);
-  assert('37. free ball on black: pointsOnTable=0', g.current.pointsOnTable === 0);
-  assert('38. free ball on black: colorsRemaining=[]', g.current.colorsRemaining.length === 0);
+  g = applyFreeBall(g, 'red'); // nominated red ≠ on-ball black → black stays, frame NOT over
+  assert('36. free ball on black (nominated red ≠ black): isFrameOver=false', g.current.isFrameOver === false);
+  assert('37. free ball on black (nominated red ≠ black): pointsOnTable=7 (black still on table)', g.current.pointsOnTable === 7);
+  assert('38. free ball on black (nominated red ≠ black): colorsRemaining=[black]', g.current.colorsRemaining.length === 1);
 
   let g2 = setupFreeBallOnBlack();
   const sBefore = g2.current.scores[1];
@@ -486,8 +490,8 @@ section('SECTION 7 — pointsOnTable correctness after free ball');
     return g;
   }
   let g4 = gColorsYellow();
-  g4 = applyFreeBall(g4, 'black');
-  assert('44. colors phase, free ball on yellow: pointsOnTable = 25', g4.current.pointsOnTable === 25);
+  g4 = applyFreeBall(g4, 'black'); // nominated black ≠ yellow → yellow stays, all 6 colors remain
+  assert('44. colors phase, free ball on yellow (nominated≠on-ball): pointsOnTable = 27', g4.current.pointsOnTable === 27, g4.current.pointsOnTable);
 
   // After free ball on green (remaining=[brown,blue,pink,black]=4+5+6+7=22)
   function gColorsGreen() {
@@ -499,8 +503,8 @@ section('SECTION 7 — pointsOnTable correctness after free ball');
     return g;
   }
   let g5 = gColorsGreen();
-  g5 = applyFreeBall(g5, 'red');
-  assert('45. colors phase, free ball on green: pointsOnTable = 22', g5.current.pointsOnTable === 22);
+  g5 = applyFreeBall(g5, 'red'); // nominated red ≠ green → green stays
+  assert('45. colors phase, free ball on green (nominated≠on-ball): pointsOnTable = 25', g5.current.pointsOnTable === 25, g5.current.pointsOnTable);
 
   // After free ball on brown (remaining=[blue,pink,black]=5+6+7=18)
   function gColorsBrown() {
@@ -513,8 +517,8 @@ section('SECTION 7 — pointsOnTable correctness after free ball');
     return g;
   }
   let g6 = gColorsBrown();
-  g6 = applyFreeBall(g6, 'yellow');
-  assert('46. colors phase, free ball on brown: pointsOnTable = 18', g6.current.pointsOnTable === 18);
+  g6 = applyFreeBall(g6, 'yellow'); // nominated yellow ≠ brown → brown stays
+  assert('46. colors phase, free ball on brown (nominated≠on-ball): pointsOnTable = 22', g6.current.pointsOnTable === 22, g6.current.pointsOnTable);
 
   // After free ball on blue (remaining=[pink,black]=6+7=13)
   function gColorsBlue() {
@@ -526,8 +530,8 @@ section('SECTION 7 — pointsOnTable correctness after free ball');
     return g;
   }
   let g7 = gColorsBlue();
-  g7 = applyFreeBall(g7, 'green');
-  assert('47. colors phase, free ball on blue: pointsOnTable = 13', g7.current.pointsOnTable === 13);
+  g7 = applyFreeBall(g7, 'green'); // nominated green ≠ blue → blue stays
+  assert('47. colors phase, free ball on blue (nominated≠on-ball): pointsOnTable = 18', g7.current.pointsOnTable === 18, g7.current.pointsOnTable);
 
   // After free ball on pink (remaining=[black]=7)
   function gColorsPink() {
@@ -539,8 +543,8 @@ section('SECTION 7 — pointsOnTable correctness after free ball');
     return g;
   }
   let g8 = gColorsPink();
-  g8 = applyFreeBall(g8, 'red');
-  assert('48. colors phase, free ball on pink: pointsOnTable = 7', g8.current.pointsOnTable === 7);
+  g8 = applyFreeBall(g8, 'red'); // nominated red ≠ pink → pink stays
+  assert('48. colors phase, free ball on pink (nominated≠on-ball): pointsOnTable = 13', g8.current.pointsOnTable === 13, g8.current.pointsOnTable);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -784,15 +788,15 @@ section('SECTION 13 — Full mini-game sequence with free ball');
   assert('75. two free balls in one frame: second free ball (P0) scores correctly',
     g2.current.scores[0] === 1); // P0 only scored the free ball
 
-  // Free ball in colors phase followed by normal pot
+  // Free ball in colors phase (nominated≠on-ball): on-ball stays → pot the actual on-ball next
   let g3 = makeGame(1);
   g3 = driveToColorsPhase(g3); // on=yellow
   g3 = applyFoul(g3, 4, true); // foul while in colors
   g3 = applyDeclareFreesBall(g3);
-  g3 = applyFreeBall(g3, 'black'); // scores yellow's value (2), advances to green
-  g3 = applyPot(g3, 'green');      // normal pot: +3
-  assert('76. after free ball in colors, next color pot is green: scores 3',
-    g3.current.colorsRemaining[0] === 'brown');
+  g3 = applyFreeBall(g3, 'black'); // nominated black ≠ yellow → yellow still next (black respots)
+  g3 = applyPot(g3, 'yellow');     // pot the actual on-ball (yellow): colorsRemaining advances
+  assert('76. after colors free ball (nominated≠on-ball) + pot actual on-ball: next is green',
+    g3.current.colorsRemaining[0] === 'green');
 
   // Verify final score in a complete 1-red frame with a free ball used
   let g4 = makeGame(1);
@@ -996,6 +1000,115 @@ section('SECTION 16 — Edge cases');
   g12 = applyFreeBall(g12, 'black');
   assert('100. declare+apply adds exactly 2 history entries',
     g12.history.length === histBeforeFreeBall + 2);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SECTION 17 — Colors phase free ball: nominated = on-ball (sequence advances)
+// ═══════════════════════════════════════════════════════════════════════════════
+section('SECTION 17 — Colors phase free ball: nominated = on-ball (direct pot, sequence advances)');
+{
+  // When the player nominates the actual on-ball as the free ball, they are potting
+  // it directly. The ball stays off the table and the sequence advances.
+
+  function setupFBColorsYellow() {
+    let g = makeGame(1);
+    g = driveToColorsPhase(g); // on=yellow
+    g = applyFoul(g, 4, true);
+    g = applyDeclareFreesBall(g);
+    return g;
+  }
+
+  // Nominated = on-ball (yellow): sequence advances
+  let g1 = setupFBColorsYellow();
+  g1 = applyFreeBall(g1, 'yellow'); // nominated = on-ball
+  assert('101. colors phase, nominated=on-ball (yellow): colorsRemaining advances to green',
+    g1.current.colorsRemaining[0] === 'green');
+  assert('102. colors phase, nominated=on-ball (yellow): score +2', g1.current.scores[1] === 6); // 4 foul + 2
+
+  let g2 = setupFBColorsYellow();
+  g2 = applyFreeBall(g2, 'yellow');
+  assert('103. colors phase, nominated=on-ball (yellow): pointsOnTable = 25 (green+brown+blue+pink+black)',
+    g2.current.pointsOnTable === 25, g2.current.pointsOnTable);
+
+  // Nominated = on-ball (green)
+  function setupFBColorsGreen() {
+    let g = makeGame(1);
+    g = driveToColorsPhase(g);
+    g = applyPot(g, 'yellow'); // advance to green
+    g = applyFoul(g, 4, true);
+    g = applyDeclareFreesBall(g);
+    return g;
+  }
+  let g3 = setupFBColorsGreen();
+  g3 = applyFreeBall(g3, 'green'); // nominated = on-ball
+  assert('104. colors phase, nominated=on-ball (green): colorsRemaining advances to brown',
+    g3.current.colorsRemaining[0] === 'brown');
+  assert('105. colors phase, nominated=on-ball (green): pointsOnTable = 22',
+    g3.current.pointsOnTable === 22, g3.current.pointsOnTable);
+
+  // Nominated = on-ball (black, last color): frame ends
+  function setupFBColorsBlackDirect() {
+    let g = makeGame(1);
+    g = driveToColorsPhase(g);
+    ['yellow','green','brown','blue','pink'].forEach(b => { g = applyPot(g, b); });
+    g = applyFoul(g, 4, true);
+    g = applyDeclareFreesBall(g);
+    return g;
+  }
+  let g4 = setupFBColorsBlackDirect();
+  g4 = applyFreeBall(g4, 'black'); // nominated = on-ball = black → frame ends
+  assert('106. colors phase, nominated=on-ball (black, last): isFrameOver=true', g4.current.isFrameOver === true);
+  assert('107. colors phase, nominated=on-ball (black, last): colorsRemaining=[]', g4.current.colorsRemaining.length === 0);
+  assert('108. colors phase, nominated=on-ball (black, last): pointsOnTable=0', g4.current.pointsOnTable === 0);
+
+  // Contrast: nominated ≠ on-ball (black on, red nominated): frame NOT over
+  let g5 = setupFBColorsBlackDirect();
+  g5 = applyFreeBall(g5, 'red'); // nominated red ≠ black → black stays
+  assert('109. colors phase, nominated≠on-ball (black on, red nominated): isFrameOver=false', g5.current.isFrameOver === false);
+  assert('110. colors phase, nominated≠on-ball (black on): colorsRemaining=[black]', g5.current.colorsRemaining.length === 1);
+
+  // Undo after free ball with nominated≠on-ball: colorsRemaining restored
+  let g6 = setupFBColorsYellow();
+  g6 = applyFreeBall(g6, 'pink'); // nominated pink ≠ yellow → yellow stays
+  assert('111. before undo: colorsRemaining[0]=yellow (unchanged)', g6.current.colorsRemaining[0] === 'yellow');
+  g6 = applyUndo(g6);
+  assert('112. after undo: colorsRemaining restored (freeBallActive=true)', g6.current.freeBallActive === true);
+  assert('113. after undo: colorsRemaining[0] still yellow', g6.current.colorsRemaining[0] === 'yellow');
+
+  // Undo after free ball with nominated=on-ball: colorsRemaining restored
+  let g7 = setupFBColorsYellow();
+  g7 = applyFreeBall(g7, 'yellow'); // nominated = on-ball → advances
+  assert('114. before undo: colorsRemaining[0]=green (advanced)', g7.current.colorsRemaining[0] === 'green');
+  g7 = applyUndo(g7);
+  assert('115. after undo: colorsRemaining[0] back to yellow', g7.current.colorsRemaining[0] === 'yellow');
+  assert('116. after undo: freeBallActive restored to true', g7.current.freeBallActive === true);
+
+  // Sequence: free ball (nominated≠on-ball) → pot actual on-ball → advance → continue
+  let g8 = makeGame(1);
+  g8 = driveToColorsPhase(g8); // on=yellow
+  g8 = applyFoul(g8, 4, true);
+  g8 = applyDeclareFreesBall(g8);
+  g8 = applyFreeBall(g8, 'black'); // nominated black ≠ yellow: yellow stays
+  assert('117. sequence: after free ball (nominated≠on-ball), yellow still on', g8.current.colorsRemaining[0] === 'yellow');
+  g8 = applyPot(g8, 'yellow'); // pot the actual on-ball
+  assert('118. sequence: after potting on-ball, green is next', g8.current.colorsRemaining[0] === 'green');
+  g8 = applyPot(g8, 'green');
+  assert('119. sequence: after green, brown is next', g8.current.colorsRemaining[0] === 'brown');
+
+  // pointsOnTable nominated=on-ball (blue): pink+black = 6+7 = 13
+  function setupFBColorsBlue() {
+    let g = makeGame(1);
+    g = driveToColorsPhase(g);
+    ['yellow','green','brown'].forEach(b => { g = applyPot(g, b); });
+    g = applyFoul(g, 4, true);
+    g = applyDeclareFreesBall(g);
+    return g;
+  }
+  let g9 = setupFBColorsBlue();
+  g9 = applyFreeBall(g9, 'blue'); // nominated = on-ball (blue) → advances to pink
+  assert('120. colors phase, nominated=on-ball (blue): pointsOnTable = 13 (pink+black)',
+    g9.current.pointsOnTable === 13, g9.current.pointsOnTable);
+  assert('121. colors phase, nominated=on-ball (blue): colorsRemaining[0]=pink', g9.current.colorsRemaining[0] === 'pink');
 }
 
 // ── Final results ─────────────────────────────────────────────────────────────
