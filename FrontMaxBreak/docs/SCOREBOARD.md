@@ -66,9 +66,17 @@ Accidental navigation away from the game screen (tapping a bottom bar item) prev
 - `isGameActive` / `setGameActive` — set true on screen focus, false on blur
 - Provider wraps `<ThemedLayout>` in `_layout.tsx`
 
+**Per-action autosave** (`hooks/useGameAutosave.ts`):
+- `useGameAutosave(state, saveDraftIfNeeded)` — called inside `GameScreen`. Watches `state` and calls `saveDraftIfNeeded()` after every state change (ball pot, foul, undo, endVisit, etc.).
+- Skips the very first render (mount) via a `hasMounted` ref — prevents a race where an autosave fires then `clearDraft()` immediately wipes it.
+- Covers the **force-kill gap**: when Android kills the process from recents, `AppState background` may not fire. The draft is already current from the last action.
+
+**AppState background save** (`game.tsx`):
+- `AppState.addEventListener('change', ...)` — calls `saveDraftIfNeeded()` when the app transitions to `background`. Belt-and-suspenders alongside the per-action hook.
+
 **Auto-save on blur** (`game.tsx` — `useFocusEffect`):
 - On focus: `clearDraft()` (in-memory is authoritative), `setGameActive(true)`
-- On blur: `setGameActive(false)`. If `matchSaved.current === false` AND game has progress (any score/break/frame result), saves a draft.
+- On blur: `setGameActive(false)`, calls `saveDraftIfNeeded()`. Draft is almost always already current from the per-action hook.
 - `matchSaved.current` is set to `true` before any intentional navigation (handleEndMatch, handleMatchOver, handleTrainEndSession "End Session" onPress). This prevents saving a draft when the user explicitly ends.
 - "Progress" check: `frameResults.length > 0 || scores[0] > 0 || scores[1] > 0 || currentBreak > 0` — prevents phantom resume cards from zero-state games.
 
@@ -432,21 +440,26 @@ Keys:
 
 ## Test suite
 
-Four test files at `FrontMaxBreak/` root — run with Node.js, no React needed:
+Seven test files at `FrontMaxBreak/` root — run with Node.js, no React needed:
 
 ```bash
-node game_test.mjs      # 326 assertions, 29 sections — full match mode + game logic
-node train_test.mjs     # 51 assertions — train mode + computeTrainingStats
-node mega_test.mjs      # 470 assertions — edge cases train+match, all formulas (sections G22–G26 added)
-node freeball_test.mjs  # 100 assertions — free ball in all situations
+node game_test.mjs          # 328 assertions, 29 sections — full match mode + game logic
+node train_test.mjs         # 51 assertions  — train mode + computeTrainingStats
+node mega_test.mjs          # 470 assertions — edge cases train+match, all formulas
+node freeball_test.mjs      # 121 assertions — free ball + foul respot
+node stats_test.mjs         # 48 assertions  — avgPointsPerFrame in groupByRivalry
+node offseason_tab_test.mjs # 42 assertions  — off-season Results tab auto-switch
+node autosave_test.mjs      # 100 assertions — useGameAutosave: mount guard, hasProgress,
+                            #                  matchSaved gate, draft structure, end-match paths,
+                            #                  AppState handler, clearDraft race, integration
 ```
 
 **Run all:**
 ```bash
-node game_test.mjs && node train_test.mjs && node mega_test.mjs && node freeball_test.mjs
+node game_test.mjs && node train_test.mjs && node mega_test.mjs && node freeball_test.mjs && node stats_test.mjs && node offseason_tab_test.mjs && node autosave_test.mjs
 ```
 
-Expected: `✅ All N assertions passed` for each file — 947 total. If any fail, fix before deploying.
+Expected: `✅ All N assertions passed` for each file — 1160 total. If any fail, fix before deploying.
 
 **What's covered:**
 - Every ball value and awaiting transition

@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useGameContext } from '../../contexts/GameContext';
 import { useSnookerGame, BallType, getSnookersNeeded, GameState } from '../../hooks/useSnookerGame';
+import { useGameAutosave } from '../../hooks/useGameAutosave';
 import { saveMatch, saveDraft, loadDraft, clearDraft, GameDraft, StoredMatch } from '../../services/gameStorage';
 import { uploadMatch } from '../../services/scoreboardSyncService';
 import { isLoggedIn } from '../../services/authService';
@@ -70,6 +71,10 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
       saveDraft(draft).catch(() => {});
     }
   }, []);
+
+  // Save draft after every state change — covers force-kill from recents where AppState
+  // background may not fire before the process is killed.
+  useGameAutosave(state, saveDraftIfNeeded);
 
   // Save draft when the OS moves the app to background (covers force-close, battery death,
   // home button press). The blur handler below covers intentional in-app navigation.
