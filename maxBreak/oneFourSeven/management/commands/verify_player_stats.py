@@ -26,7 +26,7 @@ from django.core.management.base import BaseCommand
 from oneFourSeven.constants import API_BASE_URL, HEADERS
 from oneFourSeven.models import Player, PlayerMatchHistory, Ranking
 
-API_CALL_DELAY = 6
+API_CALL_DELAY = 30  # seconds — 2 calls/min (snooker.org rate limit)
 PROGRESS_FILE = Path(__file__).resolve().parent.parent.parent.parent / 'backfill_progress.json'
 
 MIN_MATCHES_PER_SEASON = 10

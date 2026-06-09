@@ -99,5 +99,6 @@ ALLOWED_EVENT_TYPES = ['Ranking', 'Qualifying', 'Invitational']
 EXCLUDED_EVENT_NAME_PATTERNS = ['Championship League Stage']
 
 # --- Rate Limiting Configuration ---
-REQUESTS_PER_MINUTE = 10
+REQUESTS_PER_MINUTE = 2
 SECONDS_PER_MINUTE = 60
+MIN_REQUEST_INTERVAL = SECONDS_PER_MINUTE // REQUESTS_PER_MINUTE  # 30 seconds

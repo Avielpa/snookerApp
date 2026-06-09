@@ -183,7 +183,7 @@ class Command(BaseCommand):
 
         for pid in missing_ids:
             try:
-                time.sleep(6)  # Respect 10 req/min limit
+                time.sleep(30)  # Respect 2 req/min limit
                 resp = requests.get(
                     f'https://api.snooker.org/?t=4&p={pid}',
                     headers={'X-Requested-By': 'FahimaApp128'},

@@ -36,7 +36,7 @@ from oneFourSeven.models import Event, Player, PlayerMatchHistory, Ranking
 
 logger = logging.getLogger(__name__)
 
-API_CALL_DELAY = 6
+API_CALL_DELAY = 30  # seconds — 2 calls/min (snooker.org rate limit)
 
 ROUND_NAME_FROM_TOP = [
     'Final', 'Semi-Final', 'Quarter-Final',

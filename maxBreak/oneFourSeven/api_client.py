@@ -6,9 +6,10 @@ Handles all HTTP requests, rate limiting, and error handling.
 
 import requests
 import logging
+import time
 from typing import Dict, List, Optional, Any, Union
 from .constants import (
-    API_BASE_URL, HEADERS, DEFAULT_TIMEOUT,
+    API_BASE_URL, HEADERS, DEFAULT_TIMEOUT, MIN_REQUEST_INTERVAL,
     T_EVENT_MATCHES, T_ROUND_DETAILS, T_SEASON_EVENTS, T_PLAYER_INFO, T_PLAYERS,
     T_RANKING, T_HEAD_TO_HEAD, T_CURRENT_SEASON, T_EVENT_DETAILS
 )
@@ -26,6 +27,7 @@ class SnookerAPIClient:
         self.base_url = API_BASE_URL
         self.headers = HEADERS.copy()
         self.timeout = DEFAULT_TIMEOUT
+        self._last_request_time = 0.0
         
     def _make_request(self, endpoint_params: Dict[str, Union[str, int]]) -> Optional[Union[List, Dict]]:
         """
@@ -37,6 +39,14 @@ class SnookerAPIClient:
         Returns:
             JSON response as list or dict if successful, None if failed
         """
+        # Enforce rate limit: max 2 requests/minute = 30s minimum gap
+        elapsed = time.time() - self._last_request_time
+        wait = MIN_REQUEST_INTERVAL - elapsed
+        if wait > 0:
+            logger.debug(f"Rate limit: sleeping {wait:.1f}s before next request")
+            time.sleep(wait)
+        self._last_request_time = time.time()
+
         # Construct URL with parameters
         param_string = "&".join([f"{k}={v}" for k, v in endpoint_params.items()])
         url = f"{self.base_url}?{param_string}"

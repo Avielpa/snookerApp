@@ -27,8 +27,8 @@ from oneFourSeven.constants import API_BASE_URL, HEADERS
 
 logger = logging.getLogger(__name__)
 
-# 6 seconds between calls = 10 calls/minute, safely within the snooker.org limit
-API_CALL_DELAY = 6
+# 30 seconds between calls = 2 calls/minute (snooker.org rate limit)
+API_CALL_DELAY = 30
 
 
 class Command(BaseCommand):

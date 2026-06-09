@@ -33,6 +33,7 @@ TOUR_LABEL_MAP = {'women': 'womens', 'seniors': 'seniors', 'q': 'qtour', 'other'
 
 def _api_get(params: dict) -> list:
     """Single snooker.org API call. Returns list or raises."""
+    time.sleep(30)  # 2 req/min (snooker.org rate limit)
     response = requests.get(API_BASE_URL, params=params, headers=HEADERS, timeout=DEFAULT_TIMEOUT)
     response.raise_for_status()
     data = response.json()
