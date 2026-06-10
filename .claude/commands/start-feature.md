@@ -49,3 +49,4 @@ Build in this exact order:
 - Never add functions, helpers, or abstractions beyond what the feature requires
 - If you add anything not in the approved plan, explain why before committing to it
 - Dark mode only — use `colors.textPrimary`, never `colors.text`
+- Every new feature we create new file\function\component to make it modulare and easy to debug
