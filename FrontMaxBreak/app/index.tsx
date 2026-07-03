@@ -33,6 +33,7 @@ import { OtherLiveSection } from './home/components/OtherLiveSection';
 import { DrawTab } from './tour/components/DrawTab';
 import { OtherToursTab } from './home/components/OtherTours';
 import { shouldRedirectToMedia } from './home/utils/mediaFallback';
+import { logTap } from '../services/analyticsService';
 
 function formatRoundPrize(amount: any): string | null {
     if (!amount) return null;
@@ -322,6 +323,7 @@ const HomeScreen = (): React.ReactElement | null => {
                     selectedValue={activeFilter}
                     onSelectionChange={(value) => {
                         logger.debug(`[HomeFilter] Device-Aware Pressed: ${value}`);
+                        logTap('home_filter_select', { filter: value });
                         setActiveFilter(value as ActiveFilterType);
                     }}
                     colors={COLORS}

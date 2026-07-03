@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "../../contexts/ThemeContext";
 import { useGameContext } from "../../contexts/GameContext";
 import { logger } from "../../utils/logger";
+import { logTap } from "../../services/analyticsService";
 
 
 
@@ -66,6 +67,7 @@ const BottomBar = () => {
                         key={item.path}
                         style={[styles.bottomBarItem, isActive && styles.activeBottomBarItem]} 
                         onPress={() => {
+                            logTap('tab_select', { tab: item.label });
                             if (isGameActive) {
                                 if (alertActive.current) return;
                                 alertActive.current = true;

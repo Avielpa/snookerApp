@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, useWindowDimensions } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '../../../contexts/ThemeContext';
 
@@ -19,9 +19,12 @@ export default function PlayerCard({
 }: Props) {
   const { theme } = useTheme();
   const c = theme.colors;
+  const { width, height } = useWindowDimensions();
+  const isLandscape = width > height;
 
   const cardStyle = [
     styles.card,
+    { minHeight: isLandscape ? 70 : 140 },
     { backgroundColor: isActive ? 'rgba(255,183,77,0.12)' : c.cardBackground },
     { borderColor: isActive ? c.primary : c.cardBorder },
     isLeft ? styles.borderRight : styles.borderLeft,
@@ -93,7 +96,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 12,
     alignItems: 'center',
-    minHeight: 140,
     position: 'relative',
   },
   borderRight: { marginRight: 4 },

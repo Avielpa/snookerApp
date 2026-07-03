@@ -12,6 +12,7 @@ import { api } from '../services/api';
 import { initPushNotifications } from '../utils/notifications';
 import { loadFavorites } from '../services/favoritesService';
 import { useDeviceType } from '../hooks/useDeviceType';
+import { useAnalyticsScreenTracking } from '../hooks/useAnalyticsScreenTracking';
 
 // --- Component Imports ---
 import Header from './components/Header';
@@ -24,6 +25,9 @@ const ThemedLayout = () => {
     const { theme } = useTheme();
     const colors = theme.colors;
     const device = useDeviceType();
+
+    // Log a screen_view analytics event on every route change
+    useAnalyticsScreenTracking();
 
     // React to updates found by the automatic ON_LOAD check and apply immediately
     const { isUpdateAvailable } = Updates.useUpdates();

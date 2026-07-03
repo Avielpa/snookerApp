@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useKeepAwake } from 'expo-keep-awake';
-import { View, Text, TouchableOpacity, StyleSheet, Alert, AppState } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert, AppState, useWindowDimensions } from 'react-native';
 import { useLocalSearchParams, router, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -19,6 +19,8 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
   const { theme } = useTheme();
   const c = theme.colors;
   const insets = useSafeAreaInsets();
+  const { width, height } = useWindowDimensions();
+  const isLandscape = width > height;
   const params = useLocalSearchParams<{
     id: string; player1: string; player2: string; numberOfReds: string; bestOf: string; mode: string;
   }>();
@@ -366,110 +368,136 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
         </View>
       </View>
 
-      {/* Points on table */}
-      <View style={[styles.pot, { backgroundColor: c.backgroundSecondary }]}>
-        <Text style={[styles.potLabel, { color: c.textMuted }]}>Points remaining</Text>
-        <Text style={[styles.potValue, { color: c.primary }]}>{snap.pointsOnTable}</Text>
-        {isTrainMode ? (
-          snap.currentBreak > 0 && (
-            <Text style={[styles.leadText, { color: c.textSecondary }]}>
-              Current break: {snap.currentBreak}
-            </Text>
-          )
+      {(() => {
+        const potBlock = (
+          <View style={[styles.pot, { backgroundColor: c.backgroundSecondary }]}>
+            <Text style={[styles.potLabel, { color: c.textMuted }]}>Points remaining</Text>
+            <Text style={[styles.potValue, { color: c.primary }]}>{snap.pointsOnTable}</Text>
+            {isTrainMode ? (
+              snap.currentBreak > 0 && (
+                <Text style={[styles.leadText, { color: c.textSecondary }]}>
+                  Current break: {snap.currentBreak}
+                </Text>
+              )
+            ) : (
+              <Text style={[styles.leadText, { color: c.textSecondary }]}>{leadText}</Text>
+            )}
+          </View>
+        );
+
+        const cardsBlock = isTrainMode ? (
+          <View style={[styles.cardsRow, { paddingHorizontal: 16 }]}>
+            <PlayerCard
+              name={playerNames[0]}
+              score={snap.scores[0]}
+              framesWon={framesWon[0]}
+              currentBreak={snap.currentBreak}
+              highestBreak={frameHighestBreak[0]}
+              isActive
+              isLeft
+            />
+          </View>
         ) : (
-          <Text style={[styles.leadText, { color: c.textSecondary }]}>{leadText}</Text>
-        )}
-      </View>
+          <View style={styles.cardsRow}>
+            <PlayerCard
+              name={playerNames[0]}
+              score={snap.scores[0]}
+              framesWon={framesWon[0]}
+              currentBreak={snap.currentPlayer === 0 ? snap.currentBreak : 0}
+              highestBreak={frameHighestBreak[0]}
+              isActive={snap.currentPlayer === 0}
+              isLeft
+              onEndVisit={snap.currentPlayer === 1 ? endVisit : undefined}
+            />
+            <PlayerCard
+              name={playerNames[1]}
+              score={snap.scores[1]}
+              framesWon={framesWon[1]}
+              currentBreak={snap.currentPlayer === 1 ? snap.currentBreak : 0}
+              highestBreak={frameHighestBreak[1]}
+              isActive={snap.currentPlayer === 1}
+              isLeft={false}
+              onEndVisit={snap.currentPlayer === 0 ? endVisit : undefined}
+            />
+          </View>
+        );
 
-      {/* Player card(s) */}
-      {isTrainMode ? (
-        <View style={[styles.cardsRow, { paddingHorizontal: 16 }]}>
-          <PlayerCard
-            name={playerNames[0]}
-            score={snap.scores[0]}
-            framesWon={framesWon[0]}
+        const snookerBlock = !isTrainMode && !snap.isFrameOver && (() => {
+          const [sn0, sn1] = getSnookersNeeded(snap.scores, snap.pointsOnTable);
+          const trailerIdx = sn0 >= 2 ? 0 : sn1 >= 2 ? 1 : null;
+          if (trailerIdx === null) return null;
+          const snookersCount = [sn0, sn1][trailerIdx];
+          const leaderIdx: 0 | 1 = trailerIdx === 0 ? 1 : 0;
+          return (
+            <TouchableOpacity
+              style={[styles.snookerBanner, { backgroundColor: 'rgba(255,183,77,0.12)', borderColor: c.primary }]}
+              onPress={() => {
+                Alert.alert(
+                  'End Frame',
+                  `${playerNames[trailerIdx]} needs ${snookersCount} snookers. Award the frame to ${playerNames[leaderIdx]}?`,
+                  [
+                    { text: 'Keep playing', style: 'cancel' },
+                    { text: `${playerNames[leaderIdx]} wins frame`, style: 'default', onPress: concede },
+                  ],
+                );
+              }}
+              activeOpacity={0.8}
+            >
+              <Text style={[styles.snookerBannerText, { color: c.primary }]}>
+                ⚡ {playerNames[trailerIdx]} needs {snookersCount} snookers
+              </Text>
+              <Text style={[styles.snookerBannerBtn, { color: c.primary }]}>End Frame →</Text>
+            </TouchableOpacity>
+          );
+        })();
+
+        const ballPadBlock = (
+          <BallPad
+            phase={snap.phase}
+            awaiting={snap.awaiting}
+            colorsRemaining={snap.colorsRemaining}
+            redsRemaining={snap.redsRemaining}
             currentBreak={snap.currentBreak}
-            highestBreak={frameHighestBreak[0]}
-            isActive
-            isLeft
+            onPot={(ball: BallType) => potBall(ball)}
+            onExtraRed={addExtraRed}
+            onMiss={isTrainMode ? concede : endVisit}
+            onFoul={() => setShowFoul(true)}
+            onUndo={undo}
+            onConcede={isTrainMode ? handleTrainEndSession : handleConcede}
+            canUndo={state.history.length > 0}
+            trainMode={isTrainMode}
+            freeBallActive={snap.freeBallActive}
+            onFreeBall={applyFreeBall}
           />
-        </View>
-      ) : (
-        <View style={styles.cardsRow}>
-          <PlayerCard
-            name={playerNames[0]}
-            score={snap.scores[0]}
-            framesWon={framesWon[0]}
-            currentBreak={snap.currentPlayer === 0 ? snap.currentBreak : 0}
-            highestBreak={frameHighestBreak[0]}
-            isActive={snap.currentPlayer === 0}
-            isLeft
-            onEndVisit={snap.currentPlayer === 1 ? endVisit : undefined}
-          />
-          <PlayerCard
-            name={playerNames[1]}
-            score={snap.scores[1]}
-            framesWon={framesWon[1]}
-            currentBreak={snap.currentPlayer === 1 ? snap.currentBreak : 0}
-            highestBreak={frameHighestBreak[1]}
-            isActive={snap.currentPlayer === 1}
-            isLeft={false}
-            onEndVisit={snap.currentPlayer === 0 ? endVisit : undefined}
-          />
-        </View>
-      )}
+        );
 
-      {/* Snookers needed banner — match mode only */}
-      {!isTrainMode && !snap.isFrameOver && (() => {
-        const [sn0, sn1] = getSnookersNeeded(snap.scores, snap.pointsOnTable);
-        const trailerIdx = sn0 >= 2 ? 0 : sn1 >= 2 ? 1 : null;
-        if (trailerIdx === null) return null;
-        const snookersCount = [sn0, sn1][trailerIdx];
-        const leaderIdx: 0 | 1 = trailerIdx === 0 ? 1 : 0;
+        if (isLandscape) {
+          return (
+            <View style={styles.landscapeRow}>
+              <View style={[styles.landscapeColumn, { paddingLeft: insets.left }]}>
+                {potBlock}
+                {cardsBlock}
+                {snookerBlock}
+              </View>
+              <View style={[styles.landscapeColumn, styles.landscapeRightColumn, { paddingRight: insets.right }]}>
+                {ballPadBlock}
+                <View style={{ height: insets.bottom }} />
+              </View>
+            </View>
+          );
+        }
+
         return (
-          <TouchableOpacity
-            style={[styles.snookerBanner, { backgroundColor: 'rgba(255,183,77,0.12)', borderColor: c.primary }]}
-            onPress={() => {
-              Alert.alert(
-                'End Frame',
-                `${playerNames[trailerIdx]} needs ${snookersCount} snookers. Award the frame to ${playerNames[leaderIdx]}?`,
-                [
-                  { text: 'Keep playing', style: 'cancel' },
-                  { text: `${playerNames[leaderIdx]} wins frame`, style: 'default', onPress: concede },
-                ],
-              );
-            }}
-            activeOpacity={0.8}
-          >
-            <Text style={[styles.snookerBannerText, { color: c.primary }]}>
-              ⚡ {playerNames[trailerIdx]} needs {snookersCount} snookers
-            </Text>
-            <Text style={[styles.snookerBannerBtn, { color: c.primary }]}>End Frame →</Text>
-          </TouchableOpacity>
+          <>
+            {potBlock}
+            {cardsBlock}
+            {snookerBlock}
+            <View style={{ flex: 1 }} />
+            {ballPadBlock}
+            <View style={{ height: insets.bottom }} />
+          </>
         );
       })()}
-
-      <View style={{ flex: 1 }} />
-
-      {/* Ball pad */}
-      <BallPad
-        phase={snap.phase}
-        awaiting={snap.awaiting}
-        colorsRemaining={snap.colorsRemaining}
-        redsRemaining={snap.redsRemaining}
-        currentBreak={snap.currentBreak}
-        onPot={(ball: BallType) => potBall(ball)}
-        onExtraRed={addExtraRed}
-        onMiss={isTrainMode ? concede : endVisit}
-        onFoul={() => setShowFoul(true)}
-        onUndo={undo}
-        onConcede={isTrainMode ? handleTrainEndSession : handleConcede}
-        canUndo={state.history.length > 0}
-        trainMode={isTrainMode}
-        freeBallActive={snap.freeBallActive}
-        onFreeBall={applyFreeBall}
-      />
-      <View style={{ height: insets.bottom }} />
 
       {/* Modals */}
       <FoulModal
@@ -581,5 +609,15 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontFamily: 'PoppinsBold',
     opacity: 0.8,
+  },
+  landscapeRow: {
+    flex: 1,
+    flexDirection: 'row',
+  },
+  landscapeColumn: {
+    flex: 1,
+  },
+  landscapeRightColumn: {
+    justifyContent: 'flex-end',
   },
 });

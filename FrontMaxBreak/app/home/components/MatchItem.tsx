@@ -6,6 +6,7 @@ import { logger } from '../../../utils/logger';
 import { TOUCH_SLOP, MATCH_CONSTANTS } from '../../../utils/constants';
 import { getMatchPlayerNames, areScoresValid, normalizeScore } from '../../../utils/playerUtils';
 import { clearMatchCache } from '../../../services/matchServices';
+import { logTap } from '../../../services/analyticsService';
 import { isMatchFavouriteSync, isMatchFavouriteAsync, toggleMatchFavourite } from '../../../services/favoritesService';
 import { ModernGlassCard } from '../../components/modern/ModernGlassCard';
 import { BroadcastBadge } from '../../components/match/BroadcastBadge';
@@ -113,6 +114,7 @@ export const MatchItem = ({
                 setDebugTapCount(0);
             }
             
+            logTap('match_card_open', { matchId: apiMatchId });
             navigation.push(`/match/${apiMatchId}`);
         } else {
             logger.warn(`[MatchItem] Cannot navigate: invalid api_match_id: ${apiMatchId}`);

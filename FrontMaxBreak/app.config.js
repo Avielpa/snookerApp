@@ -26,6 +26,8 @@ module.exports = {
     plugins: [
       ...(baseConfig.plugins || []),
       'expo-secure-store',
+      '@react-native-firebase/app',
+      '@react-native-firebase/analytics',
     ],
   },
 };

@@ -6,6 +6,7 @@ import { useColors } from '../../contexts/ThemeContext';
 import { useGameContext } from '../../contexts/GameContext';
 import { DeviceType } from '../../hooks/useDeviceType';
 import { logger } from '../../utils/logger';
+import { logTap } from '../../services/analyticsService';
 
 const NAV_ITEMS: {
   path: string;
@@ -46,6 +47,7 @@ const SideNav: React.FC<SideNavProps> = ({ device }) => {
             key={item.path}
             style={[styles.navItem, isActive && styles.navItemActive]}
             onPress={() => {
+              logTap('tab_select', { tab: item.label });
               if (isGameActive) {
                 if (alertActive.current) return;
                 alertActive.current = true;
