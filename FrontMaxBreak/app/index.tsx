@@ -32,7 +32,7 @@ import { useOtherLiveMatches } from './home/hooks/useOtherLiveMatches';
 import { OtherLiveSection } from './home/components/OtherLiveSection';
 import { DrawTab } from './tour/components/DrawTab';
 import { OtherToursTab } from './home/components/OtherTours';
-import { MatchListItem } from './home/types';
+import { shouldRedirectToMedia } from './home/utils/mediaFallback';
 
 function formatRoundPrize(amount: any): string | null {
     if (!amount) return null;
@@ -48,6 +48,8 @@ const HomeScreen = (): React.ReactElement | null => {
     const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
     const hasAutoSwitchedToLive = React.useRef(false);
     const hasAutoSwitchedToResults = React.useRef(false);
+    const hasAutoSwitchedToMedia = React.useRef(false);
+    const [isRedirectingToMedia, setIsRedirectingToMedia] = useState(false);
     const navigation = useRouter();
 
     const toggleSection = React.useCallback((sectionId: string) => {
@@ -125,6 +127,21 @@ const HomeScreen = (): React.ReactElement | null => {
             hasAutoSwitchedToResults.current = true;
         }
     }, [processedListData]);
+
+    // Fallback: if there's truly nothing worth showing (no matches at all, or only
+    // matches whose players aren't decided yet — e.g. a final still showing "TBD 0 - 0 TBD"
+    // because snooker.org hasn't confirmed the finalists), send the user to the Media tab
+    // instead of an empty/placeholder home screen. Temporary stopgap — only fires once per session.
+    React.useEffect(() => {
+        if (hasAutoSwitchedToMedia.current) return;
+        if (hasAutoSwitchedToLive.current || hasAutoSwitchedToResults.current) return;
+        if (loading || error) return;
+        if (shouldRedirectToMedia(processedListData)) {
+            hasAutoSwitchedToMedia.current = true;
+            setIsRedirectingToMedia(true);
+            navigation.replace('/NewsScreen');
+        }
+    }, [loading, error, processedListData]);
 
     // AGGRESSIVE DEVICE FIX: Always refresh data when screen regains focus
     // This ensures scores are correct when returning from match details
@@ -254,6 +271,18 @@ const HomeScreen = (): React.ReactElement | null => {
         { label: 'Draw', value: 'draw', icon: 'git-branch-outline' },
         { label: 'Other Tours', value: 'otherTours', icon: 'trophy-outline' },
     ];
+
+    // While redirecting to Media (no decided matches to show), render a loading
+    // state instead of the underlying TBD/empty match list so the user never sees it flash.
+    if (isRedirectingToMedia) {
+        return (
+            <View style={styles.backgroundImage}>
+                <SafeAreaView style={styles.container}>
+                    <LoadingComponent COLORS={COLORS} styles={styles} />
+                </SafeAreaView>
+            </View>
+        );
+    }
 
     // Main Render structure
     return (
