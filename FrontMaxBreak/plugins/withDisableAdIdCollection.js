@@ -6,18 +6,26 @@ const { withAndroidManifest } = require('@expo/config-plugins');
 
 function withDisableAdIdCollection(config) {
   return withAndroidManifest(config, (config) => {
-    const application = config.modResults.manifest.application[0];
+    const manifest = config.modResults.manifest;
+    if (!manifest.$['xmlns:tools']) {
+      manifest.$['xmlns:tools'] = 'http://schemas.android.com/tools';
+    }
+    const application = manifest.application[0];
     if (!application['meta-data']) {
       application['meta-data'] = [];
     }
-    const alreadyPresent = application['meta-data'].some(
+    const existing = application['meta-data'].find(
       (item) => item.$['android:name'] === 'google_analytics_adid_collection_enabled'
     );
-    if (!alreadyPresent) {
+    if (existing) {
+      existing.$['android:value'] = 'false';
+      existing.$['tools:replace'] = 'android:value';
+    } else {
       application['meta-data'].push({
         $: {
           'android:name': 'google_analytics_adid_collection_enabled',
           'android:value': 'false',
+          'tools:replace': 'android:value',
         },
       });
     }
