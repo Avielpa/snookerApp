@@ -58,7 +58,8 @@
         "ENABLE_SSL_PINNING": "true"
       },
       "ios": {
-        "buildConfiguration": "Release"
+        "buildConfiguration": "Release",
+        "image": "latest"
       },
       "android": {
         "ndk": "28.2.13676358"
