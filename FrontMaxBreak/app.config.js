@@ -1,6 +1,7 @@
 // app.config.js
 // Dynamic config that reads environment variables set by EAS build profiles.
 // app.json is still the source of truth — this file only overrides what changes per profile.
+// (trivial touch to trigger the eas-build-submit CI workflow for a first test run)
 const baseConfig = require('./app.json').expo;
 
 const isPreview =
