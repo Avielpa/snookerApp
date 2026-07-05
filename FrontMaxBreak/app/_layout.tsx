@@ -1,7 +1,7 @@
 // _layout.tsx - Root Layout with Theme System
 import React, { useEffect } from 'react';
 import { View, StyleSheet, StatusBar } from 'react-native';
-import { Stack } from 'expo-router';
+import { Stack, usePathname } from 'expo-router';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as Updates from 'expo-updates';
 import { ThemeProvider, useTheme } from '../contexts/ThemeContext';
@@ -13,11 +13,13 @@ import { initPushNotifications } from '../utils/notifications';
 import { loadFavorites } from '../services/favoritesService';
 import { useDeviceType } from '../hooks/useDeviceType';
 import { useAnalyticsScreenTracking } from '../hooks/useAnalyticsScreenTracking';
+import { shouldShowScoreboardBanner } from '../services/scoreboardBannerService';
 
 // --- Component Imports ---
 import Header from './components/Header';
 import BottomBar from './components/BottomBar';
 import SideNav from './components/SideNav';
+import ScoreboardBanner from './components/ScoreboardBanner';
 import ErrorBoundary from '../components/ErrorBoundary';
 
 // Main Layout Component - wraps everything in ThemeProvider
@@ -25,9 +27,18 @@ const ThemedLayout = () => {
     const { theme } = useTheme();
     const colors = theme.colors;
     const device = useDeviceType();
+    const pathname = usePathname();
 
     // Log a screen_view analytics event on every route change
     useAnalyticsScreenTracking();
+
+    // Brief scoreboard discovery banner — shows on every launch for a limited
+    // window of days, skipped while already inside the scoreboard section.
+    const [showScoreboardBanner, setShowScoreboardBanner] = React.useState(false);
+    useEffect(() => {
+        if (pathname?.startsWith('/scoreboard')) return;
+        shouldShowScoreboardBanner().then(setShowScoreboardBanner);
+    }, []);
 
     // React to updates found by the automatic ON_LOAD check and apply immediately
     const { isUpdateAvailable } = Updates.useUpdates();
@@ -99,6 +110,11 @@ const ThemedLayout = () => {
                 </View>
 
                 {device !== 'tv' && <BottomBar />}
+
+                <ScoreboardBanner
+                    visible={showScoreboardBanner}
+                    onHide={() => setShowScoreboardBanner(false)}
+                />
             </View>
         </SafeAreaProvider>
     );

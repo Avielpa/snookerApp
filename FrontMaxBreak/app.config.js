@@ -8,6 +8,12 @@ const isPreview =
   process.env.ANDROID_PACKAGE === 'com.avielpahima.maxbreaksnooker.preview' ||
   process.env.APP_VARIANT === 'preview';
 
+// iOS has no GoogleService-Info.plist configured yet (no iOS app registered in
+// Firebase Console) — @react-native-firebase's config plugins fail prebuild
+// entirely without it, and a build made without proper config crashes natively
+// on launch. Excluded from iOS builds until that's set up; Android keeps it.
+const isIosBuild = process.env.EAS_BUILD_PLATFORM === 'ios';
+
 module.exports = {
   expo: {
     ...baseConfig,
@@ -26,9 +32,11 @@ module.exports = {
     plugins: [
       ...(baseConfig.plugins || []),
       'expo-secure-store',
-      '@react-native-firebase/app',
-      '@react-native-firebase/analytics',
-      './plugins/withDisableAdIdCollection',
+      ...(isIosBuild ? [] : [
+        '@react-native-firebase/app',
+        '@react-native-firebase/analytics',
+        './plugins/withDisableAdIdCollection',
+      ]),
     ],
   },
 };

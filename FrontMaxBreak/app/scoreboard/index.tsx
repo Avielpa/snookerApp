@@ -77,7 +77,7 @@ export default function ScoreboardSetup() {
       {!loggedIn && !bannerDismissed && (
         <View style={[styles.signInBanner, { backgroundColor: c.cardBackground, borderColor: c.primary }]}>
           <Text style={[styles.signInBannerText, { color: c.textPrimary }]}>
-            Sign in to sync sessions across devices
+            Sign in to save your matches and track rivalries with friends
           </Text>
           <TouchableOpacity
             onPress={() => setAuthVisible(true)}

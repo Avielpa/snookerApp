@@ -46,6 +46,11 @@ const Header = () => {
           <Text style={[styles.playBtnText, { color: colors.primary }]}>
             {isInScoreboard ? '← Home' : '▶ Play'}
           </Text>
+          {!isInScoreboard && (
+            <View style={[styles.newBadge, { backgroundColor: colors.primary }]}>
+              <Text style={styles.newBadgeText}>NEW</Text>
+            </View>
+          )}
         </TouchableOpacity>
 
         <View style={styles.logoRow}>
@@ -96,10 +101,25 @@ const styles = StyleSheet.create({
     width: 60,
     alignItems: 'flex-start',
     justifyContent: 'center',
+    position: 'relative',
   },
   playBtnText: {
     fontSize: 14,
     fontFamily: 'PoppinsBold',
+  },
+  newBadge: {
+    position: 'absolute',
+    top: -8,
+    left: 30,
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    borderRadius: 6,
+  },
+  newBadgeText: {
+    color: '#121212',
+    fontSize: 8,
+    fontFamily: 'PoppinsBold',
+    letterSpacing: 0.3,
   },
   logoRow: {
     flexDirection: 'row',

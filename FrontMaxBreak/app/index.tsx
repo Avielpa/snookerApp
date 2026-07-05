@@ -50,8 +50,17 @@ const HomeScreen = (): React.ReactElement | null => {
     const hasAutoSwitchedToLive = React.useRef(false);
     const hasAutoSwitchedToResults = React.useRef(false);
     const hasAutoSwitchedToMedia = React.useRef(false);
+    const redirectTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
     const [isRedirectingToMedia, setIsRedirectingToMedia] = useState(false);
     const navigation = useRouter();
+
+    // Clears the pending Media-redirect timer only on actual unmount — see the
+    // effect below for why it must NOT be tied to that effect's own re-invocation.
+    React.useEffect(() => {
+        return () => {
+            if (redirectTimerRef.current) clearTimeout(redirectTimerRef.current);
+        };
+    }, []);
 
     const toggleSection = React.useCallback((sectionId: string) => {
         setCollapsedSections(prev => {
@@ -140,7 +149,14 @@ const HomeScreen = (): React.ReactElement | null => {
         if (shouldRedirectToMedia(processedListData)) {
             hasAutoSwitchedToMedia.current = true;
             setIsRedirectingToMedia(true);
-            navigation.replace('/NewsScreen');
+            // Brief pause so the "showing latest news" message is actually readable
+            // before navigating away, instead of jumping in the same tick.
+            // Timer is intentionally NOT cleared on effect re-run (only on unmount,
+            // see the dedicated cleanup effect below) — processedListData can change
+            // reference during the delay (e.g. background refresh), and a cleanup tied
+            // to this effect's own re-invocation would silently cancel the navigation,
+            // leaving the user stuck on the loading screen forever.
+            redirectTimerRef.current = setTimeout(() => navigation.replace('/NewsScreen'), 2000);
         }
     }, [loading, error, processedListData]);
 
@@ -273,13 +289,19 @@ const HomeScreen = (): React.ReactElement | null => {
         { label: 'Other Tours', value: 'otherTours', icon: 'trophy-outline' },
     ];
 
-    // While redirecting to Media (no decided matches to show), render a loading
-    // state instead of the underlying TBD/empty match list so the user never sees it flash.
-    if (isRedirectingToMedia) {
+    // While redirecting to Media (no decided matches to show), or during the initial
+    // fetch before we know whether to redirect, render a plain loading state instead
+    // of the filter tabs/list — avoids flashing "Home" chrome before landing on Media.
+    if (isRedirectingToMedia || (loading && processedListData.length === 0)) {
         return (
             <View style={styles.backgroundImage}>
                 <SafeAreaView style={styles.container}>
                     <LoadingComponent COLORS={COLORS} styles={styles} />
+                    {isRedirectingToMedia && (
+                        <Text style={{ color: COLORS.textSecondary, textAlign: 'center', fontSize: 13, marginTop: -12, paddingHorizontal: 24, lineHeight: 19 }}>
+                            No active tours right now — showing you the latest news.{'\n'}Check the Calendar tab for upcoming tournaments.
+                        </Text>
+                    )}
                 </SafeAreaView>
             </View>
         );
