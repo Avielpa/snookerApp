@@ -82,6 +82,18 @@ class Command(BaseCommand):
         self.stdout.write(f'[ACTIVE] Active interval: {active_interval}s')
         self.stdout.write(f'[SLEEP] Sleep interval: {sleep_interval}s')
 
+        # Live scores are the top priority: check for active matches and push
+        # a live update FIRST, before any heavy startup work. A redeploy mid-
+        # tournament must cost a few seconds of live-score gap, not the ~60+
+        # minutes _startup_sync() can take (rate-limited top-128 refresh etc).
+        try:
+            if self._has_active_matches(timezone.now()):
+                self.stdout.write('[BOOT] Active tournament detected — running live update before startup sync')
+                self._run_live_updates()
+        except Exception as e:
+            logger.error(f'Boot-time live update failed (non-fatal): {e}')
+            self.stdout.write(f'[BOOT] Live update failed (non-fatal): {e}')
+
         # On startup: sync current season events + import any missing match data
         self._startup_sync()
 
