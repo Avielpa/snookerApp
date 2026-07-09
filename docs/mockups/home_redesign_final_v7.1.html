@@ -1,0 +1,339 @@
+<title>MaxBreak — Home Redesign Concept v7</title>
+<style>
+  :root{
+    --bg:#0A1911; --bg-2:#0E2116;
+    --card:#132C1D; --card-hi:#173521;
+    --chalk:#F4F1E8; --muted:#93B39F; --muted-dim:#5A7C67;
+    --hairline:rgba(244,241,232,0.07); --hairline-strong:rgba(244,241,232,0.14);
+    --live:#2ED573; --live-deep:#1B8A4A;
+    --brk:#FFA940; --amber:#FFC875;
+    --qtour:#5AA9E6; --womens:#F0648C; --seniors:#FF9F45;
+    --draw-bg:#1c1c1c; --draw-card:#252525; --draw-accent:#FFA726;
+    --font: -apple-system, 'Segoe UI', Roboto, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{ margin:0; background:#050a06; font-family:var(--font); color:var(--chalk); -webkit-font-smoothing:antialiased; }
+  .stage{ display:flex; flex-direction:column; align-items:center; padding:44px 16px 70px; min-height:100vh; }
+  .intro{ max-width:760px; text-align:center; margin-bottom:36px; }
+  .intro .eyebrow{ font-size:11px; font-weight:700; letter-spacing:0.16em; text-transform:uppercase; color:var(--live); margin-bottom:10px; }
+  .intro h1{ font-size:21px; font-weight:700; margin:0 0 10px; letter-spacing:-0.01em; }
+  .intro p{ font-size:13px; color:#6f8a7d; line-height:1.6; margin:0; }
+
+  .row{ display:flex; gap:22px; justify-content:center; flex-wrap:wrap; margin-bottom:50px; }
+  .phone-col{ text-align:center; }
+  .phone-label{ font-size:10.5px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:#537661; margin-bottom:12px; max-width:326px; }
+  .phone{
+    width:326px; height:696px;
+    background:linear-gradient(180deg, var(--bg-2), var(--bg) 40%);
+    border-radius:32px; border:1px solid rgba(244,241,232,0.06);
+    box-shadow:0 32px 64px -18px rgba(0,0,0,0.65), 0 0 0 8px #040805, inset 0 1px 0 rgba(255,255,255,0.03);
+    overflow:hidden; position:relative; display:flex; flex-direction:column;
+  }
+  .phone.draw{ background:linear-gradient(180deg, #151515, var(--draw-bg) 40%); }
+  .statusbar{ height:40px; flex-shrink:0; display:flex; align-items:flex-end; justify-content:space-between; padding:0 20px 6px; font-size:11.5px; font-weight:600; }
+
+  /* every scrollable region hides its native scrollbar the SAME way, on all 3 engines */
+  .scroll-area, .scroll-x, .tabs{
+    scrollbar-width:none; -ms-overflow-style:none;
+  }
+  .scroll-area::-webkit-scrollbar, .scroll-x::-webkit-scrollbar, .tabs::-webkit-scrollbar{ width:0; height:0; display:none; }
+  .scroll-area{ flex:1; overflow-y:auto; }
+  .scroll-x{ overflow-x:auto; }
+
+  .header{ padding:0 16px 6px; text-align:center; }
+  .tour-name{ font-size:13px; font-weight:700; color:var(--chalk); letter-spacing:-0.01em; }
+  .tour-caret{ font-size:8.5px; color:var(--muted-dim); margin-left:3px; }
+  .snkr-badge{ font-size:7.5px; color:var(--muted-dim); margin-top:1px; letter-spacing:0.04em; }
+  .prize-pill{
+    display:inline-flex; align-items:center; gap:4px; margin-top:5px;
+    font-size:9.5px; font-weight:700; color:var(--amber);
+    background:rgba(255,200,117,0.10); border:1px solid rgba(255,200,117,0.25);
+    border-radius:18px; padding:3px 9px;
+  }
+
+  .tabs{ display:flex; gap:5px; padding:8px 12px 6px; overflow-x:auto; }
+  .tab{
+    font-size:10px; font-weight:600; padding:5px 10px; border-radius:10px;
+    white-space:nowrap; border:1px solid transparent;
+    background:rgba(244,241,232,0.04); color:var(--muted);
+    display:flex; align-items:center; gap:4px;
+  }
+  .tab.active{ background:rgba(255,200,117,0.14); border-color:rgba(255,200,117,0.4); color:var(--amber); }
+  .tab.draw{ background:rgba(255,167,38,0.04); color:#aaa; }
+  .tab.draw.active{ background:rgba(255,167,38,0.18); border-color:var(--draw-accent); color:var(--draw-accent); }
+  .tab .live-dot{ width:5px; height:5px; border-radius:50%; background:var(--live); }
+
+  .search{
+    margin:0 12px 6px; background:var(--card); border:1px solid var(--hairline);
+    border-radius:8px; padding:7px 11px; font-size:10.5px; color:var(--muted-dim);
+    display:flex; align-items:center; gap:6px;
+  }
+  .search.draw{ background:var(--draw-card); border-color:rgba(255,255,255,0.08); }
+
+  .list{ padding:0 8px 20px; }
+
+  .status-header{ display:flex; align-items:center; gap:7px; padding:6px 4px 2px; margin-top:2px; }
+  .status-header .rail{ width:3px; height:12px; border-radius:2px; background:var(--live-deep); }
+  .status-header .title{ font-size:9.5px; font-weight:800; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted); }
+  .status-header .count{ margin-left:auto; background:rgba(46,213,115,0.14); color:var(--live); border-radius:8px; padding:1px 6px; font-size:8.5px; font-weight:700; }
+
+  /* ── Compact live row — replaces the old 90px hero card. ~26px tall, 1 line. ── */
+  .live-row{
+    display:flex; align-items:center; gap:6px; padding:5px 7px; margin:0 4px 4px;
+    background:rgba(46,213,115,0.07); border:1px solid rgba(46,213,115,0.22); border-radius:7px;
+  }
+  .live-row .pulse-dot{ width:5px; height:5px; border-radius:50%; background:var(--live); flex-shrink:0; animation:pulse 1.7s infinite; }
+  @keyframes pulse{ 0%{box-shadow:0 0 0 0 rgba(46,213,115,0.5);} 70%{box-shadow:0 0 0 5px rgba(46,213,115,0);} 100%{box-shadow:0 0 0 0 rgba(46,213,115,0);} }
+  .live-row .lp1, .live-row .lp2{ flex:1; font-size:9.5px; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .live-row .lp1{ text-align:right; }
+  .live-row .lp1.win, .live-row .lp2.win{ color:var(--chalk); font-weight:700; }
+  .live-row .lsc{ font-size:9.5px; font-weight:800; color:var(--live); flex-shrink:0; padding:0 2px; font-variant-numeric:tabular-nums; }
+  .live-row .lev{ font-size:7px; color:var(--muted-dim); flex-shrink:0; max-width:44px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-transform:uppercase; letter-spacing:0.03em; }
+  .live-row .lstar{ font-size:9px; color:var(--muted-dim); flex-shrink:0; width:11px; text-align:center; }
+  .live-row.feature{
+    background:linear-gradient(155deg, var(--card-hi), var(--card)); border-color:rgba(46,213,115,0.4);
+    padding:6px 8px; position:relative;
+  }
+  .live-row.feature .lp1, .live-row.feature .lp2{ font-size:10.5px; }
+  .live-row.feature .lsc{ font-size:12px; }
+
+  .round-header{ display:flex; align-items:center; gap:6px; padding:5px 6px 2px; }
+  .round-header .txt{ font-size:8px; font-weight:700; letter-spacing:0.09em; text-transform:uppercase; color:var(--muted-dim); }
+  .round-header .line{ flex:1; height:1px; background:var(--hairline); }
+
+  .m-row{ display:flex; align-items:center; gap:7px; padding:5px 6px; border-bottom:1px solid var(--hairline); }
+  .m-time{ font-size:8px; color:var(--muted-dim); width:34px; flex-shrink:0; font-variant-numeric:tabular-nums; line-height:1.25; }
+  .m-vs{ flex:1; display:flex; align-items:center; gap:5px; min-width:0; font-size:10.5px; }
+  .m-p1, .m-p2{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--muted); }
+  .m-p1{ flex:1; text-align:right; }
+  .m-p2{ flex:1; }
+  .m-vsonly{ color:var(--muted-dim); font-size:9.5px; flex-shrink:0; }
+  .m-star{ font-size:10px; color:var(--muted-dim); flex-shrink:0; width:12px; text-align:center; }
+
+  .also-live-header{ display:flex; align-items:center; gap:6px; padding:10px 6px 3px; }
+  .also-live-header .rail{ width:3px; height:12px; background:var(--live); border-radius:2px; }
+  .also-live-header .txt{ font-size:9.5px; font-weight:800; color:var(--live); }
+  .also-event-name{ font-size:8px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color:var(--muted-dim); padding:3px 6px 2px; }
+
+  .home-ind{ position:absolute; bottom:6px; left:50%; transform:translateX(-50%); width:110px; height:4px; border-radius:3px; background:rgba(244,241,232,0.28); }
+
+  /* ── Draw tab v2: real bracket tree with connector lines, not a card list ── */
+  .bracket-wrap{ position:relative; padding:10px 14px 24px; }
+  .bkt-col-heads{ display:flex; gap:0; margin-bottom:8px; }
+  .bkt-pill{
+    width:104px; flex-shrink:0; margin-right:36px;
+    border:1px solid rgba(255,167,38,0.4); background:rgba(255,167,38,0.13);
+    border-radius:7px; padding:5px 6px; text-align:center;
+  }
+  .bkt-pill:last-child{ margin-right:0; }
+  .bkt-pill .rt{ font-size:8.5px; font-weight:800; color:var(--draw-accent); }
+  .bkt-pill .rm{ font-size:6.5px; color:rgba(255,167,38,0.75); margin-top:1px; }
+  .bkt-grid{ position:relative; width:604px; height:212px; }
+  .bkt-card{
+    position:absolute; width:104px; border:1px solid rgba(255,255,255,0.12); border-radius:7px;
+    overflow:hidden; background:var(--draw-card);
+  }
+  .bkt-card.live{ border-color:var(--draw-accent); box-shadow:0 0 0 1px rgba(255,167,38,0.25); }
+  .bkt-p{ display:flex; align-items:center; justify-content:space-between; padding:4px 7px; font-size:8.5px; color:#fff; }
+  .bkt-p.win{ background:rgba(255,167,38,0.16); color:var(--draw-accent); font-weight:700; }
+  .bkt-p.lose{ opacity:0.38; }
+  .bkt-div{ height:1px; background:rgba(255,255,255,0.09); }
+  .bkt-p .sc{ font-weight:800; font-variant-numeric:tabular-nums; }
+  .draw-note{ padding:2px 12px 0; font-size:9px; color:#7a7a7a; text-align:center; }
+
+  .ot-card{ margin:8px 8px 0; border-radius:9px; border:1px solid rgba(255,255,255,0.09); background:#141d2e; overflow:hidden; }
+  .ot-head{ display:flex; align-items:center; gap:7px; padding:8px 9px; }
+  .ot-name{ font-size:10.5px; font-weight:700; color:#fff; }
+  .ot-sub{ font-size:8.5px; color:#93a0ae; margin-top:1px; }
+  .ot-live{ font-size:7.5px; font-weight:700; color:var(--live); background:rgba(46,213,115,0.15); border-radius:4px; padding:2px 5px; margin-left:auto; }
+  .ot-row{ display:flex; align-items:center; justify-content:space-between; padding:5px 9px; border-top:0.5px solid rgba(255,255,255,0.06); font-size:9.5px; color:#e5e5e5; }
+  .ot-row .sc{ font-size:9.5px; font-weight:700; color:#9CA3AF; }
+
+  .legend{
+    max-width:960px; background:#0a1510; border:1px solid rgba(244,241,232,0.07);
+    border-radius:16px; padding:24px 28px;
+  }
+  .legend h3{ font-size:12px; letter-spacing:0.12em; text-transform:uppercase; color:#537661; margin:0 0 16px; font-weight:800; }
+  .lg-cols{ display:grid; grid-template-columns:1fr 1fr; gap:0 30px; }
+  .lg-block{ margin-bottom:16px; }
+  .lg-block .h{ font-size:10.5px; font-weight:800; color:var(--amber); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:7px; }
+  .lg-block ul{ margin:0; padding-left:15px; font-size:11.5px; color:#a9c4b6; line-height:1.75; }
+  .lg-block ul li b{ color:var(--chalk); }
+</style>
+
+<div class="stage">
+  <div class="intro">
+    <div class="eyebrow">MaxBreak · Home concept v7</div>
+    <h1>Bar root cause found, Draw is now a real connected bracket, live rows cut to a single line</h1>
+    <p>Three direct fixes for this round — details in the checklist at the bottom, including <b>why</b> the bar kept surviving five "fixed" rounds.</p>
+  </div>
+
+  <div class="row">
+    <div class="phone-col">
+      <div class="phone-label">Live — Playing Now (this tournament) + Also Live grouped by event, matching real OtherLiveSection logic</div>
+      <div class="phone">
+        <div class="statusbar"><span>9:41</span><span>●●●●📶🔋</span></div>
+        <div class="scroll-area">
+          <div class="header">
+            <div class="tour-name">Championship League<span class="tour-caret">▾</span></div>
+            <div class="snkr-badge">via snooker.org</div>
+            <div><span class="prize-pill">◆ £10,000</span></div>
+          </div>
+          <div class="tabs">
+            <div class="tab">Upcoming</div><div class="tab active"><span class="live-dot"></span>Live</div>
+            <div class="tab">Results</div><div class="tab">Draw</div><div class="tab">Other Tours</div>
+          </div>
+          <div class="search">🔍 Search Player</div>
+          <div class="list">
+            <div class="status-header"><div class="rail"></div><div class="title">Playing Now</div><div class="count">1</div></div>
+
+            <div class="live-row feature"><span class="pulse-dot"></span><span class="lp1 win">Zak Surety</span><span class="lsc">1–0</span><span class="lp2">M. Selt</span><span class="lstar">☆</span></div>
+
+            <!-- Also Live = OtherLiveSection, FlatList footer, grouped by event name (real logic) -->
+            <div class="also-live-header"><div class="rail"></div><div class="txt">Also Live</div></div>
+
+            <div class="also-event-name">Q Tour · NZ Open</div>
+            <div class="live-row"><span class="pulse-dot"></span><span class="lp1">Liu Wenwei</span><span class="lsc">2–1</span><span class="lp2 win">E. Slessor</span><span class="lstar">☆</span></div>
+            <div class="live-row"><span class="pulse-dot"></span><span class="lp1 win">L. Pullen</span><span class="lsc">1–0</span><span class="lp2">R. Milkins</span><span class="lstar">☆</span></div>
+            <div class="live-row"><span class="pulse-dot"></span><span class="lp1">A. Higginson</span><span class="lsc">0–1</span><span class="lp2 win">G. Chenzhi</span><span class="lstar">☆</span></div>
+            <div class="live-row"><span class="pulse-dot"></span><span class="lp1 win">R. Day</span><span class="lsc">2–0</span><span class="lp2">M. Fu</span><span class="lstar">☆</span></div>
+            <div class="live-row"><span class="pulse-dot"></span><span class="lp1">T. Un-Nooh</span><span class="lsc">1–1</span><span class="lp2">H. Vafaei</span><span class="lstar">☆</span></div>
+            <div class="live-row"><span class="pulse-dot"></span><span class="lp1 win">S. Bingham</span><span class="lsc">1–0</span><span class="lp2">B. Hawkins</span><span class="lstar">☆</span></div>
+            <div class="live-row"><span class="pulse-dot"></span><span class="lp1 win">P. Brownrigg</span><span class="lsc">1–0</span><span class="lp2">L. Cabrera</span><span class="lstar">☆</span></div>
+            <div class="live-row"><span class="pulse-dot"></span><span class="lp1">A. Tabb</span><span class="lsc">0–1</span><span class="lp2 win">Z. Zhuang</span><span class="lstar">☆</span></div>
+
+            <div class="also-event-name">Women's World Championship</div>
+            <div class="live-row"><span class="pulse-dot"></span><span class="lp1">Ng On Yee</span><span class="lsc">1–0</span><span class="lp2">Baker</span><span class="lstar">☆</span></div>
+
+            <div class="also-event-name">Seniors Tour · Event 3</div>
+            <div class="live-row"><span class="pulse-dot"></span><span class="lp1 win">J. Jones</span><span class="lsc">2–1</span><span class="lp2">M. Stevens</span><span class="lstar">☆</span></div>
+          </div>
+        </div>
+        <div class="home-ind"></div>
+      </div>
+    </div>
+
+    <div class="phone-col">
+      <div class="phone-label">Draw — real bracket tree, connector lines, aligned pairs</div>
+      <div class="phone draw" style="width:640px;">
+        <div class="statusbar"><span>9:41</span><span>●●●●📶🔋</span></div>
+        <div class="header">
+          <div class="tour-name">Championship League<span class="tour-caret">▾</span></div>
+          <div class="snkr-badge">via snooker.org</div>
+          <div><span class="prize-pill">◆ £10,000</span></div>
+        </div>
+        <div class="tabs">
+          <div class="tab draw">Upcoming</div><div class="tab draw">Live</div>
+          <div class="tab draw">Results</div><div class="tab draw active">Draw</div><div class="tab draw">Other Tours</div>
+        </div>
+        <div class="search draw">🔍 Search Player</div>
+        <div class="scroll-x">
+          <div class="bracket-wrap">
+            <div class="bkt-col-heads">
+              <div class="bkt-pill"><div class="rt">Last 16</div><div class="rm">Best of 3</div></div>
+              <div class="bkt-pill"><div class="rt">Quarter-Finals</div><div class="rm">Best of 5</div></div>
+              <div class="bkt-pill"><div class="rt">Semi-Finals</div><div class="rm">Best of 7</div></div>
+            </div>
+            <div class="bkt-grid">
+              <svg width="604" height="212" style="position:absolute; top:0; left:0; pointer-events:none;">
+                <g stroke="rgba(255,167,38,0.38)" stroke-width="1.5" fill="none">
+                  <path d="M104,20 H124 V45 H144"/>
+                  <path d="M104,70 H124 V45"/>
+                  <path d="M104,120 H124 V145 H144"/>
+                  <path d="M104,170 H124 V145"/>
+                  <path d="M248,45 H268 V95 H288"/>
+                  <path d="M248,145 H268 V95"/>
+                </g>
+              </svg>
+              <div class="bkt-card live" style="left:0; top:0;">
+                <div class="bkt-p">Surety<span class="sc">1</span></div><div class="bkt-div"></div><div class="bkt-p">Selt<span class="sc">0</span></div>
+              </div>
+              <div class="bkt-card" style="left:0; top:50px;">
+                <div class="bkt-p win">Pullen<span class="sc">2</span></div><div class="bkt-div"></div><div class="bkt-p lose">Milkins<span class="sc">0</span></div>
+              </div>
+              <div class="bkt-card" style="left:0; top:100px;">
+                <div class="bkt-p lose">Wenwei<span class="sc">1</span></div><div class="bkt-div"></div><div class="bkt-p win">Chenzhi<span class="sc">2</span></div>
+              </div>
+              <div class="bkt-card" style="left:0; top:150px;">
+                <div class="bkt-p">Higginson</div><div class="bkt-div"></div><div class="bkt-p">Fu</div>
+              </div>
+              <div class="bkt-card" style="left:144px; top:25px;">
+                <div class="bkt-p">TBD</div><div class="bkt-div"></div><div class="bkt-p win">Pullen</div>
+              </div>
+              <div class="bkt-card" style="left:144px; top:125px;">
+                <div class="bkt-p">TBD</div><div class="bkt-div"></div><div class="bkt-p">TBD</div>
+              </div>
+              <div class="bkt-card" style="left:288px; top:75px;">
+                <div class="bkt-p">TBD</div><div class="bkt-div"></div><div class="bkt-p">TBD</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="draw-note">Pinch/scroll horizontally · each pair's connector meets its next-round slot, same pattern as Challonge/ESPN bracket views</div>
+        <div class="home-ind"></div>
+      </div>
+    </div>
+
+    <div class="phone-col">
+      <div class="phone-label">Upcoming — unchanged from v6, still correct</div>
+      <div class="phone">
+        <div class="statusbar"><span>9:41</span><span>●●●●📶🔋</span></div>
+        <div class="scroll-area">
+          <div class="header">
+            <div class="tour-name">Championship League<span class="tour-caret">▾</span></div>
+            <div class="snkr-badge">via snooker.org</div>
+            <div><span class="prize-pill">◆ £10,000</span></div>
+          </div>
+          <div class="tabs">
+            <div class="tab active">Upcoming</div><div class="tab"><span class="live-dot"></span>Live</div>
+            <div class="tab">Results</div><div class="tab">Draw</div><div class="tab">Other Tours</div>
+          </div>
+          <div class="search">🔍 Search Player</div>
+          <div class="list">
+            <div class="status-header upcoming"><div class="rail"></div><div class="title">Upcoming</div><div class="count">9</div></div>
+            <div class="round-header"><div class="txt">To Be Continued</div><div class="line"></div></div>
+            <div class="m-row"><span class="m-time">On<br>break</span><div class="m-vs"><span class="m-p1">D. Gilbert</span><span class="m-vsonly">vs</span><span class="m-p2">C. Wakelin</span></div><span class="m-star">☆</span></div>
+            <div class="round-header"><div class="txt">Upcoming</div><div class="line"></div></div>
+            <div class="m-row"><span class="m-time">17:00</span><div class="m-vs"><span class="m-p1">A. Higginson</span><span class="m-vsonly">vs</span><span class="m-p2">G. Chenzhi</span></div><span class="m-star">☆</span></div>
+            <div class="m-row"><span class="m-time">18:30</span><div class="m-vs"><span class="m-p1">Zak Surety</span><span class="m-vsonly">vs</span><span class="m-p2">M. Selt</span></div><span class="m-star">☆</span></div>
+            <div class="m-row"><span class="m-time">Jul 10<br>10:00</span><div class="m-vs"><span class="m-p1">R. Day</span><span class="m-vsonly">vs</span><span class="m-p2">M. Fu</span></div><span class="m-star">☆</span></div>
+            <div class="m-row"><span class="m-time">Jul 10<br>11:30</span><div class="m-vs"><span class="m-p1">T. Un-Nooh</span><span class="m-vsonly">vs</span><span class="m-p2">H. Vafaei</span></div><span class="m-star">☆</span></div>
+          </div>
+        </div>
+        <div class="home-ind"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <h3>This round's fixes — checklist</h3>
+    <div class="lg-cols">
+      <div>
+        <div class="lg-block">
+          <div class="h">✓ Bar — actual root cause found, not just re-checked</div>
+          <ul>
+            <li>The v6 CSS hid scrollbars on <code>.scroll-area</code> and <code>.scroll-x</code>, but <b>not on <code>.tabs</code></b> — and <code>.tabs</code> also has <code>overflow-x:auto</code>. On a desktop webkit preview that's invisible either way; on your phone's real browser/webview the tab row's native horizontal scrollbar renders as a solid gray track — that's the bar you kept seeing under Upcoming/Live/Results/Other&nbsp;Tours</li>
+            <li>Fixed by adding <code>.tabs</code> to the same hide-scrollbar rule (<code>scrollbar-width:none</code> + <code>::-webkit-scrollbar{display:none}</code>) — same fix will need to land in the real component's <code>ScrollView</code> props (<code>showsHorizontalScrollIndicator={false}</code>) when this gets implemented, it's a one-line prop already used elsewhere in the app</li>
+          </ul>
+        </div>
+        <div class="lg-block">
+          <div class="h">✓ Live cards — single line, ~4× smaller</div>
+          <ul>
+            <li>Old hero card was ~90px tall; new <code>.live-row</code> is ~26px — one score line, dot, optional event tag for cross-tour matches</li>
+            <li>12 live matches shown fitting in view with minimal scroll; only the single "your tournament's" match gets the slightly larger "featured" treatment, everything else (Also Live / other tours) is a plain compact row</li>
+          </ul>
+        </div>
+      </div>
+      <div>
+        <div class="lg-block">
+          <div class="h">✓ Draw — real connected bracket, not a card list</div>
+          <ul>
+            <li>Researched standard tournament-bracket UI patterns (Challonge, ESPN, <code>react-tournament-brackets</code>) — the defining trait missing before was <b>connector lines</b> linking each pair to its next-round slot, with the next match vertically centered between its two feeders</li>
+            <li>Cards are now absolutely positioned on a coordinate grid with an SVG line overlay drawing the actual bracket tree — colors/card styling unchanged (still real <code>#252525</code>/<code>#FFA726</code>), only the layout mechanism changed from a flowing list to a positioned tree</li>
+            <li>Real implementation would compute these Y-positions from <code>roundFormats</code>/match count per round rather than hardcoded pixels used here for the mockup</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

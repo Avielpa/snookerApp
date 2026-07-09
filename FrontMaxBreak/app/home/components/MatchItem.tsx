@@ -126,6 +126,55 @@ export const MatchItem = ({
         item.matchCategory === 'onBreak' ? '#F59E0B' :
         undefined;
 
+    // Compact single-line row for live matches — same data/handlers as the
+    // full card below, just a denser layout so long live lists (Home Live
+    // tab, "Also Live") don't require excessive scrolling.
+    if (item.matchCategory === 'livePlaying') {
+        return (
+            <TouchableOpacity
+                onPress={() => handleMatchPress(item.api_match_id)}
+                disabled={!item.api_match_id || typeof item.api_match_id !== 'number' || item.api_match_id <= 0}
+                activeOpacity={0.6}
+            >
+                <ModernGlassCard style={styles.matchItemContainer} accentColor={accentColor}>
+                    <View style={styles.liveRow}>
+                        <View style={styles.liveRowDot} />
+                        <Text
+                            style={[styles.liveRowPlayer, isPlayer1Winner && styles.liveRowPlayerWinner, { textAlign: 'right' }]}
+                            onPress={() => handlePlayerPress(item.player1_id)}
+                            disabled={!item.player1_id || item.player1_id === 376}
+                            numberOfLines={1}
+                        >
+                            {player1Name}
+                        </Text>
+                        <Text style={styles.liveRowScore}>{scoreDisplay}</Text>
+                        <Text
+                            style={[styles.liveRowPlayer, isPlayer2Winner && styles.liveRowPlayerWinner]}
+                            onPress={() => handlePlayerPress(item.player2_id)}
+                            disabled={!item.player2_id || item.player2_id === 376}
+                            numberOfLines={1}
+                        >
+                            {player2Name}
+                        </Text>
+                        {isNotFinished && (
+                            <TouchableOpacity
+                                onPress={handleStarPress}
+                                style={styles.liveRowStar}
+                                hitSlop={{ top: 6, right: 6, bottom: 6, left: 6 }}
+                            >
+                                <Ionicons
+                                    name={isStarred ? 'star' : 'star-outline'}
+                                    size={11}
+                                    color={isStarred ? '#F59E0B' : COLORS.textSecondary}
+                                />
+                            </TouchableOpacity>
+                        )}
+                    </View>
+                </ModernGlassCard>
+            </TouchableOpacity>
+        );
+    }
+
     return (
         <TouchableOpacity
             onPress={() => handleMatchPress(item.api_match_id)}
@@ -186,11 +235,9 @@ export const MatchItem = ({
 
                 {/* Footer: live badge + date */}
                 <View style={styles.detailsRow}>
-                    {item.matchCategory === 'livePlaying' && (
-                        <View style={{ backgroundColor: '#22C55E', borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2, marginRight: 8 }}>
-                            <Text style={{ color: '#fff', fontSize: 10, fontWeight: '700', letterSpacing: 0.5 }}>LIVE</Text>
-                        </View>
-                    )}
+                    {/* 'livePlaying' never reaches here — it takes the compact
+                        early-return branch above. This LIVE badge case is now
+                        unreachable dead code and was removed accordingly. */}
                     {item.matchCategory === 'onBreak' && (
                         <View style={{ backgroundColor: '#F59E0B', borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2, marginRight: 8 }}>
                             <Text style={{ color: '#fff', fontSize: 10, fontWeight: '700', letterSpacing: 0.5 }}>TBC</Text>

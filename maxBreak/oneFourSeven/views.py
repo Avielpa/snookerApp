@@ -1052,6 +1052,15 @@ def calendar_tabs_view(request, tab_type='main'):
         else:  # 'all'
             tab_name = 'All Tours'
 
+        # Real seasons present in the DB for this tab, so the frontend can offer
+        # past seasons (e.g. "who won last season") instead of only ever showing
+        # whatever single season happens to be loaded client-side.
+        available_seasons = sorted(
+            base_query.exclude(Season__isnull=True)
+            .values_list('Season', flat=True).distinct(),
+            reverse=True,
+        )
+
         # Show the target season in full, plus any upcoming events from the next
         # season (e.g. Q School May 2026 saved as Season=2026 while default is 2025).
         from django.db.models import Q
@@ -1100,6 +1109,7 @@ def calendar_tabs_view(request, tab_type='main'):
             'tab_type': tab_type,
             'tab_name': tab_name,
             'season': target_season,
+            'available_seasons': available_seasons,
             'summary': {
                 'active_count': len(active_tournaments),
                 'upcoming_count': len(upcoming_tournaments),

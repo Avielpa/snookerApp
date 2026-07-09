@@ -8,6 +8,7 @@ import {
     RefreshControl,
     ActivityIndicator,
     TouchableOpacity,
+    TextInput,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -94,9 +95,9 @@ const Divider = ({ colors }: { colors: any }) => (
 );
 
 const sharedStyles = StyleSheet.create({
-    sectionRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
+    sectionRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 6 },
     sectionTitle: { fontSize: 15, fontFamily: 'PoppinsBold' },
-    sectionSubtitle: { fontSize: 11, fontFamily: 'PoppinsRegular', marginTop: 1 },
+    sectionSubtitle: { fontSize: 11, fontFamily: 'PoppinsRegular' },
     card: { borderRadius: 16, borderWidth: 1, padding: 16, marginBottom: 14 },
 });
 
@@ -114,10 +115,15 @@ const CenturiesTab = ({
     colors: any;
 }) => {
     const [expanded, setExpanded] = useState(false);
+    const [search, setSearch] = useState('');
 
     if (!data) return <EmptyState colors={colors} />;
 
-    const rows = expanded ? data.results : data.results.slice(0, 15);
+    const filtered = search.trim()
+        ? data.results.filter((r) => r.player_name.toLowerCase().includes(search.trim().toLowerCase()))
+        : data.results;
+
+    const rows = expanded ? filtered : filtered.slice(0, 15);
     const top = data.results[0];
 
     return (
@@ -153,6 +159,21 @@ const CenturiesTab = ({
                     subtitle={`${data.season} · ${data.count} players`}
                     colors={colors}
                 />
+                <View style={[centuryStyles.searchBox, { backgroundColor: colors.backgroundTertiary, borderColor: colors.cardBorder }]}>
+                    <Ionicons name="search" size={14} color={colors.textMuted} />
+                    <TextInput
+                        value={search}
+                        onChangeText={setSearch}
+                        placeholder="Search player..."
+                        placeholderTextColor={colors.textMuted}
+                        style={[centuryStyles.searchInput, { color: colors.textPrimary }]}
+                    />
+                    {search.length > 0 && (
+                        <TouchableOpacity onPress={() => setSearch('')}>
+                            <Ionicons name="close-circle" size={16} color={colors.textMuted} />
+                        </TouchableOpacity>
+                    )}
+                </View>
                 <View style={centuryStyles.headerRow}>
                     <Text style={[centuryStyles.colRank, { color: colors.textMuted }]}>#</Text>
                     <Text style={[centuryStyles.colName, { color: colors.textMuted }]}>Player</Text>
@@ -173,13 +194,18 @@ const CenturiesTab = ({
                         </Text>
                     </View>
                 ))}
-                {data.results.length > 15 && (
+                {filtered.length === 0 && (
+                    <Text style={{ color: colors.textMuted, fontFamily: 'PoppinsRegular', fontSize: 13, paddingVertical: 8 }}>
+                        No players match "{search}"
+                    </Text>
+                )}
+                {filtered.length > 15 && (
                     <TouchableOpacity
                         onPress={() => setExpanded(!expanded)}
                         style={[centuryStyles.expandBtn, { borderTopColor: colors.cardBorder }]}
                     >
                         <Text style={{ color: colors.primary, fontSize: 13, fontFamily: 'PoppinsMedium' }}>
-                            {expanded ? 'Show less' : `Show all ${data.count} players`}
+                            {expanded ? 'Show less' : `Show all ${filtered.length} players`}
                         </Text>
                         <Ionicons name={expanded ? 'chevron-up' : 'chevron-down'} size={14} color={colors.primary} />
                     </TouchableOpacity>
@@ -200,8 +226,14 @@ const centuryStyles = StyleSheet.create({
         marginBottom: 14,
     },
     leaderLabel: { fontSize: 11, fontFamily: 'PoppinsRegular' },
-    leaderName: { fontSize: 16, fontFamily: 'PoppinsBold', marginTop: 2 },
+    leaderName: { fontSize: 12, fontFamily: 'PoppinsBold', marginTop: 2 },
     leaderCount: { fontSize: 32, fontFamily: 'PoppinsBold', color: '#FFA726' },
+    searchBox: {
+        flexDirection: 'row', alignItems: 'center', gap: 6,
+        borderRadius: 10, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 7,
+        marginBottom: 10,
+    },
+    searchInput: { flex: 1, fontSize: 13, fontFamily: 'PoppinsRegular', padding: 0 },
     headerRow: { flexDirection: 'row', paddingBottom: 6, marginBottom: 2, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.07)' },
     dataRow: { flexDirection: 'row', paddingVertical: 7 },
     colRank: { width: 28, fontSize: 12, fontFamily: 'PoppinsMedium' },
@@ -528,12 +560,14 @@ export default function StatsScreen() {
         <View style={styles.container}>
             {/* Page header */}
             <View style={styles.header}>
-                <Text style={styles.title}>Season Stats</Text>
-                <SeasonPicker
-                    seasons={STATS_SEASONS}
-                    selected={selectedSeason}
-                    onSelect={setSelectedSeason}
-                />
+                <View style={styles.headerRow}>
+                    <Text style={styles.title}>Season Stats</Text>
+                    <SeasonPicker
+                        seasons={STATS_SEASONS}
+                        selected={selectedSeason}
+                        onSelect={setSelectedSeason}
+                    />
+                </View>
                 {allEmpty && (
                     <Text style={[styles.noDataText, { color: colors.textMuted }]}>
                         {`No data available for ${seasonDisplayLabel(selectedSeason)}`}
@@ -603,8 +637,13 @@ const createStyles = (colors: any) =>
         },
         header: {
             paddingHorizontal: 16,
-            paddingTop: 16,
-            paddingBottom: 12,
+            paddingTop: 10,
+            paddingBottom: 6,
+        },
+        headerRow: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
         },
         title: {
             fontSize: 22,

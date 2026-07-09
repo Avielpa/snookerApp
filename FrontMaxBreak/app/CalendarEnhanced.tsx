@@ -13,6 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 
 import { getCalendarByTab } from '../services/matchServices';
@@ -51,9 +52,25 @@ interface FilterOption {
   count?: number;
 }
 
+interface TourGroupHeader {
+  __header: true;
+  id: string;
+  label: string;
+  color: string;
+}
+
+// Reuses the app's existing Other-Tours color mapping (Home screen's
+// OtherToursTab.TOUR_COLOR) — no new colors invented for this grouping.
+const TOUR_TYPE_COLORS: Record<string, string> = {
+  'Q Tour': '#5AA9E6',
+  "Women's": '#F0648C',
+  'Seniors': '#FF9F45',
+  'Other': '#9E9E9E',
+};
+
 // ─── Tournament card (extracted to avoid re-creation on every render) ───────
 
-const formatDateRange = (start: string | null, end: string | null): string => {
+export const formatDateRange = (start: string | null, end: string | null): string => {
   if (!start || !end) return 'Dates TBD';
   try {
     const s = new Date(start).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
@@ -62,7 +79,7 @@ const formatDateRange = (start: string | null, end: string | null): string => {
   } catch { return 'TBD'; }
 };
 
-const getPrizeDisplay = (item: Tournament): string | null => {
+export const getPrizeDisplay = (item: Tournament): string | null => {
   const prize = item.prizeMoney || item.prize_money;
   if (!prize) return null;
   if (typeof prize === 'string' && prize.trim()) return prize;
@@ -73,6 +90,77 @@ const getPrizeDisplay = (item: Tournament): string | null => {
     }
   }
   return null;
+};
+
+export const filterAndSortTournaments = (
+  tournaments: Tournament[],
+  opts: { season: number; status: string; query: string }
+): Tournament[] => {
+  let filtered = [...tournaments];
+
+  // Season filter — events with null StartDate pass through (never hidden)
+  filtered = filtered.filter(t => !t.StartDate || dateToSeasonYear(t.StartDate) === opts.season);
+
+  if (opts.status !== 'all') {
+    filtered = opts.status === 'active'
+      ? filtered.filter(t => t.isLive)
+      : filtered.filter(t => t.status === opts.status);
+  }
+
+  if (opts.query.trim()) {
+    const q = opts.query.toLowerCase().trim();
+    filtered = filtered.filter(t =>
+      t.Name?.toLowerCase().includes(q) ||
+      t.Venue?.toLowerCase().includes(q) ||
+      t.City?.toLowerCase().includes(q) ||
+      t.Country?.toLowerCase().includes(q)
+    );
+  }
+
+  filtered = groupChampionshipLeague(filtered) as Tournament[];
+
+  filtered.sort((a, b) => {
+    const priority = { active: 0, upcoming: 1, past: 2 };
+    const ap = priority[a.status || 'past'];
+    const bp = priority[b.status || 'past'];
+    if (ap !== bp) return ap - bp;
+    const aDate = a.StartDate ? new Date(a.StartDate).getTime() : 0;
+    const bDate = b.StartDate ? new Date(b.StartDate).getTime() : 0;
+    return a.status === 'upcoming' ? aDate - bDate : bDate - aDate;
+  });
+
+  return filtered;
+};
+
+export const computeTournamentStatus = (tournament: Tournament, now: Date): Tournament => {
+  let status: 'active' | 'upcoming' | 'past' = 'upcoming';
+  let daysRemaining = 0;
+  let duration = 0;
+  let progress = 0;
+  let isLive = false;
+
+  if (tournament.StartDate && tournament.EndDate) {
+    const start = new Date(tournament.StartDate);
+    const end = new Date(tournament.EndDate);
+    start.setHours(0, 0, 0, 0);
+    end.setHours(23, 59, 59, 999);
+    duration = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+
+    if (end < now) {
+      status = 'past';
+    } else if (start <= now && now <= end) {
+      status = 'active';
+      isLive = true;
+      const totalDuration = end.getTime() - start.getTime();
+      const elapsedTime = now.getTime() - start.getTime();
+      progress = Math.max(0, Math.min(1, elapsedTime / totalDuration));
+    } else {
+      status = 'upcoming';
+      daysRemaining = Math.ceil((start.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    }
+  }
+
+  return { ...tournament, status, daysRemaining, duration, progress, isLive };
 };
 
 const TournamentCard = React.memo(({
@@ -104,23 +192,35 @@ const TournamentCard = React.memo(({
   const location = [item.City, item.Country].filter(Boolean).join(', ');
   const groupCount = item.isGroup ? item.children?.length ?? 0 : 0;
 
-  return (
-    <TouchableOpacity
-      onPress={onPress}
-      activeOpacity={0.72}
-      style={[
-        cardStyles.container,
-        item.isGroupChild && cardStyles.childContainer,
-        { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder },
-      ]}
-    >
-      {/* Left accent bar — color signals status at a glance */}
-      <View style={[cardStyles.accentBar, { backgroundColor: accentColor }]} />
+  // Featured "hero" treatment for the live tournament — bigger, gradient-tinted
+  // card with a visible progress bar. Everything else uses the compact row.
+  // Purely a style/JSX branch keyed off the already-computed isLive/progress
+  // fields — no new data, same accentColor/statusLabel logic as the compact card.
+  const isHero = isLive && !item.isGroupChild;
 
-      <View style={cardStyles.body}>
+  const groupNote = item.isGroup
+    ? `${groupCount} groups${item.legCount && item.legCount > 1 ? ` · ${item.legCount} runs this season` : ''} · ${expanded ? 'tap to collapse' : 'tap to view'}`
+    : null;
+
+  // Bolder visual treatment: gradient background for the hero card (real
+  // expo-linear-gradient, already a project dependency) and a colored icon
+  // tile per card (replacing the thin flat accent bar) so status reads at a
+  // glance even without live data. Same accentColor/status logic as before,
+  // just a stronger visual expression of it.
+  const cardInner = (
+    <>
+      {/* Icon tile — colored per status, replaces the old thin flat bar */}
+      <View style={[cardStyles.iconTile, isHero && cardStyles.heroIconTile, { backgroundColor: accentColor + '26' }]}>
+        <Ionicons name={isLive ? 'radio' : item.isGroup ? 'layers' : 'trophy'} size={isHero ? 20 : 15} color={accentColor} />
+      </View>
+
+      <View style={[cardStyles.body, isHero && cardStyles.heroBody]}>
         {/* Name + status pill */}
         <View style={cardStyles.nameRow}>
-          <Text style={[cardStyles.name, { color: colors.textPrimary }]} numberOfLines={2}>
+          <Text
+            style={[cardStyles.name, isHero && cardStyles.heroName, { color: colors.textPrimary }]}
+            numberOfLines={isHero ? 2 : 1}
+          >
             {item.Name}
           </Text>
           {statusLabel !== '' && (
@@ -131,29 +231,19 @@ const TournamentCard = React.memo(({
           )}
         </View>
 
-        {/* Dates */}
+        {/* Single compact meta line: dates · location · prize — was 3 stacked rows */}
         <View style={cardStyles.metaRow}>
-          <Ionicons name="calendar-outline" size={12} color={colors.textMuted} />
-          <Text style={[cardStyles.metaText, { color: colors.textSecondary }]}>
+          <Ionicons name="calendar-outline" size={11} color={colors.textMuted} />
+          <Text style={[cardStyles.metaText, { color: colors.textSecondary }]} numberOfLines={1}>
             {formatDateRange(item.StartDate, item.EndDate)}
+            {location.length > 0 ? `  ·  ${location}` : ''}
           </Text>
         </View>
 
-        {/* Location */}
-        {location.length > 0 && (
-          <View style={cardStyles.metaRow}>
-            <Ionicons name="location-outline" size={12} color={colors.textMuted} />
-            <Text style={[cardStyles.metaText, { color: colors.textMuted }]} numberOfLines={1}>
-              {location}
-            </Text>
-          </View>
-        )}
-
-        {/* Prize */}
         {prizeDisplay && (
           <View style={cardStyles.metaRow}>
-            <Ionicons name="trophy-outline" size={12} color={colors.warning} />
-            <Text style={[cardStyles.metaText, { color: colors.warning }]}>
+            <Ionicons name="trophy-outline" size={11} color={colors.warning} />
+            <Text style={[cardStyles.metaText, { color: colors.warning }]} numberOfLines={1}>
               {prizeDisplay} winner
             </Text>
           </View>
@@ -163,20 +253,18 @@ const TournamentCard = React.memo(({
             legCount > 1 means it's played in separate runs this season (e.g.
             June and again in January) — the dates above show only the
             current/next run, not a misleading full-season span. */}
-        {item.isGroup && (
+        {groupNote && (
           <View style={cardStyles.metaRow}>
-            <Ionicons name="layers-outline" size={12} color={colors.primary} />
-            <Text style={[cardStyles.metaText, { color: colors.primary }]}>
-              {groupCount} groups
-              {item.legCount && item.legCount > 1 ? ` · played in ${item.legCount} separate runs this season` : ''}
-              {' '}{expanded ? '· tap to collapse' : '· tap to view'}
+            <Ionicons name="layers-outline" size={11} color={colors.primary} />
+            <Text style={[cardStyles.metaText, { color: colors.primary }]} numberOfLines={1}>
+              {groupNote}
             </Text>
           </View>
         )}
 
         {/* Progress bar — only shown during active tournament */}
         {isLive && item.progress !== undefined && item.progress > 0 && (
-          <View style={[cardStyles.progressTrack, { backgroundColor: colors.cardBorder }]}>
+          <View style={[cardStyles.progressTrack, isHero && cardStyles.heroProgressTrack, { backgroundColor: colors.cardBorder }]}>
             <View
               style={[
                 cardStyles.progressFill,
@@ -193,6 +281,34 @@ const TournamentCard = React.memo(({
         color={colors.textMuted}
         style={cardStyles.chevron}
       />
+    </>
+  );
+
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.72}
+      style={[
+        cardStyles.container,
+        isHero && cardStyles.heroContainer,
+        item.isGroupChild && cardStyles.childContainer,
+        { borderColor: isHero ? accentColor + '80' : colors.cardBorder },
+      ]}
+    >
+      {isHero ? (
+        <LinearGradient
+          colors={[accentColor + '2E', colors.backgroundSecondary, colors.backgroundSecondary]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={cardStyles.cardRow}
+        >
+          {cardInner}
+        </LinearGradient>
+      ) : (
+        <View style={[cardStyles.cardRow, { backgroundColor: colors.backgroundSecondary }]}>
+          {cardInner}
+        </View>
+      )}
     </TouchableOpacity>
   );
 });
@@ -202,41 +318,72 @@ const cardStyles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     marginHorizontal: 16,
-    marginVertical: 5,
-    borderRadius: 12,
+    marginVertical: 3,
+    borderRadius: 10,
     borderWidth: StyleSheet.hairlineWidth,
     overflow: 'hidden',
   },
-  accentBar: {
-    width: 4,
+  heroContainer: {
+    marginVertical: 6,
+    borderRadius: 14,
+    borderWidth: 1.5,
+  },
+  cardRow: {
+    flexDirection: 'row',
+    flex: 1,
+  },
+  iconTile: {
+    width: 30,
+    height: 30,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 10,
+    marginVertical: 8,
+  },
+  heroIconTile: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    marginLeft: 13,
+    marginVertical: 11,
   },
   childContainer: {
     marginLeft: 28,
   },
   body: {
     flex: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    gap: 2,
+  },
+  heroBody: {
+    paddingHorizontal: 13,
+    paddingVertical: 11,
+    gap: 4,
   },
   nameRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
     gap: 8,
-    marginBottom: 2,
+    marginBottom: 1,
   },
   name: {
-    fontSize: 14,
+    fontSize: 12.5,
     fontFamily: 'PoppinsSemiBold',
     flex: 1,
+    lineHeight: 17,
+  },
+  heroName: {
+    fontSize: 15,
     lineHeight: 20,
   },
   statusPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
     borderRadius: 20,
     borderWidth: 1,
     gap: 4,
@@ -248,25 +395,29 @@ const cardStyles = StyleSheet.create({
     borderRadius: 3,
   },
   statusText: {
-    fontSize: 10,
+    fontSize: 9,
     fontFamily: 'PoppinsBold',
     letterSpacing: 0.3,
   },
   metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
+    gap: 4,
   },
   metaText: {
-    fontSize: 12,
+    fontSize: 10.5,
     fontFamily: 'PoppinsRegular',
     flex: 1,
   },
   progressTrack: {
     height: 3,
     borderRadius: 2,
-    marginTop: 4,
+    marginTop: 3,
     overflow: 'hidden',
+  },
+  heroProgressTrack: {
+    height: 4,
+    marginTop: 6,
   },
   progressFill: {
     height: '100%',
@@ -295,60 +446,28 @@ export default function CalendarEnhanced() {
   const router = useRouter();
   const colors = useColors();
 
-  const availableSeasons = useMemo(() =>
-    [...new Set(
-      allTournaments
-        .filter(t => t.StartDate)
-        .map(t => dateToSeasonYear(t.StartDate!))
-    )].sort((a, b) => b - a),
-  [allTournaments]);
+  const [availableSeasons, setAvailableSeasons] = useState<number[]>([]);
 
   const { selectedSeason, setSelectedSeason } = useSeasonSelector(availableSeasons);
 
   const enhanceTournamentData = useCallback((tournaments: Tournament[]): Tournament[] => {
     const now = new Date();
     now.setHours(0, 0, 0, 0);
-
-    return tournaments.map(tournament => {
-      let status: 'active' | 'upcoming' | 'past' = 'upcoming';
-      let daysRemaining = 0;
-      let duration = 0;
-      let progress = 0;
-      let isLive = false;
-
-      if (tournament.StartDate && tournament.EndDate) {
-        const start = new Date(tournament.StartDate);
-        const end = new Date(tournament.EndDate);
-        start.setHours(0, 0, 0, 0);
-        end.setHours(23, 59, 59, 999);
-        duration = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-
-        if (end < now) {
-          status = 'past';
-        } else if (start <= now && now <= end) {
-          status = 'active';
-          isLive = true;
-          const totalDuration = end.getTime() - start.getTime();
-          const elapsedTime = now.getTime() - start.getTime();
-          progress = Math.max(0, Math.min(1, elapsedTime / totalDuration));
-        } else {
-          status = 'upcoming';
-          daysRemaining = Math.ceil((start.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-        }
-      }
-
-      return { ...tournament, status, daysRemaining, duration, progress, isLive };
-    });
+    return tournaments.map(tournament => computeTournamentStatus(tournament, now));
   }, []);
 
-  const fetchTournaments = useCallback(async (tabType: string = 'main', isRefresh = false) => {
+  const fetchTournaments = useCallback(async (tabType: string = 'main', season?: number, isRefresh = false) => {
     if (!isRefresh) setLoading(true);
     setRefreshing(isRefresh);
     setError(null);
 
     try {
-      const response = await getCalendarByTab(tabType);
+      const response = await getCalendarByTab(tabType, season);
       if (!response) throw new Error(`Failed to load ${tabType} tournaments`);
+
+      if (Array.isArray(response.available_seasons) && response.available_seasons.length > 0) {
+        setAvailableSeasons(response.available_seasons);
+      }
 
       const combined = [
         ...(response.active || []),
@@ -383,7 +502,7 @@ export default function CalendarEnhanced() {
     }
   }, [enhanceTournamentData]);
 
-  useEffect(() => { fetchTournaments(selectedTab); }, [selectedTab, fetchTournaments]);
+  useEffect(() => { fetchTournaments(selectedTab, selectedSeason); }, [selectedTab, selectedSeason, fetchTournaments]);
 
   const tabOptions: FilterOption[] = useMemo(() => [
     { id: 'main', label: 'Main Tours', icon: 'trophy-outline', color: colors.primary },
@@ -404,40 +523,13 @@ export default function CalendarEnhanced() {
   }, [allTournaments]);
 
   useEffect(() => {
-    let filtered = [...allTournaments];
-
-    // Season filter — events with null StartDate pass through (never hidden)
-    filtered = filtered.filter(t => !t.StartDate || dateToSeasonYear(t.StartDate) === selectedSeason);
-
-    if (selectedStatus !== 'all') {
-      filtered = selectedStatus === 'active'
-        ? filtered.filter(t => t.isLive)
-        : filtered.filter(t => t.status === selectedStatus);
-    }
-
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase().trim();
-      filtered = filtered.filter(t =>
-        t.Name?.toLowerCase().includes(q) ||
-        t.Venue?.toLowerCase().includes(q) ||
-        t.City?.toLowerCase().includes(q) ||
-        t.Country?.toLowerCase().includes(q)
-      );
-    }
-
-    filtered = groupChampionshipLeague(filtered) as Tournament[];
-
-    filtered.sort((a, b) => {
-      const priority = { active: 0, upcoming: 1, past: 2 };
-      const ap = priority[a.status || 'past'];
-      const bp = priority[b.status || 'past'];
-      if (ap !== bp) return ap - bp;
-      const aDate = a.StartDate ? new Date(a.StartDate).getTime() : 0;
-      const bDate = b.StartDate ? new Date(b.StartDate).getTime() : 0;
-      return a.status === 'upcoming' ? aDate - bDate : bDate - aDate;
-    });
-
-    setFilteredTournaments(filtered);
+    setFilteredTournaments(
+      filterAndSortTournaments(allTournaments, {
+        season: selectedSeason,
+        status: selectedStatus,
+        query: searchQuery,
+      })
+    );
   }, [allTournaments, selectedStatus, searchQuery, selectedSeason]);
 
   // Flatten the expanded group's children into the list right after its card.
@@ -452,6 +544,29 @@ export default function CalendarEnhanced() {
     }
     return result;
   }, [filteredTournaments, expandedGroupId]);
+
+  // Display-only grouping by tour type, ONLY for the "Others" tab — Main Tours
+  // passes `displayTournaments` straight through unchanged (identity, same
+  // reference, zero behavior change). Groups by the already-fetched `Type`
+  // field; unknown/missing types fall into a single "Other" group rather
+  // than being hidden. This is a presentational grouping transform, same
+  // pattern as the existing `groupChampionshipLeague`, not new data fetching.
+  const othersGroupedData = useMemo((): (Tournament | TourGroupHeader)[] => {
+    if (selectedTab !== 'others') return displayTournaments;
+    const seen: string[] = [];
+    const buckets = new Map<string, Tournament[]>();
+    for (const item of displayTournaments) {
+      const key = item.Type || 'Other';
+      if (!buckets.has(key)) { buckets.set(key, []); seen.push(key); }
+      buckets.get(key)!.push(item);
+    }
+    const out: (Tournament | TourGroupHeader)[] = [];
+    for (const key of seen) {
+      out.push({ __header: true, id: `header-${key}`, label: key, color: TOUR_TYPE_COLORS[key] || colors.primary });
+      out.push(...buckets.get(key)!);
+    }
+    return out;
+  }, [displayTournaments, selectedTab, colors.primary]);
 
   const handleTabPress = (tabId: string) => {
     if (tabId !== selectedTab) setSelectedTab(tabId);
@@ -490,7 +605,7 @@ export default function CalendarEnhanced() {
           <Text style={styles.errorText}>{error}</Text>
           <TouchableOpacity
             style={[styles.retryButton, { backgroundColor: colors.primary }]}
-            onPress={() => fetchTournaments(selectedTab)}
+            onPress={() => fetchTournaments(selectedTab, selectedSeason)}
           >
             <Text style={styles.retryText}>Try Again</Text>
           </TouchableOpacity>
@@ -617,20 +732,30 @@ export default function CalendarEnhanced() {
         </View>
       ) : (
         <FlatList
-          data={displayTournaments}
-          renderItem={({ item }) => (
-            <TournamentCard
-              item={item}
-              onPress={() => handleTournamentPress(item)}
-              colors={colors}
-              expanded={item.isGroup ? item.ID === expandedGroupId : undefined}
-            />
-          )}
-          keyExtractor={(item, index) => `tournament-${item.ID}-${index}`}
+          data={othersGroupedData}
+          renderItem={({ item }) => {
+            if ('__header' in item) {
+              return (
+                <View style={styles.tourGroupHeader}>
+                  <View style={[styles.tourGroupDot, { backgroundColor: item.color }]} />
+                  <Text style={[styles.tourGroupLabel, { color: item.color }]}>{item.label}</Text>
+                </View>
+              );
+            }
+            return (
+              <TournamentCard
+                item={item}
+                onPress={() => handleTournamentPress(item)}
+                colors={colors}
+                expanded={item.isGroup ? item.ID === expandedGroupId : undefined}
+              />
+            );
+          }}
+          keyExtractor={(item, index) => '__header' in item ? item.id : `tournament-${item.ID}-${index}`}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
-              onRefresh={() => fetchTournaments(selectedTab, true)}
+              onRefresh={() => fetchTournaments(selectedTab, selectedSeason, true)}
               tintColor={colors.primary}
               colors={[colors.primary]}
             />
@@ -657,11 +782,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 14,
+    paddingHorizontal: 18,
+    paddingVertical: 8,
   },
   screenTitle: {
-    fontSize: 22,
+    fontSize: 19,
     fontFamily: 'PoppinsBold',
   },
   searchToggle: {
@@ -688,12 +813,12 @@ const styles = StyleSheet.create({
   segmentBtn: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: 13,
+    paddingVertical: 9,
     borderBottomWidth: 2,
     borderBottomColor: 'transparent',
   },
   segmentText: {
-    fontSize: 12,
+    fontSize: 11.5,
     fontFamily: 'PoppinsMedium',
     letterSpacing: 0.8,
   },
@@ -702,14 +827,14 @@ const styles = StyleSheet.create({
   },
   seasonRow: {
     paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingVertical: 6,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   pillRow: {
     flexDirection: 'row',
     paddingHorizontal: 12,
-    paddingVertical: 10,
-    gap: 8,
+    paddingVertical: 7,
+    gap: 6,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   pill: {
@@ -717,10 +842,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 7,
+    paddingVertical: 6,
     borderRadius: 20,
     borderWidth: 1,
-    gap: 6,
+    gap: 5,
   },
   liveDot: {
     width: 6,
@@ -739,6 +864,25 @@ const styles = StyleSheet.create({
   listContent: {
     paddingTop: 8,
     paddingBottom: 16,
+  },
+  tourGroupHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 20,
+    paddingTop: 10,
+    paddingBottom: 4,
+  },
+  tourGroupDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+  },
+  tourGroupLabel: {
+    fontSize: 10,
+    fontFamily: 'PoppinsBold',
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
   },
   emptyContainer: {
     flex: 1,

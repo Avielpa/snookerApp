@@ -32,7 +32,7 @@ interface DrawTabProps {
 
 // ─── Round name inference ─────────────────────────────────────────────────────
 // Primary: infer from match count (works regardless of API round numbering)
-function inferRoundNameFromCount(count: number): string {
+export function inferRoundNameFromCount(count: number): string {
   if (count === 1) return 'Final';
   if (count === 2) return 'Semi-Finals';
   if (count === 4) return 'Quarter-Finals';
@@ -43,8 +43,73 @@ function inferRoundNameFromCount(count: number): string {
   return `Round (${count} matches)`;
 }
 
+export interface BracketRound {
+  roundNumber: number;
+  roundName: string;
+  roundFormat: string | null;
+  roundPrize: any;
+  matches: DrawMatch[];
+}
+
+export function computeBracketRounds(
+  matches: DrawMatch[],
+  roundNames: Record<number, string>,
+  roundFormats?: Record<number, string>,
+  roundPrizes?: Record<number, any>
+): BracketRound[] {
+  const byRound = new Map<number, DrawMatch[]>();
+  matches.forEach((m) => {
+    const r = m.round ?? 0;
+    if (!byRound.has(r)) byRound.set(r, []);
+    byRound.get(r)!.push(m);
+  });
+
+  const allRounds = Array.from(byRound.keys()).sort((a, b) => a - b);
+
+  // Build bracket by chaining backwards from the last round:
+  // valid bracket = chain where each earlier round has exactly 2x the matches
+  // (e.g. Final=1, SF=2, QF=4, R16=8, Last32=16, Last64=32) — up to 7 rounds shown
+  let chain: number[] = [];
+  // Find last round with ≤ 32 matches as starting point (covers Last 64 as first round)
+  for (let i = allRounds.length - 1; i >= 0; i--) {
+    if ((byRound.get(allRounds[i])?.length ?? 0) <= 32) {
+      chain = [allRounds[i]];
+      break;
+    }
+  }
+  if (chain.length > 0) {
+    let needed = (byRound.get(chain[0])?.length ?? 1) * 2;
+    const startIdx = allRounds.indexOf(chain[0]) - 1;
+    for (let i = startIdx; i >= 0 && chain.length < 7; i--) {
+      const r = allRounds[i];
+      const count = byRound.get(r)?.length ?? 0;
+      if (count === needed) {
+        chain.unshift(r);
+        needed = count * 2;
+      }
+    }
+  }
+
+  // Fallback: if no chain found, take last 7 rounds with ≤ 32 matches
+  let mainRounds = chain.length > 0
+    ? chain
+    : allRounds.filter((r) => (byRound.get(r)?.length ?? 0) <= 32).slice(-7);
+
+  return mainRounds.map((r) => ({
+    roundNumber: r,
+    roundName: roundNames[r] || inferRoundNameFromCount(byRound.get(r)!.length),
+    roundFormat: roundFormats?.[r] ?? null,
+    roundPrize: roundPrizes?.[r] ?? null,
+    matches: (byRound.get(r) || []).slice().sort((a, b) => {
+      const aPos = a.number ?? a.api_match_id ?? a.id;
+      const bPos = b.number ?? b.api_match_id ?? b.id;
+      return aPos - bPos;
+    }),
+  }));
+}
+
 // Fallback: infer from round number (only used when count isn't a clean power of 2)
-function inferRoundName(round: number): string {
+export function inferRoundName(round: number): string {
   if (round >= 15) return 'Final';
   if (round === 14) return 'Semi-Finals';
   if (round === 13) return 'Quarter-Finals';
@@ -56,19 +121,19 @@ function inferRoundName(round: number): string {
 }
 
 // ─── Layout constants ─────────────────────────────────────────────────────────
-const CARD_W = 118;
-const CARD_H = 40;
-const BASE_SLOT = CARD_H + 8;
-const CONN_W = 22;
+export const CARD_W = 118;
+export const CARD_H = 40;
+export const BASE_SLOT = CARD_H + 8;
+export const CONN_W = 22;
 const PILL_H = 50;
 const WIN_COLOR = '#FFA726';
 
-function getTop(roundIndex: number, matchIndex: number, firstRoundCount: number = 8): number {
+export function getTop(roundIndex: number, matchIndex: number, firstRoundCount: number = 8): number {
   const slotH = BASE_SLOT * Math.pow(2, roundIndex);
   return matchIndex * slotH + (slotH - CARD_H) / 2;
 }
 
-function totalHeight(firstRoundCount: number): number {
+export function totalHeight(firstRoundCount: number): number {
   return firstRoundCount * BASE_SLOT;
 }
 
@@ -104,7 +169,7 @@ function BracketMatchCard({
   const p2Name = (match.player2_name || 'TBD');
 
   const card = (
-    <View style={[s.card, isLive && { borderColor: accent }]}>
+    <View style={[s.card, isLive && { borderColor: accent, borderWidth: 1.5, shadowColor: accent, shadowOpacity: 0.5, shadowRadius: 5, shadowOffset: { width: 0, height: 0 }, elevation: 3 }]}>
       {/* Player 1 */}
       <View style={[s.playerRow, p1Won && { backgroundColor: accent + '18' }]}>
         <Text
@@ -175,7 +240,11 @@ function ConnectorLines({
   totalH: number;
   accent: string;
 }) {
-  const lineColor = accent + '60';
+  // Thicker, more opaque lines than before ('60'/1px was too dim/thin to
+  // read as a real connected bracket) — geometry (getTop/CONN_W) untouched,
+  // only the line View's own color/thickness/rounding changed.
+  const LINE_W = 1.75;
+  const lineColor = accent + 'B0';
   const pairs = Math.floor(numMatches / 2);
   const lines: React.ReactElement[] = [];
 
@@ -186,16 +255,16 @@ function ConnectorLines({
     const midX = CONN_W / 2;
 
     lines.push(
-      <View key={`lh0-${j}`} style={{ position: 'absolute', top: child0Center - 0.5, left: 0, width: midX, height: 1, backgroundColor: lineColor }} />
+      <View key={`lh0-${j}`} style={{ position: 'absolute', top: child0Center - LINE_W / 2, left: 0, width: midX, height: LINE_W, borderRadius: LINE_W / 2, backgroundColor: lineColor }} />
     );
     lines.push(
-      <View key={`lh1-${j}`} style={{ position: 'absolute', top: child1Center - 0.5, left: 0, width: midX, height: 1, backgroundColor: lineColor }} />
+      <View key={`lh1-${j}`} style={{ position: 'absolute', top: child1Center - LINE_W / 2, left: 0, width: midX, height: LINE_W, borderRadius: LINE_W / 2, backgroundColor: lineColor }} />
     );
     lines.push(
-      <View key={`lv-${j}`} style={{ position: 'absolute', top: child0Center, left: midX - 0.5, width: 1, height: child1Center - child0Center, backgroundColor: lineColor }} />
+      <View key={`lv-${j}`} style={{ position: 'absolute', top: child0Center, left: midX - LINE_W / 2, width: LINE_W, height: child1Center - child0Center, backgroundColor: lineColor }} />
     );
     lines.push(
-      <View key={`lhp-${j}`} style={{ position: 'absolute', top: parentCenter - 0.5, left: midX, width: midX, height: 1, backgroundColor: lineColor }} />
+      <View key={`lhp-${j}`} style={{ position: 'absolute', top: parentCenter - LINE_W / 2, left: midX, width: midX, height: LINE_W, borderRadius: LINE_W / 2, backgroundColor: lineColor }} />
     );
   }
 
@@ -211,57 +280,10 @@ export function DrawTab({ matches, roundNames, roundFormats, roundPrizes, colors
   const accent: string = colors.accent || colors.primary || '#FFA726';
   const router = useRouter();
 
-  const bracketRounds = useMemo(() => {
-    const byRound = new Map<number, DrawMatch[]>();
-    matches.forEach((m) => {
-      const r = m.round ?? 0;
-      if (!byRound.has(r)) byRound.set(r, []);
-      byRound.get(r)!.push(m);
-    });
-
-    const allRounds = Array.from(byRound.keys()).sort((a, b) => a - b);
-
-    // Build bracket by chaining backwards from the last round:
-    // valid bracket = chain where each earlier round has exactly 2x the matches
-    // (e.g. Final=1, SF=2, QF=4, R16=8, Last32=16, Last64=32) — up to 7 rounds shown
-    let chain: number[] = [];
-    // Find last round with ≤ 32 matches as starting point (covers Last 64 as first round)
-    for (let i = allRounds.length - 1; i >= 0; i--) {
-      if ((byRound.get(allRounds[i])?.length ?? 0) <= 32) {
-        chain = [allRounds[i]];
-        break;
-      }
-    }
-    if (chain.length > 0) {
-      let needed = (byRound.get(chain[0])?.length ?? 1) * 2;
-      const startIdx = allRounds.indexOf(chain[0]) - 1;
-      for (let i = startIdx; i >= 0 && chain.length < 7; i--) {
-        const r = allRounds[i];
-        const count = byRound.get(r)?.length ?? 0;
-        if (count === needed) {
-          chain.unshift(r);
-          needed = count * 2;
-        }
-      }
-    }
-
-    // Fallback: if no chain found, take last 7 rounds with ≤ 32 matches
-    let mainRounds = chain.length > 0
-      ? chain
-      : allRounds.filter((r) => (byRound.get(r)?.length ?? 0) <= 32).slice(-7);
-
-    return mainRounds.map((r) => ({
-      roundNumber: r,
-      roundName: roundNames[r] || inferRoundNameFromCount(byRound.get(r)!.length),
-      roundFormat: roundFormats?.[r] ?? null,
-      roundPrize: roundPrizes?.[r] ?? null,
-      matches: (byRound.get(r) || []).slice().sort((a, b) => {
-        const aPos = a.number ?? a.api_match_id ?? a.id;
-        const bPos = b.number ?? b.api_match_id ?? b.id;
-        return aPos - bPos;
-      }),
-    }));
-  }, [matches, roundNames, roundFormats, roundPrizes]);
+  const bracketRounds = useMemo(
+    () => computeBracketRounds(matches, roundNames, roundFormats, roundPrizes),
+    [matches, roundNames, roundFormats, roundPrizes]
+  );
 
   if (bracketRounds.length === 0) {
     return (
@@ -353,8 +375,8 @@ const s = StyleSheet.create({
     alignItems: 'flex-start',
   },
   roundPill: {
-    borderWidth: 1,
-    borderRadius: 8,
+    borderWidth: 1.5,
+    borderRadius: 9,
     paddingHorizontal: 8,
     paddingVertical: 4,
     marginBottom: 0,

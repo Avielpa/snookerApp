@@ -8,9 +8,9 @@ export const createModernMatchStyles = (COLORS: any) => StyleSheet.create({
     statusHeaderItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: 8,
+        paddingVertical: 6,
         paddingHorizontal: 16,
-        marginTop: 12,
+        marginTop: 8,
         marginBottom: 2,
         borderLeftWidth: 3,
         borderLeftColor: '#1A733A',
@@ -41,8 +41,8 @@ export const createModernMatchStyles = (COLORS: any) => StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         paddingHorizontal: 16,
-        marginTop: 8,
-        marginBottom: 4,
+        marginTop: 5,
+        marginBottom: 2,
     },
     roundHeaderLine: {
         flex: 1,
@@ -145,5 +145,49 @@ export const createModernMatchStyles = (COLORS: any) => StyleSheet.create({
         marginLeft: 4,
         flexShrink: 1,
         opacity: 0.8,
+    },
+
+    // ── Compact live-match row (single line) — used only when
+    // item.matchCategory === 'livePlaying', replaces the full card layout
+    // above for that one state. Same underlying data, denser presentation.
+    liveRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 6,
+        paddingHorizontal: 8,
+        gap: 6,
+        backgroundColor: 'rgba(34, 197, 94, 0.10)',
+        borderRadius: 8,
+    },
+    liveRowDot: {
+        width: 6,
+        height: 6,
+        borderRadius: 3,
+        backgroundColor: '#22C55E',
+        flexShrink: 0,
+    },
+    liveRowPlayer: {
+        flex: 1,
+        fontSize: 11,
+        fontFamily: 'PoppinsMedium',
+        color: COLORS.textSecondary,
+    },
+    liveRowPlayerRight: {
+        textAlign: 'right',
+    },
+    liveRowPlayerWinner: {
+        fontFamily: 'PoppinsSemiBold',
+        color: COLORS.textPrimary,
+    },
+    liveRowScore: {
+        fontSize: 11,
+        fontFamily: 'PoppinsBold',
+        color: '#22C55E',
+        marginHorizontal: 4,
+        flexShrink: 0,
+    },
+    liveRowStar: {
+        padding: 2,
+        marginLeft: 2,
     },
 });

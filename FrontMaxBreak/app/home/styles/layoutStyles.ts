@@ -9,16 +9,16 @@ export const createLayoutStyles = (COLORS: any) => StyleSheet.create({
         flex: 1,
         backgroundColor: '#0D1A0F',
     },
-    headerContainer: { 
-        paddingBottom: 2, 
-        paddingHorizontal: 16 
+    headerContainer: {
+        paddingBottom: 1,
+        paddingHorizontal: 16
     },
-    screenTitle: { 
-        fontSize: 26, 
-        fontFamily: 'PoppinsBold', 
-        textAlign: 'center', 
-        color: COLORS.textHeader, 
-        marginTop: 4, 
+    screenTitle: {
+        fontSize: 22,
+        fontFamily: 'PoppinsBold',
+        textAlign: 'center',
+        color: COLORS.textHeader,
+        marginTop: 2,
         marginBottom: 1,
         textShadowColor: 'rgba(0, 0, 0, 0.8)',
         textShadowOffset: { width: 0, height: 2 },
