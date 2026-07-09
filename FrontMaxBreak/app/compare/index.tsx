@@ -53,8 +53,6 @@ const fmtMoney = (val: number | null | undefined): string =>
 const fmtDecimal = (val: number | null | undefined, decimals = 2): string =>
     val == null ? '—' : val.toFixed(decimals);
 
-const [searchQuery, setSearchQuery] = useState('')
-
 // ---- Sub-components --------------------------------------------------------
 
 /**
