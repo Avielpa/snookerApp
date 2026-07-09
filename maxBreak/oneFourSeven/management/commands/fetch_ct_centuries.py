@@ -47,10 +47,11 @@ REQUEST_TIMEOUT = 20
 
 def _current_season_label() -> str:
     """Return the current snooker season label e.g. '2025-26'.
-    Season runs roughly June–April. September is used as the rollover point.
+    Season runs roughly May-April. May is used as the rollover point,
+    matching the frontend's useSeasonSelector.ts.
     """
     today = date.today()
-    if today.month >= 9:
+    if today.month >= 5:
         return f"{today.year}-{str(today.year + 1)[2:]}"
     else:
         return f"{today.year - 1}-{str(today.year)[2:]}"
@@ -168,10 +169,14 @@ def _link_player(ct_slug, player_name):
     return None
 
 
-def fetch_and_save(dry_run: bool = False, stdout=None) -> int:
+def fetch_and_save(dry_run: bool = False, stdout=None, url: str = None, season_label: str = None) -> int:
     """
     Fetch CueTracker centuries page, parse, save to CenturyRecord.
     Returns number of rows saved/updated. Raises on unrecoverable error.
+
+    url/season_label let this be pointed at a historical CueTracker season
+    page (e.g. .../most-made/season/2025-2026) to repair a specific
+    season_label's data without touching the current-season scrape path.
     """
     from oneFourSeven.models import CenturyRecord, PlayerCareerStats
 
@@ -180,11 +185,12 @@ def fetch_and_save(dry_run: bool = False, stdout=None) -> int:
         if stdout:
             stdout.write(msg)
 
-    season_label = _current_season_label()
-    log(f'[CT-CENTURIES] Fetching {CT_URL} (season {season_label})')
+    fetch_url = url or CT_URL
+    season_label = season_label or _current_season_label()
+    log(f'[CT-CENTURIES] Fetching {fetch_url} (season {season_label})')
 
     try:
-        r = requests.get(CT_URL, headers=CT_HEADERS, timeout=REQUEST_TIMEOUT)
+        r = requests.get(fetch_url, headers=CT_HEADERS, timeout=REQUEST_TIMEOUT)
         r.raise_for_status()
     except Exception as e:
         logger.error(f'[CT-CENTURIES] Fetch failed: {e}')
@@ -245,13 +251,24 @@ class Command(BaseCommand):
             '--dry-run', action='store_true',
             help='Parse and log everything but make no DB changes',
         )
+        parser.add_argument(
+            '--url', type=str, default=None,
+            help='Override the CueTracker URL (e.g. a historical season page)',
+        )
+        parser.add_argument(
+            '--season', type=str, default=None,
+            help='Override the season_label to save under (e.g. 2025-26)',
+        )
 
     def handle(self, *args, **options):
         dry_run = options['dry_run']
         if dry_run:
             self.stdout.write('[DRY RUN] No DB changes will be made')
         try:
-            count = fetch_and_save(dry_run=dry_run, stdout=self.stdout)
+            count = fetch_and_save(
+                dry_run=dry_run, stdout=self.stdout,
+                url=options.get('url'), season_label=options.get('season'),
+            )
             self.stdout.write(f'[CT-CENTURIES] Done — {count} records processed.')
         except Exception as e:
             logger.error(f'[CT-CENTURIES] Scrape failed — existing data kept: {e}')

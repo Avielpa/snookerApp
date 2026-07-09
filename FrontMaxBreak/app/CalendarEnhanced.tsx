@@ -20,6 +20,7 @@ import { logger } from '../utils/logger';
 import { useColors } from '../contexts/ThemeContext';
 import { useSeasonSelector, dateToSeasonYear, seasonDisplayLabel } from '../hooks/useSeasonSelector';
 import SeasonPicker from '../components/SeasonPicker';
+import { groupChampionshipLeague, CHAMPIONSHIP_LEAGUE_GROUP_ID } from '../utils/championshipLeagueGroup';
 
 interface Tournament {
   ID: number;
@@ -37,6 +38,9 @@ interface Tournament {
   duration?: number;
   isLive?: boolean;
   progress?: number;
+  isGroup?: boolean;
+  isGroupChild?: boolean;
+  children?: Tournament[];
 }
 
 interface FilterOption {
@@ -74,10 +78,12 @@ const TournamentCard = React.memo(({
   item,
   onPress,
   colors,
+  expanded,
 }: {
   item: Tournament;
   onPress: () => void;
   colors: any;
+  expanded?: boolean;
 }) => {
   const isLive = item.status === 'active';
   const isPast = item.status === 'past';
@@ -95,6 +101,7 @@ const TournamentCard = React.memo(({
 
   const prizeDisplay = getPrizeDisplay(item);
   const location = [item.City, item.Country].filter(Boolean).join(', ');
+  const groupCount = item.isGroup ? item.children?.length ?? 0 : 0;
 
   return (
     <TouchableOpacity
@@ -102,6 +109,7 @@ const TournamentCard = React.memo(({
       activeOpacity={0.72}
       style={[
         cardStyles.container,
+        item.isGroupChild && cardStyles.childContainer,
         { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder },
       ]}
     >
@@ -150,6 +158,16 @@ const TournamentCard = React.memo(({
           </View>
         )}
 
+        {/* Group badge — Championship League collapses its ~40 groups here */}
+        {item.isGroup && (
+          <View style={cardStyles.metaRow}>
+            <Ionicons name="layers-outline" size={12} color={colors.primary} />
+            <Text style={[cardStyles.metaText, { color: colors.primary }]}>
+              {groupCount} groups {expanded ? '· tap to collapse' : '· tap to view'}
+            </Text>
+          </View>
+        )}
+
         {/* Progress bar — only shown during active tournament */}
         {isLive && item.progress !== undefined && item.progress > 0 && (
           <View style={[cardStyles.progressTrack, { backgroundColor: colors.cardBorder }]}>
@@ -163,7 +181,12 @@ const TournamentCard = React.memo(({
         )}
       </View>
 
-      <Ionicons name="chevron-forward" size={16} color={colors.textMuted} style={cardStyles.chevron} />
+      <Ionicons
+        name={item.isGroup ? (expanded ? 'chevron-down' : 'chevron-forward') : 'chevron-forward'}
+        size={16}
+        color={colors.textMuted}
+        style={cardStyles.chevron}
+      />
     </TouchableOpacity>
   );
 });
@@ -180,6 +203,9 @@ const cardStyles = StyleSheet.create({
   },
   accentBar: {
     width: 4,
+  },
+  childContainer: {
+    marginLeft: 28,
   },
   body: {
     flex: 1,
@@ -258,6 +284,7 @@ export default function CalendarEnhanced() {
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [expandedGroupId, setExpandedGroupId] = useState<string | null>(null);
 
   const router = useRouter();
   const colors = useColors();
@@ -392,6 +419,8 @@ export default function CalendarEnhanced() {
       );
     }
 
+    filtered = groupChampionshipLeague(filtered) as Tournament[];
+
     filtered.sort((a, b) => {
       const priority = { active: 0, upcoming: 1, past: 2 };
       const ap = priority[a.status || 'past'];
@@ -405,6 +434,19 @@ export default function CalendarEnhanced() {
     setFilteredTournaments(filtered);
   }, [allTournaments, selectedStatus, searchQuery, selectedSeason]);
 
+  // Flatten the expanded group's children into the list right after its card.
+  const displayTournaments = useMemo(() => {
+    if (!expandedGroupId) return filteredTournaments;
+    const result: Tournament[] = [];
+    for (const item of filteredTournaments) {
+      result.push(item);
+      if (item.isGroup && item.ID === expandedGroupId && item.children) {
+        result.push(...item.children.map(c => ({ ...c, isGroupChild: true })));
+      }
+    }
+    return result;
+  }, [filteredTournaments, expandedGroupId]);
+
   const handleTabPress = (tabId: string) => {
     if (tabId !== selectedTab) setSelectedTab(tabId);
   };
@@ -415,6 +457,10 @@ export default function CalendarEnhanced() {
 
   const handleTournamentPress = (tournament: Tournament) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (tournament.isGroup) {
+      setExpandedGroupId(prev => (prev === tournament.ID ? null : String(tournament.ID)));
+      return;
+    }
     router.push(`/tour/${tournament.ID}`);
   };
 
@@ -565,12 +611,13 @@ export default function CalendarEnhanced() {
         </View>
       ) : (
         <FlatList
-          data={filteredTournaments}
+          data={displayTournaments}
           renderItem={({ item }) => (
             <TournamentCard
               item={item}
               onPress={() => handleTournamentPress(item)}
               colors={colors}
+              expanded={item.isGroup ? item.ID === expandedGroupId : undefined}
             />
           )}
           keyExtractor={(item, index) => `tournament-${item.ID}-${index}`}

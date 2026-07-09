@@ -96,7 +96,7 @@ API_FIELD_MAPPINGS = {
 
 # --- Event Filtering Configuration ---
 ALLOWED_EVENT_TYPES = ['Ranking', 'Qualifying', 'Invitational']
-EXCLUDED_EVENT_NAME_PATTERNS = ['Championship League Stage']
+EXCLUDED_EVENT_NAME_PATTERNS = []
 
 # --- Rate Limiting Configuration ---
 REQUESTS_PER_MINUTE = 2

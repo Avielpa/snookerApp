@@ -31,11 +31,13 @@ def _player_display(player: Player | None, fallback_name: str = '') -> dict:
 
 
 def _current_season_label() -> str:
-    """Return the current snooker season label, e.g. '2025-26'."""
+    """Return the current snooker season label, e.g. '2025-26'.
+    Season rolls over in May, matching the frontend's useSeasonSelector.ts.
+    """
     from datetime import date
     today = date.today()
     year = today.year
-    if today.month >= 9:
+    if today.month >= 5:
         return f"{year}-{str(year + 1)[2:]}"
     return f"{year - 1}-{str(year)[2:]}"
 
@@ -44,7 +46,7 @@ def _current_season_int() -> int:
     """Return the snooker.org season int (year the season starts), e.g. 2025."""
     from datetime import date
     today = date.today()
-    return today.year if today.month >= 9 else today.year - 1
+    return today.year if today.month >= 5 else today.year - 1
 
 
 # ---------------------------------------------------------------------------
