@@ -31,6 +31,80 @@ Render order, top to bottom:
    - `OtherToursTab` (if `activeFilter === 'otherTours'`)
    - `FlatList` of `displayData` (all other filter values) — see §3/§4
 
+### Visual anatomy — what's actually on screen per tab
+
+Text/data structure alone doesn't show what a user sees. Rough wireframes, current real layout (not a redesign):
+
+**Upcoming / Live / Results tabs** (all share the same `FlatList` renderer, just filtered to a different section):
+```
+┌──────────────────────────────┐
+│      Tournament Name          │  ← header, centered
+│      ◆ Winner: £10,000        │  ← prize pill, conditional
+├──────────────────────────────┤
+│ [Upcoming][Live][Results]      │  ← 5 tabs, horiz scroll
+│ [Draw][Other Tours]            │
+├──────────────────────────────┤
+│ [Tour chip][Tour chip]...      │  ← ONLY if activeOtherTours.length>0
+├──────────────────────────────┤
+│ 🔍 Search Player               │  ← always present
+├──────────────────────────────┤
+│ ▎PLAYING NOW              (1) │  ← statusHeader (this tab's section only)
+│  ─────── Round 19 ───────      │  ← roundHeader
+│ ┌────────────────────────────┐│
+│ │ Player A   3 — 1   Player B ││  ← MatchItem: glass card,
+│ │ [LIVE]  📅 date        ☆    ││    score-centered row, footer
+│ └────────────────────────────┘│
+│ ┌────────────────────────────┐│
+│ │ Player C   vs      Player D ││  ← next match, same round
+│ └────────────────────────────┘│
+│  ─────── Round 20 ───────      │  ← new round = new roundHeader
+│ ┌────────────────────────────┐│
+│ │ ...                         ││
+│ └────────────────────────────┘│
+├──────────────────────────────┤
+│ ▎ALSO LIVE                     │  ← OtherLiveSection, FlatList footer
+│  Q TOUR EVENT 7                │    (only on Live/onBreak/all tabs)
+│ ┌────────────────────────────┐│
+│ │ Player E   2 — 1   Player F ││
+│ └────────────────────────────┘│
+└──────────────────────────────┘
+```
+Every match card is a full `MatchItem` (§3.1) — same visual weight whether there are 2 matches or 40. This is the exact pain point behind the "cards too big" / "long scroll" feedback: nothing shrinks or collapses based on list length today.
+
+**Draw tab**:
+```
+┌──────────────────────────────┐
+│      Tournament Name          │  ← same header/tabs/search as above
+│ [Upcoming][Live][Results]      │
+│ [Draw ●][Other Tours]          │
+├──────────────────────────────┤
+│   (bracket/draw visualization) │  ← DrawTab component, own internal
+│   fed by rawMatches (raw,       │    layout — not the FlatList/
+│   undeduplicated)               │    MatchItem system at all
+└──────────────────────────────┘
+```
+
+**Other Tours tab** — completely different data source and card style (§6), not `MatchItem`:
+```
+┌──────────────────────────────┐
+│      Tournament Name          │  ← same header/tabs (search still
+│ [Upcoming][Live][Results]      │    renders but has no effect here —
+│ [Draw][Other Tours ●]          │    OtherToursTab has its own state)
+├──────────────────────────────┤
+│┌────────────────────────────┐ │
+││▎Women's World Ch.  [2 LIVE]│ │  ← EventCard: colored left border
+││ Sheffield, England      ▾  │ │    per tour type, expand chevron
+││ Player A    1–0    Player B│ │  ← MatchRow: compact single line,
+││ Player C    vs     Player D│ │    small live dot, no card chrome
+│└────────────────────────────┘ │
+│┌────────────────────────────┐ │
+││▎Q Tour: NZ Open             │ │  ← next event, same pattern
+││ ...                          │ │
+│└────────────────────────────┘ │
+└──────────────────────────────┘
+```
+Notably: `OtherToursTab`'s `MatchRow` is already the compact, single-line-per-match style — proof that a denser card isn't unprecedented in this codebase, just not used on the main list yet.
+
 ### Full-screen redirect states (replace the whole screen, no tabs shown)
 
 - **Media redirect**: if `shouldRedirectToMedia(processedListData)` is true (nothing decided to show — empty, or every match is TBD-vs-TBD) and neither Live nor Results auto-switch already fired, the screen shows a loading spinner + explanatory text for 2 seconds, then `router.replace('/NewsScreen')`. One-shot per session (`hasAutoSwitchedToMedia` ref).
