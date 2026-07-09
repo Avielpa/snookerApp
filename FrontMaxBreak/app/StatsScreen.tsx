@@ -15,9 +15,11 @@ import { useColors } from '../contexts/ThemeContext';
 import { logger } from '../utils/logger';
 import {
     fetchCenturies,
+    fetchRecords,
     fetchTourWinners,
     fetchTitleLeaders,
     CenturiesData,
+    RecordsData,
     TourWinnersData,
     TitleLeadersData,
 } from '../services/statsService';
@@ -352,7 +354,7 @@ const RecordsTab = ({
     onRefresh,
     colors,
 }: {
-    data: CenturiesData | null;
+    data: RecordsData | null;
     refreshing: boolean;
     onRefresh: () => void;
     colors: any;
@@ -484,6 +486,7 @@ export default function StatsScreen() {
     const [loading, setLoading] = useState(true);
 
     const [centuriesData, setCenturiesData] = useState<CenturiesData | null>(null);
+    const [recordsData, setRecordsData] = useState<RecordsData | null>(null);
     const [tourWinnersData, setTourWinnersData] = useState<TourWinnersData | null>(null);
     const [titleLeadersData, setTitleLeadersData] = useState<TitleLeadersData | null>(null);
 
@@ -491,12 +494,14 @@ export default function StatsScreen() {
 
     const loadAll = useCallback(async () => {
         logger.log(`[Stats] Loading stats for season ${selectedSeason}...`);
-        const [centuries, winners, leaders] = await Promise.all([
+        const [centuries, records, winners, leaders] = await Promise.all([
             fetchCenturies(centuriesSeasonParam(selectedSeason)),
+            fetchRecords(),
             fetchTourWinners(statsSeasonParam(selectedSeason)),
             fetchTitleLeaders(statsSeasonParam(selectedSeason)),
         ]);
         setCenturiesData(centuries);
+        setRecordsData(records);
         setTourWinnersData(winners);
         setTitleLeadersData(leaders);
     }, [selectedSeason]);
@@ -582,7 +587,7 @@ export default function StatsScreen() {
                         <TitlesTab winners={tourWinnersData} leaders={titleLeadersData} refreshing={refreshing} onRefresh={onRefresh} colors={colors} />
                     )}
                     {activeTab === 'records' && (
-                        <RecordsTab data={centuriesData} refreshing={refreshing} onRefresh={onRefresh} colors={colors} />
+                        <RecordsTab data={recordsData} refreshing={refreshing} onRefresh={onRefresh} colors={colors} />
                     )}
                 </>
             )}

@@ -23,6 +23,19 @@ export interface CenturiesData {
     results: CenturyEntry[];
 }
 
+export interface RecordEntry {
+    player_name: string;
+    player_id: number | null;
+    nationality: string | null;
+    career_total: number;
+    career_147s: number;
+}
+
+export interface RecordsData {
+    count: number;
+    results: RecordEntry[];
+}
+
 export interface TourWinner {
     event_id: number;
     event_name: string;
@@ -70,6 +83,16 @@ export async function fetchCenturies(season = '2025-26'): Promise<CenturiesData 
         return resp.data as CenturiesData;
     } catch (e) {
         logger.warn(`[Stats] fetchCenturies failed: ${e}`);
+        return null;
+    }
+}
+
+export async function fetchRecords(): Promise<RecordsData | null> {
+    try {
+        const resp = await api.get('stats/records/');
+        return resp.data as RecordsData;
+    } catch (e) {
+        logger.warn(`[Stats] fetchRecords failed: ${e}`);
         return null;
     }
 }

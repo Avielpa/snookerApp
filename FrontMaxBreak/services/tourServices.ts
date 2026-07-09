@@ -89,7 +89,23 @@ export const getSeasonEvents = async (retryAttempts: number = 0): Promise<Event[
  */
 export const getActiveTournamentId = async (): Promise<number | null> => {
     logger.debug("[TourService] Determining active tournament ID with main tour priority...");
-    
+
+    // Server-side resolver first: some tournaments (Championship League) run many
+    // parallel sub-events that all share one identical event-level date range
+    // spanning weeks, even though each only actually plays on one specific day.
+    // The client-side date-range logic below can't tell those apart and picks
+    // arbitrarily; the backend can, using match-level status in one query.
+    // Falls through to the client-side logic below on any failure.
+    try {
+        const resolved = await api.get<{ event_id: number | null; reason: string }>('tours/active-main-event/');
+        if (resolved.data?.event_id) {
+            logger.debug(`[TourService] Server-resolved active event: ID = ${resolved.data.event_id} (${resolved.data.reason})`);
+            return resolved.data.event_id;
+        }
+    } catch (e) {
+        logger.debug(`[TourService] Server-side active-event resolver unavailable, falling back to client logic: ${e}`);
+    }
+
     try {
         const events = await getSeasonEvents();
         

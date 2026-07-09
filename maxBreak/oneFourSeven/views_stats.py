@@ -95,6 +95,54 @@ def stats_centuries_view(request):
 
 
 # ---------------------------------------------------------------------------
+# 1b. All-time records (career totals) — deliberately NOT season-filtered.
+# CenturyRecord stores one row per (player, season_label); a player's
+# career_total/career_147s only appear on rows for seasons they actually
+# have a century in. Filtering by the currently-selected season (as the
+# centuries-race endpoint above does) silently drops any all-time great
+# who hasn't scored a century in that specific season yet — e.g. Ronnie
+# O'Sullivan's real career total (1324) never showed up because he had no
+# row in the current season's dataset. This endpoint takes the MAX
+# career_total/career_147s per player across every season row instead.
+# ---------------------------------------------------------------------------
+
+@api_view(['GET'])
+def stats_records_view(request):
+    """GET /stats/records/ — all-time century/147 leaders, not season-scoped."""
+    rows = (
+        CenturyRecord.objects
+        .values('player_name', 'player_id')
+        .annotate(best_total=Max('career_total'), best_147s=Max('career_147s'))
+    )
+
+    best_per_player: dict = {}
+    for row in rows:
+        name = row['player_name']
+        total = row['best_total'] or 0
+        existing = best_per_player.get(name)
+        if not existing or total > existing['best_total']:
+            best_per_player[name] = row
+
+    player_ids = [r['player_id'] for r in best_per_player.values() if r['player_id']]
+    players_map = {p.ID: p for p in Player.objects.filter(ID__in=player_ids)}
+
+    results = []
+    for row in best_per_player.values():
+        player = players_map.get(row['player_id'])
+        results.append({
+            'player_name':  row['player_name'],
+            'player_id':    row['player_id'],
+            'nationality':  player.Nationality if player else None,
+            'career_total': row['best_total'] or 0,
+            'career_147s':  row['best_147s'] or 0,
+        })
+
+    results.sort(key=lambda r: -r['career_total'])
+
+    return Response({'count': len(results), 'results': results})
+
+
+# ---------------------------------------------------------------------------
 # 2. Tour winners
 # ---------------------------------------------------------------------------
 

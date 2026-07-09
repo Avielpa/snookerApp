@@ -6,6 +6,7 @@ from rest_framework_simplejwt.views import TokenRefreshView
 # Import views from the current application (.)
 from .views_stats import (
     stats_centuries_view,
+    stats_records_view,
     stats_tour_winners_view,
     stats_title_leaders_view,
 )
@@ -29,6 +30,7 @@ from .views import (
     # Debug Views
     debug_status_view,
     tours_by_status_view,
+    active_main_event_view,
     calendar_tabs_view,
     ranking_tabs_view,
     ranking_types_view,
@@ -141,6 +143,7 @@ urlpatterns = [
     # --- Tournament Status URLs ---
     # Get tournaments organized by status (active/upcoming/recent/previous)
     path('tours/by-status/', tours_by_status_view, name='tours-by-status'),
+    path('tours/active-main-event/', active_main_event_view, name='active-main-event'),
     # Calendar tab endpoints for main tours vs others
     path('calendar/<str:tab_type>/', calendar_tabs_view, name='calendar-tabs'),
     path('calendar/', calendar_tabs_view, {'tab_type': 'main'}, name='calendar-main'),
@@ -155,6 +158,7 @@ urlpatterns = [
 
     # --- Stats Screen URLs ---
     path('stats/centuries/', stats_centuries_view, name='stats-centuries'),
+    path('stats/records/', stats_records_view, name='stats-records'),
     path('stats/tour-winners/', stats_tour_winners_view, name='stats-tour-winners'),
     path('stats/title-leaders/', stats_title_leaders_view, name='stats-title-leaders'),
 

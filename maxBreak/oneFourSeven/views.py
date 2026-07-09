@@ -1121,6 +1121,78 @@ def calendar_tabs_view(request, tab_type='main'):
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
+def active_main_event_view(request):
+    """
+    Resolve the single most relevant main-tour event happening right now.
+
+    Why this exists: some tournaments (Championship League) run as many
+    parallel sub-events (groups) that all share one identical event-level
+    date range spanning weeks, even though each group only actually plays
+    on one specific day within that range. Picking "the active tournament"
+    by event-level date range alone (as the frontend's client-side
+    getActiveTournamentId used to) is ambiguous whenever more than one such
+    event is "active" by date — it has no way to know which group has
+    action today. This resolves it server-side using match-level Status,
+    which IS accurate per-group, in one query instead of N per-event ones.
+
+    A genuine standalone ranking tournament always outranks Championship
+    League groups, regardless of match timing — CL is a lower-priority
+    "filler" tournament that runs in parallel with the real main tour.
+    Within each tier (real tournament vs. CL), priority is: live/on-break
+    match right now > soonest upcoming match (today or later) > most
+    recently finished match > earliest active event by ID as fallback.
+    """
+    today = date.today()
+
+    active_events = Event.objects.filter(
+        Tour='main', StartDate__lte=today, EndDate__gte=today
+    ).values_list('ID', 'Name')
+    if not active_events:
+        return Response({'event_id': None, 'reason': 'none'})
+
+    primary_ids = [eid for eid, name in active_events
+                   if not (name or '').lower().startswith('championship league')]
+    cl_ids = [eid for eid, name in active_events
+              if (name or '').lower().startswith('championship league')]
+
+    def _resolve(event_ids, tier: str):
+        if not event_ids:
+            return None
+        live_match = (
+            MatchesOfAnEvent.objects
+            .filter(Event_id__in=event_ids, Status__in=[1, 2])
+            .order_by('ScheduledDate')
+            .first()
+        )
+        if live_match:
+            return {'event_id': live_match.Event_id, 'reason': f'{tier}-live'}
+
+        upcoming_match = (
+            MatchesOfAnEvent.objects
+            .filter(Event_id__in=event_ids, Status=0, ScheduledDate__gte=django_timezone.now())
+            .order_by('ScheduledDate')
+            .first()
+        )
+        if upcoming_match:
+            return {'event_id': upcoming_match.Event_id, 'reason': f'{tier}-upcoming'}
+
+        recent_match = (
+            MatchesOfAnEvent.objects
+            .filter(Event_id__in=event_ids, Status=3)
+            .order_by('-ScheduledDate')
+            .first()
+        )
+        if recent_match:
+            return {'event_id': recent_match.Event_id, 'reason': f'{tier}-recent'}
+
+        return {'event_id': event_ids[0], 'reason': f'{tier}-fallback'}
+
+    result = _resolve(primary_ids, 'main') or _resolve(cl_ids, 'cl')
+    return Response(result)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
 def tours_by_status_view(request):
     """
     API endpoint that returns tournaments categorized by status:
