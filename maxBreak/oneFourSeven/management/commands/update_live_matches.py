@@ -10,6 +10,8 @@ import time
 from datetime import date, timedelta
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
+from django.db.models import Count, Q
+from django.utils import timezone as dj_timezone
 
 from oneFourSeven.scraper import (
     fetch_event_matches_data,
@@ -56,10 +58,23 @@ class Command(BaseCommand):
             # Grace period of 3 days so qualifiers running past their EndDate aren't wrongly closed
             self._fix_finished_tournaments(dry_run)
 
+            # Championship League runs ~40 sub-events that all share the exact
+            # same StartDate/EndDate (the whole Stage span), so ordering by
+            # StartDate alone can't break the tie -- the same first N events
+            # would get checked every cycle forever, starving the rest. Instead
+            # prioritize events that actually have a match due right now
+            # (unfinished status, scheduled time already passed) ahead of ones
+            # with nothing urgent.
+            now = dj_timezone.now()
             active_events = Event.objects.filter(
                 StartDate__lte=tomorrow,  # Started by tomorrow
                 EndDate__gte=yesterday,   # Ended after yesterday
-            ).order_by('StartDate')
+            ).annotate(
+                due_now=Count(
+                    'matches',
+                    filter=Q(matches__Status__in=[0, 1, 2], matches__ScheduledDate__lte=now),
+                )
+            ).order_by('-due_now', 'StartDate')
 
             active_event_ids = set(active_events.values_list('ID', flat=True))
 
