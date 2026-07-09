@@ -16,6 +16,7 @@ from oneFourSeven.scraper import (
     fetch_current_season
 )
 from oneFourSeven.models import Event
+from oneFourSeven.constants import MIN_REQUEST_INTERVAL
 
 logger = logging.getLogger(__name__)
 
@@ -104,7 +105,7 @@ class Command(BaseCommand):
                 try:
                     # Rate limiting: 6 seconds between requests (10 per minute)
                     if i > 0:
-                        time.sleep(6)
+                        time.sleep(MIN_REQUEST_INTERVAL)  # Respect snooker.org's 2 requests/minute limit
                     
                     # Fetch round details
                     round_details_data = fetch_round_details_data(event.ID, event.Season or season)

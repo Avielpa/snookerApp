@@ -12,6 +12,7 @@ from django.core.management.base import BaseCommand
 from django.core.management import call_command
 
 from oneFourSeven.scraper import fetch_current_season
+from oneFourSeven.constants import MIN_REQUEST_INTERVAL
 
 
 class Command(BaseCommand):
@@ -51,6 +52,6 @@ class Command(BaseCommand):
                 call_command(command_name, verbosity=0, **kwargs)
             except Exception as e:
                 self.stdout.write(f'   FAILED ({label}): {e}')
-            time.sleep(5)
+            time.sleep(MIN_REQUEST_INTERVAL)  # Respect snooker.org's 2 requests/minute limit between steps
 
         self.stdout.write('Done — all data fetched.')

@@ -18,6 +18,7 @@ from oneFourSeven.scraper import (
     SE_PLAYER_MEN,
     SE_PLAYER_WOMEN
 )
+from oneFourSeven.constants import MIN_REQUEST_INTERVAL
 
 logger = logging.getLogger(__name__)
 
@@ -103,7 +104,7 @@ class Command(BaseCommand):
                 
                 # Add rate limiting between requests
                 if total_fetched > 0:
-                    time.sleep(6)  # Respect 10 requests/minute limit
+                    time.sleep(MIN_REQUEST_INTERVAL)  # Respect snooker.org's 2 requests/minute limit
                 
                 players_data = fetch_players_data(season, status, sex)
                 

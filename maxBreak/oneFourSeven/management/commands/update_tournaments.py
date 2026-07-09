@@ -15,6 +15,7 @@ from oneFourSeven.scraper import (
     save_events,
     TR_MAIN_TOUR
 )
+from oneFourSeven.constants import MIN_REQUEST_INTERVAL
 
 logger = logging.getLogger(__name__)
 
@@ -88,7 +89,7 @@ class Command(BaseCommand):
                     
                     # Add rate limiting between requests
                     if tour_type != tour_types[-1]:  # Don't sleep after last request
-                        time.sleep(6)
+                        time.sleep(MIN_REQUEST_INTERVAL)  # Respect snooker.org's 2 requests/minute limit
                 
                 events_data = all_events_data
             else:

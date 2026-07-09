@@ -885,7 +885,8 @@ class Command(BaseCommand):
                 
                 # Delay between tournaments to respect API limits
                 import time
-                time.sleep(5)
+                from oneFourSeven.constants import MIN_REQUEST_INTERVAL
+                time.sleep(MIN_REQUEST_INTERVAL)
                 
         except Exception as e:
             logger.error(f'Tournament end updates failed: {str(e)}')

@@ -15,7 +15,7 @@ from oneFourSeven.scraper import (
     save_rankings,
     RT_MONEY_RANKINGS
 )
-from oneFourSeven.constants import ALL_RANKING_TYPES
+from oneFourSeven.constants import ALL_RANKING_TYPES, MIN_REQUEST_INTERVAL
 
 logger = logging.getLogger(__name__)
 
@@ -94,7 +94,7 @@ class Command(BaseCommand):
                 # Add rate limiting between requests (except for first one)
                 if i > 0:
                     self.stdout.write('Rate limiting... (6 second delay)')
-                    time.sleep(6)
+                    time.sleep(MIN_REQUEST_INTERVAL)  # Respect snooker.org's 2 requests/minute limit
                 
                 try:
                     # Fetch rankings data

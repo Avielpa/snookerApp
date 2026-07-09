@@ -17,6 +17,7 @@ from oneFourSeven.scraper import (
 )
 from oneFourSeven.models import Event, MatchesOfAnEvent
 from oneFourSeven.data_savers import DatabaseSaver
+from oneFourSeven.constants import MIN_REQUEST_INTERVAL
 
 logger = logging.getLogger(__name__)
 
@@ -101,7 +102,7 @@ class Command(BaseCommand):
                 try:
                     # Rate limiting: 6 seconds between requests (10 per minute)
                     if i > 0:
-                        time.sleep(6)
+                        time.sleep(MIN_REQUEST_INTERVAL)  # Respect snooker.org's 2 requests/minute limit
                     
                     self.stdout.write(f'  Fetching matches data...', ending='')
                     

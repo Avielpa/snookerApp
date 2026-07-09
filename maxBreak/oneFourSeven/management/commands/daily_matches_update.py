@@ -10,6 +10,7 @@ from datetime import date, timedelta
 from django.core.management.base import BaseCommand
 from django.core.management import call_command
 from oneFourSeven.models import Event
+from oneFourSeven.constants import MIN_REQUEST_INTERVAL
 import time
 
 class Command(BaseCommand):
@@ -42,7 +43,7 @@ class Command(BaseCommand):
                 
                 # API rate limiting - wait 6 seconds between requests
                 if i < len(active_events) - 1:
-                    time.sleep(6)
+                    time.sleep(MIN_REQUEST_INTERVAL)  # Respect snooker.org's 2 requests/minute limit
                     
             except Exception as e:
                 failed_count += 1
