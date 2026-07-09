@@ -36,6 +36,32 @@ def get_tokens_for_match(match_id):
     return list(uuid_tokens | user_tokens)
 
 
+def get_tokens_for_match_db_id(match_db_id):
+    """
+    Return a deduplicated list of push tokens for all devices that have
+    favorited this match, keyed by the STABLE MatchesOfAnEvent.id (Django PK)
+    stored in favorite_match_db_ids.
+
+    This is the churn-proof counterpart to get_tokens_for_match(): snooker.org
+    reassigns a match's api_match_id on session breaks/status changes, so a lookup
+    by the current api_match_id misses devices that favorited it under an older id.
+    The DB pk never changes, so this finds them regardless of how many times the
+    api_match_id has rotated. Callers should union this with get_tokens_for_match()
+    so both new (pk-tracked) and legacy (api-id-only) favorites are covered.
+    """
+    from oneFourSeven.models import DeviceToken
+    uuid_tokens = set(
+        DeviceToken.objects.filter(favorite_match_db_ids__contains=[match_db_id])
+        .exclude(push_token='').values_list('push_token', flat=True)
+    )
+    user_tokens = set(
+        DeviceToken.objects.filter(
+            user__favorites__favorite_match_db_ids__contains=[match_db_id]
+        ).exclude(push_token='').values_list('push_token', flat=True)
+    )
+    return list(uuid_tokens | user_tokens)
+
+
 def get_tokens_for_player(player_id):
     """
     Return a deduplicated list of push tokens for all devices that have

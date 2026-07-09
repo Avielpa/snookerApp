@@ -272,7 +272,7 @@ class Command(BaseCommand):
         """
         try:
             from oneFourSeven.models import MatchesOfAnEvent, Player, NotifDedup
-            from oneFourSeven.push_notifications import send_expo_push, get_tokens_for_match, get_tokens_for_player
+            from oneFourSeven.push_notifications import send_expo_push, get_tokens_for_match, get_tokens_for_match_db_id, get_tokens_for_player
 
             today = timezone.now().date()
             # Clean up dedup rows older than today (runs cheaply — indexed on sent_date)
@@ -309,7 +309,8 @@ class Command(BaseCommand):
                 p2_name = get_name(match.Player2ID)
 
                 # Devices following this specific match
-                match_tokens = get_tokens_for_match(mid)
+                # Union api-id lookup (legacy favorites) with stable-pk lookup (churn-proof).
+                match_tokens = list(set(get_tokens_for_match(mid)) | set(get_tokens_for_match_db_id(match.pk)))
                 if match_tokens:
                     send_expo_push(match_tokens, '🎱 Live Now',
                                    f'{p1_name} vs {p2_name}',
@@ -354,7 +355,8 @@ class Command(BaseCommand):
                 s2 = match.Score2 if match.Score2 is not None else 0
 
                 # Match followers
-                match_tokens = get_tokens_for_match(mid)
+                # Union api-id lookup (legacy favorites) with stable-pk lookup (churn-proof).
+                match_tokens = list(set(get_tokens_for_match(mid)) | set(get_tokens_for_match_db_id(match.pk)))
                 if match_tokens:
                     send_expo_push(match_tokens, '✅ Result',
                                    f'{p1_name} {s1} – {s2} {p2_name}',
@@ -405,7 +407,8 @@ class Command(BaseCommand):
                 p2_name = get_name(match.Player2ID)
 
                 # Match followers
-                match_tokens = get_tokens_for_match(mid)
+                # Union api-id lookup (legacy favorites) with stable-pk lookup (churn-proof).
+                match_tokens = list(set(get_tokens_for_match(mid)) | set(get_tokens_for_match_db_id(match.pk)))
                 if match_tokens:
                     send_expo_push(match_tokens, '⏰ Starting Soon',
                                    f'{p1_name} vs {p2_name} in ~15 min',
@@ -461,7 +464,8 @@ class Command(BaseCommand):
                     s2 = match.Score2 if match.Score2 is not None else 0
 
                     # Match followers
-                    match_tokens = get_tokens_for_match(mid)
+                    # Union api-id lookup (legacy favorites) with stable-pk lookup (churn-proof).
+                    match_tokens = list(set(get_tokens_for_match(mid)) | set(get_tokens_for_match_db_id(match.pk)))
                     if match_tokens:
                         send_expo_push(match_tokens, '▶️ Match Resumed',
                                        f'{p1_name} {s1}–{s2} {p2_name}',

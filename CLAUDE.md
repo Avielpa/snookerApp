@@ -196,6 +196,8 @@ Expected: `✅ All N assertions passed` for each file — **1039 total**. Fix an
 8. **Create tests for new feature** — For every feature created, create an MD file summarising what was done + at least 100 tests before updating preview and pushing to git.
 9. **Any time we write new code, ensure nothing breaks with old data** — investigate which functions and files will be affected and let the user know.
 10. **New code → new file/function/component** — build new sections or features modularly in new functions or files for easy debugging and review.
+11. **Check `docs/OPEN_MISSIONS.md` at the start of any bug investigation or feature work**, and add new items there whenever work surfaces something out-of-scope that shouldn't be forgotten (deferred fixes, pre-existing test failures, follow-ups scoped out of the current task). Never fix an open-mission item as a silent drive-by inside unrelated work — pull it out as its own task first.
+12. **Any bug investigation or fix uses the `bug-fix-expert` persona** (`.claude/agents/bug-fix-expert.md`, 20-rule workflow: systematic-debugging first, full connection map, root-cause causal chain, exhaustive edge cases, explicit plan approval before any Edit/Write, never deploy). This environment's `Agent` tool does not auto-register `.claude/agents/*.md` as a selectable `subagent_type` — invoke it by reading the file and passing its full contents into a `general-purpose` agent's prompt, not by naming it directly as `subagent_type`.
 
 ## Critical Rules
 

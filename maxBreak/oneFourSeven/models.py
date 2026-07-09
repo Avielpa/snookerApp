@@ -1051,7 +1051,14 @@ class DeviceToken(models.Model):
     push_token = models.CharField(max_length=512, blank=True, default='')
     push_error = models.TextField(blank=True, default='')  # diagnostic: why token is missing
     favorite_player_ids = models.JSONField(default=list)   # player IDs from player profile stars
-    favorite_match_ids = models.JSONField(default=list)    # api_match_ids from match card stars
+    favorite_match_ids = models.JSONField(default=list)    # api_match_ids from match card stars (volatile — snooker.org rotates them)
+    # Stable MatchesOfAnEvent.id (Django PK) equivalents of favorite_match_ids.
+    # api_match_id rotates on session breaks/status changes, silently breaking the
+    # star + push notifications; the PK never changes, so favorites survive the churn.
+    # Populated additively alongside favorite_match_ids — the raw field is kept for
+    # backward compatibility with pre-fix rows. (NotifDedup still keys off api_match_id;
+    # that is a known, separate, lower-priority issue and intentionally NOT touched here.)
+    favorite_match_db_ids = models.JSONField(default=list)
     user = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name='devices')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -1097,7 +1104,10 @@ class UserFavorite(models.Model):
     """
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='favorites')
     favorite_player_ids = models.JSONField(default=list)
-    favorite_match_ids = models.JSONField(default=list)
+    favorite_match_ids = models.JSONField(default=list)  # volatile api_match_ids (kept for backward compat)
+    # Stable MatchesOfAnEvent.id equivalents of favorite_match_ids — see DeviceToken
+    # for the full rationale. Populated additively; raw field kept for old rows.
+    favorite_match_db_ids = models.JSONField(default=list)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):

@@ -2007,6 +2007,85 @@ def device_favorites_players_view(request):
         return Response({'error': 'Internal error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+# ---------------------------------------------------------------------------
+# Match-favorite id-churn helpers (see docs/BUG_match_favorite_id_churn_2026-07-09.md)
+#
+# snooker.org rotates a match's api_match_id (observed: 10220801 → 10232815 →
+# 10232821 for one CL match in a few hours). Favorites stored the volatile
+# api_match_id, so the star + push notifications silently broke on rotation.
+# These helpers additionally track the STABLE MatchesOfAnEvent.id (Django PK) —
+# the same pattern MatchPrediction/MatchComment already use — WITHOUT changing
+# the response shape the frontend sees (always api_match_ids).
+# All logic lives in these new functions; the existing views only call them.
+# ---------------------------------------------------------------------------
+
+def _resolve_match_db_ids(api_ids):
+    """
+    Resolve a list of api_match_ids to stable MatchesOfAnEvent PKs.
+    Returns (db_ids, unresolved_api_ids). db_ids is order-preserving & deduped.
+    An api_id that isn't in MatchesOfAnEvent yet lands in unresolved_api_ids.
+    """
+    from .models import MatchesOfAnEvent
+    rows = MatchesOfAnEvent.objects.filter(api_match_id__in=api_ids).values('id', 'api_match_id')
+    api_to_db = {r['api_match_id']: r['id'] for r in rows}
+    db_ids, unresolved = [], []
+    for a in api_ids:
+        if a in api_to_db:
+            db_ids.append(api_to_db[a])
+        else:
+            unresolved.append(a)
+    return list(dict.fromkeys(db_ids)), unresolved
+
+
+def _write_match_favorites(obj, match_ids):
+    """
+    Persist favourite matches on a DeviceToken or UserFavorite.
+
+    Stores the raw api_match_ids in favorite_match_ids EXACTLY as before (backward
+    compatible), and additionally stores the resolved stable PKs in
+    favorite_match_db_ids. Ids that can't be resolved yet (match not published)
+    stay in favorite_match_ids only and self-heal on the next read.
+    Returns the list of raw api_match_ids stored (the response payload, unchanged shape).
+    """
+    raw_ids = [int(mid) for mid in match_ids if mid is not None]
+    db_ids, _unresolved = _resolve_match_db_ids(raw_ids)
+    obj.favorite_match_ids = raw_ids
+    obj.favorite_match_db_ids = db_ids
+    obj.save(update_fields=['favorite_match_ids', 'favorite_match_db_ids', 'updated_at'])
+    return raw_ids
+
+
+def _read_match_favorites(obj):
+    """
+    Return the current api_match_ids for a DeviceToken/UserFavorite's favourites.
+
+    - Reverse-translates stored stable PKs back to whatever api_match_id the match
+      currently has (this is what heals the churn: the star reappears under the new id).
+    - Self-heals: any raw api_id not yet backed by a PK is re-resolved now; if it
+      resolves, the PK is persisted (Q2 retry-on-load). Raw ids that still can't
+      resolve are returned as-is so nothing is ever dropped (old-data safe).
+    Response shape is identical to before: a flat list of api_match_ids.
+    """
+    from .models import MatchesOfAnEvent
+    raw_ids = list(obj.favorite_match_ids or [])
+    stored_db_ids = list(obj.favorite_match_db_ids or [])
+
+    resolved_db, unresolved_raw = _resolve_match_db_ids(raw_ids)
+    merged_db_ids = list(dict.fromkeys(stored_db_ids + resolved_db))
+
+    if merged_db_ids != stored_db_ids:
+        # Self-heal: persist newly-resolvable PKs without clobbering the raw field.
+        obj.favorite_match_db_ids = merged_db_ids
+        obj.save(update_fields=['favorite_match_db_ids', 'updated_at'])
+
+    current_api_ids = list(
+        MatchesOfAnEvent.objects.filter(pk__in=merged_db_ids)
+        .values_list('api_match_id', flat=True)
+    )
+    # Merge current (churn-healed) ids with any still-unresolvable raw ids; dedup.
+    return list(dict.fromkeys([a for a in current_api_ids if a is not None] + unresolved_raw))
+
+
 @api_view(['PATCH'])
 @permission_classes([AllowAny])
 def device_favorites_matches_view(request):
@@ -2022,9 +2101,8 @@ def device_favorites_matches_view(request):
 
     try:
         device, _ = DeviceToken.objects.get_or_create(device_id=device_id)
-        device.favorite_match_ids = [int(mid) for mid in match_ids if mid is not None]
-        device.save(update_fields=['favorite_match_ids', 'updated_at'])
-        return Response({'status': 'ok', 'match_ids': device.favorite_match_ids})
+        raw_ids = _write_match_favorites(device, match_ids)
+        return Response({'status': 'ok', 'match_ids': raw_ids})
     except Exception as e:
         logger.error(f'Error updating match favourites: {e}')
         return Response({'error': 'Internal error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -2096,7 +2174,7 @@ def device_favorites_view(request):
         device = DeviceToken.objects.get(device_id=device_id)
         return Response({
             'player_ids': device.favorite_player_ids,
-            'match_ids': device.favorite_match_ids,
+            'match_ids': _read_match_favorites(device),
         })
     except DeviceToken.DoesNotExist:
         # Return empty favourites if device not yet registered
@@ -2129,7 +2207,7 @@ def user_favorites_view(request):
     """Return favourites for the authenticated user."""
     from .models import UserFavorite
     fav, _ = UserFavorite.objects.get_or_create(user=request.user)
-    return Response({'player_ids': fav.favorite_player_ids, 'match_ids': fav.favorite_match_ids})
+    return Response({'player_ids': fav.favorite_player_ids, 'match_ids': _read_match_favorites(fav)})
 
 
 @api_view(['PATCH'])
@@ -2160,9 +2238,8 @@ def user_favorites_matches_view(request):
         return Response({'error': 'match_ids must be a list'}, status=status.HTTP_400_BAD_REQUEST)
     try:
         fav, _ = UserFavorite.objects.get_or_create(user=request.user)
-        fav.favorite_match_ids = [int(mid) for mid in match_ids if mid is not None]
-        fav.save(update_fields=['favorite_match_ids', 'updated_at'])
-        return Response({'status': 'ok', 'match_ids': fav.favorite_match_ids})
+        raw_ids = _write_match_favorites(fav, match_ids)
+        return Response({'status': 'ok', 'match_ids': raw_ids})
     except Exception as e:
         logger.error(f'Error updating user match favourites: {e}')
         return Response({'error': 'Internal error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
