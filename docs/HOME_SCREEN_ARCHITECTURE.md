@@ -193,7 +193,16 @@ Rendered as the `ListFooterComponent` of the main FlatList — **only** when `ac
 
 ## 5. Draw tab (`activeFilter === 'draw'`)
 
-`DrawTab` (`app/tour/components/DrawTab.tsx`, 422 lines) — bracket-style view of `rawMatches` (the *unprocessed* match list straight from `useHomeData`, no dedup/categorization applied). Takes `roundNames`, `roundFormats`, `roundPrizesLoser` for labeling. Not detailed further here — read that file directly if working on it specifically.
+`DrawTab` (`app/tour/components/DrawTab.tsx`, 422 lines) — a genuinely different UI paradigm from the other tabs: a **2D bracket visualization**, not a vertically-scrolling category list. Don't apply the same "compact row" treatment used elsewhere — it doesn't fit this layout and it's already dense.
+
+- Input is `rawMatches` (the *unprocessed* match list straight from `useHomeData`, no dedup/categorization applied), grouped client-side by `round` into a `Map<round, matches[]>`.
+- **Bracket chain inference**: walks backwards from the last round with ≤32 matches, and only keeps a round in the visible bracket if its match count is exactly double the round after it (Final=1 → SF=2 → QF=4 → Last16=8 → Last32=16 → Last64=32), up to 7 rounds. This means **not every round in the data necessarily appears** — a round that breaks the doubling pattern (e.g. a bye or an odd qualifying structure) gets silently excluded from the bracket chain. If there's no valid chain at all, falls back to the last 7 rounds with ≤32 matches, in raw order (no guaranteed doubling visual).
+- **Layout**: horizontally-scrolling row of round columns, each round is a labeled pill header (round name, format, loser prize if available, match count) above a column of tiny match cards (118×40px, `BracketMatchCard`), absolutely positioned so sibling matches visually converge toward their next-round match via SVG-less `View`-based connector lines (`ConnectorLines` — plain positioned `View`s forming L-shaped/right-angle connectors, not actual SVG paths).
+- **Match card**: two stacked player rows (name + score if in progress/finished), winner's row gets a subtle background tint + amber bold text (`WIN_COLOR = '#FFA726'`), loser dimmed to 38% opacity once finished. Tapping navigates to `/match/{api_match_id}` same as everywhere else.
+- Round names: prefers `roundNames[round]` from the backend if present, else infers from match count (`inferRoundNameFromCount` — 1→Final, 2→Semi-Finals, 4→Quarter-Finals, 8→Last 16, etc.), a **different, count-based inference function** from the round-header naming used in the main list (`getRoundName` in `matchProcessing.ts` — worth checking they don't drift apart if either changes).
+- Empty state: "No bracket data yet." if there are zero matches at all (not per-round — the whole tab, not just missing rounds).
+
+**Verdict for a style pass**: this tab's 40px bracket cards are already about as small as this layout can go without becoming illegible — the "make cards smaller" feedback that applies to the main list's `MatchItem` doesn't really apply here. Reasonable style-only improvements: refine the connector-line color/weight, the round-pill styling, or the win/loss color treatment to match a broader palette refresh — but the bracket-chain *logic* and 118×40 card *layout* are structural, not cosmetic.
 
 ---
 
