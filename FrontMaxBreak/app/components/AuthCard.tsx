@@ -12,6 +12,8 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { syncOnLogin } from '../../services/scoreboardSyncService';
 import { getAuthHeader, changePassword } from '../../services/authService';
+import { requestPushPermissionAndGetToken } from '../../utils/notifications';
+import { getOrCreateDeviceId } from '../../utils/deviceIdentity';
 
 const API_BASE = process.env.EXPO_PUBLIC_API_BASE_URL || 'https://snookerapp.up.railway.app/oneFourSeven/';
 
@@ -41,6 +43,12 @@ export default function AuthCard({ visible, onClose }: Props) {
   const [pwError, setPwError] = useState('');
   const [pwSuccess, setPwSuccess] = useState('');
 
+  const [showPushDebug, setShowPushDebug] = useState(false);
+  const [pushDebugLoading, setPushDebugLoading] = useState(false);
+  const [pushDeviceId, setPushDeviceId] = useState('');
+  const [pushToken, setPushToken] = useState('');
+  const [pushTokenError, setPushTokenError] = useState('');
+
   function resetForm() {
     setUsername('');
     setPassword('');
@@ -52,6 +60,27 @@ export default function AuthCard({ visible, onClose }: Props) {
     setConfirmPw('');
     setPwError('');
     setPwSuccess('');
+    setShowPushDebug(false);
+    setPushDeviceId('');
+    setPushToken('');
+    setPushTokenError('');
+  }
+
+  async function togglePushDebug() {
+    const next = !showPushDebug;
+    setShowPushDebug(next);
+    if (next && !pushToken && !pushTokenError) {
+      setPushDebugLoading(true);
+      try {
+        const deviceId = await getOrCreateDeviceId();
+        setPushDeviceId(deviceId);
+        const { token, error } = await requestPushPermissionAndGetToken();
+        setPushToken(token || '');
+        setPushTokenError(error || '');
+      } finally {
+        setPushDebugLoading(false);
+      }
+    }
   }
 
   function close() {
@@ -171,6 +200,34 @@ export default function AuthCard({ visible, onClose }: Props) {
                 <TouchableOpacity style={styles.closeBtn} onPress={close} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                   <Text style={[styles.closeBtnText, { color: c.textMuted }]}>✕</Text>
                 </TouchableOpacity>
+
+                {/* Push notification debug info — dev diagnostic */}
+                <TouchableOpacity onPress={togglePushDebug} style={styles.deleteBtn}>
+                  <Text style={[styles.deleteBtnText, { color: c.textMuted }]}>
+                    {showPushDebug ? 'Hide push debug' : 'Push debug'}
+                  </Text>
+                </TouchableOpacity>
+                {showPushDebug && (
+                  pushDebugLoading ? (
+                    <ActivityIndicator color={c.primary} />
+                  ) : (
+                    <View style={styles.pushDebugBox}>
+                      <Text style={[styles.pushDebugLabel, { color: c.textMuted }]}>Device ID</Text>
+                      <Text selectable style={[styles.pushDebugValue, { color: c.textPrimary }]}>{pushDeviceId}</Text>
+                      {pushToken ? (
+                        <>
+                          <Text style={[styles.pushDebugLabel, { color: c.textMuted }]}>Push token (long-press to copy)</Text>
+                          <Text selectable style={[styles.pushDebugValue, { color: c.textPrimary }]}>{pushToken}</Text>
+                        </>
+                      ) : (
+                        <>
+                          <Text style={[styles.pushDebugLabel, { color: c.textMuted }]}>Error</Text>
+                          <Text selectable style={[styles.pushDebugValue, { color: '#CC0000' }]}>{pushTokenError || 'Unknown'}</Text>
+                        </>
+                      )}
+                    </View>
+                  )
+                )}
 
                 {loggedIn && user ? (
                   /* ── Logged-in state ──────────────────────────────── */
@@ -442,5 +499,17 @@ const styles = StyleSheet.create({
   deleteBtnText: {
     fontSize: 12,
     textDecorationLine: 'underline',
+  },
+  pushDebugBox: {
+    gap: 2,
+    marginBottom: 4,
+  },
+  pushDebugLabel: {
+    fontSize: 10,
+    marginTop: 6,
+  },
+  pushDebugValue: {
+    fontSize: 11,
+    fontFamily: Platform.OS === 'android' ? 'monospace' : 'Courier',
   },
 });
