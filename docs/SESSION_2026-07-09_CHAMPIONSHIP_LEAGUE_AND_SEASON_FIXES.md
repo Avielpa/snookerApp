@@ -87,6 +87,30 @@ Given user's (justified) concern about scope — the live-match detection/priori
 - `auto command` (live monitor) confirmed running as a genuine persistent process, 30+ min continuous uptime, zero 403s observed post-fix.
 - No 403 errors observed in any run after the rate-limit fix landed.
 
+## Follow-up round (same day, after initial fixes shipped): two regressions found in real use
+
+### 8. Home screen flickered between upcoming matches and stale Results tab
+**Symptom reported by user**: opened the app, saw July 10 matches; reopened minutes later, Results tab auto-triggered with no upcoming data, then showed results from July 7th.
+
+**Root cause**: every Championship League group event shares the **identical event-level date range** (the whole ~3.5-week Stage span, e.g. `2026-06-22 → 2026-07-15`) — snooker.org models the whole Stage as one event per group, not each group's actual single play-day. Match-level data (`scheduled_date`, `Status`) is correctly granular and was verified accurate (checked directly: July 8 matches finished with real scores, July 9/10 matches present as not-yet-started). The bug was in `getActiveTournamentId()` (`FrontMaxBreak/services/tourServices.ts`): with ~43 CL groups now all satisfying "active by date" simultaneously, it picked `events.find(...)` — the first match in whatever order the API returned, with zero awareness of which group's matches were actually happening *today*. If it landed on a group whose matches all finished days ago, Home showed stale results while other groups had live/upcoming action.
+
+**Fix**: new backend resolver `GET /tours/active-main-event/` (`active_main_event_view` in `views.py`) picks the right event server-side using match-level `Status` (accurate per-group, unlike event dates) in one query:
+- Splits currently-active main-tour events into `primary_ids` (real standalone tournaments, name doesn't start with "championship league") and `cl_ids` (CL groups).
+- `_resolve(primary_ids, 'main') or _resolve(cl_ids, 'cl')` — a **structural** guarantee, not probabilistic: `_resolve()` returns `None` only when its input list is empty, so whenever any real tournament is active, it always wins (worst case `main-fallback`) and CL is never even queried. Verified this by code trace, not just live observation, since no real tournament happened to be active during testing to observe empirically.
+- Within each tier: live/on-break match right now > soonest upcoming match > most recently finished match > earliest event ID as last-resort fallback.
+- Frontend (`getActiveTournamentId`) calls this first, falls back to the old client-side date-range logic unchanged if the resolver errors — zero behavior change for the common case (single active tournament, no CL).
+
+Verified against production: resolver returned `{"event_id": 2833, "reason": "cl-upcoming"}` — Championship League "Stage One Group 32", whose 6 matches are genuinely all scheduled for today (July 9), confirmed zero non-CL main tournaments were active at check time (so `cl-upcoming` was the objectively correct answer, not a fallback masking a bug).
+
+### 9. Stats screen "Records" (all-time leaders) tab silently missing top players
+**Symptom reported by user**: "Records" sub-tab data not matching CueTracker, suspected season-scoping bug.
+
+**Root cause**: `RecordsTab` reused the same season-filtered `centuriesData` that the Centuries-race tab uses (`fetchCenturies(centuriesSeasonParam(selectedSeason))`). Since `CenturyRecord` stores one row per `(player, season_label)`, filtering to one season silently drops any player without a row in that specific season — so all-time greats like Ronnie O'Sullivan (real career total 1324) were completely missing from "all-time" leaders just because they hadn't scored a century in the *currently selected* season yet.
+
+**Fix**: new endpoint `GET /stats/records/` (`stats_records_view` in `views_stats.py`) takes `MAX(career_total)`/`MAX(career_147s)` per player across **every** season row, not filtered to one season. Frontend: new `fetchRecords()` in `statsService.ts`, `RecordsTab` now takes `RecordsData` instead of reusing `CenturiesData`.
+
+Verified against CueTracker's real all-time page directly (`https://cuetracker.net/statistics/centuries/most-made`): O'Sullivan 1324→1318, Trump 1149→1146, Higgins 1063→1058, Robertson 1038→1035, Selby 961→959 in our DB (2-6 century variance is expected CT-side drift between scrapes, not a bug).
+
 ## Files changed (chronological commits, master branch)
 
 ```
@@ -100,6 +124,8 @@ d61b7683  fix: throttle all snooker.org API loops to the real 2 req/min limit
 5564a7c9  fix: empty-only backfill wasted its rate-limited queue on far-future events
 d9eaba3a  fix: remaining hardcoded season=2025 defaults + misleading CL date span
 98819ea4  chore: add one-off repair for all historical century seasons
+f1c4d111  docs: session summary for Championship League + season-detection fixes
+102690f7  fix: Home screen picks wrong CL group when several are simultaneously active; Records tab was implicitly season-filtered
 ```
 
 (Plus the Railway infra change — "auto command" service cron→persistent conversion — which is NOT in git, it's a Railway service-config change made via the Railway MCP/dashboard.)
