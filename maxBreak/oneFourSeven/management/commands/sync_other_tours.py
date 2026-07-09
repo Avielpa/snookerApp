@@ -130,14 +130,16 @@ class Command(BaseCommand):
 
         # Determine season
         if not season:
+            from oneFourSeven.constants import current_season_int
             try:
                 self.stdout.write('[SEASON] Fetching current season...')
                 season_data = _api_get({'t': '20'})
-                season = season_data[0].get('CurrentSeason') if season_data else 2025
+                season = season_data[0].get('CurrentSeason') if season_data else current_season_int()
                 time.sleep(RATE_LIMIT_SECONDS)
             except Exception as e:
-                self.stdout.write(f'[SEASON] Failed to get season, defaulting to 2025: {e}')
-                season = 2025
+                fallback = current_season_int()
+                self.stdout.write(f'[SEASON] Failed to get season, defaulting to {fallback}: {e}')
+                season = fallback
 
         self.stdout.write(f'[START] Syncing other tours for season {season}: {tours}')
 

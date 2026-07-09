@@ -41,6 +41,7 @@ interface Tournament {
   isGroup?: boolean;
   isGroupChild?: boolean;
   children?: Tournament[];
+  legCount?: number;
 }
 
 interface FilterOption {
@@ -158,12 +159,17 @@ const TournamentCard = React.memo(({
           </View>
         )}
 
-        {/* Group badge — Championship League collapses its ~40 groups here */}
+        {/* Group badge — Championship League collapses its ~40 groups here.
+            legCount > 1 means it's played in separate runs this season (e.g.
+            June and again in January) — the dates above show only the
+            current/next run, not a misleading full-season span. */}
         {item.isGroup && (
           <View style={cardStyles.metaRow}>
             <Ionicons name="layers-outline" size={12} color={colors.primary} />
             <Text style={[cardStyles.metaText, { color: colors.primary }]}>
-              {groupCount} groups {expanded ? '· tap to collapse' : '· tap to view'}
+              {groupCount} groups
+              {item.legCount && item.legCount > 1 ? ` · played in ${item.legCount} separate runs this season` : ''}
+              {' '}{expanded ? '· tap to collapse' : '· tap to view'}
             </Text>
           </View>
         )}

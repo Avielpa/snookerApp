@@ -133,7 +133,8 @@ class Command(BaseCommand):
         try:
             # 1. Update tournaments (new tournaments, status changes)
             self.stdout.write('📋 Updating tournaments...')
-            call_command('update_tournaments', '--season', '2025')
+            from oneFourSeven.constants import current_season_int
+            call_command('update_tournaments', '--season', str(current_season_int()))
             
             # 2. Update live matches status
             self.stdout.write('🏆 Updating match statuses...')
@@ -165,8 +166,9 @@ class Command(BaseCommand):
             call_command('update_rankings', '--ranking-type', 'all')
             
             # 3. Update round details for recent tournaments
+            from oneFourSeven.constants import current_season_int
             self.stdout.write('🎯 Updating round details...')
-            call_command('update_round_details', '--season', '2025', '--limit', '20')
+            call_command('update_round_details', '--season', str(current_season_int()), '--limit', '20')
             
             self.stdout.write('✅ Weekly updates completed')
             

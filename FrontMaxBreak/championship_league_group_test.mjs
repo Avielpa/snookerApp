@@ -15,6 +15,37 @@ function isChampionshipLeagueRelated(name) {
     return name.toLowerCase().trim().startsWith(CL_PREFIX);
 }
 
+const LEG_GAP_DAYS = 21;
+
+function clusterIntoLegs(sorted) {
+    const legs = [];
+    let current = [];
+    let lastEnd = null;
+
+    for (const item of sorted) {
+        const start = item.StartDate ? new Date(item.StartDate).getTime() : null;
+        const end = item.EndDate ? new Date(item.EndDate).getTime() : start;
+        if (start === null) continue;
+        if (lastEnd !== null && (start - lastEnd) / (1000 * 60 * 60 * 24) > LEG_GAP_DAYS) {
+            legs.push(current);
+            current = [];
+        }
+        current.push(item);
+        lastEnd = lastEnd === null ? end : Math.max(lastEnd, end ?? start);
+    }
+    if (current.length) legs.push(current);
+    return legs;
+}
+
+function legDateRange(leg) {
+    const starts = leg.map(t => t.StartDate).filter(Boolean);
+    const ends = leg.map(t => t.EndDate).filter(Boolean);
+    return {
+        start: starts.length ? starts.reduce((a, b) => (new Date(a) < new Date(b) ? a : b)) : null,
+        end: ends.length ? ends.reduce((a, b) => (new Date(a) > new Date(b) ? a : b)) : null,
+    };
+}
+
 function groupChampionshipLeague(tournaments) {
     const clItems = tournaments.filter(t => isChampionshipLeagueSubEvent(t.Name));
     if (clItems.length <= 1) return tournaments;
@@ -28,14 +59,11 @@ function groupChampionshipLeague(tournaments) {
         return (a.Name || '').localeCompare(b.Name || '');
     });
 
-    const starts = children.map(t => t.StartDate).filter(Boolean);
-    const ends = children.map(t => t.EndDate).filter(Boolean);
-    const minStart = starts.length
-        ? starts.reduce((a, b) => (new Date(a) < new Date(b) ? a : b))
-        : null;
-    const maxEnd = ends.length
-        ? ends.reduce((a, b) => (new Date(a) > new Date(b) ? a : b))
-        : null;
+    const legs = clusterIntoLegs(children);
+    const activeLeg = legs.find(leg => leg.some(t => t.status === 'active'));
+    const upcomingLeg = legs.find(leg => leg.some(t => t.status === 'upcoming'));
+    const relevantLeg = activeLeg || upcomingLeg || legs[legs.length - 1] || children;
+    const { start: legStart, end: legEnd } = legDateRange(relevantLeg);
 
     const status = children.some(t => t.status === 'active')
         ? 'active'
@@ -46,12 +74,13 @@ function groupChampionshipLeague(tournaments) {
     const groupCard = {
         ID: CHAMPIONSHIP_LEAGUE_GROUP_ID,
         Name: 'Championship League',
-        StartDate: minStart,
-        EndDate: maxEnd,
+        StartDate: legStart,
+        EndDate: legEnd,
         status,
         isLive: status === 'active',
         isGroup: true,
         children,
+        legCount: legs.length,
     };
 
     return [...others, groupCard];
@@ -195,6 +224,76 @@ function group(name, start, end, status) {
     const result = groupChampionshipLeague(input);
     assert(result.length === 1 && result[0].isGroup, 'grouping is case-insensitive');
     assert(result[0].children.length === 2, 'case-insensitive matches both children');
+}
+
+// ── Multi-leg: CL played in separate blocks across a season ────────────────
+// (the real bug: CL runs Jun-Jul, then again Dec-Jan — a raw min/max span
+// would misleadingly show one continuous 7-month "tournament")
+
+{
+    const input = [
+        group('Championship League Stage One Group 1', '2026-06-22', '2026-06-23', 'past'),
+        group('Championship League Stage One Group 2', '2026-06-24', '2026-06-25', 'past'),
+        group('Championship League Stage Three Group A', '2026-12-21', '2026-12-22', 'upcoming'),
+        group('Championship League Winners Group', '2027-01-05', '2027-01-06', 'upcoming'),
+    ];
+    const result = groupChampionshipLeague(input);
+    const groupCard = result.find(t => t.isGroup);
+
+    assert(groupCard.legCount === 2, 'multi-leg: 4 events across a 6-month gap cluster into 2 legs');
+    assert(groupCard.status === 'upcoming', 'multi-leg: status reflects any non-past leg');
+    assert(
+        groupCard.StartDate === '2026-12-21' && groupCard.EndDate === '2027-01-06',
+        'multi-leg: displayed date range is the upcoming leg\'s span, not the full min/max across all legs'
+    );
+    assert(groupCard.children.length === 4, 'multi-leg: all children still present regardless of leg');
+}
+
+{
+    // Live leg takes priority for display even if a later leg is also upcoming.
+    const input = [
+        group('Championship League Stage One Group 1', '2026-06-22', '2026-07-15', 'active'),
+        group('Championship League Winners Group', '2027-01-22', '2027-01-23', 'upcoming'),
+    ];
+    const result = groupChampionshipLeague(input);
+    const groupCard = result.find(t => t.isGroup);
+    assert(groupCard.legCount === 2, 'multi-leg with live leg: still counts 2 legs');
+    assert(groupCard.status === 'active', 'multi-leg with live leg: status is active');
+    assert(
+        groupCard.StartDate === '2026-06-22' && groupCard.EndDate === '2026-07-15',
+        'multi-leg with live leg: displayed date range is the LIVE leg\'s span, not the future leg'
+    );
+}
+
+{
+    // All legs in the past: falls back to the most recent one.
+    const input = [
+        group('Championship League Stage One Group 1', '2025-06-22', '2025-06-23', 'past'),
+        group('Championship League Winners Group', '2026-01-22', '2026-01-23', 'past'),
+    ];
+    const result = groupChampionshipLeague(input);
+    const groupCard = result.find(t => t.isGroup);
+    assert(groupCard.legCount === 2, 'multi-leg all past: still counts 2 legs');
+    assert(groupCard.status === 'past', 'multi-leg all past: status is past');
+    assert(
+        groupCard.StartDate === '2026-01-22' && groupCard.EndDate === '2026-01-23',
+        'multi-leg all past: displayed date range is the most recent (last) leg'
+    );
+}
+
+{
+    // Events close together (gap <= 21 days) stay in a single leg.
+    const input = [
+        group('Championship League Stage One Group 1', '2026-06-22', '2026-06-23', 'past'),
+        group('Championship League Stage Two Group A', '2026-07-10', '2026-07-15', 'active'),
+    ];
+    const result = groupChampionshipLeague(input);
+    const groupCard = result.find(t => t.isGroup);
+    assert(groupCard.legCount === 1, 'single leg: events within the gap threshold stay together');
+    assert(
+        groupCard.StartDate === '2026-06-22' && groupCard.EndDate === '2026-07-15',
+        'single leg: date range spans the whole (single) leg as before'
+    );
 }
 
 // ── Empty input ──────────────────────────────────────────────────────────

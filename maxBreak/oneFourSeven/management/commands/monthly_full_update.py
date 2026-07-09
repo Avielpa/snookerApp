@@ -19,8 +19,9 @@ class Command(BaseCommand):
         
         try:
             # 1. Update tournaments
+            from oneFourSeven.constants import current_season_int
             self.stdout.write('1️⃣ Updating tournaments...')
-            call_command('update_tournaments', '--season', '2025', verbosity=0)
+            call_command('update_tournaments', '--season', str(current_season_int()), verbosity=0)
             time.sleep(10)
             
             # 2. Update players

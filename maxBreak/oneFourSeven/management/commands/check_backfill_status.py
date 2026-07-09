@@ -19,7 +19,8 @@ class Command(BaseCommand):
         parser.add_argument('--top', type=int, default=128)
 
     def handle(self, *args, **options):
-        current_season = datetime.now().year - 1  # 2025 = the 2025/26 season
+        from oneFourSeven.constants import current_season_int
+        current_season = current_season_int()
         top_n = options['top']
 
         top_ids = list(

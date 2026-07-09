@@ -166,8 +166,9 @@ class Command(BaseCommand):
     def _startup_sync(self):
         """On startup: import current season events + any missing match data."""
         try:
+            from oneFourSeven.constants import current_season_int
             self.stdout.write('[STARTUP] Syncing current season events...')
-            call_command('update_tournaments', '--season', '2025', '--tour', 'main')
+            call_command('update_tournaments', '--season', str(current_season_int()), '--tour', 'main')
             self.stdout.write('[STARTUP] Season events synced')
         except Exception as e:
             logger.error(f'Startup tournament sync failed: {e}')
@@ -670,9 +671,10 @@ class Command(BaseCommand):
         """Run monthly comprehensive updates."""
         try:
             self.stdout.write('[MONTHLY] Starting monthly comprehensive updates...')
-            
+
             # Update tournaments for current season
-            call_command('update_tournaments', '--season', '2025', '--tour', 'main')
+            from oneFourSeven.constants import current_season_int
+            call_command('update_tournaments', '--season', str(current_season_int()), '--tour', 'main')
             self.stdout.write('[SUCCESS] Monthly tournaments updated')
             
             # Update players

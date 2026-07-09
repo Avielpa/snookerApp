@@ -296,9 +296,10 @@ def ranking_types_view(request, ranking_type='MoneyRankings'):
             )
         
         # Get query parameters
+        from oneFourSeven.constants import current_season_int
         season_param = request.GET.get('season')
-        target_season = int(season_param) if season_param else 2025
-        
+        target_season = int(season_param) if season_param else current_season_int()
+
         # Base query for target season
         rankings_query = Ranking.objects.select_related('Player').filter(
             Season=target_season,
@@ -410,8 +411,9 @@ def ranking_tabs_view(request, tab_type='mens'):
     """
     try:
         # Get query parameters
+        from oneFourSeven.constants import current_season_int
         season_param = request.GET.get('season')
-        target_season = int(season_param) if season_param else 2025
+        target_season = int(season_param) if season_param else current_season_int()
         ranking_type = request.GET.get('type', 'MoneyRankings')
         
         # Base query with optimizations
@@ -1145,7 +1147,8 @@ def tours_by_status_view(request):
             except ValueError:
                 return Response({"error": "Invalid season parameter"}, status=status.HTTP_400_BAD_REQUEST)
         else:
-            target_season = 2025  # Current season
+            from oneFourSeven.constants import current_season_int
+            target_season = current_season_int()
         
         today = date.today()
         recent_cutoff = today - timedelta(days=14)  # Last 2 weeks
