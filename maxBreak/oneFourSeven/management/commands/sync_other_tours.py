@@ -167,10 +167,6 @@ class Command(BaseCommand):
                 if not event_id or not event_name:
                     continue
 
-                # Skip Championship League Stage noise
-                if 'Championship League Stage' in event_name:
-                    continue
-
                 # Upsert event
                 def parse_date(s):
                     if not s:

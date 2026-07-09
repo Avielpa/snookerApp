@@ -102,8 +102,6 @@ class Command(BaseCommand):
                     Event.objects.filter(
                         Season=current_year,
                         Type__in=['Ranking', 'Qualifying', 'Invitational']
-                    ).exclude(
-                        Name__icontains='Championship League Stage'
                     ).order_by('StartDate')[:max_events]
                 )
 

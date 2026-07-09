@@ -113,9 +113,7 @@ class Command(BaseCommand):
                 
                 # Keep ranking events, qualifying events, and invitational events
                 if event_type in ['Ranking', 'Qualifying', 'Qualifying School', 'Invitational', 'Other', 'Q', 'Seniors', 'Amateur']:
-                    # Exclude Championship League Stage events
-                    if 'Championship League Stage' not in event_name:
-                        filtered_events.append(event)
+                    filtered_events.append(event)
 
             self.stdout.write(f'Filtered to {len(filtered_events)} relevant tournaments')
 
