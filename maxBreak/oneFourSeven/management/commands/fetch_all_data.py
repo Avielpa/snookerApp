@@ -36,6 +36,7 @@ class Command(BaseCommand):
             ('Players (pro women)', 'update_players', {'status': 'pro', 'sex': 'women'}),
             ('Rankings (current season)', 'update_rankings', {'current_season_only': True}),
             ('Recent matches', 'daily_matches_update', {}),
+            ('Backfill events with zero match data', 'update_matches', {'empty_only': True}),
             ('Round details', 'daily_rounds_update', {}),
             ('Other tours (Women/Seniors/Q-Tour)', 'sync_other_tours', {}),
             ('CueTracker career history', 'sync_career_history', {}),
