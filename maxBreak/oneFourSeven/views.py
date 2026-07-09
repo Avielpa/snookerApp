@@ -1030,10 +1030,12 @@ def calendar_tabs_view(request, tab_type='main'):
         from datetime import timedelta
         
         # Get query parameters
-        season_param = request.GET.get('season')
-        target_season = int(season_param) if season_param else 2025
-
         today = date.today()
+        # Season rolls over in May, matching hooks/useSeasonSelector.ts on the frontend.
+        default_season = today.year if today.month >= 5 else today.year - 1
+        season_param = request.GET.get('season')
+        target_season = int(season_param) if season_param else default_season
+
         recent_cutoff = today - timedelta(days=365)  # Show all past tournaments in current season
 
         # Filter tournaments based on tab type
