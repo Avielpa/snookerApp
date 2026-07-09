@@ -150,7 +150,7 @@ class Command(BaseCommand):
         for tour in tours:
             self.stdout.write(f'\n[TOUR] Fetching {tour} events...')
             try:
-                events_data = _api_get({'t': '5', 'e': season, 'tr': tour})
+                events_data = _api_get({'t': '5', 's': season, 'tr': tour})
                 time.sleep(RATE_LIMIT_SECONDS)
             except Exception as e:
                 self.stdout.write(f'[TOUR] Failed to fetch {tour} events: {e}')
