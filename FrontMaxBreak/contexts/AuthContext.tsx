@@ -5,7 +5,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { login, logout, register, getUser, isLoggedIn, linkDevice, AuthUser } from '../services/authService';
 import { syncOnLogin } from '../services/scoreboardSyncService';
-import { loadFavorites } from '../services/favoritesService';
+import { loadFavorites, clearFavoritesCache } from '../services/favoritesService';
 import { getOrCreateDeviceId } from '../utils/deviceIdentity';
 
 interface AuthContextValue {
@@ -72,6 +72,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const doLogout = useCallback(async () => {
     await logout();
     setUser(null);
+    clearFavoritesCache().catch(() => {});
   }, []);
 
   return (

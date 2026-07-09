@@ -11,6 +11,7 @@ type SavePlayerFavorites  = typeof import('../services/favoritesService').savePl
 type SaveMatchFavorites   = typeof import('../services/favoritesService').saveMatchFavorites;
 type TogglePlayerFavourite = typeof import('../services/favoritesService').togglePlayerFavourite;
 type ToggleMatchFavourite  = typeof import('../services/favoritesService').toggleMatchFavourite;
+type ClearFavoritesCache   = typeof import('../services/favoritesService').clearFavoritesCache;
 
 // ─── Shared constants ─────────────────────────────────────────────────────────
 const MOCK_DEVICE_ID = 'test-device-uuid-123';
@@ -31,6 +32,7 @@ let savePlayerFavorites: SavePlayerFavorites;
 let saveMatchFavorites: SaveMatchFavorites;
 let togglePlayerFavourite: TogglePlayerFavourite;
 let toggleMatchFavourite: ToggleMatchFavourite;
+let clearFavoritesCache: ClearFavoritesCache;
 
 function setupFavoritesModule(): void {
     jest.resetModules();
@@ -72,6 +74,7 @@ function setupFavoritesModule(): void {
     saveMatchFavorites    = mod.saveMatchFavorites;
     togglePlayerFavourite = mod.togglePlayerFavourite;
     toggleMatchFavourite  = mod.toggleMatchFavourite;
+    clearFavoritesCache   = mod.clearFavoritesCache;
 }
 
 // =============================================================================
@@ -376,5 +379,248 @@ describe('toggle helpers', () => {
         );
         expect(deviceCall).toBeDefined();
         expect(deviceCall![1].match_ids).not.toContain(99);
+    });
+});
+
+// =============================================================================
+// Tests 102–111: loadFavorites account-sync gap fix — 10 tests
+//
+// Root cause: favorites starred while logged out (or on a device before it
+// linked to an account) lived only in the device/local layer and never
+// reached UserFavorite, so other devices on the same account — and the
+// backend notification query, which checks UserFavorite — never saw them.
+// loadFavorites() now pushes the merged union back to the account whenever
+// it detects the account is missing something the device/local layer has.
+// =============================================================================
+
+describe('loadFavorites — account-sync gap fix', () => {
+    beforeEach(setupFavoritesModule);
+
+    it('102 — pushes merged match_ids to the account when device has matches the account lacks', async () => {
+        mockGetAuthHeader.mockResolvedValue(MOCK_AUTH_HEADER);
+        mockApiGet
+            .mockResolvedValueOnce({ data: { player_ids: [], match_ids: [111, 222] } }) // device
+            .mockResolvedValueOnce({ data: { player_ids: [], match_ids: [] } });        // account (empty)
+        await loadFavorites();
+        const pushCall = (mockApiPatch.mock.calls as any[][]).find(
+            (c) => c[0] === 'user/favorites/matches/'
+        );
+        expect(pushCall).toBeDefined();
+        expect(pushCall![1].match_ids.slice().sort((a: number, b: number) => a - b)).toEqual([111, 222]);
+    });
+
+    it('103 — pushes merged player_ids to the account when device has players the account lacks', async () => {
+        mockGetAuthHeader.mockResolvedValue(MOCK_AUTH_HEADER);
+        mockApiGet
+            .mockResolvedValueOnce({ data: { player_ids: [7], match_ids: [] } })
+            .mockResolvedValueOnce({ data: { player_ids: [], match_ids: [] } });
+        await loadFavorites();
+        const pushCall = (mockApiPatch.mock.calls as any[][]).find(
+            (c) => c[0] === 'user/favorites/players/'
+        );
+        expect(pushCall).toBeDefined();
+        expect(pushCall![1].player_ids).toContain(7);
+    });
+
+    it('104 — does NOT push when the account already has everything the device has', async () => {
+        mockGetAuthHeader.mockResolvedValue(MOCK_AUTH_HEADER);
+        mockApiGet
+            .mockResolvedValueOnce({ data: { player_ids: [5], match_ids: [] } })
+            .mockResolvedValueOnce({ data: { player_ids: [5], match_ids: [] } });
+        await loadFavorites();
+        const pushCalls = (mockApiPatch.mock.calls as any[][]).filter(
+            (c) => c[0] === 'user/favorites/players/' || c[0] === 'user/favorites/matches/'
+        );
+        expect(pushCalls.length).toBe(0);
+    });
+
+    it('105 — does NOT push when logged out (no auth header)', async () => {
+        mockGetAuthHeader.mockResolvedValue(null);
+        mockApiGet.mockResolvedValueOnce({ data: { player_ids: [], match_ids: [999] } });
+        await loadFavorites();
+        const pushCalls = (mockApiPatch.mock.calls as any[][]).filter(
+            (c) => c[0] === 'user/favorites/players/' || c[0] === 'user/favorites/matches/'
+        );
+        expect(pushCalls.length).toBe(0);
+    });
+
+    it('106 — includes locally-cached-only matches (not yet on device or account) in the push', async () => {
+        mockAsyncGetItem.mockResolvedValue(JSON.stringify({ playerIds: [], matchIds: [321] }));
+        mockGetAuthHeader.mockResolvedValue(MOCK_AUTH_HEADER);
+        mockApiGet
+            .mockResolvedValueOnce({ data: { player_ids: [], match_ids: [] } })
+            .mockResolvedValueOnce({ data: { player_ids: [], match_ids: [] } });
+        await loadFavorites();
+        const pushCall = (mockApiPatch.mock.calls as any[][]).find(
+            (c) => c[0] === 'user/favorites/matches/'
+        );
+        expect(pushCall![1].match_ids).toContain(321);
+    });
+
+    it('107 — pushes players and matches independently (only the one with a gap)', async () => {
+        mockGetAuthHeader.mockResolvedValue(MOCK_AUTH_HEADER);
+        mockApiGet
+            .mockResolvedValueOnce({ data: { player_ids: [1], match_ids: [50] } })  // device
+            .mockResolvedValueOnce({ data: { player_ids: [1], match_ids: [] } });   // account has player, not match
+        await loadFavorites();
+        const playerPush = (mockApiPatch.mock.calls as any[][]).find((c) => c[0] === 'user/favorites/players/');
+        const matchPush  = (mockApiPatch.mock.calls as any[][]).find((c) => c[0] === 'user/favorites/matches/');
+        expect(playerPush).toBeUndefined();
+        expect(matchPush).toBeDefined();
+    });
+
+    it('108 — resolves without throwing when the account push fails', async () => {
+        mockGetAuthHeader.mockResolvedValue(MOCK_AUTH_HEADER);
+        mockApiGet
+            .mockResolvedValueOnce({ data: { player_ids: [], match_ids: [7] } })
+            .mockResolvedValueOnce({ data: { player_ids: [], match_ids: [] } });
+        mockApiPatch.mockRejectedValue(new Error('server down'));
+        await expect(loadFavorites()).resolves.toBeDefined();
+    });
+
+    it('109 — the returned merged favorites still contain the gap items regardless of push outcome', async () => {
+        mockGetAuthHeader.mockResolvedValue(MOCK_AUTH_HEADER);
+        mockApiGet
+            .mockResolvedValueOnce({ data: { player_ids: [], match_ids: [42] } })
+            .mockResolvedValueOnce({ data: { player_ids: [], match_ids: [] } });
+        mockApiPatch.mockRejectedValue(new Error('server down'));
+        const result = await loadFavorites();
+        expect(result.matchIds).toContain(42);
+    });
+
+    it('110 — does not push an empty array when device and account both have nothing', async () => {
+        mockGetAuthHeader.mockResolvedValue(MOCK_AUTH_HEADER);
+        mockApiGet
+            .mockResolvedValueOnce({ data: { player_ids: [], match_ids: [] } })
+            .mockResolvedValueOnce({ data: { player_ids: [], match_ids: [] } });
+        await loadFavorites();
+        const pushCalls = (mockApiPatch.mock.calls as any[][]).filter(
+            (c) => c[0] === 'user/favorites/players/' || c[0] === 'user/favorites/matches/'
+        );
+        expect(pushCalls.length).toBe(0);
+    });
+
+    it('111 — pushed player_ids payload is the full merged union, not just the new ones', async () => {
+        mockGetAuthHeader.mockResolvedValue(MOCK_AUTH_HEADER);
+        mockApiGet
+            .mockResolvedValueOnce({ data: { player_ids: [1, 2], match_ids: [] } }) // device
+            .mockResolvedValueOnce({ data: { player_ids: [2, 3], match_ids: [] } }); // account
+        await loadFavorites();
+        const pushCall = (mockApiPatch.mock.calls as any[][]).find((c) => c[0] === 'user/favorites/players/');
+        expect(pushCall![1].player_ids.slice().sort((a: number, b: number) => a - b)).toEqual([1, 2, 3]);
+    });
+});
+
+// =============================================================================
+// Tests 112–116: clearFavoritesCache — logout cross-account leak fix — 5 tests
+//
+// Without this, logging out and a different account logging in on the same
+// device would inherit the previous account's local favorites on the next
+// loadFavorites() merge, and (after the fix above) auto-push them onto the
+// new account.
+// =============================================================================
+
+describe('clearFavoritesCache', () => {
+    beforeEach(setupFavoritesModule);
+
+    it('112 — removes the AsyncStorage cache key', async () => {
+        const mockRemoveItem = jest.fn().mockResolvedValue(undefined);
+        (require('@react-native-async-storage/async-storage').default as any).removeItem = mockRemoveItem;
+        await clearFavoritesCache();
+        expect(mockRemoveItem).toHaveBeenCalledWith('@maxbreak_favorites');
+    });
+
+    it('113 — resets in-memory cache so sync reads return false after clearing', async () => {
+        mockApiGet.mockResolvedValue({ data: { player_ids: [5], match_ids: [] } });
+        await loadFavorites();
+        (require('@react-native-async-storage/async-storage').default as any).removeItem =
+            jest.fn().mockResolvedValue(undefined);
+        await clearFavoritesCache();
+        const mod = require('../services/favoritesService');
+        expect(mod.isPlayerFavouriteSync(5)).toBe(false);
+    });
+
+    it('114 — a subsequent loadFavorites() for a different account does not resurrect the old local matches', async () => {
+        // First account favorites match 999 locally
+        mockApiGet.mockResolvedValueOnce({ data: { player_ids: [], match_ids: [999] } });
+        await loadFavorites();
+
+        // Logout clears the cache
+        (require('@react-native-async-storage/async-storage').default as any).removeItem =
+            jest.fn().mockResolvedValue(undefined);
+        await clearFavoritesCache();
+
+        // New account logs in — device/account endpoints now report nothing
+        mockGetAuthHeader.mockResolvedValue(MOCK_AUTH_HEADER);
+        mockApiGet
+            .mockResolvedValueOnce({ data: { player_ids: [], match_ids: [] } })
+            .mockResolvedValueOnce({ data: { player_ids: [], match_ids: [] } });
+        const result = await loadFavorites();
+        expect(result.matchIds).not.toContain(999);
+    });
+
+    it('115 — does not throw when AsyncStorage.removeItem fails', async () => {
+        (require('@react-native-async-storage/async-storage').default as any).removeItem =
+            jest.fn().mockRejectedValue(new Error('storage error'));
+        await expect(clearFavoritesCache()).resolves.toBeUndefined();
+    });
+
+    it('116 — clearing an already-empty cache is a no-op that still resolves', async () => {
+        (require('@react-native-async-storage/async-storage').default as any).removeItem =
+            jest.fn().mockResolvedValue(undefined);
+        await expect(clearFavoritesCache()).resolves.toBeUndefined();
+    });
+
+    it('117 — clears the device-level player favorites via PATCH with an empty array', async () => {
+        (require('@react-native-async-storage/async-storage').default as any).removeItem =
+            jest.fn().mockResolvedValue(undefined);
+        await clearFavoritesCache();
+        const call = (mockApiPatch.mock.calls as any[][]).find((c) => c[0] === 'device/favorites/players/');
+        expect(call).toBeDefined();
+        expect(call![1]).toEqual({ device_id: MOCK_DEVICE_ID, player_ids: [] });
+    });
+
+    it('118 — clears the device-level match favorites via PATCH with an empty array', async () => {
+        (require('@react-native-async-storage/async-storage').default as any).removeItem =
+            jest.fn().mockResolvedValue(undefined);
+        await clearFavoritesCache();
+        const call = (mockApiPatch.mock.calls as any[][]).find((c) => c[0] === 'device/favorites/matches/');
+        expect(call).toBeDefined();
+        expect(call![1]).toEqual({ device_id: MOCK_DEVICE_ID, match_ids: [] });
+    });
+
+    it('119 — does not throw when the device-level clear PATCH fails', async () => {
+        mockApiPatch.mockRejectedValue(new Error('server down'));
+        await expect(clearFavoritesCache()).resolves.toBeUndefined();
+    });
+
+    it('120 — a device-level leak (old account favorites still on DeviceToken) does not resurrect after clear + new account load', async () => {
+        // Account A favorited match 999; it lives on the DEVICE row (not just local cache).
+        mockApiGet.mockResolvedValueOnce({ data: { player_ids: [], match_ids: [999] } }); // device endpoint
+        await loadFavorites();
+
+        // Logout: clears local cache AND device-level row (device/favorites/* PATCH with [])
+        await clearFavoritesCache();
+        const deviceClearCalls = (mockApiPatch.mock.calls as any[][]).filter(
+            (c) => c[0] === 'device/favorites/matches/'
+        );
+        expect(deviceClearCalls.length).toBeGreaterThan(0);
+        expect(deviceClearCalls[deviceClearCalls.length - 1][1].match_ids).toEqual([]);
+
+        // Account B logs in on the same device. Since the device row was actually
+        // cleared server-side (simulated here by the endpoint now returning empty),
+        // account B's merge must not see match 999 at all — closing the leak that
+        // clearing only the local cache would have left open.
+        mockGetAuthHeader.mockResolvedValue(MOCK_AUTH_HEADER);
+        mockApiGet
+            .mockResolvedValueOnce({ data: { player_ids: [], match_ids: [] } }) // device (now cleared)
+            .mockResolvedValueOnce({ data: { player_ids: [], match_ids: [] } }); // account B
+        const result = await loadFavorites();
+        expect(result.matchIds).not.toContain(999);
+
+        const leakedPush = (mockApiPatch.mock.calls as any[][]).find(
+            (c) => c[0] === 'user/favorites/matches/' && c[1].match_ids.includes(999)
+        );
+        expect(leakedPush).toBeUndefined();
     });
 });

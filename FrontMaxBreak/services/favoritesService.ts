@@ -48,6 +48,33 @@ async function writeCache(favs: Favorites): Promise<void> {
 }
 
 /**
+ * Clear all favorites tied to this device on logout — local cache AND the
+ * backend device-level row. Without clearing both, a different account
+ * logging in on the same device would inherit the previous account's
+ * favorites two ways: from the local cache directly, and from re-fetching
+ * the still-populated DeviceToken row via `device/favorites/`. Either path
+ * alone would then get auto-pushed onto the new account by loadFavorites().
+ * Best-effort — a failed backend clear must not block logout.
+ */
+export async function clearFavoritesCache(): Promise<void> {
+    cache = { playerIds: [], matchIds: [] };
+    try {
+        await AsyncStorage.removeItem(CACHE_KEY);
+    } catch (e) {
+        logger.error('[Favorites] Failed to clear AsyncStorage cache', e);
+    }
+    try {
+        const deviceId = await getOrCreateDeviceId();
+        await Promise.allSettled([
+            api.patch('device/favorites/players/', { device_id: deviceId, player_ids: [] }),
+            api.patch('device/favorites/matches/', { device_id: deviceId, match_ids: [] }),
+        ]);
+    } catch (e) {
+        logger.warn('[Favorites] Could not clear device-level favorites on logout', e);
+    }
+}
+
+/**
  * Load favourites from server (falls back to local cache on error).
  * Also primes the in-memory cache for synchronous reads.
  */
@@ -68,12 +95,17 @@ export async function loadFavorites(): Promise<Favorites> {
     }
 
     // Load from user account endpoint if logged in (cross-device sync)
+    let authHeader: string | null = null;
+    let userPlayerIds: number[] = [];
+    let userMatchIds: number[] = [];
     try {
-        const authHeader = await getAuthHeader();
+        authHeader = await getAuthHeader();
         if (authHeader) {
             const response = await api.get('user/favorites/', { headers: { Authorization: authHeader } });
-            (response.data.player_ids ?? []).map(Number).forEach((id: number) => allPlayerIds.add(id));
-            (response.data.match_ids ?? []).map(Number).forEach((id: number) => allMatchIds.add(id));
+            userPlayerIds = (response.data.player_ids ?? []).map(Number);
+            userMatchIds = (response.data.match_ids ?? []).map(Number);
+            userPlayerIds.forEach((id: number) => allPlayerIds.add(id));
+            userMatchIds.forEach((id: number) => allMatchIds.add(id));
         }
     } catch {
         logger.warn('[Favorites] Could not load user favorites from server');
@@ -86,6 +118,25 @@ export async function loadFavorites(): Promise<Favorites> {
     if (merged.playerIds.length > 0 || merged.matchIds.length > 0 || local.playerIds.length > 0 || local.matchIds.length > 0) {
         await writeCache(merged);
     }
+
+    // Close the account-sync gap: favorites starred while logged out (or on a
+    // device before it was linked) live only in the device/local layer and
+    // never reach the account, so other devices on the same account never see
+    // them and never get notified. Push the merged union up once we detect it
+    // has grown beyond what the account already has.
+    if (authHeader) {
+        const hasNewPlayers = merged.playerIds.some((id) => !userPlayerIds.includes(id));
+        const hasNewMatches = merged.matchIds.some((id) => !userMatchIds.includes(id));
+        if (hasNewPlayers) {
+            api.patch('user/favorites/players/', { player_ids: merged.playerIds }, { headers: { Authorization: authHeader } })
+                .catch(() => logger.warn('[Favorites] Could not sync merged player favorites to account'));
+        }
+        if (hasNewMatches) {
+            api.patch('user/favorites/matches/', { match_ids: merged.matchIds }, { headers: { Authorization: authHeader } })
+                .catch(() => logger.warn('[Favorites] Could not sync merged match favorites to account'));
+        }
+    }
+
     return merged;
 }
 
