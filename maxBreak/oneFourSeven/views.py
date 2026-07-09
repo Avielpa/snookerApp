@@ -1055,9 +1055,11 @@ def calendar_tabs_view(request, tab_type='main'):
         # Real seasons present in the DB for this tab, so the frontend can offer
         # past seasons (e.g. "who won last season") instead of only ever showing
         # whatever single season happens to be loaded client-side.
+        # Dedup in Python, not .distinct() — Event has a default Meta.ordering,
+        # which Django silently folds into the SELECT for any .distinct() query,
+        # so rows only "matched" once every ordering column matched too (never).
         available_seasons = sorted(
-            base_query.exclude(Season__isnull=True)
-            .values_list('Season', flat=True).distinct(),
+            {s for s in base_query.exclude(Season__isnull=True).values_list('Season', flat=True)},
             reverse=True,
         )
 
