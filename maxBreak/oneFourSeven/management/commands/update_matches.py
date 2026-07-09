@@ -109,13 +109,23 @@ class Command(BaseCommand):
                 self.stdout.write(f'Found {len(events_to_update)} tournament(s) in current season to update')
 
             elif empty_only:
-                # Find all events in DB that have zero match data (any season)
+                # Find events in DB that have zero match data, prioritizing ones
+                # likely to actually have match data available on snooker.org
+                # (already started, or starting soon). Far-future placeholder
+                # events (e.g. next year's World Championship) have no draw yet
+                # and would otherwise sort first by raw -StartDate, burning the
+                # rate-limited queue on requests that always fail.
+                from datetime import date, timedelta
+                from django.db.models import Q
                 from oneFourSeven.models import MatchesOfAnEvent
                 events_with_data = MatchesOfAnEvent.objects.values_list('Event_id', flat=True).distinct()
+                horizon = date.today() + timedelta(days=30)
                 events_to_update = list(
-                    Event.objects.exclude(ID__in=events_with_data).order_by('-StartDate')
+                    Event.objects.exclude(ID__in=events_with_data)
+                    .filter(Q(StartDate__lte=horizon) | Q(StartDate__isnull=True))
+                    .order_by('-StartDate')
                 )
-                self.stdout.write(f'Found {len(events_to_update)} event(s) with no match data to import')
+                self.stdout.write(f'Found {len(events_to_update)} event(s) with no match data to import (within 30-day horizon)')
 
             else:
                 raise CommandError(
