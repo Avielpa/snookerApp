@@ -64,7 +64,8 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        current_season = datetime.now().year - 1
+        from oneFourSeven.constants import current_season_int
+        current_season = current_season_int()
         top_n = options['top']
         new_players_only = options['new_players_only']
 

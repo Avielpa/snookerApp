@@ -102,3 +102,12 @@ EXCLUDED_EVENT_NAME_PATTERNS = []
 REQUESTS_PER_MINUTE = 2
 SECONDS_PER_MINUTE = 60
 MIN_REQUEST_INTERVAL = SECONDS_PER_MINUTE // REQUESTS_PER_MINUTE  # 30 seconds
+
+
+def current_season_int() -> int:
+    """Return the snooker.org season int (year the season starts), e.g. 2026.
+    Season rolls over in May, matching the frontend's useSeasonSelector.ts.
+    """
+    from datetime import date
+    today = date.today()
+    return today.year if today.month >= 5 else today.year - 1

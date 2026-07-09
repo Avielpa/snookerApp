@@ -80,7 +80,8 @@ class Command(BaseCommand):
                             help='Re-fetch seasons already in DB (useful to fix round_name)')
 
     def handle(self, *args, **options):
-        current_season = datetime.now().year - 1  # snooker.org stores 2025/26 season as 2025
+        from oneFourSeven.constants import current_season_int
+        current_season = current_season_int()  # e.g. 2026 for the 2026/27 season
         end_season = options['to_season'] or current_season
         force = options['force']
 
