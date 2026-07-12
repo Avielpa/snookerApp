@@ -8,7 +8,7 @@
 
 ## Where ads show
 
-- Banner: bottom of Home screen (`app/index.tsx`) and bottom of Match detail screen (`app/match/MatchEnhanced.tsx`).
+- Banner: below the filter row on Home screen (`app/index.tsx`) and below the score header/tab navigation on Match detail screen (`app/match/MatchEnhanced.tsx`) — deliberately placed away from the bottom tab bar to avoid crowding it.
 - Interstitial: once per app session, shortly after cold start, mounted from `app/_layout.tsx`.
 
 ## Current state: test ads only
@@ -23,8 +23,8 @@ Every ad unit ID in this integration is one of Google's public test IDs — safe
 
 - [ ] Fresh install, cold start: exactly one interstitial appears within the first few seconds, and does not reappear on further in-app navigation during the same session.
 - [ ] Force-quit and relaunch: interstitial appears again (new session) — confirms the gate is per-process, not persisted.
-- [ ] Home screen: small banner visible at the bottom, doesn't overlap or push the BottomBar off-screen, doesn't break scrolling.
-- [ ] Match detail screen: small banner visible at the bottom of the tab content, same layout checks.
+- [ ] Home screen: small banner visible just below the filter row, doesn't overlap the BottomBar, doesn't break scrolling.
+- [ ] Match detail screen: small banner visible just below the score header/tab navigation, same layout checks.
 - [ ] Airplane mode / no network: app still loads and functions normally; banner slots collapse to nothing (no broken-image placeholder), no interstitial blocks the UI waiting to load.
 - [ ] No crash or ANR on a device without Google Play Services (if available for testing) — `initAds()` catch path should keep the app fully usable.
 
