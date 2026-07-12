@@ -37,7 +37,7 @@ const SideNav: React.FC<SideNavProps> = ({ device }) => {
     <View style={styles.container}>
       {isTV && (
         <View style={styles.logoArea}>
-          <Ionicons name="billiards-outline" size={32} color={colors.primary} />
+          <Ionicons name="disc-outline" size={32} color={colors.primary} />
         </View>
       )}
       {NAV_ITEMS.map((item, index) => {

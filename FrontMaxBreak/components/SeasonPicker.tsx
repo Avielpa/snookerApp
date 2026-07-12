@@ -32,7 +32,7 @@ export default function SeasonPicker({ seasons, selected, onSelect }: SeasonPick
     <>
       <Pressable
         onPress={() => canOpen && setOpen(true)}
-        style={[styles.chip, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}
+        style={[styles.chip, { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder }]}
         accessibilityRole="button"
         accessibilityLabel={`Season ${seasonDisplayLabel(displayYear)}, tap to change`}
       >
@@ -49,7 +49,7 @@ export default function SeasonPicker({ seasons, selected, onSelect }: SeasonPick
         onRequestClose={() => setOpen(false)}
       >
         <Pressable style={styles.backdrop} onPress={() => setOpen(false)}>
-          <View style={[styles.sheet, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+          <View style={[styles.sheet, { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder }]}>
             <Text style={[styles.sheetTitle, { color: colors.textSecondary }]}>Select Season</Text>
             <ScrollView bounces={false} showsVerticalScrollIndicator={false}>
               {seasons.map((year) => {
