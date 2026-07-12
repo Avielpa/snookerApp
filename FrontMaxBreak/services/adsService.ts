@@ -33,13 +33,15 @@ export function useInterstitialOnce(): void {
     if (interstitialShownThisSession) return;
 
     let isMounted = true;
+    let unsubscribeLoaded: (() => void) | undefined;
+    let unsubscribeError: (() => void) | undefined;
 
     initAds().then(() => {
       if (!isMounted || interstitialShownThisSession) return;
 
       const interstitial = InterstitialAd.createForAdRequest(INTERSTITIAL_AD_UNIT_ID);
 
-      const unsubscribeLoaded = interstitial.addAdEventListener(AdEventType.LOADED, () => {
+      unsubscribeLoaded = interstitial.addAdEventListener(AdEventType.LOADED, () => {
         if (!interstitialShownThisSession) {
           interstitialShownThisSession = true;
           interstitial.show().catch((error: any) => {
@@ -48,20 +50,17 @@ export function useInterstitialOnce(): void {
         }
       });
 
-      const unsubscribeError = interstitial.addAdEventListener(AdEventType.ERROR, (error: any) => {
+      unsubscribeError = interstitial.addAdEventListener(AdEventType.ERROR, (error: any) => {
         logger.warn('[Ads] Interstitial load failed:', error?.message);
       });
 
       interstitial.load();
-
-      return () => {
-        unsubscribeLoaded();
-        unsubscribeError();
-      };
     });
 
     return () => {
       isMounted = false;
+      unsubscribeLoaded?.();
+      unsubscribeError?.();
     };
   }, []);
 }
