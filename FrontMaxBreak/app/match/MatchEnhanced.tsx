@@ -822,12 +822,12 @@ export default function MatchEnhanced() {
         styles={styles}
       />
 
+      <BannerAdSlot />
+
       {/* Tab Content */}
       <View style={styles.contentContainer}>
         {renderTabContent()}
       </View>
-
-      <BannerAdSlot />
     </SafeAreaView>
   );
 }

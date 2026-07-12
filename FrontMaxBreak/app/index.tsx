@@ -353,7 +353,9 @@ const HomeScreen = (): React.ReactElement | null => {
                     style={styles.filterScrollView}
                     containerStyle={styles.filterContainer}
                 />
-                
+
+                <BannerAdSlot />
+
                 {/* Other Tours Toolbar */}
                 {activeOtherTours.length > 0 && (
                     <View style={styles.otherToursContainer}>
@@ -464,8 +466,6 @@ const HomeScreen = (): React.ReactElement | null => {
                         />
                     )}
                 </View>
-
-                <BannerAdSlot />
             </SafeAreaView>
         </View>
     );
