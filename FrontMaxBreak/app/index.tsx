@@ -34,6 +34,7 @@ import { DrawTab } from './tour/components/DrawTab';
 import { OtherToursTab } from './home/components/OtherTours';
 import { shouldRedirectToMedia } from './home/utils/mediaFallback';
 import { logTap } from '../services/analyticsService';
+import BannerAdSlot from '../components/ads/BannerAdSlot';
 
 function formatRoundPrize(amount: any): string | null {
     if (!amount) return null;
@@ -463,6 +464,8 @@ const HomeScreen = (): React.ReactElement | null => {
                         />
                     )}
                 </View>
+
+                <BannerAdSlot />
             </SafeAreaView>
         </View>
     );

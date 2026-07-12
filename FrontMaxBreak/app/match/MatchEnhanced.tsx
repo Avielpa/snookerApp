@@ -33,6 +33,7 @@ import {
 } from './components';
 import { createMatchStyles } from './styles-modern';
 import { parseFrameScoresString } from './utils/frameScoreParser';
+import BannerAdSlot from '../../components/ads/BannerAdSlot';
 
 
 /**
@@ -825,6 +826,8 @@ export default function MatchEnhanced() {
       <View style={styles.contentContainer}>
         {renderTabContent()}
       </View>
+
+      <BannerAdSlot />
     </SafeAreaView>
   );
 }
