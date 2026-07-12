@@ -21,5 +21,11 @@ Running list of known issues, deferred work, and follow-ups that are NOT current
 - **Status**: `pgserver` + `tzdata` were installed into the local venv to make the test suite runnable, but were NOT added to `requirements.txt` since they're dev-only tooling.
 - **Next step when picked up**: decide whether to formalize a local Postgres test setup (e.g. documented in CLAUDE.md) or leave it as an ad hoc one-off — currently anyone re-running these specific tests locally will need to reinstall the same packages themselves.
 
+### 4. `FrameSummary.tsx` "Frame tied — black re-spotted" text can still be inaccurate for a concede-at-equal-scores tie
+- **Found**: 2026-07-12, during Phase R (respotted-black-on-tie) of the scoreboard restyle/insights plan (`docs/SCOREBOARD_RESTYLE_AND_INSIGHTS_PLAN.md`, section 7.7).
+- **Status**: Explicitly scoped OUT of that fix. Phase R correctly implements the real respot-black rule for the actual "black potted, scores level" case (`useSnookerGame.ts`'s `potBall()` now sets `awaitingRespotChoice` instead of ending the frame, resolved via the new `chooseRespotBreaker()` + `RespotBreakerModal.tsx`). It does not touch the separate, pre-existing path where `concede()` is called while scores happen to be equal — in that case `FrameSummary.tsx`'s `isTied` check still shows "black re-spotted" wording even though no black was potted and no respot occurred. This inaccuracy predates Phase R and was not introduced by it.
+- **Impact**: cosmetic/copy-only — a misleading modal label in a rare scenario (concede exactly at a tied score), no scoring or state-machine correctness issue.
+- **Next step when picked up**: in `FrameSummary.tsx`, distinguish "tied because of a genuine mid-frame concede" from "tied at colours-phase black" (which can no longer reach this component tied, per Phase R) and adjust the copy accordingly — likely just changing the tied-branch wording to something concede-appropriate, no engine change needed.
+
 ## Resolved / closed
 (move items here with a one-line resolution note when closed, don't delete history)

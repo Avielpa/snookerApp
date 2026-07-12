@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, Modal, TouchableOpacity, StyleSheet } from 'react-native';
-import { useTheme } from '../../../contexts/ThemeContext';
+import { scoreboardColors } from '../../../constants/scoreboardTheme';
 
 interface Props {
   visible: boolean;
@@ -23,8 +23,7 @@ export default function FrameSummary({
   visible, frameNumber, scores, highestBreak, playerNames, framesWon, winner,
   isMatchOver, matchWinner, bestOf, onNextFrame, onEndMatch, trainMode, sessionBest,
 }: Props) {
-  const { theme } = useTheme();
-  const c = theme.colors;
+  const c = scoreboardColors;
 
   const isTied = scores[0] === scores[1];
 

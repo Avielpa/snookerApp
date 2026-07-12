@@ -3,7 +3,7 @@ import { useKeepAwake } from 'expo-keep-awake';
 import { View, Text, TouchableOpacity, StyleSheet, Alert, AppState, useWindowDimensions } from 'react-native';
 import { useLocalSearchParams, router, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTheme } from '../../contexts/ThemeContext';
+import { scoreboardColors } from '../../constants/scoreboardTheme';
 import { useGameContext } from '../../contexts/GameContext';
 import { useSnookerGame, BallType, getSnookersNeeded, GameState } from '../../hooks/useSnookerGame';
 import { useGameAutosave } from '../../hooks/useGameAutosave';
@@ -14,10 +14,18 @@ import PlayerCard from '../components/scoreboard/PlayerCard';
 import BallPad from '../components/scoreboard/BallPad';
 import FoulModal from '../components/scoreboard/FoulModal';
 import FrameSummary from '../components/scoreboard/FrameSummary';
+import RespotBreakerModal from '../components/scoreboard/RespotBreakerModal';
+import MomentumGraph from '../components/scoreboard/MomentumGraph';
+import FrameRaceTracker from '../components/scoreboard/FrameRaceTracker';
+import BreakChain from '../components/scoreboard/BreakChain';
+import CenturyCelebration from '../components/scoreboard/CenturyCelebration';
+import { shouldTriggerCentury } from '../../services/centuryTrigger';
+import { detectGameSituations, pickInsight, SituationKey } from '../../services/insightTemplates';
+import { computeWinProbability } from '../../services/winProbability';
+import { computeMomentumSeries } from '../../services/momentum';
 
 function GameScreen({ initialState }: { initialState?: GameState }) {
-  const { theme } = useTheme();
-  const c = theme.colors;
+  const c = scoreboardColors;
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
   const isLandscape = width > height;
@@ -38,7 +46,7 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
   };
 
   useKeepAwake();
-  const { state, potBall, addExtraRed, endVisit, applyFoul, undo, concede, confirmFrameEnd, declareFreesBall, applyFreeBall } = useSnookerGame(config, initialState);
+  const { state, potBall, addExtraRed, endVisit, applyFoul, undo, concede, confirmFrameEnd, declareFreesBall, applyFreeBall, chooseRespotBreaker } = useSnookerGame(config, initialState);
   const { current: snap, framesWon, frameNumber, frameHighestBreak, isMatchOver, matchWinner } = state;
 
   const { setGameActive } = useGameContext();
@@ -101,6 +109,7 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
   const [showFoul, setShowFoul] = useState(false);
   const [showFrameSummary, setShowFrameSummary] = useState(false);
   const [pendingWinner, setPendingWinner] = useState<0 | 1>(0);
+  const [lastCelebratedFrame, setLastCelebratedFrame] = useState<number | null>(null);
 
   const playerNames: [string, string] = [config.player1Name, config.player2Name];
 
@@ -111,7 +120,9 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
 
   useEffect(() => {
     if (snap.isFrameOver && !showFrameSummary) {
-      const winner: 0 | 1 = isTrainMode ? 0 : (snap.scores[0] >= snap.scores[1] ? 0 : 1);
+      const winner: 0 | 1 = isTrainMode
+        ? 0
+        : (snap.respotForfeitWinner ?? (snap.scores[0] >= snap.scores[1] ? 0 : 1));
       setPendingWinner(winner);
       setShowFrameSummary(true);
     }
@@ -313,6 +324,27 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
     ? 'Level'
     : `${playerNames[scoreDiff > 0 ? 0 : 1]} ahead · ${playerNames[scoreDiff > 0 ? 1 : 0]} ${Math.abs(scoreDiff)} behind`;
 
+  // Local, free, no-AI ticker text (see services/insightTemplates.ts). Whitewash/tight-frame/
+  // decidingFrame situations don't mean anything in train mode (there's no real opponent —
+  // scores[1] stays 0), so they're filtered out there; century/highestBreakSoFar still apply.
+  const TRAIN_IRRELEVANT_SITUATIONS: SituationKey[] = ['decidingFrame', 'whitewash', 'tightFrame'];
+  const situations = detectGameSituations(state, sessionBest, playerNames)
+    .filter(s => !isTrainMode || !TRAIN_IRRELEVANT_SITUATIONS.includes(s.key));
+  const insightSeed = snap.scores[0] * 31 + snap.scores[1] * 17 + frameNumber;
+  const insightText = pickInsight(situations, insightSeed);
+
+  // Win probability isn't meaningful in train mode (no second player).
+  const winProbability = !isTrainMode ? computeWinProbability(snap.scores, snap.pointsOnTable, snap.isFrameOver) : null;
+
+  // Momentum graph — same "no second player in train mode" reasoning as win probability.
+  const momentumSeries = !isTrainMode ? computeMomentumSeries(snap, state.history) : [];
+
+  // Century celebration — fires once per frame the break crosses 100 (see services/centuryTrigger.ts).
+  const centuryTrigger = shouldTriggerCentury(snap.currentBreak, lastCelebratedFrame, frameNumber);
+  useEffect(() => {
+    if (centuryTrigger) setLastCelebratedFrame(frameNumber);
+  }, [centuryTrigger, frameNumber]);
+
   return (
     <View style={[styles.root, { backgroundColor: c.background, paddingTop: insets.top }]}>
       {/* Header bar */}
@@ -368,6 +400,18 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
         </View>
       </View>
 
+      {insightText && (
+        <View style={[styles.insightTicker, { backgroundColor: 'rgba(96,165,250,0.1)', borderColor: c.primary }]}>
+          <Text style={[styles.insightTickerText, { color: c.textSecondary }]}>{insightText}</Text>
+        </View>
+      )}
+
+      {!isTrainMode && (
+        <View style={styles.raceTrackerWrap}>
+          <FrameRaceTracker framesWon={framesWon} bestOf={config.bestOf} />
+        </View>
+      )}
+
       {(() => {
         const potBlock = (
           <View style={[styles.pot, { backgroundColor: c.backgroundSecondary }]}>
@@ -419,6 +463,31 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
               isLeft={false}
               onEndVisit={snap.currentPlayer === 0 ? endVisit : undefined}
             />
+          </View>
+        );
+
+        const breakChainBlock = !snap.isFrameOver && (
+          <View style={styles.breakChainWrap}>
+            <BreakChain breakBalls={snap.breakBalls} currentBreak={snap.currentBreak} />
+          </View>
+        );
+
+        const winProbBlock = winProbability && !snap.isFrameOver && (
+          <View style={styles.winProbWrap}>
+            <View style={styles.winProbLabelRow}>
+              <Text style={[styles.winProbLabel, { color: c.textMuted }]}>{playerNames[0]} {winProbability[0]}%</Text>
+              <Text style={[styles.winProbLabel, { color: c.textMuted }]}>{winProbability[1]}% {playerNames[1]}</Text>
+            </View>
+            <View style={[styles.winProbBar, { backgroundColor: c.backgroundTertiary }]}>
+              <View style={{ width: `${winProbability[0]}%`, backgroundColor: c.primary }} />
+              <View style={{ width: `${winProbability[1]}%`, backgroundColor: '#7d1c2c' }} />
+            </View>
+          </View>
+        );
+
+        const momentumBlock = !snap.isFrameOver && momentumSeries.length >= 2 && (
+          <View style={styles.momentumWrap}>
+            <MomentumGraph series={momentumSeries} />
           </View>
         );
 
@@ -477,6 +546,9 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
               <View style={[styles.landscapeColumn, { paddingLeft: insets.left }]}>
                 {potBlock}
                 {cardsBlock}
+                {breakChainBlock}
+                {winProbBlock}
+                {momentumBlock}
                 {snookerBlock}
               </View>
               <View style={[styles.landscapeColumn, styles.landscapeRightColumn, { paddingRight: insets.right }]}>
@@ -491,6 +563,9 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
           <>
             {potBlock}
             {cardsBlock}
+            {breakChainBlock}
+            {winProbBlock}
+            {momentumBlock}
             {snookerBlock}
             <View style={{ flex: 1 }} />
             {ballPadBlock}
@@ -499,7 +574,19 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
         );
       })()}
 
+      <CenturyCelebration
+        trigger={centuryTrigger}
+        player={playerNames[snap.currentPlayer]}
+        breakValue={snap.currentBreak}
+      />
+
       {/* Modals */}
+      <RespotBreakerModal
+        visible={!isTrainMode && snap.awaitingRespotChoice}
+        playerNames={playerNames}
+        onChoose={chooseRespotBreaker}
+      />
+
       <FoulModal
         visible={showFoul}
         foulingPlayer={playerNames[snap.currentPlayer]}
@@ -543,8 +630,7 @@ export default function GameScreenWrapper() {
   const params = useLocalSearchParams<{
     id: string; player1: string; player2: string; numberOfReds: string; bestOf: string; mode: string;
   }>();
-  const { theme } = useTheme();
-  const c = theme.colors;
+  const c = scoreboardColors;
   const [ready, setReady] = useState(false);
   const [draftState, setDraftState] = useState<GameState | undefined>(undefined);
 
@@ -574,6 +660,43 @@ const styles = StyleSheet.create({
   },
   frameLabel: { fontSize: 11 },
   frameScore: { fontSize: 18, fontFamily: 'PoppinsBold' },
+  insightTicker: {
+    marginHorizontal: 16,
+    marginTop: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  insightTickerText: { fontSize: 11, lineHeight: 15 },
+  raceTrackerWrap: {
+    marginHorizontal: 16,
+    marginTop: 8,
+  },
+  winProbWrap: {
+    marginHorizontal: 16,
+    marginTop: 10,
+  },
+  winProbLabelRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 3,
+  },
+  winProbLabel: { fontSize: 10 },
+  winProbBar: {
+    height: 7,
+    borderRadius: 5,
+    overflow: 'hidden',
+    flexDirection: 'row',
+  },
+  momentumWrap: {
+    marginHorizontal: 16,
+    marginTop: 10,
+  },
+  breakChainWrap: {
+    marginHorizontal: 16,
+    marginTop: 10,
+  },
   pot: {
     alignItems: 'center',
     paddingVertical: 10,

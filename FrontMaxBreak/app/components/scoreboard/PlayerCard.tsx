@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, useWindowDimensions } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import { useTheme } from '../../../contexts/ThemeContext';
+import { scoreboardColors } from '../../../constants/scoreboardTheme';
 
 interface Props {
   name: string;
@@ -17,8 +17,7 @@ interface Props {
 export default function PlayerCard({
   name, score, framesWon, currentBreak, highestBreak, isActive, isLeft, onEndVisit,
 }: Props) {
-  const { theme } = useTheme();
-  const c = theme.colors;
+  const c = scoreboardColors;
   const { width, height } = useWindowDimensions();
   const isLandscape = width > height;
 

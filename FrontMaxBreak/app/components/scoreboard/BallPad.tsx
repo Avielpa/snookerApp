@@ -1,8 +1,8 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import { BallType, BALL_VALUES, BALL_COLORS, GamePhase, AwaitingType, COLORS_SEQUENCE } from '../../../hooks/useSnookerGame';
-import { useTheme } from '../../../contexts/ThemeContext';
+import { BallType, BALL_VALUES, GamePhase, AwaitingType, COLORS_SEQUENCE } from '../../../hooks/useSnookerGame';
+import { scoreboardColors, scoreboardBallColors } from '../../../constants/scoreboardTheme';
 
 interface Props {
   phase: GamePhase;
@@ -27,8 +27,7 @@ const ALL_BALLS: BallType[] = ['red', 'yellow', 'green', 'brown', 'blue', 'pink'
 export default function BallPad({
   phase, awaiting, colorsRemaining, redsRemaining, currentBreak, onPot, onExtraRed, onMiss, onFoul, onUndo, onConcede, canUndo, trainMode, freeBallActive, onFreeBall,
 }: Props) {
-  const { theme } = useTheme();
-  const c = theme.colors;
+  const c = scoreboardColors;
 
   function isEnabled(ball: BallType): boolean {
     if (freeBallActive) return true;
@@ -94,7 +93,7 @@ export default function BallPad({
             style={[
               styles.ballButton,
               {
-                backgroundColor: BALL_COLORS[ball],
+                backgroundColor: scoreboardBallColors[ball],
                 opacity: getOpacity(ball),
                 borderWidth: ball === 'black' ? 2 : 0,
                 borderColor: ball === 'black' ? '#555' : undefined,

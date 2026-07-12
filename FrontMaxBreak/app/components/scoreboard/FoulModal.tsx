@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, Modal, TouchableOpacity, StyleSheet } from 'react-native';
-import { useTheme } from '../../../contexts/ThemeContext';
+import { scoreboardColors } from '../../../constants/scoreboardTheme';
 
 interface Props {
   visible: boolean;
@@ -21,8 +21,7 @@ const FOUL_LABELS: Record<number, string> = {
 };
 
 export default function FoulModal({ visible, foulingPlayer, opponentName, phase, redsRemaining, onConfirm, onCancel }: Props) {
-  const { theme } = useTheme();
-  const c = theme.colors;
+  const c = scoreboardColors;
   const [selected, setSelected] = useState<number>(4);
   const [opponentPlays, setOpponentPlays] = useState(true);
   const [redsAccidentallyPotted, setRedsAccidentallyPotted] = useState(0);

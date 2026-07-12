@@ -7,23 +7,24 @@ import {
 } from 'react-native';
 import { router, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTheme } from '../../contexts/ThemeContext';
+import { scoreboardColors } from '../../constants/scoreboardTheme';
 import {
   loadAllMatches, loadMatch, deleteMatch, StoredMatch,
   groupByRivalry, RivalryGroup, updateMatchPlayerNames,
 } from '../../services/gameStorage';
 import { uploadMatch } from '../../services/scoreboardSyncService';
 import { isLoggedIn } from '../../services/authService';
+import { computeRivalryTendencies } from '../../services/rivalryInsights';
 
 export default function RivalryScreen() {
-  const { theme } = useTheme();
-  const c = theme.colors;
+  const c = scoreboardColors;
   const insets = useSafeAreaInsets();
   const { rivalryKey, player1, player2 } = useLocalSearchParams<{
     rivalryKey: string; player1: string; player2: string;
   }>();
 
   const [rivalry, setRivalry] = useState<RivalryGroup | null>(null);
+  const [allMatches, setAllMatches] = useState<StoredMatch[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [editingMatch, setEditingMatch] = useState<StoredMatch | null>(null);
   const [editP1, setEditP1] = useState('');
@@ -31,6 +32,7 @@ export default function RivalryScreen() {
 
   useFocusEffect(useCallback(() => {
     loadAllMatches().then(all => {
+      setAllMatches(all);
       const groups = groupByRivalry(all);
       setRivalry(groups.find(g => g.key === rivalryKey) ?? null);
     }).catch(() => {});
@@ -120,6 +122,8 @@ export default function RivalryScreen() {
 
   // ── H2H stats header ──────────────────────────────────────────────────────
 
+  const rivalryTendencies = computeRivalryTendencies(allMatches, rivalry);
+
   const ListHeader = () => (
     <View style={{ marginBottom: 16 }}>
       <View style={[styles.h2hCard, { backgroundColor: c.cardBackground, borderColor: c.cardBorder }]}>
@@ -155,6 +159,13 @@ export default function RivalryScreen() {
             <Text style={[styles.statRowValue, { color: c.primary, textAlign: 'left' }]}>{v1}</Text>
             <Text style={[styles.statRowLabel, { color: c.textMuted }]}>{label}</Text>
             <Text style={[styles.statRowValue, { color: c.primary, textAlign: 'right' }]}>{v2}</Text>
+          </View>
+        ))}
+
+        {rivalryTendencies.map((t, i) => (
+          <View key={i} style={styles.tendencyRow}>
+            <Text style={[styles.tendencyIcon]}>📈</Text>
+            <Text style={[styles.tendencyText, { color: c.textSecondary }]}>{t.text}</Text>
           </View>
         ))}
       </View>
@@ -374,6 +385,9 @@ const styles = StyleSheet.create({
   h2hBigScore: { fontSize: 32, fontFamily: 'PoppinsBold' },
   h2hCenterLabel: { fontSize: 10, marginTop: -4 },
   divider: { height: 1, marginBottom: 10 },
+  tendencyRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginTop: 10 },
+  tendencyIcon: { fontSize: 13 },
+  tendencyText: { flex: 1, fontSize: 12, lineHeight: 17 },
   statRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 4 },
   statRowLabel: { flex: 1, textAlign: 'center', fontSize: 12 },
   statRowValue: { flex: 1, fontSize: 15, fontFamily: 'PoppinsBold' },

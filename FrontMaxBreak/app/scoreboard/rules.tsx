@@ -9,14 +9,13 @@ if (Platform.OS === 'android') {
   UIManager.setLayoutAnimationEnabledExperimental?.(true);
 }
 import { router } from 'expo-router';
-import { useTheme } from '../../contexts/ThemeContext';
+import { scoreboardColors } from '../../constants/scoreboardTheme';
 import {
   SNOOKER_RULES, RULE_CATEGORIES, searchRules, SnookerRule,
 } from '../../services/snookerRules';
 
 export default function RulesScreen() {
-  const { theme } = useTheme();
-  const c = theme.colors;
+  const c = scoreboardColors;
   const [query, setQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);

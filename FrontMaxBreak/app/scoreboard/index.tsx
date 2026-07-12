@@ -4,7 +4,7 @@ import {
 } from 'react-native';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTheme } from '../../contexts/ThemeContext';
+import { scoreboardColors } from '../../constants/scoreboardTheme';
 import { useAuth } from '../../contexts/AuthContext';
 import { generateMatchId, loadDraft, clearDraft, GameDraft } from '../../services/gameStorage';
 import AuthCard from '../components/AuthCard';
@@ -13,8 +13,7 @@ const RED_OPTIONS = [6, 10, 15] as const;
 const BEST_OF_OPTIONS: (number | null)[] = [null, 3, 5, 7, 9, 11];
 
 export default function ScoreboardSetup() {
-  const { theme } = useTheme();
-  const c = theme.colors;
+  const c = scoreboardColors;
   const insets = useSafeAreaInsets();
   const prefill = useLocalSearchParams<{ prefillPlayer1?: string; prefillPlayer2?: string }>();
   const { loggedIn } = useAuth();

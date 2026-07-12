@@ -49,6 +49,14 @@ export interface FrameSnapshot {
   colorsRemaining: BallType[];
   isFrameOver: boolean;
   freeBallActive: boolean;
+  // Respotted-black-on-tie (see docs/SCOREBOARD_RESTYLE_AND_INSIGHTS_PLAN.md, section 7.7)
+  awaitingRespotChoice: boolean;
+  respottedBlackActive: boolean;
+  respotForfeitWinner: 0 | 1 | null;
+  // Break-architecture chain (see docs/SCOREBOARD_RESTYLE_AND_INSIGHTS_PLAN.md, section 3.1) —
+  // the sequence of balls potted in the live break, cleared on a miss/foul, preserved through
+  // a concede (a conceded break is still historically what was built).
+  breakBalls: BallType[];
 }
 
 export interface MatchConfig {
@@ -90,6 +98,10 @@ function makeInitialFrame(numberOfReds: number, currentPlayer: 0 | 1): FrameSnap
     colorsRemaining: [...COLORS_SEQUENCE],
     isFrameOver: false,
     freeBallActive: false,
+    awaitingRespotChoice: false,
+    respottedBlackActive: false,
+    respotForfeitWinner: null,
+    breakBalls: [],
   };
 }
 
@@ -127,6 +139,7 @@ export function useSnookerGame(config: MatchConfig, initialState?: GameState) {
     setState(prev => {
       if (prev.isMatchOver || prev.current.isFrameOver) return prev;
       const snap = prev.current;
+      if (snap.awaitingRespotChoice) return prev; // must choose a breaker first (chooseRespotBreaker)
       if (snap.freeBallActive) return prev; // must use applyFreeBall instead
       const available = getAvailableBalls(snap);
       if (!available.includes(ball)) return prev;
@@ -141,6 +154,7 @@ export function useSnookerGame(config: MatchConfig, initialState?: GameState) {
       let newAwaiting: AwaitingType = snap.awaiting;
       let newColorsRemaining = [...snap.colorsRemaining];
       let isFrameOver = false;
+      let awaitingRespotChoice = false;
 
       if (snap.phase === 'reds') {
         if (ball === 'red') {
@@ -160,7 +174,12 @@ export function useSnookerGame(config: MatchConfig, initialState?: GameState) {
         // Colors phase — balls stay off
         newColorsRemaining = newColorsRemaining.slice(1);
         if (newColorsRemaining.length === 0) {
-          isFrameOver = true;
+          // A level score after the black respots instead of ending the frame.
+          if (newScores[0] === newScores[1]) {
+            awaitingRespotChoice = true;
+          } else {
+            isFrameOver = true;
+          }
         }
       }
 
@@ -182,6 +201,10 @@ export function useSnookerGame(config: MatchConfig, initialState?: GameState) {
         colorsRemaining: newColorsRemaining,
         isFrameOver,
         freeBallActive: false,
+        awaitingRespotChoice,
+        respottedBlackActive: snap.respottedBlackActive,
+        respotForfeitWinner: snap.respotForfeitWinner,
+        breakBalls: [...snap.breakBalls, ball],
       };
 
       return {
@@ -197,6 +220,7 @@ export function useSnookerGame(config: MatchConfig, initialState?: GameState) {
     setState(prev => {
       if (prev.isMatchOver || prev.current.isFrameOver) return prev;
       const snap = prev.current;
+      if (snap.awaitingRespotChoice) return prev; // must choose a breaker first
 
       let newPhase: GamePhase = snap.phase;
       let newAwaiting: AwaitingType = snap.awaiting;
@@ -222,6 +246,7 @@ export function useSnookerGame(config: MatchConfig, initialState?: GameState) {
         awaiting: newAwaiting,
         colorsRemaining: newColorsRemaining,
         pointsOnTable: calcPointsOnTable(newPhase, snap.redsRemaining, newAwaiting, newColorsRemaining),
+        breakBalls: [],
       };
       return { ...prev, current: newSnapshot, history: [...prev.history, snap] };
     });
@@ -231,9 +256,19 @@ export function useSnookerGame(config: MatchConfig, initialState?: GameState) {
     setState(prev => {
       if (prev.isMatchOver || prev.current.isFrameOver) return prev;
       const snap = prev.current;
+      if (snap.awaitingRespotChoice) return prev; // must choose a breaker first
       const opponent: 0 | 1 = snap.currentPlayer === 0 ? 1 : 0;
       const newScores: [number, number] = [snap.scores[0], snap.scores[1]];
       newScores[opponent] += foulValue;
+
+      if (snap.respottedBlackActive) {
+        // Any foul during the sudden-death respotted-black shootout forfeits the frame outright.
+        return {
+          ...prev,
+          current: { ...snap, scores: newScores, currentBreak: 0, isFrameOver: true, respotForfeitWinner: opponent, breakBalls: [] },
+          history: [...prev.history, snap],
+        };
+      }
 
       const newPlayer: 0 | 1 = opponentPlays ? opponent : snap.currentPlayer;
       // Awaiting state is NEVER changed by a foul — it reflects the last legal pot.
@@ -252,6 +287,7 @@ export function useSnookerGame(config: MatchConfig, initialState?: GameState) {
         redsRemaining: newRedsRemaining,
         pointsOnTable: calcPointsOnTable(snap.phase, newRedsRemaining, newAwaiting, snap.colorsRemaining),
         freeBallActive: false,
+        breakBalls: [],
       };
 
       return { ...prev, current: newSnapshot, history: [...prev.history, snap] };
@@ -263,6 +299,7 @@ export function useSnookerGame(config: MatchConfig, initialState?: GameState) {
   const addExtraRed = useCallback(() => {
     setState(prev => {
       const snap = prev.current;
+      if (snap.awaitingRespotChoice) return prev; // must choose a breaker first
       if (snap.freeBallActive) return prev;
       if (snap.phase !== 'reds' || snap.awaiting !== 'color' || snap.redsRemaining === 0) return prev;
 
@@ -281,6 +318,7 @@ export function useSnookerGame(config: MatchConfig, initialState?: GameState) {
         redsRemaining: newRedsRemaining,
         pointsOnTable: calcPointsOnTable(snap.phase, newRedsRemaining, snap.awaiting, snap.colorsRemaining),
         freeBallActive: false,
+        breakBalls: [...snap.breakBalls, 'red'],
       };
 
       return { ...prev, current: newSnap, history: [...prev.history, snap], frameHighestBreak: newHighest };
@@ -300,6 +338,7 @@ export function useSnookerGame(config: MatchConfig, initialState?: GameState) {
     setState(prev => {
       if (prev.isMatchOver || prev.current.isFrameOver) return prev;
       const snap = prev.current;
+      if (snap.awaitingRespotChoice) return prev; // must choose a breaker first
       return {
         ...prev,
         current: { ...snap, isFrameOver: true, freeBallActive: false },
@@ -312,6 +351,7 @@ export function useSnookerGame(config: MatchConfig, initialState?: GameState) {
     setState(prev => {
       if (prev.isMatchOver || prev.current.isFrameOver) return prev;
       const snap = prev.current;
+      if (snap.awaitingRespotChoice) return prev; // must choose a breaker first
       return {
         ...prev,
         current: { ...snap, freeBallActive: true },
@@ -324,6 +364,7 @@ export function useSnookerGame(config: MatchConfig, initialState?: GameState) {
     setState(prev => {
       if (prev.isMatchOver || prev.current.isFrameOver) return prev;
       const snap = prev.current;
+      if (snap.awaitingRespotChoice) return prev; // must choose a breaker first
       if (!snap.freeBallActive) return prev;
 
       let scoreValue: number;
@@ -380,6 +421,7 @@ export function useSnookerGame(config: MatchConfig, initialState?: GameState) {
           : calcPointsOnTable(newPhase, newRedsRemaining, newAwaiting, newColorsRemaining),
         isFrameOver,
         freeBallActive: false,
+        breakBalls: [...snap.breakBalls, nominatedBall],
       };
 
       return {
@@ -388,6 +430,26 @@ export function useSnookerGame(config: MatchConfig, initialState?: GameState) {
         history: [...prev.history, snap],
         frameHighestBreak: newHighest,
       };
+    });
+  }, []);
+
+  // Chooses which player breaks the respotted black after a tied frame (see potBall's
+  // colours-phase branch). Only valid during the awaitingRespotChoice window.
+  const chooseRespotBreaker = useCallback((player: 0 | 1) => {
+    setState(prev => {
+      const snap = prev.current;
+      if (!snap.awaitingRespotChoice) return prev;
+      const newSnapshot: FrameSnapshot = {
+        ...snap,
+        currentPlayer: player,
+        currentBreak: 0,
+        awaitingRespotChoice: false,
+        respottedBlackActive: true,
+        phase: 'colors',
+        colorsRemaining: ['black'],
+        pointsOnTable: 7,
+      };
+      return { ...prev, current: newSnapshot, history: [...prev.history, snap] };
     });
   }, []);
 
@@ -434,5 +496,5 @@ export function useSnookerGame(config: MatchConfig, initialState?: GameState) {
     });
   }, []);
 
-  return { state, potBall, addExtraRed, endVisit, applyFoul, undo, concede, confirmFrameEnd, declareFreesBall, applyFreeBall };
+  return { state, potBall, addExtraRed, endVisit, applyFoul, undo, concede, confirmFrameEnd, declareFreesBall, applyFreeBall, chooseRespotBreaker };
 }

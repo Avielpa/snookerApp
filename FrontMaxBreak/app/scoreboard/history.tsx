@@ -2,15 +2,14 @@ import React, { useCallback, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTheme } from '../../contexts/ThemeContext';
+import { scoreboardColors } from '../../constants/scoreboardTheme';
 import {
   loadAllMatches, deleteMatch, StoredMatch,
   computeTrainingStats, groupByRivalry, RivalryGroup,
 } from '../../services/gameStorage';
 
 export default function HistoryScreen() {
-  const { theme } = useTheme();
-  const c = theme.colors;
+  const c = scoreboardColors;
   const insets = useSafeAreaInsets();
   const [matches, setMatches] = useState<StoredMatch[]>([]);
   const [activeTab, setActiveTab] = useState<'matches' | 'training'>('matches');
