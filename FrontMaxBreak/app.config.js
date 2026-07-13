@@ -43,7 +43,6 @@ module.exports = {
       ...(isIosBuild ? [] : [
         '@react-native-firebase/app',
         '@react-native-firebase/analytics',
-        './plugins/withDisableAdIdCollection',
       ]),
     ],
   },

@@ -35,6 +35,6 @@ This means **the preview APK now serves real ads** — avoid excessive manual cl
 ## Follow-ups (not done in this pass)
 
 - Register MaxBreak in the AdMob console and create real banner + interstitial ad units, then swap the test IDs in `app.config.js` and `adsService.ts` for the real ones.
-- `FrontMaxBreak/plugins/withDisableAdIdCollection.js` currently disables Firebase Analytics' advertising-ID (AD_ID) collection with the stated reason "MaxBreak has no ads" — that's no longer true once this ships. Revisit whether AD_ID collection should be re-enabled for ad targeting/attribution, and check whether the Play Console "Advertising ID" data-safety declaration needs updating (manual Play Console step, not code).
+- ~~`FrontMaxBreak/plugins/withDisableAdIdCollection.js`~~ — removed. It disabled Firebase Analytics' advertising-ID (AD_ID) collection ("MaxBreak has no ads"), which suppressed the `AD_ID` manifest permission and conflicted with the Play Console "Advertising ID" data-safety declaration once real ads shipped (surfaced as a Play Console release warning). AD_ID collection is now on by default.
 - Rewarded ads (deferred per the design spec).
 - `app-ads.txt` (not applicable — no companion website).
