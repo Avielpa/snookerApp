@@ -7,8 +7,11 @@ import mobileAds, {
 } from 'react-native-google-mobile-ads';
 import { logger } from '../utils/logger';
 
-export const BANNER_AD_UNIT_ID = TestIds.BANNER;
-export const INTERSTITIAL_AD_UNIT_ID = TestIds.INTERSTITIAL;
+const REAL_BANNER_AD_UNIT_ID = 'ca-app-pub-7026436404209900/5896032920';
+const REAL_INTERSTITIAL_AD_UNIT_ID = 'ca-app-pub-7026436404209900/4391379567';
+
+export const BANNER_AD_UNIT_ID = __DEV__ ? TestIds.BANNER : REAL_BANNER_AD_UNIT_ID;
+export const INTERSTITIAL_AD_UNIT_ID = __DEV__ ? TestIds.INTERSTITIAL : REAL_INTERSTITIAL_AD_UNIT_ID;
 
 let sdkInitPromise: Promise<void> | null = null;
 

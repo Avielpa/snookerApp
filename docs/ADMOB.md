@@ -4,16 +4,20 @@
 
 - `FrontMaxBreak/services/adsService.ts` — Mobile Ads SDK init (`initAds()`), test ad unit ID constants, and `useInterstitialOnce()` — a hook that shows one interstitial per app process lifetime.
 - `FrontMaxBreak/components/ads/BannerAdSlot.tsx` — themed banner wrapper. Renders `null` if the ad fails to load.
-- `FrontMaxBreak/app.config.js` — `react-native-google-mobile-ads` config plugin, currently configured with Google's public **test** App IDs (`ca-app-pub-3940256099942544~3347511713` Android / `~1458002511` iOS).
+- `FrontMaxBreak/app.config.js` — `react-native-google-mobile-ads` config plugin. Android uses MaxBreak's real AdMob App ID (`ca-app-pub-7026436404209900~6184340367`); iOS still uses Google's public test App ID (`ca-app-pub-3940256099942544~1458002511`) since no iOS app is registered in AdMob yet.
 
 ## Where ads show
 
 - Banner: below the filter row on Home screen (`app/index.tsx`) and below the score header/tab navigation on Match detail screen (`app/match/MatchEnhanced.tsx`) — deliberately placed away from the bottom tab bar to avoid crowding it.
 - Interstitial: once per app session, shortly after cold start, mounted from `app/_layout.tsx`.
 
-## Current state: test ads only
+## Current state: real ad units, test IDs in dev
 
-Every ad unit ID in this integration is one of Google's public test IDs — safe to ship to real users, but they never generate real revenue. This is intentional for this pass (see the design spec).
+`services/adsService.ts` uses Google's public test ad unit IDs when `__DEV__` is true (local dev/Expo Go), and MaxBreak's real AdMob ad unit IDs in any built binary (preview APK and production):
+- Banner: `ca-app-pub-7026436404209900/5896032920`
+- Interstitial: `ca-app-pub-7026436404209900/4391379567`
+
+This means **the preview APK now serves real ads** — avoid excessive manual clicking on ads during testing (AdMob policy: invalid traffic). Revenue only counts once the app-ads.txt verification (see AdMob console) clears the serving cap.
 
 ## Requires a native build
 

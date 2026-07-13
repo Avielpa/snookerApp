@@ -35,7 +35,8 @@ module.exports = {
       [
         'react-native-google-mobile-ads',
         {
-          androidAppId: 'ca-app-pub-3940256099942544~3347511713',
+          androidAppId: 'ca-app-pub-7026436404209900~6184340367',
+          // No iOS app registered in AdMob yet — keep Google's public test App ID for iOS.
           iosAppId: 'ca-app-pub-3940256099942544~1458002511',
         },
       ],
