@@ -75,7 +75,8 @@
             "compileSdkVersion": 35,
             "targetSdkVersion": 35,
             "ndkVersion": "28.2.13676358",
-            "useLegacyPackaging": true
+            "useLegacyPackaging": true,
+            "kotlinVersion": "2.3.21"
           }
         }
       ]
