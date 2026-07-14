@@ -23,6 +23,7 @@ import { isPlayerFavouriteSync, isPlayerFavouriteAsync, togglePlayerFavourite } 
 import { useAuth } from '../../contexts/AuthContext';
 import AuthCard from '../components/AuthCard';
 import { shouldShowSignupNudge, markSignupNudgeShown } from '../../services/signupNudgeService';
+import BannerAdSlot from '../../components/ads/BannerAdSlot';
 
 // Enhanced interfaces
 interface PlayerData {
@@ -945,6 +946,8 @@ export default function PlayerDetailsScreen(): React.ReactElement {
                         />
                     ))}
                 </View>
+
+                <BannerAdSlot />
 
                 {/* No-data banner for players not yet in the database */}
                 {isUnknownPlayer && (
