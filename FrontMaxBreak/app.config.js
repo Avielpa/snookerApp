@@ -32,10 +32,17 @@ module.exports = {
     plugins: [
       ...(baseConfig.plugins || []),
       'expo-secure-store',
+      [
+        'react-native-google-mobile-ads',
+        {
+          androidAppId: 'ca-app-pub-7026436404209900~6184340367',
+          // No iOS app registered in AdMob yet — keep Google's public test App ID for iOS.
+          iosAppId: 'ca-app-pub-3940256099942544~1458002511',
+        },
+      ],
       ...(isIosBuild ? [] : [
         '@react-native-firebase/app',
         '@react-native-firebase/analytics',
-        './plugins/withDisableAdIdCollection',
       ]),
     ],
   },

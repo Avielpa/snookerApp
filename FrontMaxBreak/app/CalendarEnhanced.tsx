@@ -538,7 +538,7 @@ export default function CalendarEnhanced() {
     const result: Tournament[] = [];
     for (const item of filteredTournaments) {
       result.push(item);
-      if (item.isGroup && item.ID === expandedGroupId && item.children) {
+      if (item.isGroup && String(item.ID) === expandedGroupId && item.children) {
         result.push(...item.children.map(c => ({ ...c, isGroupChild: true })));
       }
     }
@@ -579,7 +579,7 @@ export default function CalendarEnhanced() {
   const handleTournamentPress = (tournament: Tournament) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (tournament.isGroup) {
-      setExpandedGroupId(prev => (prev === tournament.ID ? null : String(tournament.ID)));
+      setExpandedGroupId(prev => (prev === String(tournament.ID) ? null : String(tournament.ID)));
       return;
     }
     router.push(`/tour/${tournament.ID}`);
@@ -747,7 +747,7 @@ export default function CalendarEnhanced() {
                 item={item}
                 onPress={() => handleTournamentPress(item)}
                 colors={colors}
-                expanded={item.isGroup ? item.ID === expandedGroupId : undefined}
+                expanded={item.isGroup ? String(item.ID) === expandedGroupId : undefined}
               />
             );
           }}

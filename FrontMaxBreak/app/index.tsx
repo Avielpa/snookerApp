@@ -34,6 +34,7 @@ import { DrawTab } from './tour/components/DrawTab';
 import { OtherToursTab } from './home/components/OtherTours';
 import { shouldRedirectToMedia } from './home/utils/mediaFallback';
 import { logTap } from '../services/analyticsService';
+import BannerAdSlot from '../components/ads/BannerAdSlot';
 
 function formatRoundPrize(amount: any): string | null {
     if (!amount) return null;
@@ -352,7 +353,9 @@ const HomeScreen = (): React.ReactElement | null => {
                     style={styles.filterScrollView}
                     containerStyle={styles.filterContainer}
                 />
-                
+
+                <BannerAdSlot />
+
                 {/* Other Tours Toolbar */}
                 {activeOtherTours.length > 0 && (
                     <View style={styles.otherToursContainer}>

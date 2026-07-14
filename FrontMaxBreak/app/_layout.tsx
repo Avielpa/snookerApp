@@ -13,6 +13,7 @@ import { initPushNotifications } from '../utils/notifications';
 import { loadFavorites } from '../services/favoritesService';
 import { useDeviceType } from '../hooks/useDeviceType';
 import { useAnalyticsScreenTracking } from '../hooks/useAnalyticsScreenTracking';
+import { useInterstitialOnce } from '../services/adsService';
 import { shouldShowScoreboardBanner } from '../services/scoreboardBannerService';
 
 // --- Component Imports ---
@@ -31,6 +32,9 @@ const ThemedLayout = () => {
 
     // Log a screen_view analytics event on every route change
     useAnalyticsScreenTracking();
+
+    // Show one gentle interstitial ad per app session, shortly after cold start
+    useInterstitialOnce();
 
     // Brief scoreboard discovery banner — shows on every launch for a limited
     // window of days, skipped while already inside the scoreboard section.
