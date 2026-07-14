@@ -28,6 +28,7 @@ import { useColors } from '../contexts/ThemeContext';
 import { getDeviceTabConfig } from '../config/deviceTabConfig';
 import { DeviceAwareFilterScrollView } from '../components/DeviceAwareFilterScrollView';
 import { DeviceAwareFilterButton } from '../components/DeviceAwareFilterButton';
+import BannerAdSlot from '../components/ads/BannerAdSlot';
 
 // Import modern components - simplified to avoid crashes
 // Removed ProgressBar to prevent crashes - using simple native views instead
@@ -576,6 +577,8 @@ export default function RankingEnhanced() {
           colors={colors}
           containerStyle={{ marginVertical: 8 }}
         />
+
+        <BannerAdSlot />
 
         {/* Results Count */}
         <Text style={styles.resultsText}>

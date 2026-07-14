@@ -21,6 +21,7 @@ import { DeviceAwareFilterScrollView } from '../../components/DeviceAwareFilterS
 import { DeviceAwareFilterButton } from '../../components/DeviceAwareFilterButton';
 import { DrawTab } from './components/DrawTab';
 import { getNationalityFlag } from '../../utils/nationalityFlag';
+import BannerAdSlot from '../../components/ads/BannerAdSlot';
 
 // --- Interfaces (Using snake_case for API fields) ---
 interface Match {
@@ -644,7 +645,9 @@ const TournamentDetailsScreen = () => {
                 tournament={tournamentDetails}
                 matchCount={processedListData.filter(item => item.type === 'match').length}
             />
-            
+
+            <BannerAdSlot />
+
             {/* Integrated Match List with Sticky Filters */}
             <View style={styles.integratedListArea}>
                 {activeFilter === 'draw' ? (

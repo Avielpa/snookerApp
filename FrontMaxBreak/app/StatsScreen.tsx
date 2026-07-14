@@ -32,6 +32,7 @@ import {
     getCurrentSeasonYear,
 } from '../hooks/useSeasonSelector';
 import SeasonPicker from '../components/SeasonPicker';
+import BannerAdSlot from '../components/ads/BannerAdSlot';
 
 // ---- Helpers ---------------------------------------------------------------
 
@@ -605,6 +606,8 @@ export default function StatsScreen() {
                     );
                 })}
             </View>
+
+            <BannerAdSlot />
 
             {/* Content */}
             {loading ? (

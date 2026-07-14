@@ -22,6 +22,7 @@ import { useColors } from '../contexts/ThemeContext';
 import { useSeasonSelector, dateToSeasonYear, seasonDisplayLabel } from '../hooks/useSeasonSelector';
 import SeasonPicker from '../components/SeasonPicker';
 import { groupChampionshipLeague, CHAMPIONSHIP_LEAGUE_GROUP_ID } from '../utils/championshipLeagueGroup';
+import BannerAdSlot from '../components/ads/BannerAdSlot';
 
 interface Tournament {
   ID: number;
@@ -719,6 +720,8 @@ export default function CalendarEnhanced() {
           );
         })}
       </View>
+
+      <BannerAdSlot />
 
       {/* Tournament list */}
       {filteredTournaments.length === 0 ? (
