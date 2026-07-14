@@ -8,6 +8,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { generateMatchId, loadDraft, clearDraft, GameDraft } from '../../services/gameStorage';
 import AuthCard from '../components/AuthCard';
+import BannerAdSlot from '../../components/ads/BannerAdSlot';
 
 const RED_OPTIONS = [6, 10, 15] as const;
 const BEST_OF_OPTIONS: (number | null)[] = [null, 3, 5, 7, 9, 11];
@@ -127,6 +128,8 @@ export default function ScoreboardSetup() {
           </TouchableOpacity>
         </View>
       )}
+
+      <BannerAdSlot />
 
       {/* Mode toggle */}
       <View style={[styles.modeToggle, { backgroundColor: c.backgroundSecondary, borderColor: c.cardBorder }]}>

@@ -7,6 +7,7 @@ import {
   loadAllMatches, deleteMatch, StoredMatch,
   computeTrainingStats, groupByRivalry, RivalryGroup,
 } from '../../services/gameStorage';
+import BannerAdSlot from '../../components/ads/BannerAdSlot';
 
 export default function HistoryScreen() {
   const { theme } = useTheme();
@@ -222,6 +223,8 @@ export default function HistoryScreen() {
           </TouchableOpacity>
         ))}
       </View>
+
+      <BannerAdSlot />
 
       {activeTab === 'matches' ? (
         <FlatList

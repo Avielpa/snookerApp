@@ -14,6 +14,7 @@ import {
 } from '../../services/gameStorage';
 import { uploadMatch } from '../../services/scoreboardSyncService';
 import { isLoggedIn } from '../../services/authService';
+import BannerAdSlot from '../../components/ads/BannerAdSlot';
 
 export default function RivalryScreen() {
   const { theme } = useTheme();
@@ -166,6 +167,8 @@ export default function RivalryScreen() {
       >
         <Text style={styles.newSessionBtnText}>▶  New Session</Text>
       </TouchableOpacity>
+
+      <BannerAdSlot />
 
       <Text style={[styles.sessionsLabel, { color: c.textSecondary }]}>
         Sessions ({rivalry.totalSessions})
