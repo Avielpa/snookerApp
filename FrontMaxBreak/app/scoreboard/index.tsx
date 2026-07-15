@@ -9,6 +9,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { generateMatchId, loadDraft, clearDraft, GameDraft } from '../../services/gameStorage';
 import AuthCard from '../components/AuthCard';
 import BannerAdSlot from '../../components/ads/BannerAdSlot';
+import { useScoreboardEntryInterstitial } from '../../services/adsService';
 
 const RED_OPTIONS = [6, 10, 15] as const;
 const BEST_OF_OPTIONS: (number | null)[] = [null, 3, 5, 7, 9, 11];
@@ -16,6 +17,7 @@ const BEST_OF_OPTIONS: (number | null)[] = [null, 3, 5, 7, 9, 11];
 export default function ScoreboardSetup() {
   const c = scoreboardColors;
   const insets = useSafeAreaInsets();
+  useScoreboardEntryInterstitial();
   const prefill = useLocalSearchParams<{ prefillPlayer1?: string; prefillPlayer2?: string }>();
   const { loggedIn } = useAuth();
 

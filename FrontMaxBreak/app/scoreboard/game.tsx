@@ -23,6 +23,7 @@ import { shouldTriggerCentury } from '../../services/centuryTrigger';
 import { detectGameSituations, pickInsight, SituationKey } from '../../services/insightTemplates';
 import { computeWinProbability } from '../../services/winProbability';
 import { computeMomentumSeries } from '../../services/momentum';
+import BannerAdSlot from '../../components/ads/BannerAdSlot';
 
 function GameScreen({ initialState }: { initialState?: GameState }) {
   const c = scoreboardColors;
@@ -411,6 +412,8 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
           <FrameRaceTracker framesWon={framesWon} bestOf={config.bestOf} />
         </View>
       )}
+
+      <BannerAdSlot />
 
       {(() => {
         const potBlock = (
