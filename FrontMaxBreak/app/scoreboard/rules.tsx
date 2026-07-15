@@ -10,6 +10,7 @@ if (Platform.OS === 'android') {
 }
 import { router } from 'expo-router';
 import { useTheme } from '../../contexts/ThemeContext';
+import BannerAdSlot from '../../components/ads/BannerAdSlot';
 import {
   SNOOKER_RULES, RULE_CATEGORIES, searchRules, SnookerRule,
 } from '../../services/snookerRules';
@@ -64,6 +65,8 @@ export default function RulesScreen() {
         <Text style={[styles.title, { color: c.textHeader }]}>Rules of Snooker</Text>
         <View style={{ width: 24 }} />
       </View>
+
+      <BannerAdSlot />
 
       {/* Search */}
       <View style={[styles.searchBox, { backgroundColor: c.backgroundSecondary, borderColor: c.cardBorder }]}>

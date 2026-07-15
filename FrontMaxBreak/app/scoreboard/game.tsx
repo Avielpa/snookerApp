@@ -14,6 +14,7 @@ import PlayerCard from '../components/scoreboard/PlayerCard';
 import BallPad from '../components/scoreboard/BallPad';
 import FoulModal from '../components/scoreboard/FoulModal';
 import FrameSummary from '../components/scoreboard/FrameSummary';
+import BannerAdSlot from '../../components/ads/BannerAdSlot';
 
 function GameScreen({ initialState }: { initialState?: GameState }) {
   const { theme } = useTheme();
@@ -367,6 +368,8 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
           </TouchableOpacity>
         </View>
       </View>
+
+      <BannerAdSlot />
 
       {(() => {
         const potBlock = (
