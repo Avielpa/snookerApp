@@ -10,9 +10,10 @@
 // Channel IDs:
 //   WST     — UC5lTEvtwu6SR3LMSmU9VZ2Q  (youtube.com/@WorldSnookerTour)
 //   TNT     — UCexJsWmC7rvfRaqK8MF3JFA  (TNT Sports Snooker)
-//   Mubeen  — UCb4vVvFCy29IC-9soDMQgCw
+//   Astley  — UCTSrpNYgBnabSzz5ap-nMow  (John Astley Snooker)
 //   SASA    — UC7Fu3Qlk9IfFWA2bpfYF7GA
 //   Shachar — UCC7zF2g2XmvzXLP--sGj2BQ  (Shachar Rodberg)
+//   Afzaal  — UC3uEQO3IZek_Yh-qIFvfHeQ  (Muhammad Afzaal, @afziiop)
 //
 // Quota: playlistItems.list = 1 unit. Free tier = 10,000 units/day.
 // API key rotation: run `eas secret:create --scope project --name EXPO_PUBLIC_YOUTUBE_API_KEY --value NEW_KEY --force`
@@ -22,9 +23,10 @@ import { getSeasonEvents, Event } from './tourServices';
 
 const WST_CHANNEL_ID    = 'UC5lTEvtwu6SR3LMSmU9VZ2Q';
 const TNT_CHANNEL_ID    = 'UCexJsWmC7rvfRaqK8MF3JFA';
-const MUBEEN_CHANNEL_ID = 'UCb4vVvFCy29IC-9soDMQgCw';
+const ASTLEY_CHANNEL_ID = 'UCTSrpNYgBnabSzz5ap-nMow';
 const SASA_CHANNEL_ID   = 'UC7Fu3Qlk9IfFWA2bpfYF7GA';
 const SHACHAR_CHANNEL_ID = 'UCC7zF2g2XmvzXLP--sGj2BQ';
+const AFZAAL_CHANNEL_ID  = 'UC3uEQO3IZek_Yh-qIFvfHeQ';
 
 // Key is injected at build time via EAS Secrets (never hardcoded).
 // To rotate: run `eas secret:create --scope project --name EXPO_PUBLIC_YOUTUBE_API_KEY --value NEW_KEY --force`
@@ -148,6 +150,7 @@ export async function fetchHighlights(): Promise<HighlightsResult> {
 export const fetchTNT     = () => fetchWithCache('highlights_tnt',    () => fetchChannelVideos(TNT_CHANNEL_ID,    'TNT'));
 
 // Creators tab channels
-export const fetchMubeen  = () => fetchWithCache('highlights_mubeen', () => fetchChannelVideos(MUBEEN_CHANNEL_ID, 'Mubeen'));
+export const fetchAstley  = () => fetchWithCache('highlights_astley', () => fetchChannelVideos(ASTLEY_CHANNEL_ID, 'Astley'));
 export const fetchSASA    = () => fetchWithCache('highlights_sasa',   () => fetchChannelVideos(SASA_CHANNEL_ID,   'SASA'));
 export const fetchShachar = () => fetchWithCache('highlights_shachar', () => fetchChannelVideos(SHACHAR_CHANNEL_ID, 'Shachar'));
+export const fetchAfzaal  = () => fetchWithCache('highlights_afzaal',  () => fetchChannelVideos(AFZAAL_CHANNEL_ID,  'Afzaal'));
