@@ -3,17 +3,17 @@ import React, { useEffect, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { BannerAd, BannerAdSize } from 'react-native-google-mobile-ads';
 import { useColors } from '../../contexts/ThemeContext';
-import { BANNER_AD_UNIT_ID, initAds } from '../../services/adsService';
+import { ADS_ENABLED, BANNER_AD_UNIT_ID, initAds } from '../../services/adsService';
 
 export default function BannerAdSlot() {
   const colors = useColors();
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
-    initAds();
+    if (ADS_ENABLED) initAds();
   }, []);
 
-  if (failed) {
+  if (!ADS_ENABLED || failed) {
     return null;
   }
 

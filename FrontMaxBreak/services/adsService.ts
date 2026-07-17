@@ -1,5 +1,6 @@
 // services/adsService.ts
 import { useEffect } from 'react';
+import { Platform } from 'react-native';
 import mobileAds, {
   InterstitialAd,
   AdEventType,
@@ -10,12 +11,21 @@ import { logger } from '../utils/logger';
 const REAL_BANNER_AD_UNIT_ID = 'ca-app-pub-7026436404209900/5896032920';
 const REAL_INTERSTITIAL_AD_UNIT_ID = 'ca-app-pub-7026436404209900/4391379567';
 
+// No AdMob app is registered for iOS yet (app.config.js hardcodes Google's public sample
+// app ID there) — these ad unit IDs belong to the real Android AdMob app and crash the SDK
+// on iOS when requested under a different app ID. Ads are disabled entirely on iOS until a
+// real iOS AdMob app is registered. Remove this guard then.
+export const ADS_ENABLED = Platform.OS !== 'ios';
+
 export const BANNER_AD_UNIT_ID = __DEV__ ? TestIds.BANNER : REAL_BANNER_AD_UNIT_ID;
 export const INTERSTITIAL_AD_UNIT_ID = __DEV__ ? TestIds.INTERSTITIAL : REAL_INTERSTITIAL_AD_UNIT_ID;
 
 let sdkInitPromise: Promise<void> | null = null;
 
 export function initAds(): Promise<void> {
+  if (!ADS_ENABLED) {
+    return Promise.resolve();
+  }
   if (!sdkInitPromise) {
     sdkInitPromise = mobileAds()
       .initialize()
@@ -34,7 +44,7 @@ function createOnceInterstitialHook(label: string) {
 
   return function useOnceInterstitial(): void {
     useEffect(() => {
-      if (shownThisSession) return;
+      if (!ADS_ENABLED || shownThisSession) return;
 
       let isMounted = true;
       let unsubscribeLoaded: (() => void) | undefined;
