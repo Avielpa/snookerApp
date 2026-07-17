@@ -19,7 +19,6 @@ import {
     Highlight,
     fetchHighlights,
     fetchTNT,
-    fetchAstley,
     fetchSASA,
     fetchShachar,
     fetchAfzaal,
@@ -29,12 +28,12 @@ import { fetchAllNews } from '../services/newsService';
 
 type Tab = 'news' | 'highlights' | 'creators';
 type HighlightSubTab = 'wst' | 'tnt';
-type CreatorsSubTab = 'astley' | 'sasa' | 'shachar' | 'afzaal';
+type CreatorsSubTab = 'sasa' | 'shachar' | 'afzaal';
 
 const TAB_LABELS: Record<Tab, string> = { news: 'NEWS', highlights: 'HIGHLIGHTS', creators: 'CREATORS' };
 const HIGHLIGHT_SUB_LABELS: Record<HighlightSubTab, string> = { wst: 'WST', tnt: 'TNT SPORTS' };
-const CREATORS_SUB_LABELS: Record<CreatorsSubTab, string> = { astley: 'ASTLEY', sasa: 'SASA', shachar: 'SHACHAR', afzaal: 'AFZAAL' };
-const CREATORS_BADGE: Record<CreatorsSubTab, string> = { astley: 'ASTLEY', sasa: 'SASA', shachar: 'SHACHAR', afzaal: 'AFZAAL' };
+const CREATORS_SUB_LABELS: Record<CreatorsSubTab, string> = { sasa: 'SASA', shachar: 'SHACHAR', afzaal: 'AFZAAL' };
+const CREATORS_BADGE: Record<CreatorsSubTab, string> = { sasa: 'SASA', shachar: 'SHACHAR', afzaal: 'AFZAAL' };
 
 // ─── Static components ────────────────────────────────────────────────────────
 
@@ -124,10 +123,10 @@ export default function NewsScreen() {
 
     // Sub-tab selection
     const [highlightSubTab, setHighlightSubTab] = useState<HighlightSubTab>('wst');
-    const [creatorsSubTab, setCreatorsSubTab] = useState<CreatorsSubTab>('astley');
+    const [creatorsSubTab, setCreatorsSubTab] = useState<CreatorsSubTab>('sasa');
 
     // Fetched tracking via ref — avoids stale closure issues in useCallback
-    const fetched = useRef({ wst: false, tnt: false, astley: false, sasa: false, shachar: false, afzaal: false });
+    const fetched = useRef({ wst: false, tnt: false, sasa: false, shachar: false, afzaal: false });
 
     // ── News ─────────────────────────────────────────────────────────────────
     const [articles, setArticles] = useState<NewsArticle[]>([]);
@@ -145,11 +144,6 @@ export default function NewsScreen() {
     const [tntHighlights, setTntHighlights] = useState<Highlight[]>([]);
     const [tntLoading, setTntLoading] = useState(false);
     const [tntRefreshing, setTntRefreshing] = useState(false);
-
-    // ── Creators: Astley ─────────────────────────────────────────────────────
-    const [astleyHighlights, setAstleyHighlights] = useState<Highlight[]>([]);
-    const [astleyLoading, setAstleyLoading] = useState(false);
-    const [astleyRefreshing, setAstleyRefreshing] = useState(false);
 
     // ── Creators: SASA ───────────────────────────────────────────────────────
     const [sasaHighlights, setSasaHighlights] = useState<Highlight[]>([]);
@@ -202,17 +196,6 @@ export default function NewsScreen() {
         }
     }, []);
 
-    const loadAstley = useCallback(async (isRefresh = false) => {
-        if (isRefresh) setAstleyRefreshing(true); else setAstleyLoading(true);
-        try {
-            setAstleyHighlights(await fetchAstley());
-            fetched.current.astley = true;
-        } finally {
-            setAstleyLoading(false);
-            setAstleyRefreshing(false);
-        }
-    }, []);
-
     const loadSasa = useCallback(async (isRefresh = false) => {
         if (isRefresh) setSasaRefreshing(true); else setSasaLoading(true);
         try {
@@ -253,8 +236,8 @@ export default function NewsScreen() {
     const handleTabPress = useCallback((tab: Tab) => {
         setActiveTab(tab);
         if (tab === 'highlights' && !fetched.current.wst) loadWst();
-        if (tab === 'creators' && !fetched.current.astley) loadAstley();
-    }, [loadWst, loadAstley]);
+        if (tab === 'creators' && !fetched.current.sasa) loadSasa();
+    }, [loadWst, loadSasa]);
 
     const handleHighlightSubTabPress = useCallback((sub: HighlightSubTab) => {
         setHighlightSubTab(sub);
@@ -264,11 +247,10 @@ export default function NewsScreen() {
 
     const handleCreatorsSubTabPress = useCallback((sub: CreatorsSubTab) => {
         setCreatorsSubTab(sub);
-        if (sub === 'astley' && !fetched.current.astley) loadAstley();
         if (sub === 'sasa'   && !fetched.current.sasa)   loadSasa();
         if (sub === 'shachar' && !fetched.current.shachar) loadShachar();
         if (sub === 'afzaal' && !fetched.current.afzaal) loadAfzaal();
-    }, [loadAstley, loadSasa, loadShachar, loadAfzaal]);
+    }, [loadSasa, loadShachar, loadAfzaal]);
 
     // ── Derived state ────────────────────────────────────────────────────────
 
@@ -280,14 +262,11 @@ export default function NewsScreen() {
     const highlightRefreshing = highlightSubTab === 'wst' ? wstRefreshing : tntRefreshing;
     const onHighlightRefresh = highlightSubTab === 'wst' ? () => loadWst(true) : () => loadTnt(true);
 
-    const creatorsLoading = creatorsSubTab === 'astley' ? astleyLoading
-        : creatorsSubTab === 'sasa' ? sasaLoading
+    const creatorsLoading = creatorsSubTab === 'sasa' ? sasaLoading
         : creatorsSubTab === 'shachar' ? shacharLoading : afzaalLoading;
-    const creatorsRefreshing = creatorsSubTab === 'astley' ? astleyRefreshing
-        : creatorsSubTab === 'sasa' ? sasaRefreshing
+    const creatorsRefreshing = creatorsSubTab === 'sasa' ? sasaRefreshing
         : creatorsSubTab === 'shachar' ? shacharRefreshing : afzaalRefreshing;
-    const onCreatorsRefresh = creatorsSubTab === 'astley' ? () => loadAstley(true)
-        : creatorsSubTab === 'sasa' ? () => loadSasa(true)
+    const onCreatorsRefresh = creatorsSubTab === 'sasa' ? () => loadSasa(true)
         : creatorsSubTab === 'shachar' ? () => loadShachar(true) : () => loadAfzaal(true);
 
     const isLoading = activeTab === 'news' ? newsLoading
@@ -396,7 +375,7 @@ export default function NewsScreen() {
             ) : (
                 <View style={styles.flex}>
                     <SubTabRow
-                        tabs={['astley', 'sasa', 'shachar', 'afzaal'] as CreatorsSubTab[]}
+                        tabs={['sasa', 'shachar', 'afzaal'] as CreatorsSubTab[]}
                         labels={CREATORS_SUB_LABELS}
                         activeTab={creatorsSubTab}
                         onPress={handleCreatorsSubTabPress}
@@ -404,8 +383,7 @@ export default function NewsScreen() {
                     />
                     <FlatList
                         data={
-                            creatorsSubTab === 'astley' ? astleyHighlights
-                            : creatorsSubTab === 'sasa'  ? sasaHighlights
+                            creatorsSubTab === 'sasa'  ? sasaHighlights
                             : creatorsSubTab === 'shachar' ? shacharHighlights
                             : afzaalHighlights
                         }
