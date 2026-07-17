@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useKeepAwake } from 'expo-keep-awake';
 import { View, Text, TouchableOpacity, StyleSheet, Alert, AppState, useWindowDimensions, ScrollView } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, router, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scoreboardColors } from '../../constants/scoreboardTheme';
@@ -347,7 +348,9 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
   }, [centuryTrigger, frameNumber]);
 
   return (
-    <View style={[styles.root, { backgroundColor: c.background, paddingTop: insets.top }]}>
+    <LinearGradient
+      colors={[c.background, c.backgroundVignetteEnd]}
+      style={[styles.root, { paddingTop: insets.top }]}>
       {/* Header bar */}
       <View style={[styles.topBar, { borderBottomColor: c.cardBorder }]}>
         <TouchableOpacity
@@ -575,7 +578,7 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
           />
         );
       })()}
-    </View>
+    </LinearGradient>
   );
 }
 
