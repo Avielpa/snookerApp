@@ -10,12 +10,12 @@ import { useGameAutosave } from '../../hooks/useGameAutosave';
 import { saveMatch, saveDraft, loadDraft, clearDraft, GameDraft, StoredMatch } from '../../services/gameStorage';
 import { uploadMatch } from '../../services/scoreboardSyncService';
 import { isLoggedIn } from '../../services/authService';
-import PlayerCard from '../components/scoreboard/PlayerCard';
+import ScorePanel from '../components/scoreboard/ScorePanel';
+import FormRow from '../components/scoreboard/FormRow';
 import BallPad from '../components/scoreboard/BallPad';
 import FoulModal from '../components/scoreboard/FoulModal';
 import FrameSummary from '../components/scoreboard/FrameSummary';
 import RespotBreakerModal from '../components/scoreboard/RespotBreakerModal';
-import MomentumGraph from '../components/scoreboard/MomentumGraph';
 import FrameRaceTracker from '../components/scoreboard/FrameRaceTracker';
 import BreakChain from '../components/scoreboard/BreakChain';
 import CenturyCelebration from '../components/scoreboard/CenturyCelebration';
@@ -404,8 +404,8 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
       {isLandscape && (
         <>
           {insightText && (
-            <View style={[styles.insightTicker, { backgroundColor: 'rgba(96,165,250,0.1)', borderColor: c.primary }]}>
-              <Text style={[styles.insightTickerText, { color: c.textSecondary }]}>{insightText}</Text>
+            <View style={[styles.insightChip, { backgroundColor: 'rgba(199,164,92,0.07)', borderColor: 'rgba(199,164,92,0.22)' }]}>
+              <Text style={[styles.insightChipText, { color: c.textHeader }]}>💡 {insightText}</Text>
             </View>
           )}
 
@@ -420,57 +420,18 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
       )}
 
       {(() => {
-        const potBlock = (
-          <View style={[styles.pot, { backgroundColor: c.backgroundSecondary }]}>
-            <Text style={[styles.potLabel, { color: c.textMuted }]}>Points remaining</Text>
-            <Text style={[styles.potValue, { color: c.primary }]}>{snap.pointsOnTable}</Text>
-            {isTrainMode ? (
-              snap.currentBreak > 0 && (
-                <Text style={[styles.leadText, { color: c.textSecondary }]}>
-                  Current break: {snap.currentBreak}
-                </Text>
-              )
-            ) : (
-              <Text style={[styles.leadText, { color: c.textSecondary }]}>{leadText}</Text>
-            )}
-          </View>
-        );
-
-        const cardsBlock = isTrainMode ? (
-          <View style={[styles.cardsRow, { paddingHorizontal: 16 }]}>
-            <PlayerCard
-              name={playerNames[0]}
-              score={snap.scores[0]}
-              framesWon={framesWon[0]}
-              currentBreak={snap.currentBreak}
-              highestBreak={frameHighestBreak[0]}
-              isActive
-              isLeft
-            />
-          </View>
-        ) : (
-          <View style={styles.cardsRow}>
-            <PlayerCard
-              name={playerNames[0]}
-              score={snap.scores[0]}
-              framesWon={framesWon[0]}
-              currentBreak={snap.currentPlayer === 0 ? snap.currentBreak : 0}
-              highestBreak={frameHighestBreak[0]}
-              isActive={snap.currentPlayer === 0}
-              isLeft
-              onEndVisit={snap.currentPlayer === 1 ? endVisit : undefined}
-            />
-            <PlayerCard
-              name={playerNames[1]}
-              score={snap.scores[1]}
-              framesWon={framesWon[1]}
-              currentBreak={snap.currentPlayer === 1 ? snap.currentBreak : 0}
-              highestBreak={frameHighestBreak[1]}
-              isActive={snap.currentPlayer === 1}
-              isLeft={false}
-              onEndVisit={snap.currentPlayer === 0 ? endVisit : undefined}
-            />
-          </View>
+        const scorePanelBlock = (
+          <ScorePanel
+            playerNames={playerNames}
+            scores={snap.scores}
+            framesWon={framesWon}
+            currentBreak={snap.currentBreak}
+            highestBreak={frameHighestBreak}
+            currentPlayer={snap.currentPlayer}
+            pointsOnTable={snap.pointsOnTable}
+            isTrainMode={isTrainMode}
+            onEndVisit={(forPlayer) => endVisit()}
+          />
         );
 
         const breakChainBlock = !snap.isFrameOver && (
@@ -479,23 +440,8 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
           </View>
         );
 
-        const winProbBlock = winProbability && !snap.isFrameOver && (
-          <View style={styles.winProbWrap}>
-            <View style={styles.winProbLabelRow}>
-              <Text style={[styles.winProbLabel, { color: c.textMuted }]}>{playerNames[0]} {winProbability[0]}%</Text>
-              <Text style={[styles.winProbLabel, { color: c.textMuted }]}>{winProbability[1]}% {playerNames[1]}</Text>
-            </View>
-            <View style={[styles.winProbBar, { backgroundColor: c.backgroundTertiary }]}>
-              <View style={{ width: `${winProbability[0]}%`, backgroundColor: c.primary }} />
-              <View style={{ width: `${winProbability[1]}%`, backgroundColor: '#7d1c2c' }} />
-            </View>
-          </View>
-        );
-
-        const momentumBlock = !snap.isFrameOver && momentumSeries.length >= 2 && (
-          <View style={styles.momentumWrap}>
-            <MomentumGraph series={momentumSeries} />
-          </View>
+        const formRowBlock = !snap.isFrameOver && (
+          <FormRow winProbability={winProbability} momentumSeries={momentumSeries} />
         );
 
         const snookerBlock = !isTrainMode && !snap.isFrameOver && (() => {
@@ -506,7 +452,7 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
           const leaderIdx: 0 | 1 = trailerIdx === 0 ? 1 : 0;
           return (
             <TouchableOpacity
-              style={[styles.snookerBanner, { backgroundColor: 'rgba(255,183,77,0.12)', borderColor: c.primary }]}
+              style={[styles.snookerRibbon, { backgroundColor: 'rgba(199,164,92,0.06)', borderColor: 'rgba(199,164,92,0.4)' }]}
               onPress={() => {
                 Alert.alert(
                   'End Frame',
@@ -551,11 +497,9 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
           return (
             <View style={styles.landscapeRow}>
               <View style={[styles.landscapeColumn, { paddingLeft: insets.left }]}>
-                {potBlock}
-                {cardsBlock}
+                {scorePanelBlock}
                 {breakChainBlock}
-                {winProbBlock}
-                {momentumBlock}
+                {formRowBlock}
                 {snookerBlock}
               </View>
               <View style={[styles.landscapeColumn, styles.landscapeRightColumn, { paddingRight: insets.right }]}>
@@ -569,8 +513,8 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
         return (
           <ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1 }}>
             {insightText && (
-              <View style={[styles.insightTicker, { backgroundColor: 'rgba(96,165,250,0.1)', borderColor: c.primary }]}>
-                <Text style={[styles.insightTickerText, { color: c.textSecondary }]}>{insightText}</Text>
+              <View style={[styles.insightChip, { backgroundColor: 'rgba(199,164,92,0.07)', borderColor: 'rgba(199,164,92,0.22)' }]}>
+                <Text style={[styles.insightChipText, { color: c.textHeader }]}>💡 {insightText}</Text>
               </View>
             )}
 
@@ -582,11 +526,9 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
 
             <BannerAdSlot />
 
-            {potBlock}
-            {cardsBlock}
+            {scorePanelBlock}
             {breakChainBlock}
-            {winProbBlock}
-            {momentumBlock}
+            {formRowBlock}
             {snookerBlock}
             <View style={{ flex: 1 }} />
             {ballPadBlock}
@@ -681,38 +623,18 @@ const styles = StyleSheet.create({
   },
   frameLabel: { fontSize: 11 },
   frameScore: { fontSize: 18, fontFamily: 'PoppinsBold' },
-  insightTicker: {
+  insightChip: {
     marginHorizontal: 16,
     marginTop: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 8,
     borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
   },
-  insightTickerText: { fontSize: 11, lineHeight: 15 },
+  insightChipText: { fontSize: 11, fontFamily: 'PoppinsBold' },
   raceTrackerWrap: {
     marginHorizontal: 16,
     marginTop: 8,
-  },
-  winProbWrap: {
-    marginHorizontal: 16,
-    marginTop: 10,
-  },
-  winProbLabelRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 3,
-  },
-  winProbLabel: { fontSize: 10 },
-  winProbBar: {
-    height: 7,
-    borderRadius: 5,
-    overflow: 'hidden',
-    flexDirection: 'row',
-  },
-  momentumWrap: {
-    marginHorizontal: 16,
-    marginTop: 10,
   },
   breakChainWrap: {
     marginHorizontal: 16,
@@ -734,16 +656,17 @@ const styles = StyleSheet.create({
     marginTop: 10,
     gap: 0,
   },
-  snookerBanner: {
+  snookerRibbon: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginHorizontal: 12,
+    marginHorizontal: 16,
     marginTop: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    borderRadius: 4,
     borderWidth: 1,
+    borderLeftWidth: 3,
   },
   snookerBannerText: {
     fontSize: 13,
