@@ -431,6 +431,7 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
             pointsOnTable={snap.pointsOnTable}
             isTrainMode={isTrainMode}
             onEndVisit={(forPlayer) => endVisit()}
+            leadText={!isTrainMode ? leadText : undefined}
           />
         );
 
@@ -639,22 +640,6 @@ const styles = StyleSheet.create({
   breakChainWrap: {
     marginHorizontal: 16,
     marginTop: 10,
-  },
-  pot: {
-    alignItems: 'center',
-    paddingVertical: 10,
-    marginHorizontal: 16,
-    marginTop: 10,
-    borderRadius: 12,
-  },
-  potLabel: { fontSize: 11, letterSpacing: 0.5 },
-  potValue: { fontSize: 36, fontFamily: 'PoppinsBold', lineHeight: 42 },
-  leadText: { fontSize: 12 },
-  cardsRow: {
-    flexDirection: 'row',
-    paddingHorizontal: 12,
-    marginTop: 10,
-    gap: 0,
   },
   snookerRibbon: {
     flexDirection: 'row',

@@ -13,6 +13,9 @@ interface ScorePanelProps {
   pointsOnTable: number;
   isTrainMode: boolean;
   onEndVisit?: (forPlayer: 0 | 1) => void;
+  /** Match-mode lead status, e.g. "Aviel ahead · Sam 24 behind" or "Level". Caller decides
+   * whether to pass it (game.tsx only computes/passes it outside train mode). */
+  leadText?: string;
 }
 
 // Unified score panel — the redesign's signature element. Squared corners (deliberately
@@ -22,7 +25,7 @@ interface ScorePanelProps {
 // conditions, just visually merged. See docs/superpowers/specs/2026-07-17-scoreboard-game-screen-redesign-design.md.
 export default function ScorePanel({
   playerNames, scores, framesWon, currentBreak, highestBreak, currentPlayer,
-  pointsOnTable, isTrainMode, onEndVisit,
+  pointsOnTable, isTrainMode, onEndVisit, leadText,
 }: ScorePanelProps) {
   const c = scoreboardColors;
 
@@ -83,6 +86,9 @@ export default function ScorePanel({
         <Text style={[styles.potValue, { color: c.textPrimary }]}>{pointsOnTable}</Text>
         <Text style={[styles.potLabel, { color: c.textSage }]}>points remaining</Text>
       </View>
+      {!!leadText && (
+        <Text style={[styles.leadText, { color: c.textSage }]}>{leadText}</Text>
+      )}
     </View>
   );
 }
@@ -115,4 +121,5 @@ const styles = StyleSheet.create({
   },
   potValue: { fontSize: 24, fontFamily: 'PoppinsBold' },
   potLabel: { fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.6 },
+  leadText: { fontSize: 11, textAlign: 'center', paddingBottom: 10, paddingHorizontal: 12 },
 });
