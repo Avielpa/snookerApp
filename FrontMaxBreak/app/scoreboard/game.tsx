@@ -401,25 +401,23 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
         </View>
       </View>
 
-      {isLandscape && (
-        <>
-          {insightText && (
-            <View style={[styles.insightChip, { backgroundColor: 'rgba(199,164,92,0.07)', borderColor: 'rgba(199,164,92,0.22)' }]}>
-              <Text style={[styles.insightChipText, { color: c.textHeader }]}>💡 {insightText}</Text>
-            </View>
-          )}
-
-          {!isTrainMode && (
-            <View style={styles.raceTrackerWrap}>
-              <FrameRaceTracker framesWon={framesWon} bestOf={config.bestOf} />
-            </View>
-          )}
-
-          <BannerAdSlot />
-        </>
-      )}
-
       {(() => {
+        const topInfoBlock = (
+          <>
+            {insightText && (
+              <View style={[styles.insightChip, { backgroundColor: 'rgba(199,164,92,0.07)', borderColor: 'rgba(199,164,92,0.22)' }]}>
+                <Text style={[styles.insightChipText, { color: c.textHeader }]}>💡 {insightText}</Text>
+              </View>
+            )}
+            {!isTrainMode && (
+              <View style={styles.raceTrackerWrap}>
+                <FrameRaceTracker framesWon={framesWon} bestOf={config.bestOf} />
+              </View>
+            )}
+            <BannerAdSlot />
+          </>
+        );
+
         const scorePanelBlock = (
           <ScorePanel
             playerNames={playerNames}
@@ -497,12 +495,16 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
         if (isLandscape) {
           return (
             <View style={styles.landscapeRow}>
-              <View style={[styles.landscapeColumn, { paddingLeft: insets.left }]}>
+              <ScrollView
+                style={[styles.landscapeColumn, { paddingLeft: insets.left }]}
+                contentContainerStyle={{ paddingBottom: 12 }}
+              >
+                {topInfoBlock}
                 {scorePanelBlock}
                 {breakChainBlock}
                 {formRowBlock}
                 {snookerBlock}
-              </View>
+              </ScrollView>
               <View style={[styles.landscapeColumn, styles.landscapeRightColumn, { paddingRight: insets.right }]}>
                 {ballPadBlock}
                 <View style={{ height: insets.bottom }} />
@@ -513,20 +515,7 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
 
         return (
           <ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1 }}>
-            {insightText && (
-              <View style={[styles.insightChip, { backgroundColor: 'rgba(199,164,92,0.07)', borderColor: 'rgba(199,164,92,0.22)' }]}>
-                <Text style={[styles.insightChipText, { color: c.textHeader }]}>💡 {insightText}</Text>
-              </View>
-            )}
-
-            {!isTrainMode && (
-              <View style={styles.raceTrackerWrap}>
-                <FrameRaceTracker framesWon={framesWon} bestOf={config.bestOf} />
-              </View>
-            )}
-
-            <BannerAdSlot />
-
+            {topInfoBlock}
             {scorePanelBlock}
             {breakChainBlock}
             {formRowBlock}
