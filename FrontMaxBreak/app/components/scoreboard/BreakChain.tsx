@@ -8,14 +8,12 @@ interface Props {
   currentBreak: number;
 }
 
-// Renders the actual sequence of balls potted in the live break, not just its total —
-// reads state.current.breakBalls directly, nothing invented or re-derived.
 export default function BreakChain({ breakBalls, currentBreak }: Props) {
   const c = scoreboardColors;
   if (breakBalls.length === 0) return null;
 
   return (
-    <View style={[styles.wrap, { backgroundColor: '#0a2a1f', borderColor: c.cardBorder }]}>
+    <View style={[styles.wrap, { backgroundColor: c.backgroundSecondary, borderColor: c.borderGlass }]}>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
         {breakBalls.map((ball, i) => (
           <React.Fragment key={i}>
@@ -24,7 +22,7 @@ export default function BreakChain({ breakBalls, currentBreak }: Props) {
           </React.Fragment>
         ))}
       </ScrollView>
-      <Text style={[styles.total, { color: c.primary }]}>{currentBreak}</Text>
+      <Text style={[styles.total, { color: c.pinGold }]}>{currentBreak}</Text>
     </View>
   );
 }
@@ -38,23 +36,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 7,
   },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-  },
-  chip: {
-    width: 17,
-    height: 17,
-    borderRadius: 9,
-  },
-  arrow: {
-    fontSize: 9,
-    marginHorizontal: 1,
-  },
-  total: {
-    fontFamily: 'PoppinsBold',
-    fontSize: 15,
-    marginLeft: 10,
-  },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  chip: { width: 17, height: 17, borderRadius: 9 },
+  arrow: { fontSize: 9, marginHorizontal: 1 },
+  total: { fontFamily: 'PoppinsBold', fontSize: 15, marginLeft: 10 },
 });
