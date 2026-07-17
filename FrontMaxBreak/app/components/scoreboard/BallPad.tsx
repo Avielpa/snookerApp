@@ -1,8 +1,9 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import * as Haptics from 'expo-haptics';
+import { LinearGradient } from 'expo-linear-gradient';
 import { BallType, BALL_VALUES, GamePhase, AwaitingType, COLORS_SEQUENCE } from '../../../hooks/useSnookerGame';
-import { scoreboardColors, scoreboardBallColors } from '../../../constants/scoreboardTheme';
+import { scoreboardColors } from '../../../constants/scoreboardTheme';
 
 interface Props {
   phase: GamePhase;
@@ -23,6 +24,19 @@ interface Props {
 }
 
 const ALL_BALLS: BallType[] = ['red', 'yellow', 'green', 'brown', 'blue', 'pink', 'black'];
+
+// Two-stop gradient per ball for a glossy-sphere highlight instead of a flat fill —
+// light stop top-left, base ball color everywhere else. Values match
+// scoreboardBallColors exactly (same ball → same base color), just adding a highlight.
+const BALL_GRADIENT: Record<BallType, [string, string]> = {
+  red: ['#e8544f', '#8f1526'],
+  yellow: ['#ffe27a', '#b9891c'],
+  green: ['#3fb867', '#0e4d26'],
+  brown: ['#a06b3f', '#452b16'],
+  blue: ['#4a80d6', '#163665'],
+  pink: ['#f5b6cd', '#b95f80'],
+  black: ['#3a3a3a', '#000000'],
+};
 
 export default function BallPad({
   phase, awaiting, colorsRemaining, redsRemaining, currentBreak, onPot, onExtraRed, onMiss, onFoul, onUndo, onConcede, canUndo, trainMode, freeBallActive, onFreeBall,
@@ -90,23 +104,22 @@ export default function BallPad({
             onPress={() => handlePot(ball)}
             disabled={!isEnabled(ball)}
             activeOpacity={0.7}
-            style={[
-              styles.ballButton,
-              {
-                backgroundColor: scoreboardBallColors[ball],
-                opacity: getOpacity(ball),
-                borderWidth: ball === 'black' ? 2 : 0,
-                borderColor: ball === 'black' ? '#555' : undefined,
-              },
-              isEnabled(ball) && styles.ballEnabled,
-            ]}
+            style={[styles.ballButton, { opacity: getOpacity(ball) }]}
           >
-            <Text style={[
-              styles.ballPts,
-              { color: ball === 'yellow' || ball === 'green' ? '#000' : '#fff' },
-            ]}>
-              {BALL_VALUES[ball]}
-            </Text>
+            <LinearGradient
+              colors={BALL_GRADIENT[ball]}
+              start={{ x: 0.3, y: 0.25 }}
+              end={{ x: 0.75, y: 0.9 }}
+              style={[
+                styles.ballGradient,
+                { borderWidth: ball === 'black' ? 2 : 0, borderColor: ball === 'black' ? '#555' : undefined },
+                isEnabled(ball) && styles.ballEnabled,
+              ]}
+            >
+              <Text style={[styles.ballPts, { color: ball === 'yellow' || ball === 'green' ? '#000' : '#fff' }]}>
+                {BALL_VALUES[ball]}
+              </Text>
+            </LinearGradient>
           </TouchableOpacity>
         ))}
       </View>
@@ -114,34 +127,34 @@ export default function BallPad({
       {/* Action buttons */}
       <View style={styles.actionRow}>
         <TouchableOpacity
-          style={[styles.actionBtn, { backgroundColor: c.backgroundTertiary }]}
+          style={[styles.actionBtn, { backgroundColor: 'rgba(255,255,255,0.05)' }]}
           onPress={onMiss}
         >
-          <Text style={[styles.actionText, { color: c.textSecondary }]}>
+          <Text style={[styles.actionText, { color: c.textSage }]}>
             {trainMode ? 'End Break' : 'End Visit'}
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.actionBtn, { backgroundColor: 'rgba(248,113,113,0.15)' }]}
+          style={[styles.actionBtn, { backgroundColor: 'rgba(224,100,95,0.14)' }]}
           onPress={onFoul}
         >
           <Text style={[styles.actionText, { color: c.error }]}>Foul</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.actionBtn, { backgroundColor: c.backgroundTertiary, opacity: canUndo ? 1 : 0.35 }]}
+          style={[styles.actionBtn, { backgroundColor: 'rgba(255,255,255,0.05)', opacity: canUndo ? 1 : 0.35 }]}
           onPress={onUndo}
           disabled={!canUndo}
         >
-          <Text style={[styles.actionText, { color: c.textSecondary }]}>↩ Undo</Text>
+          <Text style={[styles.actionText, { color: c.textSage }]}>↩ Undo</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.actionBtn, { backgroundColor: 'rgba(255,183,77,0.08)' }]}
+          style={[styles.actionBtn, { backgroundColor: c.pinGold }]}
           onPress={onConcede}
         >
-          <Text style={[styles.actionText, { color: c.textMuted }]}>
+          <Text style={[styles.actionText, { color: '#0a2a1f', fontWeight: '700' }]}>
             {trainMode ? 'End Session' : 'Concede'}
           </Text>
         </TouchableOpacity>
@@ -172,11 +185,14 @@ const styles = StyleSheet.create({
   ballButton: {
     flex: 1,
     aspectRatio: 1,
+    maxWidth: 52,
+    maxHeight: 52,
+  },
+  ballGradient: {
+    flex: 1,
     borderRadius: 100,
     alignItems: 'center',
     justifyContent: 'center',
-    maxWidth: 52,
-    maxHeight: 52,
   },
   ballEnabled: {
     shadowColor: '#000',
