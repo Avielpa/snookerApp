@@ -8,6 +8,8 @@ interface Props {
   currentBreak: number;
 }
 
+// Renders the actual sequence of balls potted in the live break, not just its total —
+// reads state.current.breakBalls directly, nothing invented or re-derived.
 export default function BreakChain({ breakBalls, currentBreak }: Props) {
   const c = scoreboardColors;
   if (breakBalls.length === 0) return null;
@@ -36,8 +38,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 7,
   },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  chip: { width: 17, height: 17, borderRadius: 9 },
-  arrow: { fontSize: 9, marginHorizontal: 1 },
-  total: { fontFamily: 'PoppinsBold', fontSize: 15, marginLeft: 10 },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  chip: {
+    width: 17,
+    height: 17,
+    borderRadius: 9,
+  },
+  arrow: {
+    fontSize: 9,
+    marginHorizontal: 1,
+  },
+  total: {
+    fontFamily: 'PoppinsBold',
+    fontSize: 15,
+    marginLeft: 10,
+  },
 });
