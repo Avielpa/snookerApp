@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useKeepAwake } from 'expo-keep-awake';
-import { View, Text, TouchableOpacity, StyleSheet, Alert, AppState, useWindowDimensions } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert, AppState, useWindowDimensions, ScrollView } from 'react-native';
 import { useLocalSearchParams, router, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scoreboardColors } from '../../constants/scoreboardTheme';
@@ -401,19 +401,23 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
         </View>
       </View>
 
-      {insightText && (
-        <View style={[styles.insightTicker, { backgroundColor: 'rgba(96,165,250,0.1)', borderColor: c.primary }]}>
-          <Text style={[styles.insightTickerText, { color: c.textSecondary }]}>{insightText}</Text>
-        </View>
-      )}
+      {isLandscape && (
+        <>
+          {insightText && (
+            <View style={[styles.insightTicker, { backgroundColor: 'rgba(96,165,250,0.1)', borderColor: c.primary }]}>
+              <Text style={[styles.insightTickerText, { color: c.textSecondary }]}>{insightText}</Text>
+            </View>
+          )}
 
-      {!isTrainMode && (
-        <View style={styles.raceTrackerWrap}>
-          <FrameRaceTracker framesWon={framesWon} bestOf={config.bestOf} />
-        </View>
-      )}
+          {!isTrainMode && (
+            <View style={styles.raceTrackerWrap}>
+              <FrameRaceTracker framesWon={framesWon} bestOf={config.bestOf} />
+            </View>
+          )}
 
-      <BannerAdSlot />
+          <BannerAdSlot />
+        </>
+      )}
 
       {(() => {
         const potBlock = (
@@ -563,7 +567,21 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
         }
 
         return (
-          <>
+          <ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1 }}>
+            {insightText && (
+              <View style={[styles.insightTicker, { backgroundColor: 'rgba(96,165,250,0.1)', borderColor: c.primary }]}>
+                <Text style={[styles.insightTickerText, { color: c.textSecondary }]}>{insightText}</Text>
+              </View>
+            )}
+
+            {!isTrainMode && (
+              <View style={styles.raceTrackerWrap}>
+                <FrameRaceTracker framesWon={framesWon} bestOf={config.bestOf} />
+              </View>
+            )}
+
+            <BannerAdSlot />
+
             {potBlock}
             {cardsBlock}
             {breakChainBlock}
@@ -573,7 +591,7 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
             <View style={{ flex: 1 }} />
             {ballPadBlock}
             <View style={{ height: insets.bottom }} />
-          </>
+          </ScrollView>
         );
       })()}
 
