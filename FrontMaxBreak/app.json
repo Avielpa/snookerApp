@@ -84,7 +84,7 @@
     "experiments": {
       "typedRoutes": true
     },
-    "runtimeVersion": "1.0.0",
+    "runtimeVersion": "2.0.0",
     "extra": {
       "router": {
         "origin": false
