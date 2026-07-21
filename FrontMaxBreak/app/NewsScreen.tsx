@@ -22,18 +22,19 @@ import {
     fetchSASA,
     fetchShachar,
     fetchAfzaal,
+    fetchMubeen,
     filterHighlightsByTournament,
 } from '../services/highlightsService';
 import { fetchAllNews } from '../services/newsService';
 
 type Tab = 'news' | 'highlights' | 'creators';
 type HighlightSubTab = 'wst' | 'tnt';
-type CreatorsSubTab = 'sasa' | 'shachar' | 'afzaal';
+type CreatorsSubTab = 'sasa' | 'shachar' | 'afzaal' | 'mubeen';
 
 const TAB_LABELS: Record<Tab, string> = { news: 'NEWS', highlights: 'HIGHLIGHTS', creators: 'CREATORS' };
 const HIGHLIGHT_SUB_LABELS: Record<HighlightSubTab, string> = { wst: 'WST', tnt: 'TNT SPORTS' };
-const CREATORS_SUB_LABELS: Record<CreatorsSubTab, string> = { sasa: 'SASA', shachar: 'SHACHAR', afzaal: 'AFZAAL' };
-const CREATORS_BADGE: Record<CreatorsSubTab, string> = { sasa: 'SASA', shachar: 'SHACHAR', afzaal: 'AFZAAL' };
+const CREATORS_SUB_LABELS: Record<CreatorsSubTab, string> = { sasa: 'SASA', shachar: 'SHACHAR', afzaal: 'AFZAAL', mubeen: 'MUBEEN' };
+const CREATORS_BADGE: Record<CreatorsSubTab, string> = { sasa: 'SASA', shachar: 'SHACHAR', afzaal: 'AFZAAL', mubeen: 'MUBEEN' };
 
 // ─── Static components ────────────────────────────────────────────────────────
 
@@ -126,7 +127,7 @@ export default function NewsScreen() {
     const [creatorsSubTab, setCreatorsSubTab] = useState<CreatorsSubTab>('sasa');
 
     // Fetched tracking via ref — avoids stale closure issues in useCallback
-    const fetched = useRef({ wst: false, tnt: false, sasa: false, shachar: false, afzaal: false });
+    const fetched = useRef({ wst: false, tnt: false, sasa: false, shachar: false, afzaal: false, mubeen: false });
 
     // ── News ─────────────────────────────────────────────────────────────────
     const [articles, setArticles] = useState<NewsArticle[]>([]);
@@ -159,6 +160,11 @@ export default function NewsScreen() {
     const [afzaalHighlights, setAfzaalHighlights] = useState<Highlight[]>([]);
     const [afzaalLoading, setAfzaalLoading] = useState(false);
     const [afzaalRefreshing, setAfzaalRefreshing] = useState(false);
+
+    // ── Creators: Mubeen ─────────────────────────────────────────────────────
+    const [mubeenHighlights, setMubeenHighlights] = useState<Highlight[]>([]);
+    const [mubeenLoading, setMubeenLoading] = useState(false);
+    const [mubeenRefreshing, setMubeenRefreshing] = useState(false);
 
     // ── Load functions ───────────────────────────────────────────────────────
 
@@ -229,6 +235,17 @@ export default function NewsScreen() {
         }
     }, []);
 
+    const loadMubeen = useCallback(async (isRefresh = false) => {
+        if (isRefresh) setMubeenRefreshing(true); else setMubeenLoading(true);
+        try {
+            setMubeenHighlights(await fetchMubeen());
+            fetched.current.mubeen = true;
+        } finally {
+            setMubeenLoading(false);
+            setMubeenRefreshing(false);
+        }
+    }, []);
+
     useEffect(() => { loadNews(); }, [loadNews]);
 
     // ── Tab navigation ───────────────────────────────────────────────────────
@@ -250,7 +267,8 @@ export default function NewsScreen() {
         if (sub === 'sasa'   && !fetched.current.sasa)   loadSasa();
         if (sub === 'shachar' && !fetched.current.shachar) loadShachar();
         if (sub === 'afzaal' && !fetched.current.afzaal) loadAfzaal();
-    }, [loadSasa, loadShachar, loadAfzaal]);
+        if (sub === 'mubeen' && !fetched.current.mubeen) loadMubeen();
+    }, [loadSasa, loadShachar, loadAfzaal, loadMubeen]);
 
     // ── Derived state ────────────────────────────────────────────────────────
 
@@ -263,11 +281,14 @@ export default function NewsScreen() {
     const onHighlightRefresh = highlightSubTab === 'wst' ? () => loadWst(true) : () => loadTnt(true);
 
     const creatorsLoading = creatorsSubTab === 'sasa' ? sasaLoading
-        : creatorsSubTab === 'shachar' ? shacharLoading : afzaalLoading;
+        : creatorsSubTab === 'shachar' ? shacharLoading
+        : creatorsSubTab === 'afzaal' ? afzaalLoading : mubeenLoading;
     const creatorsRefreshing = creatorsSubTab === 'sasa' ? sasaRefreshing
-        : creatorsSubTab === 'shachar' ? shacharRefreshing : afzaalRefreshing;
+        : creatorsSubTab === 'shachar' ? shacharRefreshing
+        : creatorsSubTab === 'afzaal' ? afzaalRefreshing : mubeenRefreshing;
     const onCreatorsRefresh = creatorsSubTab === 'sasa' ? () => loadSasa(true)
-        : creatorsSubTab === 'shachar' ? () => loadShachar(true) : () => loadAfzaal(true);
+        : creatorsSubTab === 'shachar' ? () => loadShachar(true)
+        : creatorsSubTab === 'afzaal' ? () => loadAfzaal(true) : () => loadMubeen(true);
 
     const isLoading = activeTab === 'news' ? newsLoading
         : activeTab === 'highlights' ? highlightLoading : creatorsLoading;
@@ -375,7 +396,7 @@ export default function NewsScreen() {
             ) : (
                 <View style={styles.flex}>
                     <SubTabRow
-                        tabs={['sasa', 'shachar', 'afzaal'] as CreatorsSubTab[]}
+                        tabs={['sasa', 'shachar', 'afzaal', 'mubeen'] as CreatorsSubTab[]}
                         labels={CREATORS_SUB_LABELS}
                         activeTab={creatorsSubTab}
                         onPress={handleCreatorsSubTabPress}
@@ -385,7 +406,8 @@ export default function NewsScreen() {
                         data={
                             creatorsSubTab === 'sasa'  ? sasaHighlights
                             : creatorsSubTab === 'shachar' ? shacharHighlights
-                            : afzaalHighlights
+                            : creatorsSubTab === 'afzaal' ? afzaalHighlights
+                            : mubeenHighlights
                         }
                         keyExtractor={(item) => item.videoId}
                         renderItem={({ item }) => (
