@@ -41,40 +41,54 @@ export function initAds(): Promise<void> {
   return sdkInitPromise;
 }
 
-function createOnceInterstitialHook(label: string) {
-  let shownThisSession = false;
+// Delay before an interstitial is even requested, so a first-time user gets to
+// see the screen they opened before any ad can interrupt them — showing an ad
+// the instant the app launches is a well-documented uninstall driver.
+const INTERSTITIAL_DELAY_MS = 5000;
 
+// Shared across every interstitial trigger (app-launch, scoreboard-entry, ...) —
+// at most one interstitial shows per app session, regardless of which trigger
+// fires first. Without this, a user who opens the app and immediately jumps to
+// the scoreboard could see the app-launch interstitial fire while already on
+// the scoreboard screen, followed by the scoreboard-entry one — two ads in one
+// session from what's meant to be a "once per process" cap.
+let interstitialShownThisSession = false;
+
+function createOnceInterstitialHook(label: string) {
   return function useOnceInterstitial(): void {
     useEffect(() => {
-      if (!ADS_ENABLED || shownThisSession || !INTERSTITIAL_AD_UNIT_ID) return;
+      if (!ADS_ENABLED || interstitialShownThisSession || !INTERSTITIAL_AD_UNIT_ID) return;
 
       let isMounted = true;
       let unsubscribeLoaded: (() => void) | undefined;
       let unsubscribeError: (() => void) | undefined;
 
-      initAds().then(() => {
-        if (!isMounted || shownThisSession) return;
+      const delayTimer = setTimeout(() => {
+        if (interstitialShownThisSession) return;
+        initAds().then(() => {
+          if (!isMounted || interstitialShownThisSession) return;
 
-        const interstitial = InterstitialAd.createForAdRequest(INTERSTITIAL_AD_UNIT_ID as string);
+          const interstitial = InterstitialAd.createForAdRequest(INTERSTITIAL_AD_UNIT_ID as string);
 
-        unsubscribeLoaded = interstitial.addAdEventListener(AdEventType.LOADED, () => {
-          if (!shownThisSession) {
-            shownThisSession = true;
+          unsubscribeLoaded = interstitial.addAdEventListener(AdEventType.LOADED, () => {
+            if (!isMounted || interstitialShownThisSession) return;
+            interstitialShownThisSession = true;
             interstitial.show().catch((error: any) => {
               logger.warn(`[Ads] ${label} interstitial show failed:`, error?.message);
             });
-          }
-        });
+          });
 
-        unsubscribeError = interstitial.addAdEventListener(AdEventType.ERROR, (error: any) => {
-          logger.warn(`[Ads] ${label} interstitial load failed:`, error?.message);
-        });
+          unsubscribeError = interstitial.addAdEventListener(AdEventType.ERROR, (error: any) => {
+            logger.warn(`[Ads] ${label} interstitial load failed:`, error?.message);
+          });
 
-        interstitial.load();
-      });
+          interstitial.load();
+        });
+      }, INTERSTITIAL_DELAY_MS);
 
       return () => {
         isMounted = false;
+        clearTimeout(delayTimer);
         unsubscribeLoaded?.();
         unsubscribeError?.();
       };
@@ -86,5 +100,7 @@ function createOnceInterstitialHook(label: string) {
 export const useInterstitialOnce = createOnceInterstitialHook('app-launch');
 
 // Shown once per app process, the first time the scoreboard setup screen is opened —
-// independent of the app-launch one above (both can fire in the same session).
+// shares the same session-wide cap as the app-launch interstitial above, so a
+// user only ever sees one interstitial total per session, from whichever
+// trigger fires first.
 export const useScoreboardEntryInterstitial = createOnceInterstitialHook('scoreboard-entry');
