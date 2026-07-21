@@ -47,12 +47,18 @@ module.exports = {
     plugins: [
       ...(baseConfig.plugins || []),
       'expo-secure-store',
+      [
+        'react-native-google-mobile-ads',
+        {
+          androidAppId: 'ca-app-pub-7026436404209900~6184340367',
+          iosAppId: 'ca-app-pub-7026436404209900~7553262356',
+        },
+      ],
       ...(isIosBuild ? [
         './plugins/withFmtFix',
       ] : [
         '@react-native-firebase/app',
         '@react-native-firebase/analytics',
-        './plugins/withDisableAdIdCollection',
       ]),
     ],
   },

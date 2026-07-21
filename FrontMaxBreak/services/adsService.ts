@@ -1,83 +1,90 @@
+// services/adsService.ts
+import { useEffect } from 'react';
 import { Platform } from 'react-native';
+import mobileAds, {
+  InterstitialAd,
+  AdEventType,
+  TestIds,
+} from 'react-native-google-mobile-ads';
+import { logger } from '../utils/logger';
 import {
-  ADMOB_IOS_BANNER_ID,
-  ADMOB_IOS_INTERSTITIAL_ID,
   ADMOB_ANDROID_BANNER_ID,
   ADMOB_ANDROID_INTERSTITIAL_ID,
+  ADMOB_IOS_BANNER_ID,
+  ADMOB_IOS_INTERSTITIAL_ID,
 } from '../config/ads';
 
-// Google test ad unit IDs
-const GOOGLE_TEST_BANNER = __DEV__ ? 'ca-app-pub-3940256099942544/6300978111' : undefined;
-const GOOGLE_TEST_INTERSTITIAL = __DEV__ ? 'ca-app-pub-3940256099942544/1033173712' : undefined;
+const REAL_BANNER_AD_UNIT_ID = Platform.OS === 'ios' ? ADMOB_IOS_BANNER_ID : ADMOB_ANDROID_BANNER_ID;
+const REAL_INTERSTITIAL_AD_UNIT_ID = Platform.OS === 'ios' ? ADMOB_IOS_INTERSTITIAL_ID : ADMOB_ANDROID_INTERSTITIAL_ID;
 
-// Platform-specific real IDs
-export const REAL_BANNER_AD_UNIT_ID_IOS = ADMOB_IOS_BANNER_ID;
-export const REAL_INTERSTITIAL_AD_UNIT_ID_IOS = ADMOB_IOS_INTERSTITIAL_ID;
-export const REAL_BANNER_AD_UNIT_ID_ANDROID = ADMOB_ANDROID_BANNER_ID;
-export const REAL_INTERSTITIAL_AD_UNIT_ID_ANDROID = ADMOB_ANDROID_INTERSTITIAL_ID;
+export const ADS_ENABLED = !!REAL_BANNER_AD_UNIT_ID || !!REAL_INTERSTITIAL_AD_UNIT_ID;
 
-// Exposed IDs (the app should use these constants)
-export const BANNER_AD_UNIT_ID = __DEV__
-  ? GOOGLE_TEST_BANNER
-  : Platform.OS === 'ios'
-  ? REAL_BANNER_AD_UNIT_ID_IOS
-  : REAL_BANNER_AD_UNIT_ID_ANDROID;
+export const BANNER_AD_UNIT_ID = __DEV__ ? TestIds.BANNER : REAL_BANNER_AD_UNIT_ID;
+export const INTERSTITIAL_AD_UNIT_ID = __DEV__ ? TestIds.INTERSTITIAL : REAL_INTERSTITIAL_AD_UNIT_ID;
 
-export const INTERSTITIAL_AD_UNIT_ID = __DEV__
-  ? GOOGLE_TEST_INTERSTITIAL
-  : Platform.OS === 'ios'
-  ? REAL_INTERSTITIAL_AD_UNIT_ID_IOS
-  : REAL_INTERSTITIAL_AD_UNIT_ID_ANDROID;
+let sdkInitPromise: Promise<void> | null = null;
 
-// Ads are intentionally disabled at runtime until a build-compatible native SDK
-// integration is available for this Expo SDK version.
-export const ADS_ENABLED = false;
-
-let hasInitialized = false;
-let shownThisSession = false;
-
-export async function initAds(): Promise<void> {
-  if (hasInitialized) return;
-  try {
-    // Dynamically require expo-ads-admob to avoid hard dependency failures in other environments.
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const admob = require('expo-ads-admob');
-    if (admob && admob.AdMobInterstitial) {
-      const { AdMobInterstitial } = admob;
-      const interstitialId = INTERSTITIAL_AD_UNIT_ID;
-      if (interstitialId) {
-        try {
-          AdMobInterstitial.setAdUnitID(interstitialId);
-        } catch (e) {
-          // ignore
-        }
-      }
-    }
-  } catch (e) {
-    // expo-ads-admob not installed — ignore silently
+export function initAds(): Promise<void> {
+  if (!ADS_ENABLED) {
+    return Promise.resolve();
   }
-  hasInitialized = true;
+  if (!sdkInitPromise) {
+    sdkInitPromise = mobileAds()
+      .initialize()
+      .then(() => {
+        logger.log('[Ads] Mobile Ads SDK initialized');
+      })
+      .catch((error: any) => {
+        logger.warn('[Ads] SDK init failed — app continues without ads:', error?.message);
+      });
+  }
+  return sdkInitPromise;
 }
 
-export async function showInterstitialOnce(): Promise<void> {
-  if (shownThisSession) return;
-  shownThisSession = true;
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const admob = require('expo-ads-admob');
-    if (admob && admob.AdMobInterstitial) {
-      const { AdMobInterstitial } = admob;
-      const interstitialId = INTERSTITIAL_AD_UNIT_ID;
-      if (!interstitialId) return;
-      try {
-        AdMobInterstitial.setAdUnitID(interstitialId);
-        await AdMobInterstitial.requestAdAsync({ servePersonalizedAds: true });
-        await AdMobInterstitial.showAdAsync();
-      } catch (e) {
-        // ignore fail-to-show
-      }
-    }
-  } catch (e) {
-    // SDK not installed — no-op
-  }
+function createOnceInterstitialHook(label: string) {
+  let shownThisSession = false;
+
+  return function useOnceInterstitial(): void {
+    useEffect(() => {
+      if (!ADS_ENABLED || shownThisSession || !INTERSTITIAL_AD_UNIT_ID) return;
+
+      let isMounted = true;
+      let unsubscribeLoaded: (() => void) | undefined;
+      let unsubscribeError: (() => void) | undefined;
+
+      initAds().then(() => {
+        if (!isMounted || shownThisSession) return;
+
+        const interstitial = InterstitialAd.createForAdRequest(INTERSTITIAL_AD_UNIT_ID as string);
+
+        unsubscribeLoaded = interstitial.addAdEventListener(AdEventType.LOADED, () => {
+          if (!shownThisSession) {
+            shownThisSession = true;
+            interstitial.show().catch((error: any) => {
+              logger.warn(`[Ads] ${label} interstitial show failed:`, error?.message);
+            });
+          }
+        });
+
+        unsubscribeError = interstitial.addAdEventListener(AdEventType.ERROR, (error: any) => {
+          logger.warn(`[Ads] ${label} interstitial load failed:`, error?.message);
+        });
+
+        interstitial.load();
+      });
+
+      return () => {
+        isMounted = false;
+        unsubscribeLoaded?.();
+        unsubscribeError?.();
+      };
+    }, []);
+  };
 }
+
+// Shown once per app process, on cold start.
+export const useInterstitialOnce = createOnceInterstitialHook('app-launch');
+
+// Shown once per app process, the first time the scoreboard setup screen is opened —
+// independent of the app-launch one above (both can fire in the same session).
+export const useScoreboardEntryInterstitial = createOnceInterstitialHook('scoreboard-entry');
