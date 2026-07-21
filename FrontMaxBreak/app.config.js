@@ -54,12 +54,11 @@ module.exports = {
           iosAppId: 'ca-app-pub-7026436404209900~7553262356',
         },
       ],
+      '@react-native-firebase/app',
+      '@react-native-firebase/analytics',
       ...(isIosBuild ? [
         './plugins/withFmtFix',
-      ] : [
-        '@react-native-firebase/app',
-        '@react-native-firebase/analytics',
-      ]),
+      ] : []),
     ],
   },
 };
