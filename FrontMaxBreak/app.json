@@ -17,12 +17,14 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.avielpahima.maxbreaksnooker",
+      "googleServicesFile": "./GoogleService-Info.plist",
       "buildNumber": "1",
       "infoPlist": {
         "NSAppTransportSecurity": {
           "NSAllowsArbitraryLoads": true
         },
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "GADApplicationIdentifier": "ca-app-pub-7026436404209900~7553262356"
       }
     },
     "android": {
@@ -40,8 +42,7 @@
         "RECEIVE_BOOT_COMPLETED",
         "VIBRATE",
         "WAKE_LOCK",
-        "POST_NOTIFICATIONS",
-        "com.google.android.gms.permission.AD_ID"
+        "POST_NOTIFICATIONS"
       ]
     },
     "web": {

@@ -12,6 +12,7 @@ import {
 import { useRouter, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import BannerAdSlot from '../components/ads/BannerAdSlot';
 import { TOUCH_SLOP } from '../utils/constants';
 import { logger } from '../utils/logger';
 import { forceCacheRefresh } from '../services/api';
@@ -34,7 +35,6 @@ import { DrawTab } from './tour/components/DrawTab';
 import { OtherToursTab } from './home/components/OtherTours';
 import { shouldRedirectToMedia } from './home/utils/mediaFallback';
 import { logTap } from '../services/analyticsService';
-import BannerAdSlot from '../components/ads/BannerAdSlot';
 
 function formatRoundPrize(amount: any): string | null {
     if (!amount) return null;
@@ -353,9 +353,7 @@ const HomeScreen = (): React.ReactElement | null => {
                     style={styles.filterScrollView}
                     containerStyle={styles.filterContainer}
                 />
-
-                <BannerAdSlot />
-
+                
                 {/* Other Tours Toolbar */}
                 {activeOtherTours.length > 0 && (
                     <View style={styles.otherToursContainer}>
@@ -404,6 +402,8 @@ const HomeScreen = (): React.ReactElement | null => {
                             marginBottom: 8,
                             padding: 10,
                         }}/>
+
+                    <BannerAdSlot />
 
                     {loading && filteredListData.length === 0 ? (
                         <LoadingComponent COLORS={COLORS} styles={styles} />

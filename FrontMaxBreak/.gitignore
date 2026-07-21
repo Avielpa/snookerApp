@@ -69,4 +69,5 @@ android/
 ios/
 google-services.json
 google-services-preview.json
+GoogleService-Info.plist
 google-play-service-account.json
