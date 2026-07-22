@@ -59,7 +59,7 @@
       },
       "ios": {
         "buildConfiguration": "Release",
-        "image": "macos-sequoia-15.5-xcode-16.4"
+        "image": "macos-sequoia-15.6-xcode-26.0"
       },
       "android": {
         "ndk": "28.2.13676358"
