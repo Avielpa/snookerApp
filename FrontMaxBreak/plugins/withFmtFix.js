@@ -1,1 +1,38 @@
-const { withDangerousMod } = require('@expo/config-plugins');const fs = require('fs');const path = require('path');// React Native 0.79 bundles fmt 9.x, whose FMT_COMPILE_STRING macro creates a// `consteval` constructor. Clang 18 (Xcode 26) enforces consteval more strictly// than earlier compilers, causing "is not a constant expression" build failures.// Redefining FMT_CONSTEVAL to constexpr disables consteval in fmt and fixes the// build without affecting runtime behaviour.const withFmtFix = (config) => {  return withDangerousMod(config, [    'ios',    async (config) => {      const podfilePath = path.join(config.modRequest.platformProjectRoot, 'Podfile');      let podfile = fs.readFileSync(podfilePath, 'utf8');      const fmtFix = `  # Fix fmt consteval incompatibility with Xcode 26 / Clang 18 (React Native 0.79)  installer.pods_project.targets.each do |target|    if ['fmt', 'RCT-Folly'].include?(target.name)      target.build_configurations.each do |config|        config.build_settings['OTHER_CPLUSPLUSFLAGS'] = '$(inherited) -DFMT_CONSTEVAL=constexpr'      end    end  end`;      if (podfile.includes('post_install do |installer|')) {        podfile = podfile.replace(          'post_install do |installer|',          `post_install do |installer|\n${fmtFix}`        );      } else {        podfile += `\npost_install do |installer|\n${fmtFix}\nend\n`;      }      fs.writeFileSync(podfilePath, podfile);      return config;    },  ]);};module.exports = withFmtFix;
+const { withDangerousMod } = require('@expo/config-plugins');
+const fs = require('fs');
+const path = require('path');
+
+// React Native 0.79 bundles fmt 9.x, whose FMT_COMPILE_STRING macro creates a
+// `consteval` constructor. Clang 18 (Xcode 26) enforces consteval more strictly
+// than earlier compilers, causing "is not a constant expression" build failures.
+// Redefining FMT_CONSTEVAL to constexpr disables consteval in fmt and fixes the
+// build without affecting runtime behaviour.
+const withFmtFix = (config) => {
+  return withDangerousMod(config, [
+    'ios',
+    async (config) => {
+      const podfilePath = path.join(config.modRequest.platformProjectRoot, 'Podfile');
+      let podfile = fs.readFileSync(podfilePath, 'utf8');
+      const fmtFix = `  # Fix fmt consteval incompatibility with Xcode 26 / Clang 18 (React Native 0.79)
+  installer.pods_project.targets.each do |target|
+    if ['fmt', 'RCT-Folly'].include?(target.name)
+      target.build_configurations.each do |config|
+        config.build_settings['OTHER_CPLUSPLUSFLAGS'] = '$(inherited) -DFMT_CONSTEVAL=constexpr'
+      end
+    end
+  end`;
+      if (podfile.includes('post_install do |installer|')) {
+        podfile = podfile.replace(
+          'post_install do |installer|',
+          `post_install do |installer|\n${fmtFix}`
+        );
+      } else {
+        podfile += `\npost_install do |installer|\n${fmtFix}\nend\n`;
+      }
+      fs.writeFileSync(podfilePath, podfile);
+      return config;
+    },
+  ]);
+};
+
+module.exports = withFmtFix;
