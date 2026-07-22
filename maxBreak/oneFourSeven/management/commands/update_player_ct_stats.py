@@ -113,13 +113,23 @@ def _parse_ct_career(html):
 
 
 def _get_todays_player_ids():
-    """Return set of player IDs with matches today (main tour, not finished)."""
+    """
+    Return set of player IDs with matches today or yesterday (main tour).
+    Includes Finished matches (status=3) — a player's career stats only
+    change once their match is finished, so excluding that status meant
+    the job could never catch the case it exists for. Yesterday is
+    included because this job runs at 2 AM UTC, shortly after most
+    evening matches finish.
+    """
+    from datetime import timedelta
+
     from oneFourSeven.models import UpcomingMatch
     today = date.today()
+    yesterday = today - timedelta(days=1)
     matches = UpcomingMatch.objects.filter(
-        scheduled_date__date=today,
+        scheduled_date__date__in=[today, yesterday],
         tour_type='main',
-    ).exclude(status=3)
+    )
 
     p1s = set(matches.values_list('player1_id', flat=True))
     p2s = set(matches.values_list('player2_id', flat=True))

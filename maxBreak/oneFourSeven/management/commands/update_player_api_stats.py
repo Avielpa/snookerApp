@@ -54,15 +54,25 @@ def _fetch_api_t4(player_id):
 
 def _get_todays_player_ids():
     """
-    Return the set of player IDs (from UpcomingMatch) who have matches today.
-    Excludes finished matches (status=3).
+    Return the set of player IDs (from UpcomingMatch) who have matches today
+    or yesterday (status=3/Finished included).
+
+    A player's snooker.org stats (e.g. NumMaximums) only change once their
+    match is Finished (status=3) — excluding that status meant a finished
+    match could never trigger the refresh it exists for. Yesterday is
+    included too because this job runs at 2 AM UTC, shortly after most
+    evening matches finish, so "today's" matches are usually still
+    scheduled/unplayed while yesterday's are the ones with fresh results.
     """
+    from datetime import timedelta
+
     from oneFourSeven.models import UpcomingMatch
     today = date.today()
+    yesterday = today - timedelta(days=1)
     matches = UpcomingMatch.objects.filter(
-        scheduled_date__date=today,
+        scheduled_date__date__in=[today, yesterday],
         tour_type='main',
-    ).exclude(status=3)
+    )
 
     p1s = set(matches.values_list('player1_id', flat=True))
     p2s = set(matches.values_list('player2_id', flat=True))

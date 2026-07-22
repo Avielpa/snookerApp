@@ -45,7 +45,9 @@ API_FIELD_MAP = {
     'Nationality':      'Nationality',
 }
 
-DELAY_BETWEEN_PLAYERS = 0.5  # seconds — polite CueTracker scraping
+DELAY_BETWEEN_PLAYERS = 30  # seconds — every player also calls snooker.org t=4
+# (2 req/min rate limit, see verify_player_stats.py / sync_career_history.py);
+# CueTracker itself has no rate limit but shares this loop's per-player delay.
 
 
 # ── Encoding helper ───────────────────────────────────────────────────────────
