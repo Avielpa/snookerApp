@@ -131,9 +131,12 @@ export const processMatchesForList = (matches: Match[]): ListItem[] => {
         const rA = a.round ?? 999;
         const rB = b.round ?? 999;
         if (rA !== rB) return rA - rB;
-        
-        const dA = new Date(a.scheduled_date || 0).getTime();
-        const dB = new Date(b.scheduled_date || 0).getTime();
+
+        // Matches with no scheduled_date (e.g. HeldOver, not yet slotted by
+        // snooker.org) sort to the END of their round, not the start —
+        // otherwise they'd float above every timed match via new Date(0).
+        const dA = a.scheduled_date ? new Date(a.scheduled_date).getTime() : Infinity;
+        const dB = b.scheduled_date ? new Date(b.scheduled_date).getTime() : Infinity;
         if (dA !== dB) return dA - dB;
         
         return (a.number ?? 999) - (b.number ?? 999);
