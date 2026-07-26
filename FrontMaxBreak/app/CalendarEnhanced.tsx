@@ -16,6 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { FONT_SIZE_PRIMARY, FONT_SIZE_TITLE } from '../constants/typography';
+import { ScreenHeader } from './components/ScreenHeader';
 
 import { getCalendarByTab } from '../services/matchServices';
 import { logger } from '../utils/logger';
@@ -621,8 +622,7 @@ export default function CalendarEnhanced() {
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['bottom', 'left', 'right']}>
 
       {/* Header */}
-      <View style={styles.header}>
-        <Text style={[styles.screenTitle, { color: colors.textHeader }]}>Calendar</Text>
+      <ScreenHeader title="Calendar">
         <TouchableOpacity
           onPress={() => {
             setSearchVisible(v => !v);
@@ -637,7 +637,7 @@ export default function CalendarEnhanced() {
             color={colors.textPrimary}
           />
         </TouchableOpacity>
-      </View>
+      </ScreenHeader>
 
       {/* Collapsible search bar */}
       {searchVisible && (
@@ -781,17 +781,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 18,
-    paddingVertical: 8,
-  },
-  screenTitle: {
-    fontSize: 19,
-    fontFamily: 'PoppinsBold',
   },
   searchToggle: {
     padding: 4,

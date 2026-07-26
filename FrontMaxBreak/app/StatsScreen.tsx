@@ -14,6 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useColors } from '../contexts/ThemeContext';
 import { FONT_SIZE_PRIMARY } from '../constants/typography';
+import { ScreenHeader } from './components/ScreenHeader';
 import { logger } from '../utils/logger';
 import {
     fetchCenturies,
@@ -562,14 +563,13 @@ export default function StatsScreen() {
         <View style={styles.container}>
             {/* Page header */}
             <View style={styles.header}>
-                <View style={styles.headerRow}>
-                    <Text style={styles.title}>Season Stats</Text>
+                <ScreenHeader title="Season Stats">
                     <SeasonPicker
                         seasons={STATS_SEASONS}
                         selected={selectedSeason}
                         onSelect={setSelectedSeason}
                     />
-                </View>
+                </ScreenHeader>
                 {allEmpty && (
                     <Text style={[styles.noDataText, { color: colors.textMuted }]}>
                         {`No data available for ${seasonDisplayLabel(selectedSeason)}`}
@@ -640,24 +640,13 @@ const createStyles = (colors: any) =>
             backgroundColor: colors.background,
         },
         header: {
-            paddingHorizontal: 16,
-            paddingTop: 10,
             paddingBottom: 6,
-        },
-        headerRow: {
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-        },
-        title: {
-            fontSize: 22,
-            fontFamily: 'PoppinsBold',
-            color: colors.textPrimary,
         },
         noDataText: {
             fontSize: 12,
             fontFamily: 'PoppinsRegular',
             marginTop: 6,
+            paddingHorizontal: 20,
         },
         tabBar: {
             flexDirection: 'row',

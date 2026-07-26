@@ -10,7 +10,6 @@ import {
   ScrollView,
   RefreshControl,
   FlatList,
-  ImageBackground,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -30,6 +29,7 @@ import { DeviceAwareFilterScrollView } from '../components/DeviceAwareFilterScro
 import { DeviceAwareFilterButton } from '../components/DeviceAwareFilterButton';
 import BannerAdSlot from '../components/ads/BannerAdSlot';
 import { FONT_SIZE_PRIMARY } from '../constants/typography';
+import { ScreenHeader } from './components/ScreenHeader';
 
 // Import modern components - simplified to avoid crashes
 // Removed ProgressBar to prevent crashes - using simple native views instead
@@ -467,7 +467,7 @@ export default function RankingEnhanced() {
     logger.log(`[RankingEnhanced] SHOWING LOADING STATE`);
     return (
       <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
-        <Text style={styles.title}>Player Rankings</Text>
+        <ScreenHeader title="Player Rankings" />
         <View style={styles.centerContent}>
           <ActivityIndicator size="large" color={colors.primary} />
           <Text style={styles.loadingText}>Loading Rankings...</Text>
@@ -481,7 +481,7 @@ export default function RankingEnhanced() {
     logger.log(`[RankingEnhanced] SHOWING ERROR STATE: ${error}`);
     return (
       <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
-        <Text style={styles.title}>Player Rankings</Text>
+        <ScreenHeader title="Player Rankings" />
         <View style={styles.centerContent}>
           <Ionicons name="alert-circle-outline" size={48} color={colors.error} />
           <Text style={styles.errorText}>{error}</Text>
@@ -504,16 +504,10 @@ export default function RankingEnhanced() {
   logger.log(`[RankingEnhanced] SHOWING MAIN UI - filteredData: ${filteredData.length} items`);
 
   return (
-    <ImageBackground
-      source={require('../assets/snooker_background.jpg')}
-      style={styles.backgroundImage}
-      resizeMode="cover"
-    >
-      {/* Semi-transparent overlay for readability */}
-      <View style={styles.overlay} />
+    <LinearGradient colors={['#0A0F0A', '#0D1F14']} style={styles.backgroundImage}>
       <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
       {/* Header */}
-      <Text style={styles.title}>Player Rankings</Text>
+      <ScreenHeader title="Player Rankings" />
       
       {/* Search and Filters Container */}
       <View style={styles.headerContainer}>
@@ -619,8 +613,7 @@ export default function RankingEnhanced() {
         )}
       </View>
     </SafeAreaView>
-
-    </ImageBackground>
+    </LinearGradient>
   );
 }
 
@@ -629,22 +622,9 @@ const createRankingStyles = (colors: any) => StyleSheet.create({
   backgroundImage: {
     flex: 1,
   },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: colors.cardBackground === 'rgba(255, 255, 255, 0.95)'
-      ? 'rgba(255, 255, 255, 0.75)' // Light semi-transparent overlay
-      : 'rgba(0, 0, 0, 0.6)', // Dark semi-transparent overlay
-  },
   container: {
     flex: 1,
     backgroundColor: 'transparent',
-  },
-  title: {
-    fontSize: 20,
-    fontFamily: 'PoppinsBold',
-    textAlign: 'center',
-    marginVertical: 10,
-    color: colors.textHeader,
   },
   headerContainer: {
     paddingHorizontal: 12,

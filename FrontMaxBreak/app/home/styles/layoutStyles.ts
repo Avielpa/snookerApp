@@ -1,6 +1,5 @@
 // app/home/styles/layoutStyles.ts
 import { StyleSheet } from 'react-native';
-import { FONT_SIZE_TITLE } from '../../../constants/typography';
 
 export const createLayoutStyles = (COLORS: any) => StyleSheet.create({
     container: { 
@@ -11,8 +10,17 @@ export const createLayoutStyles = (COLORS: any) => StyleSheet.create({
         backgroundColor: '#0D1A0F',
     },
     headerContainer: {
-        paddingBottom: 1,
-        paddingHorizontal: 16
+        marginTop: 6,
+        marginBottom: 10,
+        marginHorizontal: 4,
+        paddingVertical: 14,
+        paddingHorizontal: 16,
+        backgroundColor: 'rgba(0, 0, 0, 0.35)',
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: 'rgba(255, 183, 77, 0.18)',
+        borderBottomWidth: 2,
+        borderBottomColor: 'rgba(255, 183, 77, 0.45)',
     },
     screenTitle: {
         fontSize: 22,
@@ -27,16 +35,16 @@ export const createLayoutStyles = (COLORS: any) => StyleSheet.create({
         letterSpacing: 0.3,
     },
     tourTitle: {
-        fontSize: FONT_SIZE_TITLE,
-        fontFamily: 'PoppinsSemiBold',
-        textAlign: 'center', 
-        color: COLORS.textSecondary, 
+        fontSize: 24,
+        fontFamily: 'PoppinsBold',
+        fontWeight: '800',
+        textAlign: 'center',
+        color: '#FFFFFF',
         marginBottom: 2,
-        letterSpacing: 0.2,
-        textShadowColor: 'rgba(0, 0, 0, 0.6)',
-        textShadowOffset: { width: 0, height: 1 },
-        textShadowRadius: 2,
-        opacity: 0.95,
+        letterSpacing: 0.3,
+        textShadowColor: 'rgba(255, 183, 77, 0.4)',
+        textShadowOffset: { width: 0, height: 0 },
+        textShadowRadius: 10,
     },
     prizeContainer: {
         flexDirection: 'row',

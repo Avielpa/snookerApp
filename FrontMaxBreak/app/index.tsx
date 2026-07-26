@@ -295,7 +295,7 @@ const HomeScreen = (): React.ReactElement | null => {
     // (not the whole screen) so it reads correctly when other tournaments' matches
     // also appear further down via OtherLiveSection.
     const tournamentSectionHeader = (
-        <View style={[styles.headerContainer, { paddingTop: 4 }]}>
+        <View style={styles.headerContainer}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
                 {tourName && <Text style={styles.tourTitle}>{tourName}</Text>}
                 {Platform.OS === 'android' && (

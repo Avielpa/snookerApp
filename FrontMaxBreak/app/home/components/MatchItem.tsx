@@ -9,6 +9,7 @@ import { clearMatchCache } from '../../../services/matchServices';
 import { logTap } from '../../../services/analyticsService';
 import { isMatchFavouriteSync, isMatchFavouriteAsync, toggleMatchFavourite } from '../../../services/favoritesService';
 import { ModernGlassCard } from '../../components/modern/ModernGlassCard';
+import { LiveIndicator } from '../../components/modern/LiveIndicator';
 import { BroadcastBadge } from '../../components/match/BroadcastBadge';
 import { MatchListItem } from '../types';
 import { formatDate } from '../utils/dateFormatting';
@@ -121,59 +122,19 @@ export const MatchItem = ({
         }
     };
 
+    const isLive = item.matchCategory === 'livePlaying';
+    const isOnBreak = item.matchCategory === 'onBreak';
+    const isUpcoming = item.matchCategory === 'upcoming';
+
     const accentColor =
-        item.matchCategory === 'livePlaying' ? '#22C55E' :
-        item.matchCategory === 'onBreak' ? '#F59E0B' :
+        isLive ? '#22C55E' :
+        isOnBreak ? '#F59E0B' :
+        isUpcoming ? '#9CA3AF' :
         undefined;
 
-    // Compact single-line row for live matches — same data/handlers as the
-    // full card below, just a denser layout so long live lists (Home Live
-    // tab, "Also Live") don't require excessive scrolling.
-    if (item.matchCategory === 'livePlaying') {
-        return (
-            <TouchableOpacity
-                onPress={() => handleMatchPress(item.api_match_id)}
-                disabled={!item.api_match_id || typeof item.api_match_id !== 'number' || item.api_match_id <= 0}
-                activeOpacity={0.6}
-            >
-                <ModernGlassCard style={styles.matchItemContainer} accentColor={accentColor}>
-                    <View style={styles.liveRow}>
-                        <View style={styles.liveRowDot} />
-                        <Text
-                            style={[styles.liveRowPlayer, isPlayer1Winner && styles.liveRowPlayerWinner, { textAlign: 'right' }]}
-                            onPress={() => handlePlayerPress(item.player1_id)}
-                            disabled={!item.player1_id || item.player1_id === 376}
-                            numberOfLines={1}
-                        >
-                            {player1Name}
-                        </Text>
-                        <Text style={styles.liveRowScore}>{scoreDisplay}</Text>
-                        <Text
-                            style={[styles.liveRowPlayer, isPlayer2Winner && styles.liveRowPlayerWinner]}
-                            onPress={() => handlePlayerPress(item.player2_id)}
-                            disabled={!item.player2_id || item.player2_id === 376}
-                            numberOfLines={1}
-                        >
-                            {player2Name}
-                        </Text>
-                        {isNotFinished && (
-                            <TouchableOpacity
-                                onPress={handleStarPress}
-                                style={styles.liveRowStar}
-                                hitSlop={{ top: 6, right: 6, bottom: 6, left: 6 }}
-                            >
-                                <Ionicons
-                                    name={isStarred ? 'star' : 'star-outline'}
-                                    size={11}
-                                    color={isStarred ? '#F59E0B' : COLORS.textSecondary}
-                                />
-                            </TouchableOpacity>
-                        )}
-                    </View>
-                </ModernGlassCard>
-            </TouchableOpacity>
-        );
-    }
+    // Prominent centered time/date for upcoming matches (no score to show yet) —
+    // split "Jul 28, 14:30" into two stacked lines for a cleaner, clock-like look.
+    const scheduledDateParts = scheduledDate.split(', ');
 
     return (
         <TouchableOpacity
@@ -181,13 +142,26 @@ export const MatchItem = ({
             disabled={!item.api_match_id || typeof item.api_match_id !== 'number' || item.api_match_id <= 0}
             activeOpacity={0.6}
         >
-            <ModernGlassCard style={styles.matchItemContainer} accentColor={accentColor}>
-
+            <ModernGlassCard
+                style={[styles.matchItemContainer, isMatchFinished && styles.finishedCard]}
+                accentColor={accentColor}
+                accentSide="left"
+                glow={isLive || isOnBreak}
+            >
+                {(isLive || isOnBreak) && (
+                    <View style={styles.liveBadgeRow}>
+                        <LiveIndicator isLive={isLive} onBreak={isOnBreak} size="small" />
+                    </View>
+                )}
 
                 {/* Score-centered row: Name | Score — Score | Name */}
                 <View style={styles.scoreRow}>
                     <Text
-                        style={[styles.playerName, isPlayer1Winner && styles.winnerText]}
+                        style={[
+                            styles.playerName,
+                            isPlayer1Winner && styles.winnerText,
+                            isMatchFinished && !isPlayer1Winner && styles.loserText,
+                        ]}
                         onPress={() => handlePlayerPress(item.player1_id)}
                         disabled={!item.player1_id || item.player1_id === 376}
                         numberOfLines={1}
@@ -196,7 +170,13 @@ export const MatchItem = ({
                     </Text>
 
                     <View style={styles.centerScore}>
-                        {hasValidScores ? (
+                        {isUpcoming ? (
+                            <View>
+                                {scheduledDateParts.map((part, i) => (
+                                    <Text key={i} style={styles.upcomingTimeText}>{part}</Text>
+                                ))}
+                            </View>
+                        ) : hasValidScores ? (
                             <>
                                 <Text style={[styles.scoreNumber, isPlayer1Winner && styles.winnerScore]}>
                                     {score1}
@@ -212,7 +192,12 @@ export const MatchItem = ({
                     </View>
 
                     <Text
-                        style={[styles.playerName, { textAlign: 'right' }, isPlayer2Winner && styles.winnerText]}
+                        style={[
+                            styles.playerName,
+                            { textAlign: 'right' },
+                            isPlayer2Winner && styles.winnerText,
+                            isMatchFinished && !isPlayer2Winner && styles.loserText,
+                        ]}
                         onPress={() => handlePlayerPress(item.player2_id)}
                         disabled={!item.player2_id || item.player2_id === 376}
                         numberOfLines={1}
@@ -221,8 +206,9 @@ export const MatchItem = ({
                     </Text>
                 </View>
 
-                {/* Broadcast badges — tappable links to where you can watch */}
-                {!!item.broadcasters && item.broadcasters.length > 0 && (
+                {/* Broadcast badges — tappable links to where you can watch.
+                    Hidden once finished: irrelevant clutter for a past match. */}
+                {!isMatchFinished && !!item.broadcasters && item.broadcasters.length > 0 && (
                     <BroadcastBadge broadcasters={item.broadcasters} />
                 )}
 
@@ -233,20 +219,19 @@ export const MatchItem = ({
                     </Text>
                 )}
 
-                {/* Footer: live badge + date */}
+                {/* Footer: FT badge (finished) + date + favourite star */}
                 <View style={styles.detailsRow}>
-                    {/* 'livePlaying' never reaches here — it takes the compact
-                        early-return branch above. This LIVE badge case is now
-                        unreachable dead code and was removed accordingly. */}
-                    {item.matchCategory === 'onBreak' && (
-                        <View style={{ backgroundColor: '#F59E0B', borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2, marginRight: 8 }}>
-                            <Text style={{ color: '#fff', fontSize: 10, fontWeight: '700', letterSpacing: 0.5 }}>TBC</Text>
+                    {isMatchFinished && (
+                        <View style={styles.ftBadge}>
+                            <Text style={styles.ftBadgeText}>FT</Text>
                         </View>
                     )}
-                    <View style={styles.detailItem}>
-                        <Ionicons name={ICONS.calendar} size={11} color={COLORS.textSecondary} />
-                        <Text style={styles.detailText}>{scheduledDate}</Text>
-                    </View>
+                    {!isUpcoming && (
+                        <View style={styles.detailItem}>
+                            <Ionicons name={ICONS.calendar} size={11} color={COLORS.textSecondary} />
+                            <Text style={styles.detailText}>{scheduledDate}</Text>
+                        </View>
+                    )}
                     <View style={{ flex: 1 }} />
                     {isNotFinished && (
                         <TouchableOpacity
