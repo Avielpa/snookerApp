@@ -27,6 +27,7 @@ import {
 } from '../services/highlightsService';
 import { fetchAllNews } from '../services/newsService';
 import { useMediaTabInterstitial } from '../services/adsService';
+import { ScreenHeader } from './components/ScreenHeader';
 
 type Tab = 'news' | 'highlights' | 'creators';
 type HighlightSubTab = 'wst' | 'tnt';
@@ -343,6 +344,7 @@ export default function NewsScreen() {
 
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
+            <ScreenHeader title="Media" />
             <TabToggle activeTab={activeTab} onPress={handleTabPress} colors={colors} />
 
             {isLoading ? (
