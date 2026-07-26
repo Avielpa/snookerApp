@@ -201,7 +201,8 @@
       "PowerShell(Get-Command *)",
       "PowerShell(Get-ChildItem *)",
       "Bash(\"/c/Users/PC/AppData/Roaming/npm/node_modules/@anthropic-ai/claude-code/bin/claude.exe\" --version)",
-      "Bash(\"/c/Users/PC/AppData/Roaming/npm/node_modules/@anthropic-ai/claude-code/bin/claude.exe\" doctor *)"
+      "Bash(\"/c/Users/PC/AppData/Roaming/npm/node_modules/@anthropic-ai/claude-code/bin/claude.exe\" doctor *)",
+      "mcp__railway__get-status"
     ],
     "deny": [],
     "ask": [],
