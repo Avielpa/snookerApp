@@ -27,5 +27,11 @@ Running list of known issues, deferred work, and follow-ups that are NOT current
 - **Impact**: cosmetic/copy-only — a misleading modal label in a rare scenario (concede exactly at a tied score), no scoring or state-machine correctness issue.
 - **Next step when picked up**: in `FrameSummary.tsx`, distinguish "tied because of a genuine mid-frame concede" from "tied at colours-phase black" (which can no longer reach this component tied, per Phase R) and adjust the copy accordingly — likely just changing the tied-branch wording to something concede-appropriate, no engine change needed.
 
+### 5. Poppins fonts are referenced everywhere but never actually loaded
+- **Found**: 2026-07-26, during the UI/typography overhaul session (`docs/SESSION_2026-07-26_UI_MONETIZATION_OVERHAUL.md`), while investigating what to gate the new splash-screen "wait for fonts" logic on.
+- **Status**: Not fixed — out of scope for a font-*size* task. Every style file references `fontFamily: 'PoppinsBold' / 'PoppinsSemiBold' / 'PoppinsMedium' / 'PoppinsRegular'`, but there are no font files anywhere in the repo, no `@expo-google-fonts/*` dependency, no `useFonts` hook, and no `Font.loadAsync` call. `app.json` lists the bare `expo-font` config plugin with no `fonts` array to auto-link. Text is silently falling back to each platform's system default font.
+- **Impact**: cosmetic — the app doesn't crash or warn, it just isn't rendering in the intended typeface. Likely invisible unless someone compares against a Figma/design mock expecting real Poppins.
+- **Next step when picked up**: source/license the actual Poppins `.ttf` files (or add `@expo-google-fonts/poppins` + `expo-font`), add them via the `expo-font` config plugin's `fonts` array (requires a new native build) or a `useFonts()` hook gated behind the splash screen (see `app/_layout.tsx`'s existing `SplashScreen.preventAutoHideAsync()`/`hideAsync()` gating added in the session above — extend the hide condition to also wait on `useFonts()`'s loaded flag).
+
 ## Resolved / closed
 (move items here with a one-line resolution note when closed, don't delete history)

@@ -12,6 +12,7 @@ import {
 import { useRouter, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import BannerAdSlot from '../components/ads/BannerAdSlot';
 import { TOUCH_SLOP } from '../utils/constants';
 import { logger } from '../utils/logger';
@@ -295,8 +296,8 @@ const HomeScreen = (): React.ReactElement | null => {
     // of the filter tabs/list — avoids flashing "Home" chrome before landing on Media.
     if (isRedirectingToMedia || (loading && processedListData.length === 0)) {
         return (
-            <View style={styles.backgroundImage}>
-                <SafeAreaView style={styles.container}>
+            <LinearGradient colors={['#0A0F0A', '#0D1F14']} style={styles.backgroundImage}>
+                <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
                     <LoadingComponent COLORS={COLORS} styles={styles} />
                     {isRedirectingToMedia && (
                         <Text style={{ color: COLORS.textSecondary, textAlign: 'center', fontSize: 13, marginTop: -12, paddingHorizontal: 24, lineHeight: 19 }}>
@@ -304,14 +305,14 @@ const HomeScreen = (): React.ReactElement | null => {
                         </Text>
                     )}
                 </SafeAreaView>
-            </View>
+            </LinearGradient>
         );
     }
 
     // Main Render structure
     return (
-        <View style={styles.backgroundImage}>
-            <SafeAreaView style={styles.container}>
+        <LinearGradient colors={['#0A0F0A', '#0D1F14']} style={styles.backgroundImage}>
+            <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
                 <View style={styles.headerContainer}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
                         {tourName && <Text style={styles.tourTitle}>{tourName}</Text>}
@@ -393,17 +394,19 @@ const HomeScreen = (): React.ReactElement | null => {
                         value={searchQuery}
                         onChangeText={setSearchQuery}
                         placeholder='Search Player'
-                        placeholderTextColor={COLORS.textMuted}
+                        placeholderTextColor={COLORS.textSecondary}
                         style={{
-                            backgroundColor: COLORS.cardBackground,
+                            backgroundColor: '#1A1A1A',
                             color: COLORS.textPrimary,
-                            fontSize: 7,
-                            borderRadius: 8,
+                            fontSize: 17,
+                            fontFamily: 'PoppinsRegular',
+                            borderRadius: 14,
+                            borderWidth: 1,
+                            borderColor: 'rgba(255, 255, 255, 0.14)',
                             marginBottom: 8,
-                            padding: 10,
+                            paddingHorizontal: 16,
+                            paddingVertical: 14,
                         }}/>
-
-                    <BannerAdSlot />
 
                     {loading && filteredListData.length === 0 ? (
                         <LoadingComponent COLORS={COLORS} styles={styles} />
@@ -466,8 +469,13 @@ const HomeScreen = (): React.ReactElement | null => {
                         />
                     )}
                 </View>
+
+                {/* Fixed banner, just above the bottom tab navigator — a sibling
+                    outside the scrollable list area so it can never overlap or
+                    hide list content. */}
+                <BannerAdSlot />
             </SafeAreaView>
-        </View>
+        </LinearGradient>
     );
 };
 

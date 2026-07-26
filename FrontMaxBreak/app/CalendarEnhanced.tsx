@@ -15,6 +15,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
+import { FONT_SIZE_PRIMARY, FONT_SIZE_TITLE } from '../constants/typography';
 
 import { getCalendarByTab } from '../services/matchServices';
 import { logger } from '../utils/logger';
@@ -371,14 +372,14 @@ const cardStyles = StyleSheet.create({
     marginBottom: 1,
   },
   name: {
-    fontSize: 12.5,
+    fontSize: FONT_SIZE_PRIMARY,
     fontFamily: 'PoppinsSemiBold',
     flex: 1,
-    lineHeight: 17,
+    lineHeight: 21,
   },
   heroName: {
-    fontSize: 15,
-    lineHeight: 20,
+    fontSize: FONT_SIZE_TITLE,
+    lineHeight: 24,
   },
   statusPill: {
     flexDirection: 'row',
@@ -589,7 +590,7 @@ export default function CalendarEnhanced() {
   // ─── Loading ───────────────────────────────────────────────────────────────
   if (loading && !refreshing) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['bottom', 'left', 'right']}>
         <View style={styles.centerContent}>
           <ActivityIndicator size="large" color={colors.primary} />
         </View>
@@ -600,7 +601,7 @@ export default function CalendarEnhanced() {
   // ─── Error ─────────────────────────────────────────────────────────────────
   if (error && !refreshing) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['bottom', 'left', 'right']}>
         <View style={styles.centerContent}>
           <Ionicons name="alert-circle-outline" size={48} color="#F87171" />
           <Text style={styles.errorText}>{error}</Text>
@@ -617,7 +618,7 @@ export default function CalendarEnhanced() {
 
   // ─── Main render ───────────────────────────────────────────────────────────
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['bottom', 'left', 'right']}>
 
       {/* Header */}
       <View style={styles.header}>
@@ -645,7 +646,7 @@ export default function CalendarEnhanced() {
           <TextInput
             style={[styles.searchInput, { color: colors.textPrimary }]}
             placeholder="Search tournaments, venues, countries..."
-            placeholderTextColor={colors.textMuted}
+            placeholderTextColor={colors.textSecondary}
             value={searchQuery}
             onChangeText={setSearchQuery}
             autoFocus
@@ -805,7 +806,7 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    fontSize: 14,
+    fontSize: 16,
     fontFamily: 'PoppinsRegular',
     paddingVertical: 0,
   },

@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useColors } from '../../../contexts/ThemeContext';
 import { timeAgo } from './newsUtils';
 import { Highlight } from '../../../services/highlightsService';
+import { FONT_SIZE_PRIMARY } from '../../../constants/typography';
 
 interface Props {
     highlight: Highlight;
@@ -72,9 +73,9 @@ const styles = StyleSheet.create({
         padding: 12,
     },
     title: {
-        fontSize: 14,
+        fontSize: FONT_SIZE_PRIMARY,
         fontFamily: 'PoppinsMedium',
-        lineHeight: 21,
+        lineHeight: 22,
         marginBottom: 8,
     },
     meta: {

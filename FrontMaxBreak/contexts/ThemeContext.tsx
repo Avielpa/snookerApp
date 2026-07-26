@@ -60,7 +60,7 @@ export const darkColors: Colors = {
   backgroundTertiary: '#2C2C2C',
 
   cardBackground: 'rgba(255, 255, 255, 0.08)',
-  cardBorder: 'rgba(255, 255, 255, 0.16)',
+  cardBorder: '#2A2A2A',
 
   textPrimary: '#FFFFFF',
   textSecondary: '#B3B3B3',

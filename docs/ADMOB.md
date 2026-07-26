@@ -8,8 +8,9 @@
 
 ## Where ads show
 
-- Banner: below the filter row on Home screen (`app/index.tsx`) and below the score header/tab navigation on Match detail screen (`app/match/MatchEnhanced.tsx`) — deliberately placed away from the bottom tab bar to avoid crowding it.
-- Interstitial: once per app session, shortly after cold start, mounted from `app/_layout.tsx`.
+- Banner: fixed above the bottom tab bar on Home screen (`app/index.tsx`, rendered as a sibling after the scrollable list — not inline in the scroll content, so it can't overlap list items) and below the score header/tab navigation on Match detail screen (`app/match/MatchEnhanced.tsx`).
+- Interstitial: on entering the Media tab (`app/NewsScreen.tsx`), at most once every 4 hours (persisted via AsyncStorage, see `isMediaInterstitialCooldownElapsed`/`useMediaTabInterstitial` in `adsService.ts`). No longer shown on app launch — the previous app-launch trigger was found to hurt retention and was removed (2026-07-26). Still shares the session-wide "one interstitial per process" gate with the scoreboard-entry trigger below.
+- Interstitial: also once per app process, the first time the scoreboard setup screen is opened (`useScoreboardEntryInterstitial`, unchanged).
 
 ## Current state: real ad units, test IDs in dev
 
@@ -25,9 +26,10 @@ This means **the preview APK now serves real ads** — avoid excessive manual cl
 
 ## Manual verification checklist (run once per native build)
 
-- [ ] Fresh install, cold start: exactly one interstitial appears within the first few seconds, and does not reappear on further in-app navigation during the same session.
-- [ ] Force-quit and relaunch: interstitial appears again (new session) — confirms the gate is per-process, not persisted.
-- [ ] Home screen: small banner visible just below the filter row, doesn't overlap the BottomBar, doesn't break scrolling.
+- [ ] Fresh install, cold start: no interstitial appears until the Media tab is opened.
+- [ ] First Media-tab visit: one interstitial appears (after the standard load delay); repeat Media-tab visits within the same 4h window show none.
+- [ ] After 4+ hours (or clearing app storage to simulate it): visiting the Media tab shows an interstitial again.
+- [ ] Home screen: banner visible fixed above the bottom tab bar, doesn't overlap the last list row, doesn't break scrolling.
 - [ ] Match detail screen: small banner visible just below the score header/tab navigation, same layout checks.
 - [ ] Airplane mode / no network: app still loads and functions normally; banner slots collapse to nothing (no broken-image placeholder), no interstitial blocks the UI waiting to load.
 - [ ] No crash or ANR on a device without Google Play Services (if available for testing) — `initAds()` catch path should keep the app fully usable.

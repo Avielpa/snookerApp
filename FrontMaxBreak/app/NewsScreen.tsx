@@ -26,6 +26,7 @@ import {
     filterHighlightsByTournament,
 } from '../services/highlightsService';
 import { fetchAllNews } from '../services/newsService';
+import { useMediaTabInterstitial } from '../services/adsService';
 
 type Tab = 'news' | 'highlights' | 'creators';
 type HighlightSubTab = 'wst' | 'tnt';
@@ -118,6 +119,9 @@ function SubTabRow<T extends string>({
 
 export default function NewsScreen() {
     const colors = useColors();
+
+    // Show an interstitial on entering the Media tab, at most once every 4 hours
+    useMediaTabInterstitial();
 
     // Top-level tab
     const [activeTab, setActiveTab] = useState<Tab>('news');

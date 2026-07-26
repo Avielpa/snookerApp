@@ -1,6 +1,7 @@
 // app/match/styles-modern.ts
 // DARK, MODERN, PRACTICAL, COMFORTABLE - SAME CLASS NAMES, ZERO LOGIC CHANGES
 import { StyleSheet } from 'react-native';
+import { FONT_SIZE_PRIMARY } from '../../constants/typography';
 
 export const createMatchStyles = (colors: any) => StyleSheet.create({
   // CONTAINER
@@ -59,7 +60,7 @@ export const createMatchStyles = (colors: any) => StyleSheet.create({
     alignItems: 'center',
   },
   playerName: {
-    fontSize: 10,
+    fontSize: FONT_SIZE_PRIMARY,
     fontFamily: 'PoppinsSemiBold',
     color: 'rgba(255, 255, 255, 0.85)',
     textAlign: 'center',

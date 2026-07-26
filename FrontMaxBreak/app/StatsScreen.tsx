@@ -13,6 +13,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useColors } from '../contexts/ThemeContext';
+import { FONT_SIZE_PRIMARY } from '../constants/typography';
 import { logger } from '../utils/logger';
 import {
     fetchCenturies,
@@ -166,7 +167,7 @@ const CenturiesTab = ({
                         value={search}
                         onChangeText={setSearch}
                         placeholder="Search player..."
-                        placeholderTextColor={colors.textMuted}
+                        placeholderTextColor={colors.textSecondary}
                         style={[centuryStyles.searchInput, { color: colors.textPrimary }]}
                     />
                     {search.length > 0 && (
@@ -227,18 +228,18 @@ const centuryStyles = StyleSheet.create({
         marginBottom: 14,
     },
     leaderLabel: { fontSize: 11, fontFamily: 'PoppinsRegular' },
-    leaderName: { fontSize: 12, fontFamily: 'PoppinsBold', marginTop: 2 },
+    leaderName: { fontSize: FONT_SIZE_PRIMARY, fontFamily: 'PoppinsBold', marginTop: 2 },
     leaderCount: { fontSize: 32, fontFamily: 'PoppinsBold', color: '#FFA726' },
     searchBox: {
-        flexDirection: 'row', alignItems: 'center', gap: 6,
-        borderRadius: 10, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 7,
+        flexDirection: 'row', alignItems: 'center', gap: 8,
+        borderRadius: 12, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 10,
         marginBottom: 10,
     },
-    searchInput: { flex: 1, fontSize: 13, fontFamily: 'PoppinsRegular', padding: 0 },
+    searchInput: { flex: 1, fontSize: 16, fontFamily: 'PoppinsRegular', padding: 0 },
     headerRow: { flexDirection: 'row', paddingBottom: 6, marginBottom: 2, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.07)' },
     dataRow: { flexDirection: 'row', paddingVertical: 7 },
     colRank: { width: 28, fontSize: 12, fontFamily: 'PoppinsMedium' },
-    colName: { flex: 1, fontSize: 13, fontFamily: 'PoppinsMedium' },
+    colName: { flex: 1, fontSize: FONT_SIZE_PRIMARY, fontFamily: 'PoppinsMedium' },
     colNum: { width: 48, textAlign: 'right', fontSize: 13, fontFamily: 'PoppinsMedium' },
     expandBtn: {
         flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
@@ -367,14 +368,14 @@ const titleStyles = StyleSheet.create({
     row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 6 },
     badge: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
     badgeNum: { fontSize: 16, fontFamily: 'PoppinsBold' },
-    name: { fontSize: 14, fontFamily: 'PoppinsBold' },
+    name: { fontSize: FONT_SIZE_PRIMARY, fontFamily: 'PoppinsBold' },
     eventList: { fontSize: 11, fontFamily: 'PoppinsRegular', marginTop: 2 },
 });
 
 const champStyles = StyleSheet.create({
     row: { flexDirection: 'row', alignItems: 'flex-start', paddingVertical: 7 },
-    eventName: { fontSize: 13, fontFamily: 'PoppinsBold', marginBottom: 2 },
-    winner: { fontSize: 13, fontFamily: 'PoppinsMedium' },
+    eventName: { fontSize: 14, fontFamily: 'PoppinsBold', marginBottom: 2 },
+    winner: { fontSize: 15, fontFamily: 'PoppinsMedium' },
     runnerUp: { fontSize: 11, fontFamily: 'PoppinsRegular', marginTop: 1 },
     date: { fontSize: 11, fontFamily: 'PoppinsRegular', marginLeft: 10, marginTop: 2 },
 });
@@ -476,7 +477,7 @@ const recordStyles = StyleSheet.create({
     headerRow: { flexDirection: 'row', paddingBottom: 6, marginBottom: 2, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.07)' },
     dataRow: { flexDirection: 'row', paddingVertical: 7 },
     colRank: { width: 28, fontSize: 12, fontFamily: 'PoppinsMedium' },
-    colName: { flex: 1, fontSize: 13, fontFamily: 'PoppinsMedium' },
+    colName: { flex: 1, fontSize: FONT_SIZE_PRIMARY, fontFamily: 'PoppinsMedium' },
     colNum: { width: 56, textAlign: 'right', fontSize: 14, fontFamily: 'PoppinsBold' },
 });
 

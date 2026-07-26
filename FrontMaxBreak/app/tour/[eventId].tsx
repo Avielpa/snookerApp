@@ -18,6 +18,7 @@ import { logger } from '../../utils/logger';
 import { useColors } from '../../contexts/ThemeContext';
 import { getDeviceTabConfig } from '../../config/deviceTabConfig';
 import { DeviceAwareFilterScrollView } from '../../components/DeviceAwareFilterScrollView';
+import { FONT_SIZE_PRIMARY } from '../../constants/typography';
 import { DeviceAwareFilterButton } from '../../components/DeviceAwareFilterButton';
 import { DrawTab } from './components/DrawTab';
 import { getNationalityFlag } from '../../utils/nationalityFlag';
@@ -623,10 +624,10 @@ const TournamentDetailsScreen = () => {
     ];
 
     // --- Main Display Logic ---
-    if (loading && !tournamentDetails) return <SafeAreaView style={styles.container}><LoadingComponent /></SafeAreaView>;
-    if (noData) return <SafeAreaView style={styles.container}><NoDataComponent /></SafeAreaView>;
-    if (error && !tournamentDetails) return <SafeAreaView style={styles.container}><ErrorComponent /></SafeAreaView>;
-    if (!tournamentDetails) return <SafeAreaView style={styles.container}><NoDataComponent /></SafeAreaView>;
+    if (loading && !tournamentDetails) return <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}><LoadingComponent /></SafeAreaView>;
+    if (noData) return <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}><NoDataComponent /></SafeAreaView>;
+    if (error && !tournamentDetails) return <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}><ErrorComponent /></SafeAreaView>;
+    if (!tournamentDetails) return <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}><NoDataComponent /></SafeAreaView>;
 
     return (
         <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
@@ -1022,7 +1023,7 @@ const styles = StyleSheet.create({
         direction: 'ltr',
     },
     playerName: {
-        fontSize: 13,
+        fontSize: FONT_SIZE_PRIMARY,
         fontFamily: 'PoppinsMedium',
         color: COLORS.textPrimary,
         flexShrink: 1,

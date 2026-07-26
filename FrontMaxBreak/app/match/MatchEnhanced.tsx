@@ -753,7 +753,7 @@ export default function MatchEnhanced() {
   // Loading state
   if (loading && !matchDetails) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
         <View style={styles.centerContent}>
           <ActivityIndicator size="large" color={colors.primary} />
           <Text style={styles.loadingText}>Loading Match Details...</Text>
@@ -765,7 +765,7 @@ export default function MatchEnhanced() {
   // Error state
   if (error && !matchDetails) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
         <View style={styles.centerContent}>
           <Ionicons name="alert-circle-outline" size={48} color={colors.error} />
           <Text style={[styles.loadingText, { color: colors.error }]}>Error: {error}</Text>
@@ -779,7 +779,7 @@ export default function MatchEnhanced() {
 
   if (!matchDetails) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
         <View style={styles.centerContent}>
           <Text style={styles.loadingText}>Match data could not be loaded.</Text>
         </View>
@@ -788,7 +788,7 @@ export default function MatchEnhanced() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
       <Stack.Screen 
         options={{
           headerShown: true,

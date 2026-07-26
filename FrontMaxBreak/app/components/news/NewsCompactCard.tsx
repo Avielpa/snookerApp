@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import { useColors } from '../../../contexts/ThemeContext';
 import { NewsArticle, SOURCE_COLORS, timeAgo, openArticle } from './newsUtils';
+import { FONT_SIZE_PRIMARY } from '../../../constants/typography';
 
 interface Props {
     article: NewsArticle;
@@ -78,9 +79,9 @@ const styles = StyleSheet.create({
         minHeight: 82,
     },
     title: {
-        fontSize: 14,
+        fontSize: FONT_SIZE_PRIMARY,
         fontFamily: 'PoppinsMedium',
-        lineHeight: 21,
+        lineHeight: 22,
         flex: 1,
     },
     meta: {

@@ -78,22 +78,14 @@ export const SearchBox: React.FC<SearchBoxProps> = ({
 
   const borderColor = focusAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: ['rgba(255, 167, 38, 0.3)', 'rgba(255, 167, 38, 0.8)'],
-  });
-
-  const backgroundColor = focusAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['rgba(255, 255, 255, 0.05)', 'rgba(255, 255, 255, 0.1)'],
+    outputRange: ['rgba(255, 255, 255, 0.14)', 'rgba(255, 167, 38, 0.75)'],
   });
 
   return (
-    <Animated.View 
+    <Animated.View
       style={[
         styles.container,
-        {
-          borderColor,
-          backgroundColor,
-        }
+        { borderColor },
       ]}
     >
       {/* Search Icon */}
@@ -113,7 +105,7 @@ export const SearchBox: React.FC<SearchBoxProps> = ({
       <TextInput
         style={[styles.input, { color: colors.textPrimary }]}
         placeholder={placeholder}
-        placeholderTextColor="#9CA3AF"
+        placeholderTextColor={colors.textSecondary}
         value={searchText}
         onChangeText={handleChangeText}
         onFocus={handleFocus}
@@ -151,18 +143,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderRadius: 12,
+    borderRadius: 14,
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 14,
     marginHorizontal: 16,
     marginVertical: 8,
+    backgroundColor: '#1A1A1A',
   },
   searchIcon: {
     marginRight: 12,
   },
   input: {
     flex: 1,
-    fontSize: 16,
+    fontSize: 17,
     fontFamily: 'PoppinsRegular',
     includeFontPadding: false,
     textAlignVertical: 'center',

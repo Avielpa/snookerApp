@@ -2,6 +2,7 @@
 // Score-centered layout — NO LOGIC CHANGES
 
 import { StyleSheet } from 'react-native';
+import { FONT_SIZE_PRIMARY } from '../../../constants/typography';
 
 export const createModernMatchStyles = (COLORS: any) => StyleSheet.create({
     // STATUS HEADER — tappable section label with count + chevron
@@ -82,7 +83,7 @@ export const createModernMatchStyles = (COLORS: any) => StyleSheet.create({
     },
     playerName: {
         flex: 1,
-        fontSize: 11,
+        fontSize: FONT_SIZE_PRIMARY,
         fontFamily: 'PoppinsSemiBold',
         color: COLORS.textPrimary,
         flexShrink: 1,
@@ -168,7 +169,7 @@ export const createModernMatchStyles = (COLORS: any) => StyleSheet.create({
     },
     liveRowPlayer: {
         flex: 1,
-        fontSize: 11,
+        fontSize: 13,
         fontFamily: 'PoppinsMedium',
         color: COLORS.textSecondary,
     },

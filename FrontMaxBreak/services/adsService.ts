@@ -1,6 +1,7 @@
 // services/adsService.ts
 import { useEffect } from 'react';
 import { Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import mobileAds, {
   InterstitialAd,
   AdEventType,
@@ -96,11 +97,78 @@ function createOnceInterstitialHook(label: string) {
   };
 }
 
-// Shown once per app process, on cold start.
-export const useInterstitialOnce = createOnceInterstitialHook('app-launch');
-
 // Shown once per app process, the first time the scoreboard setup screen is opened —
-// shares the same session-wide cap as the app-launch interstitial above, so a
+// shares the same session-wide cap as other interstitial triggers, so a
 // user only ever sees one interstitial total per session, from whichever
 // trigger fires first.
 export const useScoreboardEntryInterstitial = createOnceInterstitialHook('scoreboard-entry');
+
+const MEDIA_INTERSTITIAL_COOLDOWN_KEY = '@maxbreak_media_interstitial_last_shown';
+export const MEDIA_INTERSTITIAL_COOLDOWN_MS = 4 * 60 * 60 * 1000; // 4 hours
+
+// Pure timestamp check — no RN/AsyncStorage dependency, so it's unit-testable
+// in plain Node alongside the rest of the FrontMaxBreak test suite.
+export function isMediaInterstitialCooldownElapsed(
+  lastShownAt: number | null,
+  now: number,
+  cooldownMs: number = MEDIA_INTERSTITIAL_COOLDOWN_MS
+): boolean {
+  if (lastShownAt === null) return true;
+  return now - lastShownAt >= cooldownMs;
+}
+
+// Shown on entering the Media tab, at most once per MEDIA_INTERSTITIAL_COOLDOWN_MS
+// (persisted across app restarts via AsyncStorage) — unlike the "once per
+// process" hooks above, repeatedly leaving and returning to the Media tab
+// across separate app sessions must not re-show the ad every time. Still
+// respects the shared session-wide cap so it doesn't double up with another
+// interstitial trigger firing in the same session.
+export function useMediaTabInterstitial(): void {
+  useEffect(() => {
+    if (!ADS_ENABLED || interstitialShownThisSession || !INTERSTITIAL_AD_UNIT_ID) return;
+
+    let isMounted = true;
+    let unsubscribeLoaded: (() => void) | undefined;
+    let unsubscribeError: (() => void) | undefined;
+    let delayTimer: ReturnType<typeof setTimeout> | undefined;
+
+    AsyncStorage.getItem(MEDIA_INTERSTITIAL_COOLDOWN_KEY)
+      .catch(() => null)
+      .then((stored: string | null) => {
+        if (!isMounted || interstitialShownThisSession) return;
+        const lastShownAt = stored ? parseInt(stored, 10) : null;
+        if (!isMediaInterstitialCooldownElapsed(lastShownAt, Date.now())) return;
+
+        delayTimer = setTimeout(() => {
+          if (interstitialShownThisSession) return;
+          initAds().then(() => {
+            if (!isMounted || interstitialShownThisSession) return;
+
+            const interstitial = InterstitialAd.createForAdRequest(INTERSTITIAL_AD_UNIT_ID as string);
+
+            unsubscribeLoaded = interstitial.addAdEventListener(AdEventType.LOADED, () => {
+              if (!isMounted || interstitialShownThisSession) return;
+              interstitialShownThisSession = true;
+              AsyncStorage.setItem(MEDIA_INTERSTITIAL_COOLDOWN_KEY, String(Date.now())).catch(() => {});
+              interstitial.show().catch((error: any) => {
+                logger.warn('[Ads] media-tab interstitial show failed:', error?.message);
+              });
+            });
+
+            unsubscribeError = interstitial.addAdEventListener(AdEventType.ERROR, (error: any) => {
+              logger.warn('[Ads] media-tab interstitial load failed:', error?.message);
+            });
+
+            interstitial.load();
+          });
+        }, INTERSTITIAL_DELAY_MS);
+      });
+
+    return () => {
+      isMounted = false;
+      if (delayTimer) clearTimeout(delayTimer);
+      unsubscribeLoaded?.();
+      unsubscribeError?.();
+    };
+  }, []);
+}

@@ -4,16 +4,16 @@ import { View, StyleSheet, StatusBar } from 'react-native';
 import { Stack, usePathname } from 'expo-router';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as Updates from 'expo-updates';
+import * as SplashScreen from 'expo-splash-screen';
 import { ThemeProvider, useTheme } from '../contexts/ThemeContext';
 import { GameProvider } from '../contexts/GameContext';
-import { AuthProvider } from '../contexts/AuthContext';
+import { AuthProvider, useAuth } from '../contexts/AuthContext';
 import { logger } from '../utils/logger';
 import { api } from '../services/api';
 import { initPushNotifications } from '../utils/notifications';
 import { loadFavorites } from '../services/favoritesService';
 import { useDeviceType } from '../hooks/useDeviceType';
 import { useAnalyticsScreenTracking } from '../hooks/useAnalyticsScreenTracking';
-import { useInterstitialOnce } from '../services/adsService';
 import { shouldShowScoreboardBanner } from '../services/scoreboardBannerService';
 
 // --- Component Imports ---
@@ -23,18 +23,31 @@ import SideNav from './components/SideNav';
 import ScoreboardBanner from './components/ScoreboardBanner';
 import ErrorBoundary from '../components/ErrorBoundary';
 
+// Keep the native splash screen visible past the default auto-hide point —
+// held open in ThemedLayout below until auth state (the one real async
+// readiness signal this app has before first paint) has resolved. Must be
+// called at module scope so it takes effect before the first render.
+SplashScreen.preventAutoHideAsync().catch(() => {});
+
 // Main Layout Component - wraps everything in ThemeProvider
 const ThemedLayout = () => {
     const { theme } = useTheme();
     const colors = theme.colors;
     const device = useDeviceType();
     const pathname = usePathname();
+    const { loading: authLoading } = useAuth();
 
     // Log a screen_view analytics event on every route change
     useAnalyticsScreenTracking();
 
-    // Show one gentle interstitial ad per app session, shortly after cold start
-    useInterstitialOnce();
+    // Hide the native splash screen once critical initial state (auth) is
+    // resolved, instead of the default "as soon as JS renders" auto-hide —
+    // avoids a flash of stale/incorrect logged-in-vs-out chrome.
+    useEffect(() => {
+        if (!authLoading) {
+            SplashScreen.hideAsync().catch(() => {});
+        }
+    }, [authLoading]);
 
     // Brief scoreboard discovery banner — shows on every launch for a limited
     // window of days, skipped while already inside the scoreboard section.

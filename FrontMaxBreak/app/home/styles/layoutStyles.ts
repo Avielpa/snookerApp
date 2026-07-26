@@ -1,5 +1,6 @@
 // app/home/styles/layoutStyles.ts
 import { StyleSheet } from 'react-native';
+import { FONT_SIZE_TITLE } from '../../../constants/typography';
 
 export const createLayoutStyles = (COLORS: any) => StyleSheet.create({
     container: { 
@@ -25,9 +26,9 @@ export const createLayoutStyles = (COLORS: any) => StyleSheet.create({
         textShadowRadius: 4,
         letterSpacing: 0.3,
     },
-    tourTitle: { 
-        fontSize: 15, 
-        fontFamily: 'PoppinsMedium', 
+    tourTitle: {
+        fontSize: FONT_SIZE_TITLE,
+        fontFamily: 'PoppinsSemiBold',
         textAlign: 'center', 
         color: COLORS.textSecondary, 
         marginBottom: 2,

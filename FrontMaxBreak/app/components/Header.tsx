@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, usePathname } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useGameContext } from '../../contexts/GameContext';
@@ -39,31 +41,37 @@ const Header = () => {
       borderBottomColor: colors.cardBorder,
     }]}>
       <View style={styles.headerRow}>
-        <TouchableOpacity
-          style={styles.playBtn}
-          onPress={handleHomePress}
-        >
-          <Text style={[styles.playBtnText, { color: colors.primary }]}>
-            {isInScoreboard ? '← Home' : '▶ Play'}
-          </Text>
+        <View style={styles.playBtnWrapper}>
+          <TouchableOpacity onPress={handleHomePress} activeOpacity={0.85}>
+            <LinearGradient
+              colors={isInScoreboard ? [colors.cardBackground, colors.cardBackground] : ['#FFD54F', '#FFA000']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={[styles.playBtnPill, isInScoreboard && { borderWidth: 1, borderColor: colors.cardBorder }]}
+            >
+              <Ionicons
+                name={isInScoreboard ? 'arrow-back' : 'play'}
+                size={13}
+                color={isInScoreboard ? colors.textPrimary : '#1A1200'}
+              />
+              <Text style={[styles.playBtnText, { color: isInScoreboard ? colors.textPrimary : '#1A1200' }]}>
+                {isInScoreboard ? 'Home' : 'Play'}
+              </Text>
+            </LinearGradient>
+          </TouchableOpacity>
           {!isInScoreboard && (
             <View style={[styles.newBadge, { backgroundColor: colors.primary }]}>
               <Text style={styles.newBadgeText}>NEW</Text>
             </View>
           )}
-        </TouchableOpacity>
+        </View>
 
         <View style={styles.logoRow}>
-          <View style={styles.iconWrapper}>
-            <Image
-              source={require('../../assets/images/icon.png')}
-              style={styles.iconImage}
-              resizeMode="cover"
-            />
-          </View>
-          <Text style={[styles.title, { color: colors.textHeader }]}>
-            MaxBreak147
-          </Text>
+          <Image
+            source={require('../../assets/images/header-logo.png')}
+            style={styles.logoImage}
+            resizeMode="contain"
+          />
         </View>
 
         <TouchableOpacity style={styles.rightSection} onPress={() => setAuthVisible(true)}>
@@ -97,20 +105,28 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 10,
   },
-  playBtn: {
-    width: 60,
+  playBtnWrapper: {
+    width: 74,
     alignItems: 'flex-start',
     justifyContent: 'center',
     position: 'relative',
   },
+  playBtnPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
   playBtnText: {
-    fontSize: 14,
+    fontSize: 13,
     fontFamily: 'PoppinsBold',
   },
   newBadge: {
     position: 'absolute',
     top: -8,
-    left: 30,
+    left: 40,
     paddingHorizontal: 4,
     paddingVertical: 1,
     borderRadius: 6,
@@ -122,27 +138,13 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
   logoRow: {
-    flexDirection: 'row',
+    flex: 1,
     alignItems: 'center',
-    gap: 8,
+    justifyContent: 'center',
   },
-  iconWrapper: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    overflow: 'hidden',
-  },
-  iconImage: {
-    width: 32,
-    height: 32,
-  },
-  title: {
-    fontSize: 22,
-    fontFamily: 'PoppinsBold',
-    letterSpacing: 0.5,
-    textShadowColor: 'rgba(255, 167, 38, 0.3)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
+  logoImage: {
+    width: '100%',
+    height: 36,
   },
   rightSection: {
     flexDirection: 'row',

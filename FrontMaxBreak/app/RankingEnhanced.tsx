@@ -29,6 +29,7 @@ import { getDeviceTabConfig } from '../config/deviceTabConfig';
 import { DeviceAwareFilterScrollView } from '../components/DeviceAwareFilterScrollView';
 import { DeviceAwareFilterButton } from '../components/DeviceAwareFilterButton';
 import BannerAdSlot from '../components/ads/BannerAdSlot';
+import { FONT_SIZE_PRIMARY } from '../constants/typography';
 
 // Import modern components - simplified to avoid crashes
 // Removed ProgressBar to prevent crashes - using simple native views instead
@@ -465,7 +466,7 @@ export default function RankingEnhanced() {
   if (loading && !refreshing) {
     logger.log(`[RankingEnhanced] SHOWING LOADING STATE`);
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
         <Text style={styles.title}>Player Rankings</Text>
         <View style={styles.centerContent}>
           <ActivityIndicator size="large" color={colors.primary} />
@@ -479,7 +480,7 @@ export default function RankingEnhanced() {
   if (error && !refreshing) {
     logger.log(`[RankingEnhanced] SHOWING ERROR STATE: ${error}`);
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
         <Text style={styles.title}>Player Rankings</Text>
         <View style={styles.centerContent}>
           <Ionicons name="alert-circle-outline" size={48} color={colors.error} />
@@ -510,7 +511,7 @@ export default function RankingEnhanced() {
     >
       {/* Semi-transparent overlay for readability */}
       <View style={styles.overlay} />
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
       {/* Header */}
       <Text style={styles.title}>Player Rankings</Text>
       
@@ -795,7 +796,7 @@ const createRankingStyles = (colors: any) => StyleSheet.create({
     marginBottom: 2,
   },
   playerName: {
-    fontSize: 12,
+    fontSize: FONT_SIZE_PRIMARY,
     fontFamily: 'PoppinsSemiBold',
     color: colors.textPrimary,
     flex: 1,
