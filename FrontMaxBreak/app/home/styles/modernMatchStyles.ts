@@ -59,9 +59,11 @@ export const createModernMatchStyles = (COLORS: any) => StyleSheet.create({
         textTransform: 'uppercase',
     },
 
-    // MATCH CARD CONTAINER
+    // MATCH CARD CONTAINER — generous bottom margin so cards have room to
+    // breathe in the list instead of feeling stacked on top of each other.
     matchItemContainer: {
-        marginVertical: 2,
+        marginTop: 2,
+        marginBottom: 14,
         marginHorizontal: 8,
     },
 
@@ -87,6 +89,8 @@ export const createModernMatchStyles = (COLORS: any) => StyleSheet.create({
         fontFamily: 'PoppinsSemiBold',
         color: COLORS.textPrimary,
         flexShrink: 1,
+        textAlign: 'center',
+        paddingHorizontal: 6,
     },
 
     // CENTER SCORE CONTAINER
@@ -102,7 +106,7 @@ export const createModernMatchStyles = (COLORS: any) => StyleSheet.create({
     scoreNumber: {
         fontSize: 24,
         fontFamily: 'PoppinsBold',
-        fontWeight: '800',
+        fontWeight: '900',
         color: '#FFB74D',
         minWidth: 24,
         textAlign: 'center',
@@ -113,7 +117,7 @@ export const createModernMatchStyles = (COLORS: any) => StyleSheet.create({
         fontSize: 15,
         fontFamily: 'PoppinsRegular',
         color: COLORS.textMuted,
-        marginHorizontal: 4,
+        marginHorizontal: 7,
     },
 
     // Prominent centered time/date shown instead of a score for upcoming
@@ -148,11 +152,10 @@ export const createModernMatchStyles = (COLORS: any) => StyleSheet.create({
         opacity: 0.6,
     },
 
-    // Small "LIVE"/"BREAK" micro-badge row, top of the card.
-    liveBadgeRow: {
-        flexDirection: 'row',
-        justifyContent: 'flex-end',
-        marginBottom: 6,
+    // Small "LIVE"/"BREAK" micro-badge, footer row (bottom-right) — avoids
+    // the dead space a dedicated top row created above the player names.
+    liveBadgeFooter: {
+        marginRight: 8,
     },
 
     // Crisp "FT" (Full Time) badge for finished matches, in the footer row.

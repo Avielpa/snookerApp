@@ -19,11 +19,13 @@ export default function BannerAdSlot() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <BannerAd
-        unitId={BANNER_AD_UNIT_ID}
-        size={BannerAdSize.BANNER}
-        onAdFailedToLoad={() => setFailed(true)}
-      />
+      <View style={[styles.frame, { borderColor: colors.cardBorder }]}>
+        <BannerAd
+          unitId={BANNER_AD_UNIT_ID}
+          size={BannerAdSize.BANNER}
+          onAdFailedToLoad={() => setFailed(true)}
+        />
+      </View>
     </View>
   );
 }
@@ -33,5 +35,13 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
     paddingVertical: 4,
+  },
+  // Frames the (usually white/bright) ad creative so it reads as a
+  // deliberate "picture" against the dark theme instead of a jarring flash.
+  frame: {
+    borderRadius: 10,
+    borderWidth: 1,
+    padding: 3,
+    overflow: 'hidden',
   },
 });

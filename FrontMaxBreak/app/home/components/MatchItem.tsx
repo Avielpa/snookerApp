@@ -148,12 +148,6 @@ export const MatchItem = ({
                 accentSide="left"
                 glow={isLive || isOnBreak}
             >
-                {(isLive || isOnBreak) && (
-                    <View style={styles.liveBadgeRow}>
-                        <LiveIndicator isLive={isLive} onBreak={isOnBreak} size="small" />
-                    </View>
-                )}
-
                 {/* Score-centered row: Name | Score — Score | Name */}
                 <View style={styles.scoreRow}>
                     <Text
@@ -194,7 +188,6 @@ export const MatchItem = ({
                     <Text
                         style={[
                             styles.playerName,
-                            { textAlign: 'right' },
                             isPlayer2Winner && styles.winnerText,
                             isMatchFinished && !isPlayer2Winner && styles.loserText,
                         ]}
@@ -233,6 +226,11 @@ export const MatchItem = ({
                         </View>
                     )}
                     <View style={{ flex: 1 }} />
+                    {(isLive || isOnBreak) && (
+                        <View style={styles.liveBadgeFooter}>
+                            <LiveIndicator isLive={isLive} onBreak={isOnBreak} size="small" />
+                        </View>
+                    )}
                     {isNotFinished && (
                         <TouchableOpacity
                             onPress={handleStarPress}

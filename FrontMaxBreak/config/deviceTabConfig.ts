@@ -734,10 +734,10 @@ export class DeviceTabConfigManager {
       },
       
       filterButtonActive: {
-        // Vibrant, lively active state
-        backgroundColor: '#FF6B35', // Vibrant orange-red
-        borderColor: '#FF6B35',
-        borderWidth: 1, // Same border width - no thickness change
+        // Premium dark-charcoal active state with a brand-gold border
+        backgroundColor: colors.backgroundSecondary,
+        borderColor: colors.primary,
+        borderWidth: 2,
         
         // No glow effects - clean
         shadowColor: 'transparent',

@@ -60,7 +60,7 @@ const TabToggle = ({
     onPress: (tab: Tab) => void;
     colors: any;
 }) => (
-    <View style={[styles.toggleRow, { backgroundColor: colors.cardBackground, borderBottomColor: colors.cardBorder }]}>
+    <View style={[styles.toggleRow, { backgroundColor: 'transparent', borderBottomColor: colors.cardBorder }]}>
         {(['news', 'highlights', 'creators'] as Tab[]).map(tab => (
             <TouchableOpacity
                 key={tab}
@@ -70,7 +70,7 @@ const TabToggle = ({
             >
                 <Text style={[
                     styles.toggleText,
-                    { color: activeTab === tab ? colors.primary : colors.textMuted },
+                    { color: activeTab === tab ? colors.primary : colors.textPrimary },
                     activeTab === tab && styles.toggleTextActive,
                 ]}>
                     {TAB_LABELS[tab]}

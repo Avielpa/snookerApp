@@ -9,18 +9,15 @@ export const createLayoutStyles = (COLORS: any) => StyleSheet.create({
         flex: 1,
         backgroundColor: '#0D1A0F',
     },
+    // Premium section header, not a card/pill — pure text with a faint
+    // gold underline for hierarchy, nothing that reads as tappable.
     headerContainer: {
         marginTop: 6,
-        marginBottom: 10,
-        marginHorizontal: 4,
-        paddingVertical: 14,
+        marginBottom: 12,
+        paddingVertical: 10,
         paddingHorizontal: 16,
-        backgroundColor: 'rgba(0, 0, 0, 0.35)',
-        borderRadius: 16,
-        borderWidth: 1,
-        borderColor: 'rgba(255, 183, 77, 0.18)',
-        borderBottomWidth: 2,
-        borderBottomColor: 'rgba(255, 183, 77, 0.45)',
+        borderBottomWidth: 1,
+        borderBottomColor: 'rgba(255, 183, 77, 0.25)',
     },
     screenTitle: {
         fontSize: 22,
