@@ -2,7 +2,6 @@
 // Score-centered layout — NO LOGIC CHANGES
 
 import { StyleSheet } from 'react-native';
-import { FONT_SIZE_PRIMARY } from '../../../constants/typography';
 
 export const createModernMatchStyles = (COLORS: any) => StyleSheet.create({
     // STATUS HEADER — tappable section label with count + chevron
@@ -85,8 +84,9 @@ export const createModernMatchStyles = (COLORS: any) => StyleSheet.create({
     },
     playerName: {
         flex: 1,
-        fontSize: FONT_SIZE_PRIMARY,
-        fontFamily: 'PoppinsSemiBold',
+        fontSize: 15,
+        fontFamily: 'PoppinsBold',
+        fontWeight: '700',
         color: COLORS.textPrimary,
         flexShrink: 1,
         textAlign: 'center',
@@ -104,11 +104,11 @@ export const createModernMatchStyles = (COLORS: any) => StyleSheet.create({
 
     // INDIVIDUAL SCORE NUMBERS — big and bold, the loudest thing on the card
     scoreNumber: {
-        fontSize: 24,
+        fontSize: 21,
         fontFamily: 'PoppinsBold',
         fontWeight: '900',
         color: '#FFB74D',
-        minWidth: 24,
+        minWidth: 22,
         textAlign: 'center',
     },
 

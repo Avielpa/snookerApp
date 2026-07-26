@@ -35,6 +35,10 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
     paddingVertical: 4,
+    // Strict sizing so the layout engine can never collapse/squash this
+    // slot — it sits in a flex column next to a flex:1 sibling on Home.
+    minHeight: 60,
+    flexShrink: 0,
   },
   // Frames the (usually white/bright) ad creative so it reads as a
   // deliberate "picture" against the dark theme instead of a jarring flash.

@@ -10,14 +10,23 @@ export const createLayoutStyles = (COLORS: any) => StyleSheet.create({
         backgroundColor: '#0D1A0F',
     },
     // Premium section header, not a card/pill — pure text with a faint
-    // gold underline for hierarchy, nothing that reads as tappable.
+    // gold underline for hierarchy, nothing that reads as tappable. Sticky
+    // (see stickyHeaderIndices on the FlatList), so it needs a solid
+    // background — otherwise scrolling match cards show through behind it.
     headerContainer: {
-        marginTop: 6,
         marginBottom: 12,
-        paddingVertical: 10,
+        paddingTop: 10,
+        paddingBottom: 10,
         paddingHorizontal: 16,
         borderBottomWidth: 1,
         borderBottomColor: 'rgba(255, 183, 77, 0.25)',
+        backgroundColor: '#0D1512',
+    },
+    tourTitleRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
     },
     screenTitle: {
         fontSize: 22,
@@ -32,12 +41,11 @@ export const createLayoutStyles = (COLORS: any) => StyleSheet.create({
         letterSpacing: 0.3,
     },
     tourTitle: {
-        fontSize: 24,
+        fontSize: 20,
         fontFamily: 'PoppinsBold',
         fontWeight: '800',
         textAlign: 'center',
         color: '#FFFFFF',
-        marginBottom: 2,
         letterSpacing: 0.3,
         textShadowColor: 'rgba(255, 183, 77, 0.4)',
         textShadowOffset: { width: 0, height: 0 },

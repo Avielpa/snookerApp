@@ -734,8 +734,10 @@ export class DeviceTabConfigManager {
       },
       
       filterButtonActive: {
-        // Premium dark-charcoal active state with a brand-gold border
-        backgroundColor: colors.backgroundSecondary,
+        // Solid brand-gold active state — the charcoal+border treatment
+        // tested too close to the dark background to read as "selected"
+        // on a real device.
+        backgroundColor: colors.primary,
         borderColor: colors.primary,
         borderWidth: 2,
         
@@ -772,9 +774,9 @@ export class DeviceTabConfigManager {
       },
       
       filterTextActive: {
-        color: '#FFFFFF', // Pure white for active
-        fontFamily: 'PoppinsMedium', // Same weight as inactive
-        fontWeight: '500' as const, // Only slightly bolder
+        color: '#121212', // Stark black-ish for contrast against the gold fill
+        fontFamily: 'PoppinsBold',
+        fontWeight: '700' as const,
         // No text shadows - clean
       },
       

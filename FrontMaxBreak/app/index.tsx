@@ -296,7 +296,10 @@ const HomeScreen = (): React.ReactElement | null => {
     // also appear further down via OtherLiveSection.
     const tournamentSectionHeader = (
         <View style={styles.headerContainer}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+            <View style={styles.tourTitleRow}>
+                {/* Placeholder tournament logo/flag — swap for the real
+                    per-tournament asset once that data is available. */}
+                <Ionicons name="trophy" size={22} color={COLORS.accent} />
                 {tourName && <Text style={styles.tourTitle}>{tourName}</Text>}
                 {Platform.OS === 'android' && (
                     <View style={{
@@ -450,6 +453,7 @@ const HomeScreen = (): React.ReactElement | null => {
                                 return item.id;
                             }}
                             ListHeaderComponent={tournamentSectionHeader}
+                            stickyHeaderIndices={[0]}
                             ListEmptyComponent={!loading ? (
                                 <EmptyComponent COLORS={COLORS} styles={styles} tourName={tourName} />
                             ) : null}

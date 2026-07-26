@@ -4,13 +4,12 @@ import { View, Text, TouchableOpacity, I18nManager } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { logger } from '../../../utils/logger';
 import { TOUCH_SLOP, MATCH_CONSTANTS } from '../../../utils/constants';
-import { getMatchPlayerNames, areScoresValid, normalizeScore } from '../../../utils/playerUtils';
+import { getMatchPlayerNames, areScoresValid, normalizeScore, abbreviatePlayerName } from '../../../utils/playerUtils';
 import { clearMatchCache } from '../../../services/matchServices';
 import { logTap } from '../../../services/analyticsService';
 import { isMatchFavouriteSync, isMatchFavouriteAsync, toggleMatchFavourite } from '../../../services/favoritesService';
 import { ModernGlassCard } from '../../components/modern/ModernGlassCard';
 import { LiveIndicator } from '../../components/modern/LiveIndicator';
-import { BroadcastBadge } from '../../components/match/BroadcastBadge';
 import { MatchListItem } from '../types';
 import { formatDate } from '../utils/dateFormatting';
 import { ICONS } from '../utils/icons';
@@ -58,6 +57,10 @@ export const MatchItem = ({
     
     // Get formatted player names - DIRECT from backend JSON
     const { player1Name, player2Name} = getMatchPlayerNames(item);
+
+    // Abbreviated for compact card display (e.g. "Matthew Selt" -> "M. Selt")
+    const player1NameShort = abbreviatePlayerName(player1Name);
+    const player2NameShort = abbreviatePlayerName(player2Name);
 
     // Get and normalize scores - DIRECT from backend JSON
     const hasValidScores = areScoresValid(item.score1, item.score2);
@@ -160,7 +163,7 @@ export const MatchItem = ({
                         disabled={!item.player1_id || item.player1_id === 376}
                         numberOfLines={1}
                     >
-                        {player1Name}
+                        {player1NameShort}
                     </Text>
 
                     <View style={styles.centerScore}>
@@ -195,15 +198,9 @@ export const MatchItem = ({
                         disabled={!item.player2_id || item.player2_id === 376}
                         numberOfLines={1}
                     >
-                        {player2Name}
+                        {player2NameShort}
                     </Text>
                 </View>
-
-                {/* Broadcast badges — tappable links to where you can watch.
-                    Hidden once finished: irrelevant clutter for a past match. */}
-                {!isMatchFinished && !!item.broadcasters && item.broadcasters.length > 0 && (
-                    <BroadcastBadge broadcasters={item.broadcasters} />
-                )}
 
                 {/* Note (walkover, withdrawal, etc.) */}
                 {!!item.note && (
