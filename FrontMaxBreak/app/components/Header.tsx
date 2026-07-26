@@ -36,7 +36,7 @@ const Header = () => {
 
   return (
     <View style={[styles.header, {
-      paddingTop: insets.top,
+      paddingTop: insets.top + 8,
       backgroundColor: colors.cardBackground,
       borderBottomColor: colors.cardBorder,
     }]}>

@@ -52,6 +52,13 @@ User asked for a broad "premium sports broadcasting" visual overhaul plus a mone
 - `app/index.tsx` — main background swapped from a flat `#0D1A0F` `View` to a real `LinearGradient` (`#0A0F0A` → `#0D1F14`, obsidian → dark emerald) on both the loading-state and main-state render branches.
 - Other screens' card-level gradient treatment: **already existed and already wired up** via `ModernGlassCard` (used by Home's `MatchItem`) — not duplicated elsewhere in this pass; extending the same gradient-card treatment to Calendar/Ranking/Stats card components was **not done** and is listed as a follow-up below, to keep this session's diff reviewable.
 
+## Follow-up fixes from real-device QA
+
+After the iOS production build (#29) was tested on a real device, two more issues surfaced:
+
+- **Header colliding with the status bar / Dynamic Island**: `Header.tsx` already had `paddingTop: insets.top` from this session's first pass — that part was correct. The actual problem was that an exact-fit inset leaves zero breathing room, so content sits immediately flush against the notch/Dynamic Island cutout and visually reads as "colliding" even though nothing is technically covered. Changed to `paddingTop: insets.top + 8`.
+- **Tournament title (e.g. "English Open Qualifiers") shown globally above the filter tabs**: this is misleading when `OtherLiveSection` (rendered as the list's `ListFooterComponent`) shows matches from *other* concurrently-running tournaments further down the same screen — the fixed top-of-screen title implied the whole screen was about one tournament. Moved the same title/prize block (`app/index.tsx`) from a static position above `DeviceAwareFilterScrollView` to the `FlatList`'s `ListHeaderComponent`, so it now renders below the filter tabs, scrolls with the list, and only appears for the Upcoming/Live/Results filters (correctly absent for Draw/Other-Tours/loading/error, where a single-tournament title doesn't apply).
+
 ## New open mission logged
 
 Added to `docs/OPEN_MISSIONS.md`: the app references `PoppinsBold`/`PoppinsSemiBold`/`PoppinsMedium`/`PoppinsRegular` everywhere but no such fonts are actually loaded anywhere (no font files, no `@expo-google-fonts` dependency, no `useFonts`/`Font.loadAsync` call) — text is silently rendering in the system default font. Pre-existing, unrelated to this session's font-*size* changes, deliberately not fixed here.

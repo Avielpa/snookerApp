@@ -291,6 +291,36 @@ const HomeScreen = (): React.ReactElement | null => {
         { label: 'Other Tours', value: 'otherTours', icon: 'trophy-outline' },
     ];
 
+    // Section header for the match list — scoped to the matches directly below it
+    // (not the whole screen) so it reads correctly when other tournaments' matches
+    // also appear further down via OtherLiveSection.
+    const tournamentSectionHeader = (
+        <View style={[styles.headerContainer, { paddingTop: 4 }]}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                {tourName && <Text style={styles.tourTitle}>{tourName}</Text>}
+                {Platform.OS === 'android' && (
+                    <View style={{
+                        marginLeft: 8,
+                        backgroundColor: 'rgba(0,0,0,0.45)',
+                        borderRadius: 6,
+                        paddingHorizontal: 5,
+                        paddingVertical: 2,
+                    }}>
+                        <Text style={{ color: COLORS.textMuted, fontSize: 9, fontFamily: 'Poppins' }}>
+                            snooker.org
+                        </Text>
+                    </View>
+                )}
+            </View>
+            {tournamentPrize && (
+                <View style={styles.prizeContainer}>
+                    <Ionicons name="diamond-outline" size={14} color={COLORS.accentLight} />
+                    <Text style={styles.prizeText}>Winner: {tournamentPrize}</Text>
+                </View>
+            )}
+        </View>
+    );
+
     // While redirecting to Media (no decided matches to show), or during the initial
     // fetch before we know whether to redirect, render a plain loading state instead
     // of the filter tabs/list — avoids flashing "Home" chrome before landing on Media.
@@ -313,31 +343,6 @@ const HomeScreen = (): React.ReactElement | null => {
     return (
         <LinearGradient colors={['#0A0F0A', '#0D1F14']} style={styles.backgroundImage}>
             <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
-                <View style={styles.headerContainer}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
-                        {tourName && <Text style={styles.tourTitle}>{tourName}</Text>}
-                        {Platform.OS === 'android' && (
-                            <View style={{
-                                marginLeft: 8,
-                                backgroundColor: 'rgba(0,0,0,0.45)',
-                                borderRadius: 6,
-                                paddingHorizontal: 5,
-                                paddingVertical: 2,
-                            }}>
-                                <Text style={{ color: COLORS.textMuted, fontSize: 9, fontFamily: 'Poppins' }}>
-                                    snooker.org
-                                </Text>
-                            </View>
-                        )}
-                    </View>
-                    {tournamentPrize && (
-                        <View style={styles.prizeContainer}>
-                            <Ionicons name="diamond-outline" size={14} color={COLORS.accentLight} />
-                            <Text style={styles.prizeText}>Winner: {tournamentPrize}</Text>
-                        </View>
-                    )}
-                </View>
-                
                 <DeviceAwareFilterScrollView
                     options={filterButtons.map(filter => ({
                         id: filter.value,
@@ -444,6 +449,7 @@ const HomeScreen = (): React.ReactElement | null => {
                                 }
                                 return item.id;
                             }}
+                            ListHeaderComponent={tournamentSectionHeader}
                             ListEmptyComponent={!loading ? (
                                 <EmptyComponent COLORS={COLORS} styles={styles} tourName={tourName} />
                             ) : null}
