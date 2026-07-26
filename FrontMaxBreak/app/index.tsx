@@ -404,16 +404,19 @@ const HomeScreen = (): React.ReactElement | null => {
                         placeholder='Search Player'
                         placeholderTextColor={COLORS.textSecondary}
                         style={{
-                            backgroundColor: '#1A1A1A',
+                            backgroundColor: '#1A2421',
                             color: COLORS.textPrimary,
-                            fontSize: 17,
+                            fontSize: 15,
                             fontFamily: 'PoppinsRegular',
-                            borderRadius: 14,
+                            height: 40,
+                            borderRadius: 20,
                             borderWidth: 1,
                             borderColor: 'rgba(255, 255, 255, 0.14)',
                             marginBottom: 8,
-                            paddingHorizontal: 16,
-                            paddingVertical: 14,
+                            paddingHorizontal: 18,
+                            paddingVertical: 0,
+                            includeFontPadding: false,
+                            textAlignVertical: 'center',
                         }}/>
 
                     {loading && filteredListData.length === 0 ? (

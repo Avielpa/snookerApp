@@ -58,11 +58,10 @@ export const createModernMatchStyles = (COLORS: any) => StyleSheet.create({
         textTransform: 'uppercase',
     },
 
-    // MATCH CARD CONTAINER — generous bottom margin so cards have room to
-    // breathe in the list instead of feeling stacked on top of each other.
+    // MATCH CARD CONTAINER
     matchItemContainer: {
         marginTop: 2,
-        marginBottom: 14,
+        marginBottom: 8,
         marginHorizontal: 8,
     },
 
@@ -104,11 +103,11 @@ export const createModernMatchStyles = (COLORS: any) => StyleSheet.create({
 
     // INDIVIDUAL SCORE NUMBERS — big and bold, the loudest thing on the card
     scoreNumber: {
-        fontSize: 21,
+        fontSize: 20,
         fontFamily: 'PoppinsBold',
         fontWeight: '900',
         color: '#FFB74D',
-        minWidth: 22,
+        minWidth: 20,
         textAlign: 'center',
     },
 

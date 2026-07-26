@@ -7,18 +7,44 @@ interface LiveIndicatorProps {
   size?: 'small' | 'medium' | 'large';
 }
 
-export const LiveIndicator: React.FC<LiveIndicatorProps> = ({ 
-  isLive = true, 
-  onBreak = false 
+// Sizing per variant — 'small' is the compact badge used inside Home's
+// match cards; 'medium'/'large' preserve the original fixed dimensions
+// this component always rendered at (used on the match-detail header).
+const SIZES = {
+  small: { dot: 5, fontSize: 9, paddingVertical: 2, paddingHorizontal: 6, borderRadius: 9, dotMargin: 4 },
+  medium: { dot: 8, fontSize: 12, paddingVertical: 4, paddingHorizontal: 8, borderRadius: 12, dotMargin: 6 },
+  large: { dot: 8, fontSize: 12, paddingVertical: 4, paddingHorizontal: 8, borderRadius: 12, dotMargin: 6 },
+} as const;
+
+export const LiveIndicator: React.FC<LiveIndicatorProps> = ({
+  isLive = true,
+  onBreak = false,
+  size = 'medium',
 }) => {
   if (!isLive && !onBreak) return null;
-  
+
   const isBreak = onBreak && !isLive;
-  
+  const s = SIZES[size];
+
   return (
-    <View style={[styles.liveContainer, isBreak ? styles.breakContainer : null]}>
-      <View style={styles.liveDot} />
-      <Text style={styles.liveText}>
+    <View
+      style={[
+        styles.liveContainer,
+        isBreak && styles.breakContainer,
+        {
+          paddingVertical: s.paddingVertical,
+          paddingHorizontal: s.paddingHorizontal,
+          borderRadius: s.borderRadius,
+        },
+      ]}
+    >
+      <View
+        style={[
+          styles.liveDot,
+          { width: s.dot, height: s.dot, borderRadius: s.dot / 2, marginRight: s.dotMargin },
+        ]}
+      />
+      <Text style={[styles.liveText, { fontSize: s.fontSize }]}>
         {isBreak ? 'BREAK' : 'LIVE'}
       </Text>
     </View>
@@ -33,23 +59,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(255, 0, 0, 0.8)',
-    borderRadius: 12,
-    paddingVertical: 4,
-    paddingHorizontal: 8,
   },
   breakContainer: {
     backgroundColor: 'rgba(255, 152, 0, 0.8)',
   },
   liveDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
     backgroundColor: '#fff',
-    marginRight: 6,
   },
   liveText: {
     color: '#fff',
-    fontSize: 12,
     fontWeight: 'bold',
   },
 });

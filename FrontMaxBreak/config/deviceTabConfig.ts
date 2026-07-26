@@ -697,17 +697,18 @@ export class DeviceTabConfigManager {
         flexDirection: 'row' as const,
         alignItems: 'center' as const,
         justifyContent: 'center' as const,
-        // Lively, inviting background with subtle color
-        backgroundColor: 'rgba(255, 255, 255, 0.06)',
+        // Subtle dark-gray "clickable button" look — visible against the
+        // dark background without competing with the active gold state.
+        backgroundColor: 'rgba(255, 255, 255, 0.09)',
         paddingVertical: Math.max(styleConfig.filterButton.paddingVertical - 2, 4), // Much smaller padding
         paddingHorizontal: Math.max(styleConfig.filterButton.paddingHorizontal - 4, 6), // Compact horizontal space
         borderRadius: Math.max(styleConfig.filterButton.borderRadius - 8, 6), // Much smaller radius
         marginRight: Math.max(styleConfig.filterButton.marginRight, 6), // More spacing to prevent overlap
         marginHorizontal: 3, // Even more margin to prevent tap overlap
-        
+
         // More visible, inviting border with debug visibility
         borderWidth: 1.5,
-        borderColor: 'rgba(255, 255, 255, 0.25)', // More visible border to see exact boundaries
+        borderColor: 'rgba(255, 255, 255, 0.3)', // More visible border to see exact boundaries
         
         // No shadows - clean modern look
         shadowColor: 'transparent',
