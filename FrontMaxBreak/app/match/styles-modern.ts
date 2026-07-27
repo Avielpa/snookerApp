@@ -145,7 +145,7 @@ export const createMatchStyles = (colors: any) => StyleSheet.create({
   // the ScrollView itself is capped, and its content row is centered inside it.
   tabContainer: {
     height: 40,
-    marginTop: 0,
+    marginTop: 12,
     marginBottom: 0,
   },
   tabContainerContent: {
