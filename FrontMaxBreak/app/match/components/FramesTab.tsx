@@ -222,10 +222,9 @@ export function FramesTab({
   );
 
   return (
-    // DEBUG: full-chain rainbow pass — remove after locating the gap.
     <ScrollView
-      style={{ flex: 1, backgroundColor: 'green' }}
-      contentContainerStyle={{ paddingTop: 8, paddingBottom: 24, backgroundColor: 'yellow' }}
+      style={{ flex: 1 }}
+      contentContainerStyle={{ paddingTop: 8, paddingBottom: 24 }}
       // iOS auto-adjusts a ScrollView's top content inset to account for
       // translucent nav/tab bars — since this screen replaces the native
       // header with its own custom TopActionRow, iOS has no way to know
@@ -238,7 +237,7 @@ export function FramesTab({
         <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor="#FF8F00" colors={['#FF8F00']} />
       }
     >
-      <View style={[styles.framesContainer, { backgroundColor: 'magenta' }]}>
+      <View style={styles.framesContainer}>
         <Text style={styles.framesTitle}>
           {`Frame by Frame (${matchStats.completedFrames}/${matchStats.totalFrames})`}
         </Text>

@@ -109,17 +109,16 @@ export function TabNavigation({ selectedTab, onTabChange, colors, styles }: TabN
   };
 
   return (
-    // DEBUG: full-chain rainbow pass — remove after locating the gap.
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
-      style={[styles.tabContainer, { backgroundColor: 'deepskyblue' }]}
+      style={styles.tabContainer}
       // NOTE: RN's horizontal ScrollView does NOT automatically apply
       // flexDirection: 'row' to its content container just because
       // `horizontal` is set — omitting this was the actual cause of tabs
       // rendering as full-width vertical blocks (each button stacked in
       // the default column direction, stretched to the viewport width).
-      contentContainerStyle={[styles.tabContainerContent, { backgroundColor: 'navy' }]}
+      contentContainerStyle={styles.tabContainerContent}
     >
       {TAB_CONFIG.map(renderTabButton)}
     </ScrollView>
