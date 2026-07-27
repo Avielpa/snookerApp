@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { FrameScoreCard } from './FrameScoreCard';
 import { FrameScore, MatchStats } from '../types';
 import { MatchFrameScore } from '../../../services/matchServices';
+import BannerAdSlot from '../../../components/ads/BannerAdSlot';
 
 interface FramesTabProps {
   frameScores: FrameScore[];
@@ -223,12 +224,13 @@ export function FramesTab({
   return (
     <ScrollView
       style={{ flex: 1 }}
-      contentContainerStyle={{ paddingTop: 0, flexGrow: 1, justifyContent: 'flex-start', alignItems: 'stretch' }}
+      contentContainerStyle={{ paddingTop: 16, paddingBottom: 24 }}
       showsVerticalScrollIndicator={false}
       refreshControl={
         <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor="#FF8F00" colors={['#FF8F00']} />
       }
     >
+      <BannerAdSlot />
       <View style={styles.framesContainer}>
         <Text style={styles.framesTitle}>
           {`Frame by Frame (${matchStats.completedFrames}/${matchStats.totalFrames})`}

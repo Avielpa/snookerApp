@@ -34,7 +34,6 @@ import {
 } from './components';
 import { createMatchStyles } from './styles-modern';
 import { parseFrameScoresString } from './utils/frameScoreParser';
-import BannerAdSlot from '../../components/ads/BannerAdSlot';
 import { isMatchFavouriteSync, isMatchFavouriteAsync } from '../../services/favoritesService';
 import { isMatchMutedSync, isMatchMutedAsync, toggleMatchMute } from '../../services/mutedMatchesService';
 
@@ -896,9 +895,10 @@ export default function MatchEnhanced() {
         styles={styles}
       />
 
-      <BannerAdSlot />
-
-      {/* Tab Content */}
+      {/* Tab Content — each tab renders its own BannerAdSlot as the first
+          scrollable element (was previously a static sibling here, outside
+          any ScrollView; moved inside so it can never leave orphaned flex
+          space between the tab bar and the scroll content). */}
       <View style={styles.contentContainer}>
         {renderTabContent()}
       </View>

@@ -4,6 +4,7 @@ import { View, Text, ScrollView, RefreshControl, ActivityIndicator } from 'react
 import { Ionicons } from '@expo/vector-icons';
 import { ProgressBar } from '../../components/modern';
 import { H2HData } from '../types';
+import BannerAdSlot from '../../../components/ads/BannerAdSlot';
 
 interface H2HTabProps {
   h2hData: H2HData | null;
@@ -19,12 +20,13 @@ export function H2HTab({ h2hData, h2hLoading, p1Name, p2Name, styles, isRefreshi
   return (
     <ScrollView
       style={{ flex: 1 }}
-      contentContainerStyle={{ paddingTop: 0, flexGrow: 1, justifyContent: 'flex-start', alignItems: 'stretch' }}
+      contentContainerStyle={{ paddingTop: 16, paddingBottom: 24 }}
       showsVerticalScrollIndicator={false}
       refreshControl={
         <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor="#FF8F00" colors={['#FF8F00']} />
       }
     >
+      <BannerAdSlot />
       <View style={styles.h2hCard}>
         <Text style={styles.h2hTitle}>Head to Head</Text>
         <Text style={styles.h2hSubtitle}>

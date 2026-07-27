@@ -7,6 +7,7 @@ import { LiveIndicator, ProgressBar } from '../../components/modern';
 import { MatchDetails, MatchStats } from '../types';
 import { PredictionStats } from '../../../services/matchServices';
 import { getMatchStatusLabel } from '../utils/matchStatusLabel';
+import BannerAdSlot from '../../../components/ads/BannerAdSlot';
 
 interface OverviewTabProps {
   matchDetails: MatchDetails;
@@ -77,12 +78,13 @@ export function OverviewTab({
   return (
     <ScrollView
       style={{ flex: 1 }}
-      contentContainerStyle={{ paddingTop: 0, flexGrow: 1, justifyContent: 'flex-start', alignItems: 'stretch' }}
+      contentContainerStyle={{ paddingTop: 16, paddingBottom: 24 }}
       showsVerticalScrollIndicator={false}
       refreshControl={
         <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor="#FF8F00" colors={['#FF8F00']} />
       }
     >
+      <BannerAdSlot />
       {/* Match Status */}
       <View style={styles.statusCard}>
         <View style={styles.statusHeader}>
