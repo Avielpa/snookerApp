@@ -34,6 +34,8 @@ import {
 import { createMatchStyles } from './styles-modern';
 import { parseFrameScoresString } from './utils/frameScoreParser';
 import BannerAdSlot from '../../components/ads/BannerAdSlot';
+import { isMatchFavouriteSync, isMatchFavouriteAsync } from '../../services/favoritesService';
+import { isMatchMutedSync, isMatchMutedAsync, toggleMatchMute } from '../../services/mutedMatchesService';
 
 
 /**
@@ -68,6 +70,31 @@ export default function MatchEnhanced() {
   const [h2hLoading, setH2hLoading] = useState<boolean>(false);
   const [realMatchFormat, setRealMatchFormat] = useState<string | null>(null);
   const [ctFrameScores, setCtFrameScores] = useState<MatchFrameScore[]>([]);
+
+  // Pinned/muted state for the mute-notifications bell — the bell is only
+  // shown when this match is pinned (starred from the Home feed).
+  const [isPinned, setIsPinned] = useState(apiMatchId ? isMatchFavouriteSync(apiMatchId) : false);
+  const [isMuted, setIsMuted] = useState(apiMatchId ? isMatchMutedSync(apiMatchId) : false);
+
+  useEffect(() => {
+    if (!apiMatchId) return;
+    let cancelled = false;
+    Promise.all([isMatchFavouriteAsync(apiMatchId), isMatchMutedAsync(apiMatchId)]).then(
+      ([pinned, muted]) => {
+        if (cancelled) return;
+        setIsPinned(pinned);
+        setIsMuted(muted);
+      }
+    );
+    return () => { cancelled = true; };
+  }, [apiMatchId]);
+
+  const handleToggleMute = useCallback(async () => {
+    if (!apiMatchId) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const nowMuted = await toggleMatchMute(apiMatchId);
+    setIsMuted(nowMuted);
+  }, [apiMatchId]);
 
   // Helper functions (must be defined before useMemo calls)
   const formatDuration = (minutes: number): string => {
@@ -801,9 +828,23 @@ export default function MatchEnhanced() {
             fontSize: 16 
           },
           headerRight: () => (
-            <TouchableOpacity onPress={handleShare} style={styles.shareButton}>
-              <Ionicons name="share-outline" size={24} color={colors.primary} />
-            </TouchableOpacity>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+              {isPinned && (
+                <TouchableOpacity
+                  onPress={handleToggleMute}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                  <Ionicons
+                    name={isMuted ? 'notifications-off' : 'notifications'}
+                    size={22}
+                    color={colors.primary}
+                  />
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity onPress={handleShare} style={styles.shareButton}>
+                <Ionicons name="share-outline" size={24} color={colors.primary} />
+              </TouchableOpacity>
+            </View>
           ),
         }}
       />

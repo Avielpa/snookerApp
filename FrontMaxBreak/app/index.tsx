@@ -36,6 +36,8 @@ import { DrawTab } from './tour/components/DrawTab';
 import { OtherToursTab } from './home/components/OtherTours';
 import { shouldRedirectToMedia } from './home/utils/mediaFallback';
 import { logTap } from '../services/analyticsService';
+import { subscribeToMatchFavorites, getFavoriteMatchIdsSync } from '../services/favoritesService';
+import { pinMatchesToTop } from './home/utils/pinnedMatches';
 
 function formatRoundPrize(amount: any): string | null {
     if (!amount) return null;
@@ -55,6 +57,18 @@ const HomeScreen = (): React.ReactElement | null => {
     const redirectTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
     const [isRedirectingToMedia, setIsRedirectingToMedia] = useState(false);
     const navigation = useRouter();
+
+    // Pinned matches — bumped whenever any match's star is toggled anywhere
+    // (see MatchItem's handlePinPress), so the feed re-sorts pinned matches
+    // to the top reactively without lifting favourites into shared props.
+    const [pinnedRevision, setPinnedRevision] = useState(0);
+    React.useEffect(() => {
+        return subscribeToMatchFavorites(() => setPinnedRevision((v) => v + 1));
+    }, []);
+    const pinnedMatchIds = useMemo(
+        () => new Set(getFavoriteMatchIdsSync()),
+        [pinnedRevision]
+    );
 
     // Clears the pending Media-redirect timer only on actual unmount — see the
     // effect below for why it must NOT be tied to that effect's own re-invocation.
@@ -223,20 +237,25 @@ const HomeScreen = (): React.ReactElement | null => {
         }
 
         // Step 2: hide content of collapsed sections (only in 'all' view)
-        if (activeFilter !== 'all' || collapsedSections.size === 0) return data;
-
-        const result: ListItem[] = [];
-        let currentSectionCollapsed = false;
-        for (const item of data) {
-            if (item.type === 'statusHeader') {
-                currentSectionCollapsed = collapsedSections.has(item.id.replace('statusHeader-', ''));
-                result.push(item);
-            } else if (!currentSectionCollapsed) {
-                result.push(item);
+        let result = data;
+        if (activeFilter === 'all' && collapsedSections.size > 0) {
+            const visible: ListItem[] = [];
+            let currentSectionCollapsed = false;
+            for (const item of data) {
+                if (item.type === 'statusHeader') {
+                    currentSectionCollapsed = collapsedSections.has(item.id.replace('statusHeader-', ''));
+                    visible.push(item);
+                } else if (!currentSectionCollapsed) {
+                    visible.push(item);
+                }
             }
+            result = visible;
         }
-        return result;
-    }, [processedListData, activeFilter, collapsedSections]);
+
+        // Step 3: hoist pinned (starred) matches to a "Pinned Matches" section
+        // at the top of whichever tab is currently showing.
+        return pinMatchesToTop(result, pinnedMatchIds);
+    }, [processedListData, activeFilter, collapsedSections, pinnedMatchIds]);
 
     const displayData = searchQuery.trim() === ''
         ? filteredListData
@@ -412,7 +431,7 @@ const HomeScreen = (): React.ReactElement | null => {
                             borderRadius: 20,
                             borderWidth: 1,
                             borderColor: 'rgba(255, 255, 255, 0.14)',
-                            marginBottom: 8,
+                            marginBottom: 4,
                             paddingHorizontal: 18,
                             paddingVertical: 0,
                             includeFontPadding: false,

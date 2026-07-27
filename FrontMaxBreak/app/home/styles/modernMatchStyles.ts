@@ -61,7 +61,7 @@ export const createModernMatchStyles = (COLORS: any) => StyleSheet.create({
     // MATCH CARD CONTAINER
     matchItemContainer: {
         marginTop: 2,
-        marginBottom: 8,
+        marginBottom: 6,
         marginHorizontal: 8,
     },
 

@@ -47,6 +47,27 @@ async function writeCache(favs: Favorites): Promise<void> {
     }
 }
 
+// ---- Match-favorites change subscription ----
+// Lets components (e.g. the Home feed, to pin favourited/starred matches to
+// the top) react when a match is starred/unstarred anywhere else in the app,
+// without needing a shared context/store for the whole favorites system.
+type MatchFavoritesListener = () => void;
+const matchFavoritesListeners = new Set<MatchFavoritesListener>();
+
+export function subscribeToMatchFavorites(listener: MatchFavoritesListener): () => void {
+    matchFavoritesListeners.add(listener);
+    return () => matchFavoritesListeners.delete(listener);
+}
+
+function notifyMatchFavoritesChanged(): void {
+    matchFavoritesListeners.forEach((listener) => listener());
+}
+
+/** Synchronous snapshot of all currently-favourited match IDs (in-memory cache). */
+export function getFavoriteMatchIdsSync(): number[] {
+    return cache?.matchIds ?? [];
+}
+
 /**
  * Clear all favorites tied to this device on logout — local cache AND the
  * backend device-level row. Without clearing both, a different account
@@ -163,6 +184,7 @@ export async function savePlayerFavorites(playerIds: number[]): Promise<void> {
 export async function saveMatchFavorites(matchIds: number[]): Promise<void> {
     const current = await readCache();
     await writeCache({ ...current, matchIds });
+    notifyMatchFavoritesChanged();
     const [deviceId, authHeader] = await Promise.all([getOrCreateDeviceId(), getAuthHeader()]);
     await Promise.allSettled([
         api.patch('device/favorites/matches/', { device_id: deviceId, match_ids: matchIds })
@@ -217,3 +239,16 @@ export async function toggleMatchFavourite(matchId: number): Promise<boolean> {
     await saveMatchFavorites(updated);
     return !isFav;
 }
+
+/**
+ * "Pin" a match — the Home feed's user-facing name for starring/favouriting
+ * a match, which also hoists it to a "Pinned Matches" section at the top of
+ * the feed (see app/home/utils/pinnedMatches.ts). This is the SAME underlying
+ * favourites data as toggleMatchFavourite, not a separate store — confirmed
+ * (maxBreak/oneFourSeven/push_notifications.py::get_tokens_for_match, called
+ * from management/commands/auto_live_monitor.py) that favoriting a match
+ * already makes the backend's live-monitor daemon send that device a real
+ * push notification about it. Pinning is not a placeholder here — it's the
+ * exact same subscription mechanism already in production.
+ */
+export const toggleMatchPin = toggleMatchFavourite;

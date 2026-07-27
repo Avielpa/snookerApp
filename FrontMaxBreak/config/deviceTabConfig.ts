@@ -782,14 +782,14 @@ export class DeviceTabConfigManager {
       },
       
       filterScrollView: {
-        marginVertical: 2, // Minimal vertical space
-        paddingVertical: 1, // Minimal internal padding
+        marginVertical: 1, // Minimal vertical space
+        paddingVertical: 0, // Minimal internal padding
       },
-      
+
       filterContainer: {
         paddingHorizontal: Math.max(styleConfig.spacing.containerPadding - 6, 8), // Less container padding
         paddingRight: Math.max(styleConfig.spacing.scrollPadding - 6, 8), // Less right padding
-        paddingVertical: 2, // Minimal vertical padding
+        paddingVertical: 1, // Minimal vertical padding
         backgroundColor: 'transparent', // Clean background
         borderRadius: 0, // No border radius
       },

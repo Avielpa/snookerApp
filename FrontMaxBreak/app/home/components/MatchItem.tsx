@@ -7,7 +7,7 @@ import { TOUCH_SLOP, MATCH_CONSTANTS } from '../../../utils/constants';
 import { getMatchPlayerNames, areScoresValid, normalizeScore, abbreviatePlayerName } from '../../../utils/playerUtils';
 import { clearMatchCache } from '../../../services/matchServices';
 import { logTap } from '../../../services/analyticsService';
-import { isMatchFavouriteSync, isMatchFavouriteAsync, toggleMatchFavourite } from '../../../services/favoritesService';
+import { isMatchFavouriteSync, isMatchFavouriteAsync, toggleMatchPin } from '../../../services/favoritesService';
 import { ModernGlassCard } from '../../components/modern/ModernGlassCard';
 import { LiveIndicator } from '../../components/modern/LiveIndicator';
 import { MatchListItem } from '../types';
@@ -33,9 +33,10 @@ export const MatchItem = ({
     // Debug counter for force refresh on multiple taps
     const [debugTapCount, setDebugTapCount] = React.useState(0);
 
-    // Star / favourite state — only for upcoming + live matches
+    // Pin state (starring a match pins it to the top of the feed) — only
+    // offered for upcoming + live matches
     const isNotFinished = item.status_code !== 3;
-    const [isStarred, setIsStarred] = React.useState(
+    const [isPinned, setIsPinned] = React.useState(
         item.api_match_id ? isMatchFavouriteSync(item.api_match_id) : false
     );
 
@@ -44,15 +45,15 @@ export const MatchItem = ({
         if (!item.api_match_id) return;
         let cancelled = false;
         isMatchFavouriteAsync(item.api_match_id).then((val) => {
-            if (!cancelled) setIsStarred(val);
+            if (!cancelled) setIsPinned(val);
         });
         return () => { cancelled = true; };
     }, [item.api_match_id]);
 
-    const handleStarPress = async () => {
+    const handlePinPress = async () => {
         if (!item.api_match_id) return;
-        const newVal = await toggleMatchFavourite(item.api_match_id);
-        setIsStarred(newVal);
+        const newVal = await toggleMatchPin(item.api_match_id);
+        setIsPinned(newVal);
     };
     
     // Get formatted player names - DIRECT from backend JSON
@@ -230,14 +231,14 @@ export const MatchItem = ({
                     )}
                     {isNotFinished && (
                         <TouchableOpacity
-                            onPress={handleStarPress}
+                            onPress={handlePinPress}
                             style={{ padding: 2 }}
                             hitSlop={{ top: 6, right: 6, bottom: 6, left: 6 }}
                         >
                             <Ionicons
-                                name={isStarred ? 'star' : 'star-outline'}
+                                name={isPinned ? 'star' : 'star-outline'}
                                 size={11}
-                                color={isStarred ? '#F59E0B' : COLORS.textSecondary}
+                                color={isPinned ? COLORS.primary : COLORS.textSecondary}
                             />
                         </TouchableOpacity>
                     )}

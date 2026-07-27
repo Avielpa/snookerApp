@@ -9,13 +9,13 @@ export const createEnhancedTabStyles = (colors: any) => {
     premiumContainer: {
       backgroundColor: 'transparent', // No background - cleaner
       paddingHorizontal: 4, // Minimal horizontal padding
-      paddingVertical: 2,   // Minimal vertical padding
+      paddingVertical: 0,   // Minimal vertical padding
     },
-    
+
     // Clean minimal scroll view
     enhancedScrollView: {
       backgroundColor: 'transparent',
-      paddingVertical: 2, // Much smaller padding
+      paddingVertical: 0, // Much smaller padding
     },
     
     // Minimal separator - SofaScore style

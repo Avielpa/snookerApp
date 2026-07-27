@@ -33,5 +33,11 @@ Running list of known issues, deferred work, and follow-ups that are NOT current
 - **Impact**: cosmetic — the app doesn't crash or warn, it just isn't rendering in the intended typeface. Likely invisible unless someone compares against a Figma/design mock expecting real Poppins.
 - **Next step when picked up**: source/license the actual Poppins `.ttf` files (or add `@expo-google-fonts/poppins` + `expo-font`), add them via the `expo-font` config plugin's `fonts` array (requires a new native build) or a `useFonts()` hook gated behind the splash screen (see `app/_layout.tsx`'s existing `SplashScreen.preventAutoHideAsync()`/`hideAsync()` gating added in the session above — extend the hide condition to also wait on `useFonts()`'s loaded flag).
 
+### 6. Match-mute toggle is a frontend-only UI shell, not wired to notifications
+- **Found**: 2026-07-27, while building the Pinned Matches feature (`docs/SESSION_2026-07-27_PINNED_MATCHES_AND_SPACING.md`).
+- **Status**: Explicitly requested as a UI shell only. `services/mutedMatchesService.ts` persists mute state locally (AsyncStorage) but the backend's notification sender (`push_notifications.py::get_tokens_for_match`, called from `auto_live_monitor.py`) has no concept of "muted" and will still notify a device for a match it has favorited/pinned, even if the user muted it in the app.
+- **Impact**: user-facing — toggling the bell icon on the match-detail screen currently does nothing functionally; it will look like a bug once someone assumes it works.
+- **Next step when picked up**: add a parallel `muted_match_ids` (or similar) field to `DeviceToken`/`UserFavorite`, sync it the same way `favorite_match_ids` is synced, and have `get_tokens_for_match`/`get_tokens_for_match_db_id` exclude devices that muted that specific match.
+
 ## Resolved / closed
 (move items here with a one-line resolution note when closed, don't delete history)
