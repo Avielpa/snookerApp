@@ -862,42 +862,71 @@ export default function MatchEnhanced() {
   }
 
   return (
-    <View style={[styles.container, { paddingBottom: insets.bottom, paddingLeft: insets.left, paddingRight: insets.right }]}>
+    // DEBUG: full-chain rainbow pass — remove after locating the gap.
+    // ROOT = saddlebrown. If ANY gap shows this color, it belongs to no
+    // child container at all — it's literally unpainted root background.
+    <View style={[styles.container, { paddingBottom: insets.bottom, paddingLeft: insets.left, paddingRight: insets.right, backgroundColor: 'saddlebrown' }]}>
       <Stack.Screen options={{ headerShown: false }} />
 
-      {/* Custom top row — replaces the native header entirely. No top inset
-          here: the global app Header (in _layout.tsx) already sits below
-          the notch, so this row can sit flush beneath it. */}
-      <TopActionRow
-        colors={colors}
-        styles={styles}
-        onBack={() => router.back()}
-        onShare={handleShare}
-        showMute={isPinned}
-        isMuted={isMuted}
-        onToggleMute={handleToggleMute}
-      />
+      <View style={{ backgroundColor: 'red' }}>
+        <TopActionRow
+          colors={colors}
+          styles={styles}
+          onBack={() => router.back()}
+          onShare={handleShare}
+          showMute={isPinned}
+          isMuted={isMuted}
+          onToggleMute={handleToggleMute}
+        />
+      </View>
 
-      {/* Score Header */}
-      <PlayerScoreHeader
-        matchDetails={matchDetails}
-        styles={styles}
-      />
+      <View style={{ backgroundColor: 'darkorange' }}>
+        <PlayerScoreHeader
+          matchDetails={matchDetails}
+          styles={styles}
+        />
+      </View>
 
-      {/* Tab Navigation */}
-      <TabNavigation
-        selectedTab={selectedTab}
-        onTabChange={handleTabChange}
-        colors={colors}
-        styles={styles}
-      />
+      <View style={{ backgroundColor: 'blue' }}>
+        <TabNavigation
+          selectedTab={selectedTab}
+          onTabChange={handleTabChange}
+          colors={colors}
+          styles={styles}
+        />
+      </View>
 
-      {/* Tab Content — each tab renders its own BannerAdSlot as the first
-          scrollable element (was previously a static sibling here, outside
-          any ScrollView; moved inside so it can never leave orphaned flex
-          space between the tab bar and the scroll content). */}
-      <View style={styles.contentContainer}>
+      <View style={[styles.contentContainer, { backgroundColor: 'purple' }]}>
         {renderTabContent()}
+      </View>
+
+      {/* DEBUG: color legend, fixed on screen (does not scroll) */}
+      <View
+        pointerEvents="none"
+        style={{
+          position: 'absolute',
+          top: 60,
+          left: 8,
+          right: 8,
+          backgroundColor: 'black',
+          padding: 8,
+          borderRadius: 8,
+          zIndex: 999,
+        }}
+      >
+        <Text style={{ color: '#fff', fontSize: 10, fontFamily: 'monospace', lineHeight: 14 }}>
+          {'saddlebrown = root View (MatchEnhanced)\n'}
+          {'red = TopActionRow wrapper\n'}
+          {'darkorange = PlayerScoreHeader wrapper\n'}
+          {'deepskyblue = TabNavigation ScrollView (tabContainer)\n'}
+          {'navy = TabNavigation content (tabContainerContent)\n'}
+          {'purple = contentContainer (wraps active tab)\n'}
+          {'green = FramesTab ScrollView (style)\n'}
+          {'yellow = FramesTab contentContainerStyle\n'}
+          {'magenta = framesContainer (title+cards)\n'}
+          {'cyan = BannerAdSlot outer container\n'}
+          {'hotpink = BannerAdSlot frame (around the ad)'}
+        </Text>
       </View>
     </View>
   );
