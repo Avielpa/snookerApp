@@ -1,5 +1,5 @@
 // app/match/MatchEnhanced.tsx
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -64,6 +64,25 @@ export default function MatchEnhanced() {
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedTab, setSelectedTab] = useState<TabType>('overview');
+  const hasSetDynamicDefaultTab = useRef(false);
+
+  // Dynamic default tab based on match status — fires once, the first time
+  // matchDetails becomes available, and never again (so it doesn't yank the
+  // user back to a "default" tab after they've manually switched, e.g. when
+  // loadData() re-runs on refresh or a live-status change).
+  useEffect(() => {
+    if (hasSetDynamicDefaultTab.current || !matchDetails) return;
+    hasSetDynamicDefaultTab.current = true;
+
+    if (matchDetails.status_code === 1 || matchDetails.status_code === 2) {
+      // Live or On Break — users want immediate access to the current frame
+      setSelectedTab('frames');
+    } else if (matchDetails.status_code === 3) {
+      // Finished — focus on the final match data
+      setSelectedTab('stats');
+    }
+    // Scheduled (status_code === 0) or unknown — leave the 'overview' default
+  }, [matchDetails]);
   const [userPrediction, setUserPrediction] = useState<1 | 2 | null>(null);
   const [predictionStats, setPredictionStats] = useState<PredictionStats | null>(null);
   const [h2hData, setH2hData] = useState<H2HData | null>(null);
@@ -334,8 +353,33 @@ export default function MatchEnhanced() {
 
     const totalFrames = frameScores.length;
     const completedFrames = frameScores.filter(f => f.isComplete).length;
-    const progress = totalFrames > 0 ? completedFrames / totalFrames : 0;
-    
+
+    // Use real format if available, otherwise fallback
+    const realFormatNumber = extractFormatNumber(realMatchFormat || '');
+    const actualFormat = realFormatNumber || 0; // Default to 0 if not available
+    const actualFramesToWin = Math.ceil(actualFormat / 2);
+
+    // Progress must be 100% ONLY when the match is actually finished. The
+    // previous calculation (completedFrames / totalFrames, where totalFrames
+    // came from frameScores' own "add up to 3 upcoming placeholder frames"
+    // logic) could read as 100% for a still-live match whenever the match
+    // format hadn't loaded yet (maxPossibleFrames computes to a negative
+    // number in that case, so zero placeholder frames get added and every
+    // already-played frame counts as "complete"). Compute progress directly
+    // from played-frames-vs-format instead.
+    let progress = 0;
+    if (matchDetails.status_code === 3) {
+      progress = 1;
+    } else if (actualFormat > 0) {
+      // Capped just under 100% so a match at match-point still reads as
+      // "in progress" until the backend actually marks it finished.
+      const framesPlayed = (matchDetails.score1 || 0) + (matchDetails.score2 || 0);
+      progress = Math.min(framesPlayed / actualFormat, 0.95);
+    }
+    // else: format not yet known — leave at 0 (OverviewTab already hides
+    // the bar entirely when progress <= 0, which reads as "indeterminate"
+    // rather than showing a potentially-wrong percentage).
+
     // Calculate time statistics based on match data
     let timeElapsed: string | undefined;
     let estimatedTimeRemaining: string | undefined;
@@ -358,11 +402,6 @@ export default function MatchEnhanced() {
         // as frame timing data is not always reliable
       }
     }
-    
-    // Use real format if available, otherwise fallback
-    const realFormatNumber = extractFormatNumber(realMatchFormat || '');
-    const actualFormat = realFormatNumber || 0; // Default to 0 if not available
-    const actualFramesToWin = Math.ceil(actualFormat / 2);
     
     // Debug logging
     logger.debug(`[MatchEnhanced] Format calculation: realMatchFormat="${realMatchFormat}", realFormatNumber=${realFormatNumber}, actualFormat=${actualFormat}, framesToWin=${actualFramesToWin}`);
@@ -816,17 +855,13 @@ export default function MatchEnhanced() {
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
-      <Stack.Screen 
+      <Stack.Screen
         options={{
           headerShown: true,
-          title: `${p1Name} vs ${p2Name}`,
+          title: '',
+          headerTitle: () => null,
           headerStyle: { backgroundColor: colors.background },
           headerTintColor: colors.primary,
-          headerTitleStyle: { 
-            color: colors.primary, 
-            fontFamily: 'PoppinsSemiBold', 
-            fontSize: 16 
-          },
           headerRight: () => (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
               {isPinned && (

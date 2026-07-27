@@ -6,6 +6,7 @@ import * as Haptics from 'expo-haptics';
 import { LiveIndicator, ProgressBar } from '../../components/modern';
 import { MatchDetails, MatchStats } from '../types';
 import { PredictionStats } from '../../../services/matchServices';
+import { getMatchStatusLabel } from '../utils/matchStatusLabel';
 
 interface OverviewTabProps {
   matchDetails: MatchDetails;
@@ -88,7 +89,7 @@ export function OverviewTab({
         </View>
 
         <Text style={styles.statusText}>
-          {matchDetails?.status_display || 'Status Unknown'}
+          {getMatchStatusLabel(matchDetails?.status_code)}
         </Text>
 
         {matchStats.progress > 0 && (

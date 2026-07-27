@@ -1,6 +1,6 @@
 // app/match/components/TabNavigation.tsx
 import React from 'react';
-import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, Text, StyleSheet, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { TabType } from '../types';
@@ -35,13 +35,16 @@ export function TabNavigation({ selectedTab, onTabChange, colors, styles }: TabN
 
   // Create local styles using same approach as home screen
   const tabStyles = StyleSheet.create({
-    filterButton: { 
-      flexDirection: 'row', 
-      alignItems: 'center', 
-      backgroundColor: colors.cardBackground, 
-      paddingVertical: 6, 
-      paddingHorizontal: 10, 
-      borderRadius: 16, 
+    filterButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      // Deliberately no width/flex here — buttons must size to their own
+      // content ("width: auto"), never stretch to fill the row.
+      alignSelf: 'flex-start',
+      backgroundColor: colors.cardBackground,
+      paddingVertical: 6,
+      paddingHorizontal: 16,
+      borderRadius: 16,
       marginRight: 6,
       borderWidth: 1,
       borderColor: 'rgba(255, 167, 38, 0.25)',
@@ -106,8 +109,18 @@ export function TabNavigation({ selectedTab, onTabChange, colors, styles }: TabN
   };
 
   return (
-    <View style={styles.tabContainer}>
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      style={styles.tabContainer}
+      // NOTE: RN's horizontal ScrollView does NOT automatically apply
+      // flexDirection: 'row' to its content container just because
+      // `horizontal` is set — omitting this was the actual cause of tabs
+      // rendering as full-width vertical blocks (each button stacked in
+      // the default column direction, stretched to the viewport width).
+      contentContainerStyle={styles.tabContainerContent}
+    >
       {TAB_CONFIG.map(renderTabButton)}
-    </View>
+    </ScrollView>
   );
 }
