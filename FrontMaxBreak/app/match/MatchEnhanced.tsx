@@ -860,6 +860,7 @@ export default function MatchEnhanced() {
           headerShown: true,
           title: '',
           headerTitle: () => null,
+          headerBackTitle: '',
           headerStyle: { backgroundColor: colors.background },
           headerTintColor: colors.primary,
           headerRight: () => (

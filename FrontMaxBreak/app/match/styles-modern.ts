@@ -77,12 +77,19 @@ export const createMatchStyles = (colors: any) => StyleSheet.create({
     fontFamily: 'PoppinsBold',
     color: '#FF8F00',
   },
+  // Name + flag sit on one row (not stacked) to save vertical space.
+  nameFlagRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    maxWidth: '100%',
+  },
   playerName: {
     fontSize: 14,
     fontFamily: 'PoppinsSemiBold',
     color: 'rgba(255, 255, 255, 0.85)',
     textAlign: 'center',
-    marginBottom: 2,
+    flexShrink: 1,
   },
   flagText: {
     fontSize: 14,
@@ -128,6 +135,7 @@ export const createMatchStyles = (colors: any) => StyleSheet.create({
   // the ScrollView itself is capped, and its content row is centered inside it.
   tabContainer: {
     height: 48,
+    marginTop: 10,
     marginBottom: 10,
   },
   tabContainerContent: {

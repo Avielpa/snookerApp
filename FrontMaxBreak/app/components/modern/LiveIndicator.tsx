@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, Animated } from 'react-native';
 
 interface LiveIndicatorProps {
   isLive?: boolean;
@@ -21,10 +21,26 @@ export const LiveIndicator: React.FC<LiveIndicatorProps> = ({
   onBreak = false,
   size = 'medium',
 }) => {
-  if (!isLive && !onBreak) return null;
-
   const isBreak = onBreak && !isLive;
   const s = SIZES[size];
+  const dotOpacity = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    if (!isLive) {
+      dotOpacity.setValue(1);
+      return;
+    }
+    const pulse = Animated.loop(
+      Animated.sequence([
+        Animated.timing(dotOpacity, { toValue: 0.3, duration: 900, useNativeDriver: true }),
+        Animated.timing(dotOpacity, { toValue: 1, duration: 900, useNativeDriver: true }),
+      ])
+    );
+    pulse.start();
+    return () => pulse.stop();
+  }, [isLive, dotOpacity]);
+
+  if (!isLive && !onBreak) return null;
 
   return (
     <View
@@ -38,10 +54,11 @@ export const LiveIndicator: React.FC<LiveIndicatorProps> = ({
         },
       ]}
     >
-      <View
+      <Animated.View
         style={[
           styles.liveDot,
           { width: s.dot, height: s.dot, borderRadius: s.dot / 2, marginRight: s.dotMargin },
+          isLive && { opacity: dotOpacity },
         ]}
       />
       <Text style={[styles.liveText, { fontSize: s.fontSize }]}>
