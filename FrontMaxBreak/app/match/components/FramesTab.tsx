@@ -1,12 +1,11 @@
 // app/match/components/FramesTab.tsx
-import React, { useEffect, useRef, useState } from 'react';
+import React from 'react';
 import { View, Text, ScrollView, RefreshControl, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { FrameScoreCard } from './FrameScoreCard';
 import { FrameScore, MatchStats } from '../types';
 import { MatchFrameScore } from '../../../services/matchServices';
 import BannerAdSlot from '../../../components/ads/BannerAdSlot';
-import { debugLayout, subscribeDebugLayout, notifyDebugLayoutChanged } from '../../../utils/debugLayoutProbe';
 
 interface FramesTabProps {
   frameScores: FrameScore[];
@@ -222,49 +221,22 @@ export function FramesTab({
     <FrameScoreCard frame={item} styles={styles} />
   );
 
-  // DEBUG: precision numeric measurement — remove once the gap is root-caused.
-  const scrollRef = useRef<ScrollView>(null);
-  const [, forceTick] = useState(0);
-  useEffect(() => {
-    const unsub = subscribeDebugLayout(() => forceTick((n) => n + 1));
-    const t = setTimeout(() => {
-      (scrollRef.current as any)?.measureInWindow((x: number, y: number) => {
-        debugLayout.scrollTop = y;
-        notifyDebugLayoutChanged();
-      });
-    }, 800);
-    return () => {
-      unsub();
-      clearTimeout(t);
-    };
-  }, []);
-
   return (
     <ScrollView
-      ref={scrollRef}
       style={{ flex: 1 }}
       contentContainerStyle={{ paddingTop: 12, paddingBottom: 24 }}
+      // iOS auto-adjusts a ScrollView's top content inset to account for
+      // translucent nav/tab bars — since this screen replaces the native
+      // header with its own custom TopActionRow, iOS has no way to know
+      // that, and was injecting extra top inset the JS layout tree never
+      // saw (confirmed via measureInWindow: Yoga's positions were correct,
+      // the rendered content was still pushed down). This opts out.
+      contentInsetAdjustmentBehavior="never"
       showsVerticalScrollIndicator={false}
       refreshControl={
         <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor="#FF8F00" colors={['#FF8F00']} />
       }
     >
-      <View
-        pointerEvents="none"
-        style={{
-          position: 'absolute',
-          top: 4,
-          right: 4,
-          zIndex: 999,
-          backgroundColor: 'black',
-          padding: 6,
-          borderRadius: 6,
-        }}
-      >
-        <Text style={{ color: '#0F0', fontSize: 11, fontFamily: 'monospace' }}>
-          {`tabBottom: ${debugLayout.tabBottom ?? '?'}\nscrollTop: ${debugLayout.scrollTop ?? '?'}\nadTop: ${debugLayout.adTop ?? '?'}\nadBottom: ${debugLayout.adBottom ?? '?'}`}
-        </Text>
-      </View>
       <BannerAdSlot />
       <View style={styles.framesContainer}>
         <Text style={styles.framesTitle}>

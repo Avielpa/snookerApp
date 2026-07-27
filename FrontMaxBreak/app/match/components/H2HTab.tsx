@@ -21,6 +21,7 @@ export function H2HTab({ h2hData, h2hLoading, p1Name, p2Name, styles, isRefreshi
     <ScrollView
       style={{ flex: 1 }}
       contentContainerStyle={{ paddingTop: 12, paddingBottom: 24 }}
+      contentInsetAdjustmentBehavior="never"
       showsVerticalScrollIndicator={false}
       refreshControl={
         <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor="#FF8F00" colors={['#FF8F00']} />
