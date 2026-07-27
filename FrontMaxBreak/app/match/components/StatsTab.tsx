@@ -3,6 +3,7 @@ import React from 'react';
 import { View, Text, ScrollView, RefreshControl } from 'react-native';
 import { ProgressBar } from '../../components/modern';
 import { FrameScore, MatchStats } from '../types';
+import { hasFramesToWin } from '../utils/statsTabGuards';
 
 interface StatsTabProps {
   frameScores: FrameScore[];
@@ -121,19 +122,19 @@ export function StatsTab({
           </Text>
         </View>
         
-        {matchStats.framesToWin && (
+        {hasFramesToWin(matchStats.framesToWin) && (
           <>
             <View style={styles.statRow}>
               <Text style={styles.statLabel}>{p1Name} needs:</Text>
               <Text style={styles.statValue}>
-                {Math.max(0, matchStats.framesToWin - (matchStats.player1Score || 0))} more frames
+                {Math.max(0, (matchStats.framesToWin ?? 0) - (matchStats.player1Score || 0))} more frames
               </Text>
             </View>
-            
+
             <View style={styles.statRow}>
               <Text style={styles.statLabel}>{p2Name} needs:</Text>
               <Text style={styles.statValue}>
-                {Math.max(0, matchStats.framesToWin - (matchStats.player2Score || 0))} more frames
+                {Math.max(0, (matchStats.framesToWin ?? 0) - (matchStats.player2Score || 0))} more frames
               </Text>
             </View>
           </>

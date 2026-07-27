@@ -47,33 +47,30 @@ export function initAds(): Promise<void> {
 // the instant the app launches is a well-documented uninstall driver.
 const INTERSTITIAL_DELAY_MS = 5000;
 
-// Shared across every interstitial trigger (app-launch, scoreboard-entry, ...) —
-// at most one interstitial shows per app session, regardless of which trigger
-// fires first. Without this, a user who opens the app and immediately jumps to
-// the scoreboard could see the app-launch interstitial fire while already on
-// the scoreboard screen, followed by the scoreboard-entry one — two ads in one
-// session from what's meant to be a "once per process" cap.
-let interstitialShownThisSession = false;
+// Each interstitial trigger (app-launch, scoreboard-entry, ...) gets its own
+// one-time-per-session cap, keyed by label — so app-launch showing an ad
+// doesn't block scoreboard-entry from showing its own later, and vice versa.
+const shownThisSessionByLabel: Record<string, boolean> = {};
 
 function createOnceInterstitialHook(label: string) {
   return function useOnceInterstitial(): void {
     useEffect(() => {
-      if (!ADS_ENABLED || interstitialShownThisSession || !INTERSTITIAL_AD_UNIT_ID) return;
+      if (!ADS_ENABLED || shownThisSessionByLabel[label] || !INTERSTITIAL_AD_UNIT_ID) return;
 
       let isMounted = true;
       let unsubscribeLoaded: (() => void) | undefined;
       let unsubscribeError: (() => void) | undefined;
 
       const delayTimer = setTimeout(() => {
-        if (interstitialShownThisSession) return;
+        if (shownThisSessionByLabel[label]) return;
         initAds().then(() => {
-          if (!isMounted || interstitialShownThisSession) return;
+          if (!isMounted || shownThisSessionByLabel[label]) return;
 
           const interstitial = InterstitialAd.createForAdRequest(INTERSTITIAL_AD_UNIT_ID as string);
 
           unsubscribeLoaded = interstitial.addAdEventListener(AdEventType.LOADED, () => {
-            if (!isMounted || interstitialShownThisSession) return;
-            interstitialShownThisSession = true;
+            if (!isMounted || shownThisSessionByLabel[label]) return;
+            shownThisSessionByLabel[label] = true;
             interstitial.show().catch((error: any) => {
               logger.warn(`[Ads] ${label} interstitial show failed:`, error?.message);
             });
@@ -98,9 +95,8 @@ function createOnceInterstitialHook(label: string) {
 }
 
 // Shown once per app process, the first time the scoreboard setup screen is opened —
-// shares the same session-wide cap as other interstitial triggers, so a
-// user only ever sees one interstitial total per session, from whichever
-// trigger fires first.
+// independent cap from the app-launch interstitial above, so this can still
+// fire even if the app-launch ad already showed earlier in the session.
 export const useScoreboardEntryInterstitial = createOnceInterstitialHook('scoreboard-entry');
 
 const MEDIA_INTERSTITIAL_COOLDOWN_KEY = '@maxbreak_media_interstitial_last_shown';
@@ -123,9 +119,11 @@ export function isMediaInterstitialCooldownElapsed(
 // across separate app sessions must not re-show the ad every time. Still
 // respects the shared session-wide cap so it doesn't double up with another
 // interstitial trigger firing in the same session.
+const MEDIA_TAB_LABEL = 'media-tab';
+
 export function useMediaTabInterstitial(): void {
   useEffect(() => {
-    if (!ADS_ENABLED || interstitialShownThisSession || !INTERSTITIAL_AD_UNIT_ID) return;
+    if (!ADS_ENABLED || shownThisSessionByLabel[MEDIA_TAB_LABEL] || !INTERSTITIAL_AD_UNIT_ID) return;
 
     let isMounted = true;
     let unsubscribeLoaded: (() => void) | undefined;
@@ -135,20 +133,20 @@ export function useMediaTabInterstitial(): void {
     AsyncStorage.getItem(MEDIA_INTERSTITIAL_COOLDOWN_KEY)
       .catch(() => null)
       .then((stored: string | null) => {
-        if (!isMounted || interstitialShownThisSession) return;
+        if (!isMounted || shownThisSessionByLabel[MEDIA_TAB_LABEL]) return;
         const lastShownAt = stored ? parseInt(stored, 10) : null;
         if (!isMediaInterstitialCooldownElapsed(lastShownAt, Date.now())) return;
 
         delayTimer = setTimeout(() => {
-          if (interstitialShownThisSession) return;
+          if (shownThisSessionByLabel[MEDIA_TAB_LABEL]) return;
           initAds().then(() => {
-            if (!isMounted || interstitialShownThisSession) return;
+            if (!isMounted || shownThisSessionByLabel[MEDIA_TAB_LABEL]) return;
 
             const interstitial = InterstitialAd.createForAdRequest(INTERSTITIAL_AD_UNIT_ID as string);
 
             unsubscribeLoaded = interstitial.addAdEventListener(AdEventType.LOADED, () => {
-              if (!isMounted || interstitialShownThisSession) return;
-              interstitialShownThisSession = true;
+              if (!isMounted || shownThisSessionByLabel[MEDIA_TAB_LABEL]) return;
+              shownThisSessionByLabel[MEDIA_TAB_LABEL] = true;
               AsyncStorage.setItem(MEDIA_INTERSTITIAL_COOLDOWN_KEY, String(Date.now())).catch(() => {});
               interstitial.show().catch((error: any) => {
                 logger.warn('[Ads] media-tab interstitial show failed:', error?.message);
