@@ -303,7 +303,7 @@ const HomeScreen = (): React.ReactElement | null => {
     };
 
     const filterButtons: FilterButton[] = [
-        { label: 'Upcoming2', value: 'upcoming', icon: ICONS.upcoming },
+        { label: 'Upcoming', value: 'upcoming', icon: ICONS.upcoming },
         { label: 'Live', value: 'livePlaying', icon: ICONS.livePlaying },
         { label: 'Results', value: 'finished', icon: ICONS.finished },
         { label: 'Draw', value: 'draw', icon: 'git-branch-outline' },
