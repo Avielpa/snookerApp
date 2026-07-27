@@ -51,6 +51,9 @@
     "production": {
       "autoIncrement": true,
       "channel": "production",
+      "cache": {
+        "disabled": true
+      },
       "env": {
         "NODE_ENV": "production",
         "EXPO_PUBLIC_API_BASE_URL": "https://snookerapp.up.railway.app/oneFourSeven/",
