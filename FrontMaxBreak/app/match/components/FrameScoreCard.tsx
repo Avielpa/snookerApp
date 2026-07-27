@@ -3,6 +3,7 @@ import React from 'react';
 import { View, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { FrameScore } from '../types';
+import { hasBreak, hasAnyBreak } from '../utils/frameBreakGuards';
 
 interface FrameScoreCardProps {
   frame: FrameScore;
@@ -47,14 +48,14 @@ export function FrameScoreCard({ frame, styles }: FrameScoreCardProps) {
           )}
           
           {/* Display highest breaks if available */}
-          {(frame.player1Break || frame.player2Break) && (
+          {hasAnyBreak(frame.player1Break, frame.player2Break) && (
             <View style={styles.frameBreaks}>
-              {frame.player1Break && (
+              {hasBreak(frame.player1Break) && (
                 <Text style={[styles.frameBreak, frame.winner === 1 && styles.winningBreak]}>
                   ({frame.player1Break})
                 </Text>
               )}
-              {frame.player2Break && (
+              {hasBreak(frame.player2Break) && (
                 <Text style={[styles.frameBreak, frame.winner === 2 && styles.winningBreak]}>
                   ({frame.player2Break})
                 </Text>
