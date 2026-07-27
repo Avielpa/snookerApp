@@ -1,5 +1,5 @@
 // app/match/components/FramesTab.tsx
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, ScrollView, RefreshControl, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { FrameScoreCard } from './FrameScoreCard';
@@ -221,8 +221,27 @@ export function FramesTab({
     <FrameScoreCard frame={item} styles={styles} />
   );
 
+  // DEBUG: re-verify with hard numbers whether contentInsetAdjustmentBehavior
+  // actually closed the Yoga-vs-visual gap, or whether that "fix" was itself
+  // masked by rainbow colors like every prior round. Remove once resolved.
+  const scrollRef = useRef<ScrollView>(null);
+  const titleRef = useRef<View>(null);
+  const [measurements, setMeasurements] = useState<{ scrollTop?: number; titleTop?: number }>({});
+  useEffect(() => {
+    const t = setTimeout(() => {
+      (scrollRef.current as any)?.measureInWindow((x: number, y: number) => {
+        setMeasurements((m) => ({ ...m, scrollTop: y }));
+      });
+      (titleRef.current as any)?.measureInWindow((x: number, y: number) => {
+        setMeasurements((m) => ({ ...m, titleTop: y }));
+      });
+    }, 1000);
+    return () => clearTimeout(t);
+  }, []);
+
   return (
     <ScrollView
+      ref={scrollRef}
       style={{ flex: 1 }}
       contentContainerStyle={{ paddingTop: 8, paddingBottom: 24 }}
       // iOS auto-adjusts a ScrollView's top content inset to account for
@@ -237,7 +256,15 @@ export function FramesTab({
         <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor="#FF8F00" colors={['#FF8F00']} />
       }
     >
-      <View style={styles.framesContainer}>
+      <View
+        pointerEvents="none"
+        style={{ position: 'absolute', top: 4, right: 4, zIndex: 999, backgroundColor: 'black', padding: 6, borderRadius: 6 }}
+      >
+        <Text style={{ color: '#0F0', fontSize: 11, fontFamily: 'monospace' }}>
+          {`scrollTop: ${measurements.scrollTop ?? '?'}\ntitleTop: ${measurements.titleTop ?? '?'}\ndiff: ${measurements.scrollTop != null && measurements.titleTop != null ? (measurements.titleTop - measurements.scrollTop).toFixed(1) : '?'}`}
+        </Text>
+      </View>
+      <View ref={titleRef} style={styles.framesContainer}>
         <Text style={styles.framesTitle}>
           {`Frame by Frame (${matchStats.completedFrames}/${matchStats.totalFrames})`}
         </Text>
