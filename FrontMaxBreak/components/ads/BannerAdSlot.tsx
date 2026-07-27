@@ -18,8 +18,7 @@ export default function BannerAdSlot() {
   }
 
   return (
-    // DEBUG: rainbow-debugging pass — remove after locating the gap.
-    <View style={[styles.container, { backgroundColor: 'purple' }]}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.frame, { borderColor: colors.cardBorder }]}>
         <BannerAd
           unitId={BANNER_AD_UNIT_ID}

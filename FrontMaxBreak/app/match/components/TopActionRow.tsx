@@ -2,7 +2,10 @@
 // Custom top row replacing the native Stack header entirely (headerShown:
 // false on this screen) — a plain View gives full control over height/
 // spacing, unlike the native header which reserved unpredictable vertical
-// space for the back-title text on iOS.
+// space for the back-title text on iOS. No top safe-area inset here: the
+// global app Header (rendered above the routed screen in _layout.tsx)
+// already sits below the notch, so adding insets.top on top of that was
+// double-counting the inset a second time.
 import React from 'react';
 import { View, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -15,10 +18,6 @@ interface TopActionRowProps {
   showMute?: boolean;
   isMuted?: boolean;
   onToggleMute?: () => void;
-  // Manual safe-area top inset (from useSafeAreaInsets in the parent screen,
-  // which uses a plain View instead of SafeAreaView to avoid double-applying
-  // the top inset on iOS native-stack screens).
-  topInset: number;
 }
 
 export function TopActionRow({
@@ -29,10 +28,9 @@ export function TopActionRow({
   showMute,
   isMuted,
   onToggleMute,
-  topInset,
 }: TopActionRowProps) {
   return (
-    <View style={[styles.topActionRow, { paddingTop: topInset, paddingBottom: 0, marginBottom: 0 }]}>
+    <View style={[styles.topActionRow, { paddingTop: 0, paddingBottom: 0, marginTop: 0, marginBottom: 0 }]}>
       <TouchableOpacity onPress={onBack} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
         <Ionicons name="chevron-back" size={26} color={colors.primary} />
       </TouchableOpacity>

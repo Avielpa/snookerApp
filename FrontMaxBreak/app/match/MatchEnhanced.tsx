@@ -823,7 +823,7 @@ export default function MatchEnhanced() {
     return (
       <View style={[styles.container, { paddingBottom: insets.bottom, paddingLeft: insets.left, paddingRight: insets.right }]}>
         <Stack.Screen options={{ headerShown: false }} />
-        <TopActionRow colors={colors} styles={styles} onBack={() => router.back()} topInset={insets.top} />
+        <TopActionRow colors={colors} styles={styles} onBack={() => router.back()} />
         <View style={styles.centerContent}>
           <ActivityIndicator size="large" color={colors.primary} />
           <Text style={styles.loadingText}>Loading Match Details...</Text>
@@ -837,7 +837,7 @@ export default function MatchEnhanced() {
     return (
       <View style={[styles.container, { paddingBottom: insets.bottom, paddingLeft: insets.left, paddingRight: insets.right }]}>
         <Stack.Screen options={{ headerShown: false }} />
-        <TopActionRow colors={colors} styles={styles} onBack={() => router.back()} topInset={insets.top} />
+        <TopActionRow colors={colors} styles={styles} onBack={() => router.back()} />
         <View style={styles.centerContent}>
           <Ionicons name="alert-circle-outline" size={48} color={colors.error} />
           <Text style={[styles.loadingText, { color: colors.error }]}>Error: {error}</Text>
@@ -853,7 +853,7 @@ export default function MatchEnhanced() {
     return (
       <View style={[styles.container, { paddingBottom: insets.bottom, paddingLeft: insets.left, paddingRight: insets.right }]}>
         <Stack.Screen options={{ headerShown: false }} />
-        <TopActionRow colors={colors} styles={styles} onBack={() => router.back()} topInset={insets.top} />
+        <TopActionRow colors={colors} styles={styles} onBack={() => router.back()} />
         <View style={styles.centerContent}>
           <Text style={styles.loadingText}>Match data could not be loaded.</Text>
         </View>
@@ -865,11 +865,9 @@ export default function MatchEnhanced() {
     <View style={[styles.container, { paddingBottom: insets.bottom, paddingLeft: insets.left, paddingRight: insets.right }]}>
       <Stack.Screen options={{ headerShown: false }} />
 
-      {/* Custom top row — replaces the native header entirely. Uses a plain
-          View + useSafeAreaInsets (not SafeAreaView) because iOS native-stack
-          already insets screen content for the notch even with headerShown:
-          false; stacking a SafeAreaView on top of that double-applied the
-          top inset and pushed the Hero down. */}
+      {/* Custom top row — replaces the native header entirely. No top inset
+          here: the global app Header (in _layout.tsx) already sits below
+          the notch, so this row can sit flush beneath it. */}
       <TopActionRow
         colors={colors}
         styles={styles}
@@ -878,7 +876,6 @@ export default function MatchEnhanced() {
         showMute={isPinned}
         isMuted={isMuted}
         onToggleMute={handleToggleMute}
-        topInset={insets.top}
       />
 
       {/* Score Header */}
@@ -888,15 +885,12 @@ export default function MatchEnhanced() {
       />
 
       {/* Tab Navigation */}
-      {/* DEBUG: rainbow-debugging pass — remove after locating the gap */}
-      <View style={{ backgroundColor: 'red' }}>
-        <TabNavigation
-          selectedTab={selectedTab}
-          onTabChange={handleTabChange}
-          colors={colors}
-          styles={styles}
-        />
-      </View>
+      <TabNavigation
+        selectedTab={selectedTab}
+        onTabChange={handleTabChange}
+        colors={colors}
+        styles={styles}
+      />
 
       {/* Tab Content — each tab renders its own BannerAdSlot as the first
           scrollable element (was previously a static sibling here, outside

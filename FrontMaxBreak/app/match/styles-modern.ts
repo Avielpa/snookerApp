@@ -144,9 +144,9 @@ export const createMatchStyles = (colors: any) => StyleSheet.create({
   // Strict height so this can never grow into the giant vertical blocks bug —
   // the ScrollView itself is capped, and its content row is centered inside it.
   tabContainer: {
-    height: 48,
-    marginTop: 10,
-    marginBottom: 10,
+    height: 40,
+    marginTop: 0,
+    marginBottom: 0,
   },
   tabContainerContent: {
     flexDirection: 'row',
