@@ -1,10 +1,11 @@
 // app/match/components/FramesTab.tsx
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, ScrollView, RefreshControl, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { FrameScoreCard } from './FrameScoreCard';
 import { FrameScore, MatchStats } from '../types';
 import { MatchFrameScore } from '../../../services/matchServices';
+import BannerAdSlot from '../../../components/ads/BannerAdSlot';
 
 interface FramesTabProps {
   frameScores: FrameScore[];
@@ -220,14 +221,53 @@ export function FramesTab({
     <FrameScoreCard frame={item} styles={styles} />
   );
 
+  // DEBUG: re-verify with hard numbers whether contentInsetAdjustmentBehavior
+  // actually closed the Yoga-vs-visual gap, or whether that "fix" was itself
+  // masked by rainbow colors like every prior round. Remove once resolved.
+  const scrollRef = useRef<ScrollView>(null);
+  const titleRef = useRef<View>(null);
+  const [measurements, setMeasurements] = useState<{ scrollTop?: number; titleTop?: number; ts?: number }>({});
+  useEffect(() => {
+    // Re-measure continuously (not once) — every reproduction of this bug
+    // has been on a LIVE match with a 30s auto-refresh poll, so a one-shot
+    // measurement can easily go stale before a screenshot is actually taken.
+    const id = setInterval(() => {
+      (scrollRef.current as any)?.measureInWindow((x: number, y: number) => {
+        setMeasurements((m) => ({ ...m, scrollTop: y, ts: Date.now() }));
+      });
+      (titleRef.current as any)?.measureInWindow((x: number, y: number) => {
+        setMeasurements((m) => ({ ...m, titleTop: y, ts: Date.now() }));
+      });
+    }, 1000);
+    return () => clearInterval(id);
+  }, []);
+
   return (
     <ScrollView
+      ref={scrollRef}
+      style={{ flex: 1 }}
+      contentContainerStyle={{ paddingTop: 8, paddingBottom: 24 }}
+      // iOS auto-adjusts a ScrollView's top content inset to account for
+      // translucent nav/tab bars — since this screen replaces the native
+      // header with its own custom TopActionRow, iOS has no way to know
+      // that, and was injecting extra top inset the JS layout tree never
+      // saw (confirmed via measureInWindow: Yoga's positions were correct,
+      // the rendered content was still pushed down). This opts out.
+      contentInsetAdjustmentBehavior="never"
       showsVerticalScrollIndicator={false}
       refreshControl={
         <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor="#FF8F00" colors={['#FF8F00']} />
       }
     >
-      <View style={styles.framesContainer}>
+      <View
+        pointerEvents="none"
+        style={{ position: 'absolute', top: 4, right: 4, zIndex: 999, backgroundColor: 'black', padding: 6, borderRadius: 6 }}
+      >
+        <Text style={{ color: '#0F0', fontSize: 11, fontFamily: 'monospace' }}>
+          {`scrollTop: ${measurements.scrollTop ?? '?'}\ntitleTop: ${measurements.titleTop ?? '?'}\ndiff: ${measurements.scrollTop != null && measurements.titleTop != null ? (measurements.titleTop - measurements.scrollTop).toFixed(1) : '?'}\nlast measured: ${measurements.ts ? new Date(measurements.ts).toLocaleTimeString() : '?'} (updates every 1s)`}
+        </Text>
+      </View>
+      <View ref={titleRef} style={styles.framesContainer}>
         <Text style={styles.framesTitle}>
           {`Frame by Frame (${matchStats.completedFrames}/${matchStats.totalFrames})`}
         </Text>
@@ -261,6 +301,7 @@ export function FramesTab({
           </View>
         )}
       </View>
+      <BannerAdSlot />
     </ScrollView>
   );
 }

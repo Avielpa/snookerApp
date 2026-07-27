@@ -7,8 +7,8 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
-import { useLocalSearchParams, Stack } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
@@ -22,10 +22,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Import types and modular components
 import { MatchDetails, EventDetails, FrameScore, MatchStats, H2HData, H2HResponse, TabType } from './types';
-import { 
-  PlayerScoreHeader, 
-  TabNavigation, 
-  OverviewTab, 
+import {
+  PlayerScoreHeader,
+  TopActionRow,
+  TabNavigation,
+  OverviewTab,
   FramesTab,
   StatsTab,
   H2HTab,
@@ -33,7 +34,6 @@ import {
 } from './components';
 import { createMatchStyles } from './styles-modern';
 import { parseFrameScoresString } from './utils/frameScoreParser';
-import BannerAdSlot from '../../components/ads/BannerAdSlot';
 import { isMatchFavouriteSync, isMatchFavouriteAsync } from '../../services/favoritesService';
 import { isMatchMutedSync, isMatchMutedAsync, toggleMatchMute } from '../../services/mutedMatchesService';
 
@@ -49,6 +49,8 @@ import { isMatchMutedSync, isMatchMutedAsync, toggleMatchMute } from '../../serv
  * - Modern glassmorphism design
  */
 export default function MatchEnhanced() {
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ matchId: string }>();
   const apiMatchId = useMemo(() => {
     const id = params.matchId ? parseInt(params.matchId, 10) : NaN;
@@ -819,19 +821,23 @@ export default function MatchEnhanced() {
   // Loading state
   if (loading && !matchDetails) {
     return (
-      <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
+      <View style={[styles.container, { paddingBottom: insets.bottom, paddingLeft: insets.left, paddingRight: insets.right }]}>
+        <Stack.Screen options={{ headerShown: false, animation: 'none' }} />
+        <TopActionRow colors={colors} styles={styles} onBack={() => router.back()} />
         <View style={styles.centerContent}>
           <ActivityIndicator size="large" color={colors.primary} />
           <Text style={styles.loadingText}>Loading Match Details...</Text>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   // Error state
   if (error && !matchDetails) {
     return (
-      <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
+      <View style={[styles.container, { paddingBottom: insets.bottom, paddingLeft: insets.left, paddingRight: insets.right }]}>
+        <Stack.Screen options={{ headerShown: false, animation: 'none' }} />
+        <TopActionRow colors={colors} styles={styles} onBack={() => router.back()} />
         <View style={styles.centerContent}>
           <Ionicons name="alert-circle-outline" size={48} color={colors.error} />
           <Text style={[styles.loadingText, { color: colors.error }]}>Error: {error}</Text>
@@ -839,55 +845,49 @@ export default function MatchEnhanced() {
             <Text style={styles.retryText}>Try Again</Text>
           </TouchableOpacity>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   if (!matchDetails) {
     return (
-      <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
+      <View style={[styles.container, { paddingBottom: insets.bottom, paddingLeft: insets.left, paddingRight: insets.right }]}>
+        <Stack.Screen options={{ headerShown: false, animation: 'none' }} />
+        <TopActionRow colors={colors} styles={styles} onBack={() => router.back()} />
         <View style={styles.centerContent}>
           <Text style={styles.loadingText}>Match data could not be loaded.</Text>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
-      <Stack.Screen
-        options={{
-          headerShown: true,
-          title: '',
-          headerTitle: () => null,
-          headerStyle: { backgroundColor: colors.background },
-          headerTintColor: colors.primary,
-          headerRight: () => (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
-              {isPinned && (
-                <TouchableOpacity
-                  onPress={handleToggleMute}
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                >
-                  <Ionicons
-                    name={isMuted ? 'notifications-off' : 'notifications'}
-                    size={22}
-                    color={colors.primary}
-                  />
-                </TouchableOpacity>
-              )}
-              <TouchableOpacity onPress={handleShare} style={styles.shareButton}>
-                <Ionicons name="share-outline" size={24} color={colors.primary} />
-              </TouchableOpacity>
-            </View>
-          ),
-        }}
+    <View style={[styles.container, { paddingBottom: insets.bottom, paddingLeft: insets.left, paddingRight: insets.right }]}>
+      {/* animation: 'none' overrides the global Stack fade transition
+          (_layout.tsx) for this screen only — testing whether a native
+          screen-transition animation that doesn't fully settle before
+          interaction is the cause of a persistent visual gap that
+          measureInWindow (Yoga's model-layer position) never detects,
+          reported on the Frames tab. */}
+      <Stack.Screen options={{ headerShown: false, animation: 'none' }} />
+
+      {/* Custom top row — replaces the native header entirely. No top inset
+          here: the global app Header (in _layout.tsx) already sits below
+          the notch, so this row can sit flush beneath it. */}
+      <TopActionRow
+        colors={colors}
+        styles={styles}
+        onBack={() => router.back()}
+        onShare={handleShare}
+        showMute={isPinned}
+        isMuted={isMuted}
+        onToggleMute={handleToggleMute}
       />
 
       {/* Score Header */}
-      <PlayerScoreHeader 
-        matchDetails={matchDetails} 
-        styles={styles} 
+      <PlayerScoreHeader
+        matchDetails={matchDetails}
+        styles={styles}
       />
 
       {/* Tab Navigation */}
@@ -898,13 +898,12 @@ export default function MatchEnhanced() {
         styles={styles}
       />
 
-      <BannerAdSlot />
-
-      {/* Tab Content */}
+      {/* Tab Content — each tab renders its own data first, then its own
+          BannerAdSlot after the data (never before it). */}
       <View style={styles.contentContainer}>
         {renderTabContent()}
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 

@@ -46,12 +46,14 @@ function PlayerZone({
       <View style={styles.avatarSquare}>
         <Text style={styles.avatarInitial}>{initialOf(name)}</Text>
       </View>
-      <Text style={styles.playerName} numberOfLines={1} ellipsizeMode="tail">
-        {name}
-      </Text>
-      {!!nationality && (
-        <Text style={styles.flagText}>{getNationalityFlag(nationality)}</Text>
-      )}
+      <View style={styles.nameFlagRow}>
+        <Text style={styles.playerName} numberOfLines={1} ellipsizeMode="tail">
+          {name}
+        </Text>
+        {!!nationality && (
+          <Text style={styles.flagText}>{getNationalityFlag(nationality)}</Text>
+        )}
+      </View>
     </TouchableOpacity>
   );
 }

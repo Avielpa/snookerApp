@@ -38,6 +38,16 @@ export const createMatchStyles = (colors: any) => StyleSheet.create({
     padding: 6,
   },
 
+  // CUSTOM TOP ACTION ROW - replaces the native Stack header entirely
+  topActionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 4,
+  },
+
   // PLAYER SCORE HEADER - HERO SCOREBOARD, STRICT 3-ZONE FLEX LAYOUT
   // Solid (not translucent) background — this sits sticky above scrolling
   // tab content, and a translucent one lets that content bleed through it.
@@ -77,12 +87,19 @@ export const createMatchStyles = (colors: any) => StyleSheet.create({
     fontFamily: 'PoppinsBold',
     color: '#FF8F00',
   },
+  // Name + flag sit on one row (not stacked) to save vertical space.
+  nameFlagRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    maxWidth: '100%',
+  },
   playerName: {
     fontSize: 14,
     fontFamily: 'PoppinsSemiBold',
     color: 'rgba(255, 255, 255, 0.85)',
     textAlign: 'center',
-    marginBottom: 2,
+    flexShrink: 1,
   },
   flagText: {
     fontSize: 14,
@@ -127,8 +144,9 @@ export const createMatchStyles = (colors: any) => StyleSheet.create({
   // Strict height so this can never grow into the giant vertical blocks bug —
   // the ScrollView itself is capped, and its content row is centered inside it.
   tabContainer: {
-    height: 48,
-    marginBottom: 10,
+    height: 40,
+    marginTop: 12,
+    marginBottom: 0,
   },
   tabContainerContent: {
     flexDirection: 'row',

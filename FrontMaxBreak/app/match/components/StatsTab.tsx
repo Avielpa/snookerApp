@@ -4,6 +4,7 @@ import { View, Text, ScrollView, RefreshControl } from 'react-native';
 import { ProgressBar } from '../../components/modern';
 import { FrameScore, MatchStats } from '../types';
 import { hasFramesToWin } from '../utils/statsTabGuards';
+import BannerAdSlot from '../../../components/ads/BannerAdSlot';
 
 interface StatsTabProps {
   frameScores: FrameScore[];
@@ -33,6 +34,9 @@ export function StatsTab({
 
   return (
     <ScrollView
+      style={{ flex: 1 }}
+      contentContainerStyle={{ paddingTop: 8, paddingBottom: 24 }}
+      contentInsetAdjustmentBehavior="never"
       showsVerticalScrollIndicator={false}
       refreshControl={
         <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor="#FF8F00" colors={['#FF8F00']} />
@@ -178,6 +182,7 @@ export function StatsTab({
         </View>
       )}
 
+      <BannerAdSlot />
     </ScrollView>
   );
 }

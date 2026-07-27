@@ -16,6 +16,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getOrCreateDeviceId } from '../../../utils/deviceIdentity';
 import { getComments, postComment, deleteComment, toggleLike, Comment } from '../../../services/commentService';
 import { logger } from '../../../utils/logger';
+import BannerAdSlot from '../../../components/ads/BannerAdSlot';
 
 const AUTHOR_NAME_KEY = '@maxbreak_author_name';
 
@@ -138,6 +139,9 @@ export function CommentsTab({ matchApiId, colors, isRefreshing, onRefresh }: Com
 
     return (
         <ScrollView
+            style={{ flex: 1 }}
+            contentContainerStyle={{ paddingTop: 8, paddingBottom: 24 }}
+            contentInsetAdjustmentBehavior="never"
             showsVerticalScrollIndicator={false}
             refreshControl={
                 <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor="#FF8F00" colors={['#FF8F00']} />
@@ -252,6 +256,7 @@ export function CommentsTab({ matchApiId, colors, isRefreshing, onRefresh }: Com
                     </View>
                 ))
             )}
+            <BannerAdSlot />
             <View style={{ height: 24 }} />
         </ScrollView>
     );
