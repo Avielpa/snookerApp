@@ -222,16 +222,17 @@ export function FramesTab({
   );
 
   return (
+    // DEBUG: precision test — remove after confirming ad vs container position
     <ScrollView
       style={{ flex: 1 }}
-      contentContainerStyle={{ paddingTop: 12, paddingBottom: 24 }}
+      contentContainerStyle={{ paddingTop: 12, paddingBottom: 24, backgroundColor: 'orange' }}
       showsVerticalScrollIndicator={false}
       refreshControl={
         <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor="#FF8F00" colors={['#FF8F00']} />
       }
     >
       <BannerAdSlot />
-      <View style={styles.framesContainer}>
+      <View style={[styles.framesContainer, { backgroundColor: 'magenta' }]}>
         <Text style={styles.framesTitle}>
           {`Frame by Frame (${matchStats.completedFrames}/${matchStats.totalFrames})`}
         </Text>
