@@ -822,7 +822,7 @@ export default function MatchEnhanced() {
   if (loading && !matchDetails) {
     return (
       <View style={[styles.container, { paddingBottom: insets.bottom, paddingLeft: insets.left, paddingRight: insets.right }]}>
-        <Stack.Screen options={{ headerShown: false }} />
+        <Stack.Screen options={{ headerShown: false, animation: 'none' }} />
         <TopActionRow colors={colors} styles={styles} onBack={() => router.back()} />
         <View style={styles.centerContent}>
           <ActivityIndicator size="large" color={colors.primary} />
@@ -836,7 +836,7 @@ export default function MatchEnhanced() {
   if (error && !matchDetails) {
     return (
       <View style={[styles.container, { paddingBottom: insets.bottom, paddingLeft: insets.left, paddingRight: insets.right }]}>
-        <Stack.Screen options={{ headerShown: false }} />
+        <Stack.Screen options={{ headerShown: false, animation: 'none' }} />
         <TopActionRow colors={colors} styles={styles} onBack={() => router.back()} />
         <View style={styles.centerContent}>
           <Ionicons name="alert-circle-outline" size={48} color={colors.error} />
@@ -852,7 +852,7 @@ export default function MatchEnhanced() {
   if (!matchDetails) {
     return (
       <View style={[styles.container, { paddingBottom: insets.bottom, paddingLeft: insets.left, paddingRight: insets.right }]}>
-        <Stack.Screen options={{ headerShown: false }} />
+        <Stack.Screen options={{ headerShown: false, animation: 'none' }} />
         <TopActionRow colors={colors} styles={styles} onBack={() => router.back()} />
         <View style={styles.centerContent}>
           <Text style={styles.loadingText}>Match data could not be loaded.</Text>
@@ -863,7 +863,13 @@ export default function MatchEnhanced() {
 
   return (
     <View style={[styles.container, { paddingBottom: insets.bottom, paddingLeft: insets.left, paddingRight: insets.right }]}>
-      <Stack.Screen options={{ headerShown: false }} />
+      {/* animation: 'none' overrides the global Stack fade transition
+          (_layout.tsx) for this screen only — testing whether a native
+          screen-transition animation that doesn't fully settle before
+          interaction is the cause of a persistent visual gap that
+          measureInWindow (Yoga's model-layer position) never detects,
+          reported on the Frames tab. */}
+      <Stack.Screen options={{ headerShown: false, animation: 'none' }} />
 
       {/* Custom top row — replaces the native header entirely. No top inset
           here: the global app Header (in _layout.tsx) already sits below
