@@ -1,6 +1,5 @@
 // app/home/styles/layoutStyles.ts
 import { StyleSheet } from 'react-native';
-import { FONT_SIZE_TITLE } from '../../../constants/typography';
 
 export const createLayoutStyles = (COLORS: any) => StyleSheet.create({
     container: { 
@@ -10,9 +9,24 @@ export const createLayoutStyles = (COLORS: any) => StyleSheet.create({
         flex: 1,
         backgroundColor: '#0D1A0F',
     },
+    // Premium section header, not a card/pill — pure text with a faint
+    // gold underline for hierarchy, nothing that reads as tappable. Sticky
+    // (see stickyHeaderIndices on the FlatList), so it needs a solid
+    // background — otherwise scrolling match cards show through behind it.
     headerContainer: {
-        paddingBottom: 1,
-        paddingHorizontal: 16
+        marginBottom: 12,
+        paddingTop: 10,
+        paddingBottom: 10,
+        paddingHorizontal: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: 'rgba(255, 183, 77, 0.25)',
+        backgroundColor: '#0D1512',
+    },
+    tourTitleRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
     },
     screenTitle: {
         fontSize: 22,
@@ -27,16 +41,15 @@ export const createLayoutStyles = (COLORS: any) => StyleSheet.create({
         letterSpacing: 0.3,
     },
     tourTitle: {
-        fontSize: FONT_SIZE_TITLE,
-        fontFamily: 'PoppinsSemiBold',
-        textAlign: 'center', 
-        color: COLORS.textSecondary, 
-        marginBottom: 2,
-        letterSpacing: 0.2,
-        textShadowColor: 'rgba(0, 0, 0, 0.6)',
-        textShadowOffset: { width: 0, height: 1 },
-        textShadowRadius: 2,
-        opacity: 0.95,
+        fontSize: 20,
+        fontFamily: 'PoppinsBold',
+        fontWeight: '800',
+        textAlign: 'center',
+        color: '#FFFFFF',
+        letterSpacing: 0.3,
+        textShadowColor: 'rgba(255, 183, 77, 0.4)',
+        textShadowOffset: { width: 0, height: 0 },
+        textShadowRadius: 10,
     },
     prizeContainer: {
         flexDirection: 'row',

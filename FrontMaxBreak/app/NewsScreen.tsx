@@ -27,6 +27,7 @@ import {
 } from '../services/highlightsService';
 import { fetchAllNews } from '../services/newsService';
 import { useMediaTabInterstitial } from '../services/adsService';
+import { ScreenHeader } from './components/ScreenHeader';
 
 type Tab = 'news' | 'highlights' | 'creators';
 type HighlightSubTab = 'wst' | 'tnt';
@@ -60,7 +61,7 @@ const TabToggle = ({
     onPress: (tab: Tab) => void;
     colors: any;
 }) => (
-    <View style={[styles.toggleRow, { backgroundColor: colors.cardBackground, borderBottomColor: colors.cardBorder }]}>
+    <View style={[styles.toggleRow, { backgroundColor: 'transparent', borderBottomColor: colors.cardBorder }]}>
         {(['news', 'highlights', 'creators'] as Tab[]).map(tab => (
             <TouchableOpacity
                 key={tab}
@@ -70,7 +71,7 @@ const TabToggle = ({
             >
                 <Text style={[
                     styles.toggleText,
-                    { color: activeTab === tab ? colors.primary : colors.textMuted },
+                    { color: activeTab === tab ? colors.primary : colors.textPrimary },
                     activeTab === tab && styles.toggleTextActive,
                 ]}>
                     {TAB_LABELS[tab]}
@@ -343,6 +344,7 @@ export default function NewsScreen() {
 
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
+            <ScreenHeader title="Media" />
             <TabToggle activeTab={activeTab} onPress={handleTabPress} colors={colors} />
 
             {isLoading ? (

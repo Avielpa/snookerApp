@@ -11,6 +11,7 @@ export const useHomeColors = () => {
         textPrimary: colors.textPrimary,
         textSecondary: colors.textSecondary,
         textMuted: colors.textMuted,
+        primary: colors.primary,
         score: colors.primary,
         accent: colors.primary,
         accentLight: colors.secondary,

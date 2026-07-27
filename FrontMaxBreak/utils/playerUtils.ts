@@ -45,6 +45,22 @@ export function getMatchPlayerNames(match: {
 }
 
 /**
+ * Abbreviates a full player name to "InitialLetter. Surname" for compact
+ * list display (e.g. "Matthew Selt" -> "M. Selt", "Long Zehuang" -> "L. Zehuang").
+ * Single-word names (e.g. "TBD") are returned unchanged.
+ * @param fullName - The player's full display name
+ * @returns Abbreviated name, or the original if it can't be abbreviated
+ */
+export function abbreviatePlayerName(fullName: string): string {
+  const parts = fullName.trim().split(/\s+/);
+  if (parts.length < 2) {
+    return fullName;
+  }
+  const [first, ...rest] = parts;
+  return `${first.charAt(0)}. ${rest.join(' ')}`;
+}
+
+/**
  * Validates if score data is complete and valid
  * @param score1 - First player's score
  * @param score2 - Second player's score

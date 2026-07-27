@@ -14,6 +14,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useColors } from '../contexts/ThemeContext';
 import { FONT_SIZE_PRIMARY } from '../constants/typography';
+import { ScreenHeader } from './components/ScreenHeader';
+import { abbreviatePlayerName } from '../utils/playerUtils';
 import { logger } from '../utils/logger';
 import {
     fetchCenturies,
@@ -144,7 +146,7 @@ const CenturiesTab = ({
                     <View>
                         <Text style={[centuryStyles.leaderLabel, { color: colors.textSecondary }]}>Season Leader</Text>
                         <Text style={[centuryStyles.leaderName, { color: colors.textPrimary }]}>
-                            {getFlag(top.nationality)} {top.player_name}
+                            {getFlag(top.nationality)} {abbreviatePlayerName(top.player_name)}
                         </Text>
                     </View>
                     <View style={{ alignItems: 'flex-end' }}>
@@ -187,7 +189,7 @@ const CenturiesTab = ({
                     <View key={r.rank} style={centuryStyles.dataRow}>
                         <Text style={[centuryStyles.colRank, { color: colors.textSecondary }]}>{r.rank}</Text>
                         <Text style={[centuryStyles.colName, { color: colors.textPrimary }]} numberOfLines={1}>
-                            {getFlag(r.nationality)} {r.player_name}
+                            {getFlag(r.nationality)} {abbreviatePlayerName(r.player_name)}
                         </Text>
                         <Text style={[centuryStyles.colNum, { color: colors.primary }]}>{r.season_current}</Text>
                         <Text style={[centuryStyles.colNum, { color: colors.textSecondary }]}>{r.career_total}</Text>
@@ -303,7 +305,7 @@ const TitlesTab = ({
                                 </View>
                                 <View style={{ flex: 1 }}>
                                     <Text style={[titleStyles.name, { color: colors.textPrimary }]}>
-                                        {getFlag(leader.nationality)} {leader.player_name}
+                                        {getFlag(leader.nationality)} {abbreviatePlayerName(leader.player_name)}
                                     </Text>
                                     <Text style={[titleStyles.eventList, { color: colors.textMuted }]} numberOfLines={2}>
                                         {leader.events.map((e) => e.event_name).join(' · ')}
@@ -331,7 +333,7 @@ const TitlesTab = ({
                                 <View style={{ flex: 1 }}>
                                     <Text style={[champStyles.eventName, { color: colors.textPrimary }]}>{w.event_name}</Text>
                                     <Text style={[champStyles.winner, { color: colors.primary }]}>
-                                        {getFlag(w.winner_nationality)} {w.winner_name}
+                                        {getFlag(w.winner_nationality)} {abbreviatePlayerName(w.winner_name)}
                                     </Text>
                                     {w.runner_up_name ? (
                                         <Text style={[champStyles.runnerUp, { color: colors.textMuted }]}>
@@ -437,7 +439,7 @@ const RecordsTab = ({
                             <View key={r.player_name} style={recordStyles.dataRow}>
                                 <Text style={[recordStyles.colRank, { color: colors.textSecondary }]}>{idx + 1}</Text>
                                 <Text style={[recordStyles.colName, { color: colors.textPrimary }]} numberOfLines={1}>
-                                    {getFlag(r.nationality)} {r.player_name}
+                                    {getFlag(r.nationality)} {abbreviatePlayerName(r.player_name)}
                                 </Text>
                                 <Text style={[recordStyles.colNum, { color: '#FFA726' }]}>{r.career_147s}</Text>
                             </View>
@@ -463,7 +465,7 @@ const RecordsTab = ({
                     <View key={r.player_name} style={recordStyles.dataRow}>
                         <Text style={[recordStyles.colRank, { color: colors.textSecondary }]}>{idx + 1}</Text>
                         <Text style={[recordStyles.colName, { color: colors.textPrimary }]} numberOfLines={1}>
-                            {getFlag(r.nationality)} {r.player_name}
+                            {getFlag(r.nationality)} {abbreviatePlayerName(r.player_name)}
                         </Text>
                         <Text style={[recordStyles.colNum, { color: colors.primary }]}>{r.career_total}</Text>
                     </View>
@@ -562,14 +564,13 @@ export default function StatsScreen() {
         <View style={styles.container}>
             {/* Page header */}
             <View style={styles.header}>
-                <View style={styles.headerRow}>
-                    <Text style={styles.title}>Season Stats</Text>
+                <ScreenHeader title="Season Stats">
                     <SeasonPicker
                         seasons={STATS_SEASONS}
                         selected={selectedSeason}
                         onSelect={setSelectedSeason}
                     />
-                </View>
+                </ScreenHeader>
                 {allEmpty && (
                     <Text style={[styles.noDataText, { color: colors.textMuted }]}>
                         {`No data available for ${seasonDisplayLabel(selectedSeason)}`}
@@ -640,24 +641,13 @@ const createStyles = (colors: any) =>
             backgroundColor: colors.background,
         },
         header: {
-            paddingHorizontal: 16,
-            paddingTop: 10,
             paddingBottom: 6,
-        },
-        headerRow: {
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-        },
-        title: {
-            fontSize: 22,
-            fontFamily: 'PoppinsBold',
-            color: colors.textPrimary,
         },
         noDataText: {
             fontSize: 12,
             fontFamily: 'PoppinsRegular',
             marginTop: 6,
+            paddingHorizontal: 20,
         },
         tabBar: {
             flexDirection: 'row',

@@ -2,7 +2,6 @@
 // Score-centered layout — NO LOGIC CHANGES
 
 import { StyleSheet } from 'react-native';
-import { FONT_SIZE_PRIMARY } from '../../../constants/typography';
 
 export const createModernMatchStyles = (COLORS: any) => StyleSheet.create({
     // STATUS HEADER — tappable section label with count + chevron
@@ -61,7 +60,8 @@ export const createModernMatchStyles = (COLORS: any) => StyleSheet.create({
 
     // MATCH CARD CONTAINER
     matchItemContainer: {
-        marginVertical: 2,
+        marginTop: 2,
+        marginBottom: 8,
         marginHorizontal: 8,
     },
 
@@ -83,10 +83,13 @@ export const createModernMatchStyles = (COLORS: any) => StyleSheet.create({
     },
     playerName: {
         flex: 1,
-        fontSize: FONT_SIZE_PRIMARY,
-        fontFamily: 'PoppinsSemiBold',
+        fontSize: 15,
+        fontFamily: 'PoppinsBold',
+        fontWeight: '700',
         color: COLORS.textPrimary,
         flexShrink: 1,
+        textAlign: 'center',
+        paddingHorizontal: 6,
     },
 
     // CENTER SCORE CONTAINER
@@ -95,24 +98,35 @@ export const createModernMatchStyles = (COLORS: any) => StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         paddingHorizontal: 6,
-        minWidth: 58,
+        minWidth: 76,
     },
 
-    // INDIVIDUAL SCORE NUMBERS — big and bold
+    // INDIVIDUAL SCORE NUMBERS — big and bold, the loudest thing on the card
     scoreNumber: {
-        fontSize: 15,
+        fontSize: 20,
         fontFamily: 'PoppinsBold',
+        fontWeight: '900',
         color: '#FFB74D',
-        minWidth: 18,
+        minWidth: 20,
         textAlign: 'center',
     },
 
     // SCORE DASH / VS separator
     scoreDash: {
-        fontSize: 11,
+        fontSize: 15,
         fontFamily: 'PoppinsRegular',
         color: COLORS.textMuted,
-        marginHorizontal: 4,
+        marginHorizontal: 7,
+    },
+
+    // Prominent centered time/date shown instead of a score for upcoming
+    // matches (0-0 would be meaningless) — muted vs the gold live/final score.
+    upcomingTimeText: {
+        fontSize: 13,
+        fontFamily: 'PoppinsSemiBold',
+        color: COLORS.textSecondary,
+        textAlign: 'center',
+        lineHeight: 17,
     },
 
     // WINNER — bright amber for both name and score
@@ -124,13 +138,47 @@ export const createModernMatchStyles = (COLORS: any) => StyleSheet.create({
         color: '#FFB74D',
     },
 
+    // LOSER (finished matches only) — dimmed for immediate visual hierarchy
+    // against the bolded winner.
+    loserText: {
+        opacity: 0.5,
+    },
+
+    // Whole-card treatment for finished matches — applied via the
+    // ModernGlassCard `style` prop so it dims gradient + border + content
+    // together, reading instantly as "past".
+    finishedCard: {
+        opacity: 0.6,
+    },
+
+    // Small "LIVE"/"BREAK" micro-badge, footer row (bottom-right) — avoids
+    // the dead space a dedicated top row created above the player names.
+    liveBadgeFooter: {
+        marginRight: 8,
+    },
+
+    // Crisp "FT" (Full Time) badge for finished matches, in the footer row.
+    ftBadge: {
+        backgroundColor: 'rgba(255, 255, 255, 0.12)',
+        borderRadius: 4,
+        paddingHorizontal: 6,
+        paddingVertical: 2,
+        marginRight: 8,
+    },
+    ftBadgeText: {
+        fontSize: 10,
+        fontFamily: 'PoppinsBold',
+        color: COLORS.textSecondary,
+        letterSpacing: 0.5,
+    },
+
     // DETAILS ROW — compact footer
     detailsRow: {
         flexDirection: 'row',
         alignItems: 'center',
         marginTop: 4,
         paddingTop: 3,
-        borderTopColor: 'rgba(26, 115, 58, 0.25)',
+        borderTopColor: 'rgba(255, 255, 255, 0.08)',
         borderTopWidth: 1,
     },
     detailItem: {
@@ -146,49 +194,5 @@ export const createModernMatchStyles = (COLORS: any) => StyleSheet.create({
         marginLeft: 4,
         flexShrink: 1,
         opacity: 0.8,
-    },
-
-    // ── Compact live-match row (single line) — used only when
-    // item.matchCategory === 'livePlaying', replaces the full card layout
-    // above for that one state. Same underlying data, denser presentation.
-    liveRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingVertical: 6,
-        paddingHorizontal: 8,
-        gap: 6,
-        backgroundColor: 'rgba(34, 197, 94, 0.10)',
-        borderRadius: 8,
-    },
-    liveRowDot: {
-        width: 6,
-        height: 6,
-        borderRadius: 3,
-        backgroundColor: '#22C55E',
-        flexShrink: 0,
-    },
-    liveRowPlayer: {
-        flex: 1,
-        fontSize: 13,
-        fontFamily: 'PoppinsMedium',
-        color: COLORS.textSecondary,
-    },
-    liveRowPlayerRight: {
-        textAlign: 'right',
-    },
-    liveRowPlayerWinner: {
-        fontFamily: 'PoppinsSemiBold',
-        color: COLORS.textPrimary,
-    },
-    liveRowScore: {
-        fontSize: 11,
-        fontFamily: 'PoppinsBold',
-        color: '#22C55E',
-        marginHorizontal: 4,
-        flexShrink: 0,
-    },
-    liveRowStar: {
-        padding: 2,
-        marginLeft: 2,
     },
 });
