@@ -15,6 +15,10 @@ interface TopActionRowProps {
   showMute?: boolean;
   isMuted?: boolean;
   onToggleMute?: () => void;
+  // Manual safe-area top inset (from useSafeAreaInsets in the parent screen,
+  // which uses a plain View instead of SafeAreaView to avoid double-applying
+  // the top inset on iOS native-stack screens).
+  topInset: number;
 }
 
 export function TopActionRow({
@@ -25,9 +29,10 @@ export function TopActionRow({
   showMute,
   isMuted,
   onToggleMute,
+  topInset,
 }: TopActionRowProps) {
   return (
-    <View style={styles.topActionRow}>
+    <View style={[styles.topActionRow, { paddingTop: topInset, paddingBottom: 0, marginBottom: 0 }]}>
       <TouchableOpacity onPress={onBack} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
         <Ionicons name="chevron-back" size={26} color={colors.primary} />
       </TouchableOpacity>

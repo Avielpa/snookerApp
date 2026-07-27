@@ -8,7 +8,7 @@ import {
   Alert,
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
@@ -51,6 +51,7 @@ import { isMatchMutedSync, isMatchMutedAsync, toggleMatchMute } from '../../serv
  */
 export default function MatchEnhanced() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ matchId: string }>();
   const apiMatchId = useMemo(() => {
     const id = params.matchId ? parseInt(params.matchId, 10) : NaN;
@@ -821,23 +822,23 @@ export default function MatchEnhanced() {
   // Loading state
   if (loading && !matchDetails) {
     return (
-      <SafeAreaView style={styles.container} edges={['top', 'bottom', 'left', 'right']}>
+      <View style={[styles.container, { paddingBottom: insets.bottom, paddingLeft: insets.left, paddingRight: insets.right }]}>
         <Stack.Screen options={{ headerShown: false }} />
-        <TopActionRow colors={colors} styles={styles} onBack={() => router.back()} />
+        <TopActionRow colors={colors} styles={styles} onBack={() => router.back()} topInset={insets.top} />
         <View style={styles.centerContent}>
           <ActivityIndicator size="large" color={colors.primary} />
           <Text style={styles.loadingText}>Loading Match Details...</Text>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   // Error state
   if (error && !matchDetails) {
     return (
-      <SafeAreaView style={styles.container} edges={['top', 'bottom', 'left', 'right']}>
+      <View style={[styles.container, { paddingBottom: insets.bottom, paddingLeft: insets.left, paddingRight: insets.right }]}>
         <Stack.Screen options={{ headerShown: false }} />
-        <TopActionRow colors={colors} styles={styles} onBack={() => router.back()} />
+        <TopActionRow colors={colors} styles={styles} onBack={() => router.back()} topInset={insets.top} />
         <View style={styles.centerContent}>
           <Ionicons name="alert-circle-outline" size={48} color={colors.error} />
           <Text style={[styles.loadingText, { color: colors.error }]}>Error: {error}</Text>
@@ -845,28 +846,31 @@ export default function MatchEnhanced() {
             <Text style={styles.retryText}>Try Again</Text>
           </TouchableOpacity>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   if (!matchDetails) {
     return (
-      <SafeAreaView style={styles.container} edges={['top', 'bottom', 'left', 'right']}>
+      <View style={[styles.container, { paddingBottom: insets.bottom, paddingLeft: insets.left, paddingRight: insets.right }]}>
         <Stack.Screen options={{ headerShown: false }} />
-        <TopActionRow colors={colors} styles={styles} onBack={() => router.back()} />
+        <TopActionRow colors={colors} styles={styles} onBack={() => router.back()} topInset={insets.top} />
         <View style={styles.centerContent}>
           <Text style={styles.loadingText}>Match data could not be loaded.</Text>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom', 'left', 'right']}>
+    <View style={[styles.container, { paddingBottom: insets.bottom, paddingLeft: insets.left, paddingRight: insets.right }]}>
       <Stack.Screen options={{ headerShown: false }} />
 
-      {/* Custom top row — replaces the native header entirely so iOS can't
-          reserve unpredictable vertical space for back-title text. */}
+      {/* Custom top row — replaces the native header entirely. Uses a plain
+          View + useSafeAreaInsets (not SafeAreaView) because iOS native-stack
+          already insets screen content for the notch even with headerShown:
+          false; stacking a SafeAreaView on top of that double-applied the
+          top inset and pushed the Hero down. */}
       <TopActionRow
         colors={colors}
         styles={styles}
@@ -875,6 +879,7 @@ export default function MatchEnhanced() {
         showMute={isPinned}
         isMuted={isMuted}
         onToggleMute={handleToggleMute}
+        topInset={insets.top}
       />
 
       {/* Score Header */}
@@ -897,7 +902,7 @@ export default function MatchEnhanced() {
       <View style={styles.contentContainer}>
         {renderTabContent()}
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
