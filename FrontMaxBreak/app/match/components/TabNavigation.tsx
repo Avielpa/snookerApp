@@ -1,6 +1,6 @@
 // app/match/components/TabNavigation.tsx
 import React from 'react';
-import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, Text, StyleSheet, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { TabType } from '../types';
@@ -106,8 +106,13 @@ export function TabNavigation({ selectedTab, onTabChange, colors, styles }: TabN
   };
 
   return (
-    <View style={styles.tabContainer}>
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      style={styles.tabContainer}
+      contentContainerStyle={{ flexGrow: 1 }}
+    >
       {TAB_CONFIG.map(renderTabButton)}
-    </View>
+    </ScrollView>
   );
 }

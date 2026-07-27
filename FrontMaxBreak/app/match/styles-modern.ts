@@ -1,7 +1,6 @@
 // app/match/styles-modern.ts
 // DARK, MODERN, PRACTICAL, COMFORTABLE - SAME CLASS NAMES, ZERO LOGIC CHANGES
 import { StyleSheet } from 'react-native';
-import { FONT_SIZE_PRIMARY } from '../../constants/typography';
 
 export const createMatchStyles = (colors: any) => StyleSheet.create({
   // CONTAINER
@@ -59,23 +58,49 @@ export const createMatchStyles = (colors: any) => StyleSheet.create({
     flex: 1,
     alignItems: 'center',
   },
+  // Placeholder square profile picture (initial letter) — no circles, per
+  // the premium hero scoreboard spec. Swap for a real photo Image once a
+  // player photo URL exists in the API response.
+  avatarSquare: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255, 143, 0, 0.16)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 143, 0, 0.4)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+  },
+  avatarInitial: {
+    fontSize: 16,
+    fontFamily: 'PoppinsBold',
+    color: '#FF8F00',
+  },
   playerName: {
-    fontSize: FONT_SIZE_PRIMARY,
+    fontSize: 13,
     fontFamily: 'PoppinsSemiBold',
     color: 'rgba(255, 255, 255, 0.85)',
     textAlign: 'center',
     marginBottom: 1,
   },
   player1: {
-    textAlign: 'left',
+    textAlign: 'center',
   },
   player2: {
-    textAlign: 'right',
+    textAlign: 'center',
   },
+  flagText: {
+    fontSize: 13,
+    marginBottom: 2,
+  },
+  // The score is the loudest element on the hero scoreboard — everything
+  // else (avatar, name, flag) is deliberately smaller/quieter than this.
   playerScore: {
-    fontSize: 15,
+    fontSize: 32,
     fontFamily: 'PoppinsBold',
-    color: 'rgba(255, 255, 255, 0.9)',
+    fontWeight: '900',
+    color: 'rgba(255, 255, 255, 0.95)',
   },
   winnerScore: {
     color: '#FF8F00',

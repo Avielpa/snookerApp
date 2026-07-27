@@ -29,6 +29,8 @@ export interface MatchDetails {
   details_url: string | null;
   note: string | null;
   broadcasters?: { name: string; url: string }[] | null;
+  player1_nationality?: string | null;
+  player2_nationality?: string | null;
 }
 
 export interface EventDetails {
