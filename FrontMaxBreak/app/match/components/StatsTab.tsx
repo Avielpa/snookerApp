@@ -35,14 +35,13 @@ export function StatsTab({
   return (
     <ScrollView
       style={{ flex: 1 }}
-      contentContainerStyle={{ paddingTop: 12, paddingBottom: 24 }}
+      contentContainerStyle={{ paddingTop: 8, paddingBottom: 24 }}
       contentInsetAdjustmentBehavior="never"
       showsVerticalScrollIndicator={false}
       refreshControl={
         <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor="#FF8F00" colors={['#FF8F00']} />
       }
     >
-      <BannerAdSlot />
       {/* Match Format & Status */}
       <View style={styles.statsCard}>
         <Text style={styles.statsTitle}>Match Information</Text>
@@ -183,6 +182,7 @@ export function StatsTab({
         </View>
       )}
 
+      <BannerAdSlot />
     </ScrollView>
   );
 }

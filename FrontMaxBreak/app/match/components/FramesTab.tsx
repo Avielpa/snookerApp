@@ -224,7 +224,7 @@ export function FramesTab({
   return (
     <ScrollView
       style={{ flex: 1 }}
-      contentContainerStyle={{ paddingTop: 12, paddingBottom: 24 }}
+      contentContainerStyle={{ paddingTop: 8, paddingBottom: 24 }}
       // iOS auto-adjusts a ScrollView's top content inset to account for
       // translucent nav/tab bars — since this screen replaces the native
       // header with its own custom TopActionRow, iOS has no way to know
@@ -237,7 +237,6 @@ export function FramesTab({
         <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor="#FF8F00" colors={['#FF8F00']} />
       }
     >
-      <BannerAdSlot />
       <View style={styles.framesContainer}>
         <Text style={styles.framesTitle}>
           {`Frame by Frame (${matchStats.completedFrames}/${matchStats.totalFrames})`}
@@ -272,6 +271,7 @@ export function FramesTab({
           </View>
         )}
       </View>
+      <BannerAdSlot />
     </ScrollView>
   );
 }

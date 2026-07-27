@@ -78,14 +78,13 @@ export function OverviewTab({
   return (
     <ScrollView
       style={{ flex: 1 }}
-      contentContainerStyle={{ paddingTop: 12, paddingBottom: 24 }}
+      contentContainerStyle={{ paddingTop: 8, paddingBottom: 24 }}
       contentInsetAdjustmentBehavior="never"
       showsVerticalScrollIndicator={false}
       refreshControl={
         <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor="#FF8F00" colors={['#FF8F00']} />
       }
     >
-      <BannerAdSlot />
       {/* Match Status */}
       <View style={styles.statusCard}>
         <View style={styles.statusHeader}>
@@ -258,6 +257,7 @@ export function OverviewTab({
           )}
         </View>
       )}
+      <BannerAdSlot />
     </ScrollView>
   );
 }

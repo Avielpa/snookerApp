@@ -20,14 +20,13 @@ export function H2HTab({ h2hData, h2hLoading, p1Name, p2Name, styles, isRefreshi
   return (
     <ScrollView
       style={{ flex: 1 }}
-      contentContainerStyle={{ paddingTop: 12, paddingBottom: 24 }}
+      contentContainerStyle={{ paddingTop: 8, paddingBottom: 24 }}
       contentInsetAdjustmentBehavior="never"
       showsVerticalScrollIndicator={false}
       refreshControl={
         <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor="#FF8F00" colors={['#FF8F00']} />
       }
     >
-      <BannerAdSlot />
       <View style={styles.h2hCard}>
         <Text style={styles.h2hTitle}>Head to Head</Text>
         <Text style={styles.h2hSubtitle}>
@@ -133,6 +132,7 @@ export function H2HTab({ h2hData, h2hLoading, p1Name, p2Name, styles, isRefreshi
           </View>
         )}
       </View>
+      <BannerAdSlot />
     </ScrollView>
   );
 }

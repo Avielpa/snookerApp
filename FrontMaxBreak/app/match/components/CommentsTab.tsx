@@ -140,14 +140,13 @@ export function CommentsTab({ matchApiId, colors, isRefreshing, onRefresh }: Com
     return (
         <ScrollView
             style={{ flex: 1 }}
-            contentContainerStyle={{ paddingTop: 12, paddingBottom: 24 }}
+            contentContainerStyle={{ paddingTop: 8, paddingBottom: 24 }}
             contentInsetAdjustmentBehavior="never"
             showsVerticalScrollIndicator={false}
             refreshControl={
                 <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor="#FF8F00" colors={['#FF8F00']} />
             }
         >
-            <BannerAdSlot />
             {/* ── Compose area ── */}
             <View style={[s.card, { marginBottom: 12 }]}>
                 {/* Name row */}
@@ -257,6 +256,7 @@ export function CommentsTab({ matchApiId, colors, isRefreshing, onRefresh }: Com
                     </View>
                 ))
             )}
+            <BannerAdSlot />
             <View style={{ height: 24 }} />
         </ScrollView>
     );
