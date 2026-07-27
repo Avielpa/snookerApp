@@ -1,10 +1,11 @@
 // app/match/components/TabNavigation.tsx
-import React from 'react';
+import React, { useRef } from 'react';
 import { View, TouchableOpacity, Text, StyleSheet, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { TabType } from '../types';
 import { logger } from '../../../utils/logger';
+import { debugLayout, notifyDebugLayoutChanged } from '../../../utils/debugLayoutProbe';
 
 interface TabNavigationProps {
   selectedTab: TabType;
@@ -28,6 +29,15 @@ const TAB_CONFIG: TabConfig[] = [
 ];
 
 export function TabNavigation({ selectedTab, onTabChange, colors, styles }: TabNavigationProps) {
+  // DEBUG: precision numeric measurement — remove once the gap is root-caused.
+  const scrollRef = useRef<ScrollView>(null);
+  const measureBottom = () => {
+    (scrollRef.current as any)?.measureInWindow((x: number, y: number, w: number, h: number) => {
+      debugLayout.tabBottom = y + h;
+      notifyDebugLayoutChanged();
+    });
+  };
+
   const handleTabPress = (tabId: string) => {
     onTabChange(tabId as TabType);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -110,6 +120,8 @@ export function TabNavigation({ selectedTab, onTabChange, colors, styles }: TabN
 
   return (
     <ScrollView
+      ref={scrollRef}
+      onLayout={measureBottom}
       horizontal
       showsHorizontalScrollIndicator={false}
       style={styles.tabContainer}

@@ -1,13 +1,23 @@
 // components/ads/BannerAdSlot.tsx
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { BannerAd, BannerAdSize } from 'react-native-google-mobile-ads';
 import { useColors } from '../../contexts/ThemeContext';
 import { ADS_ENABLED, BANNER_AD_UNIT_ID, initAds } from '../../services/adsService';
+import { debugLayout, notifyDebugLayoutChanged } from '../../utils/debugLayoutProbe';
 
 export default function BannerAdSlot() {
   const colors = useColors();
   const [failed, setFailed] = useState(false);
+  // DEBUG: precision numeric measurement — remove once the gap is root-caused.
+  const containerRef = useRef<View>(null);
+  const measure = () => {
+    containerRef.current?.measureInWindow((x, y, w, h) => {
+      debugLayout.adTop = y;
+      debugLayout.adBottom = y + h;
+      notifyDebugLayoutChanged();
+    });
+  };
 
   useEffect(() => {
     if (ADS_ENABLED) initAds();
@@ -18,12 +28,17 @@ export default function BannerAdSlot() {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View
+      ref={containerRef}
+      onLayout={measure}
+      style={[styles.container, { backgroundColor: colors.background }]}
+    >
       <View style={[styles.frame, { borderColor: colors.cardBorder }]}>
         <BannerAd
           unitId={BANNER_AD_UNIT_ID}
           size={BannerAdSize.BANNER}
           onAdFailedToLoad={() => setFailed(true)}
+          onAdLoaded={measure}
         />
       </View>
     </View>

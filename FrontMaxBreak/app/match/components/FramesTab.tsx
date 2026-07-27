@@ -1,11 +1,12 @@
 // app/match/components/FramesTab.tsx
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, ScrollView, RefreshControl, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { FrameScoreCard } from './FrameScoreCard';
 import { FrameScore, MatchStats } from '../types';
 import { MatchFrameScore } from '../../../services/matchServices';
 import BannerAdSlot from '../../../components/ads/BannerAdSlot';
+import { debugLayout, subscribeDebugLayout, notifyDebugLayoutChanged } from '../../../utils/debugLayoutProbe';
 
 interface FramesTabProps {
   frameScores: FrameScore[];
@@ -221,8 +222,26 @@ export function FramesTab({
     <FrameScoreCard frame={item} styles={styles} />
   );
 
+  // DEBUG: precision numeric measurement — remove once the gap is root-caused.
+  const scrollRef = useRef<ScrollView>(null);
+  const [, forceTick] = useState(0);
+  useEffect(() => {
+    const unsub = subscribeDebugLayout(() => forceTick((n) => n + 1));
+    const t = setTimeout(() => {
+      (scrollRef.current as any)?.measureInWindow((x: number, y: number) => {
+        debugLayout.scrollTop = y;
+        notifyDebugLayoutChanged();
+      });
+    }, 800);
+    return () => {
+      unsub();
+      clearTimeout(t);
+    };
+  }, []);
+
   return (
     <ScrollView
+      ref={scrollRef}
       style={{ flex: 1 }}
       contentContainerStyle={{ paddingTop: 12, paddingBottom: 24 }}
       showsVerticalScrollIndicator={false}
@@ -230,6 +249,22 @@ export function FramesTab({
         <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor="#FF8F00" colors={['#FF8F00']} />
       }
     >
+      <View
+        pointerEvents="none"
+        style={{
+          position: 'absolute',
+          top: 4,
+          right: 4,
+          zIndex: 999,
+          backgroundColor: 'black',
+          padding: 6,
+          borderRadius: 6,
+        }}
+      >
+        <Text style={{ color: '#0F0', fontSize: 11, fontFamily: 'monospace' }}>
+          {`tabBottom: ${debugLayout.tabBottom ?? '?'}\nscrollTop: ${debugLayout.scrollTop ?? '?'}\nadTop: ${debugLayout.adTop ?? '?'}\nadBottom: ${debugLayout.adBottom ?? '?'}`}
+        </Text>
+      </View>
       <BannerAdSlot />
       <View style={styles.framesContainer}>
         <Text style={styles.framesTitle}>
