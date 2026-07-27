@@ -109,6 +109,10 @@ export function TabNavigation({ selectedTab, onTabChange, colors, styles }: TabN
   };
 
   return (
+    // DEBUG: rainbow-debugging pass — remove after locating the gap.
+    // This component has no <Tab.Navigator> (it's a plain ScrollView, not
+    // React Navigation tabs) — "blue" is applied to its own scene-holding
+    // content container instead.
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
@@ -118,7 +122,7 @@ export function TabNavigation({ selectedTab, onTabChange, colors, styles }: TabN
       // `horizontal` is set — omitting this was the actual cause of tabs
       // rendering as full-width vertical blocks (each button stacked in
       // the default column direction, stretched to the viewport width).
-      contentContainerStyle={styles.tabContainerContent}
+      contentContainerStyle={[styles.tabContainerContent, { backgroundColor: 'blue' }]}
     >
       {TAB_CONFIG.map(renderTabButton)}
     </ScrollView>

@@ -222,9 +222,10 @@ export function FramesTab({
   );
 
   return (
+    // DEBUG: rainbow-debugging pass — remove after locating the gap.
     <ScrollView
-      style={{ flex: 1 }}
-      contentContainerStyle={{ paddingTop: 16, paddingBottom: 24 }}
+      style={{ flex: 1, backgroundColor: 'green' }}
+      contentContainerStyle={{ paddingTop: 16, paddingBottom: 24, backgroundColor: 'yellow' }}
       showsVerticalScrollIndicator={false}
       refreshControl={
         <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor="#FF8F00" colors={['#FF8F00']} />

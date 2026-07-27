@@ -888,12 +888,15 @@ export default function MatchEnhanced() {
       />
 
       {/* Tab Navigation */}
-      <TabNavigation
-        selectedTab={selectedTab}
-        onTabChange={handleTabChange}
-        colors={colors}
-        styles={styles}
-      />
+      {/* DEBUG: rainbow-debugging pass — remove after locating the gap */}
+      <View style={{ backgroundColor: 'red' }}>
+        <TabNavigation
+          selectedTab={selectedTab}
+          onTabChange={handleTabChange}
+          colors={colors}
+          styles={styles}
+        />
+      </View>
 
       {/* Tab Content — each tab renders its own BannerAdSlot as the first
           scrollable element (was previously a static sibling here, outside
