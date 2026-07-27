@@ -1,6 +1,34 @@
 # Session 2026-07-27 — Match Details screen premium refinement
 
-## 1. Hero scoreboard & typography
+## Follow-up: layout regression fix (same day, second pass)
+
+The first pass above shipped a real regression: `TabNavigation.tsx`'s fix for
+the horizontal-scroll bug set `<ScrollView horizontal contentContainerStyle={{
+flexGrow: 1 }}>` — but RN's horizontal `ScrollView` does **not** automatically
+apply `flexDirection: 'row'` to its content container just because
+`horizontal` is set. Without an explicit `flexDirection: 'row'`, the 5 tab
+buttons stacked in the default column direction, each stretching to the full
+viewport width — "giant vertical blocks taking up half the screen." Fixed by
+giving `contentContainerStyle` its own `{ flexDirection: 'row', alignItems:
+'center', paddingHorizontal: 10 }` (`styles.tabContainerContent`), plus a
+strict `height: 48` on the outer wrapper and `alignSelf: 'flex-start'` on each
+button so none of them can ever stretch to fill the row.
+
+Also rebuilt `PlayerScoreHeader.tsx` into a strict 3-zone flex layout (was
+previously per-player score-under-name) per an explicit spec: LEFT zone
+(player 1: 60x60 square avatar, name capped to one line via
+`numberOfLines`/`ellipsizeMode="tail"`, flag) / CENTER zone (combined "score1
+- score2" at 32px bold, with the live/break status badge directly beneath it,
+and the "VS" placeholder only shown when there's no real score yet — never
+alongside a real one) / RIGHT zone (mirror of left). Extracted a small
+`PlayerZone` sub-component within the same file so LEFT/RIGHT stay
+structurally identical. `scoreHeader`'s background changed from translucent
+(`rgba(0,0,0,0.6)`) to solid (`colors.background`) — since it's sticky above
+scrolling tab content, a translucent background let that content bleed
+through it. Also set `headerTitle: () => null` in addition to `title: ''` on
+the Stack.Screen, to be doubly sure no residual title text can render.
+
+## 1. Hero scoreboard & typography (first pass)
 - Removed the redundant native `Stack.Screen` title (`"P1 vs P2"`) — kept `headerShown: true` (back button + the existing share/mute buttons in `headerRight`), just blanked the title text.
 - `PlayerScoreHeader.tsx`: added a placeholder square avatar (`borderRadius: 12`, no circle — initial letter, since there's no player-photo URL anywhere in the API response) and a country flag (reusing the existing `getNationalityFlag` util) under each player's name. Added `player1_nationality`/`player2_nationality` to the `MatchDetails` type — the backend (`views.py`'s match dict) already sends these, the TS interface just hadn't declared them.
 - Rebalanced typography: player name 17px→13px, score 15px→32px/`fontWeight:900` — the score is now clearly the loudest element, as requested (previously it was backwards: names were bigger than the score).

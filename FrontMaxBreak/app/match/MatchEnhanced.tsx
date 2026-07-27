@@ -859,6 +859,7 @@ export default function MatchEnhanced() {
         options={{
           headerShown: true,
           title: '',
+          headerTitle: () => null,
           headerStyle: { backgroundColor: colors.background },
           headerTintColor: colors.primary,
           headerRight: () => (

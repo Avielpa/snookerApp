@@ -38,23 +38,23 @@ export const createMatchStyles = (colors: any) => StyleSheet.create({
     padding: 6,
   },
 
-  // PLAYER SCORE HEADER - DARK, COMPACT, CLEAR
+  // PLAYER SCORE HEADER - HERO SCOREBOARD, STRICT 3-ZONE FLEX LAYOUT
+  // Solid (not translucent) background — this sits sticky above scrolling
+  // tab content, and a translucent one lets that content bleed through it.
   scoreHeader: {
-    marginHorizontal: 6,
-    marginTop: 2,
-    marginBottom: 4,
-    padding: 5,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 143, 0, 0.3)',
+    backgroundColor: colors.background,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 143, 0, 0.3)',
   },
   scoreContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
+    alignItems: 'center',
   },
-  playerContainer: {
+  // LEFT / RIGHT ZONE
+  playerZone: {
     flex: 1,
     alignItems: 'center',
   },
@@ -62,37 +62,40 @@ export const createMatchStyles = (colors: any) => StyleSheet.create({
   // the premium hero scoreboard spec. Swap for a real photo Image once a
   // player photo URL exists in the API response.
   avatarSquare: {
-    width: 40,
-    height: 40,
+    width: 60,
+    height: 60,
     borderRadius: 12,
     backgroundColor: 'rgba(255, 143, 0, 0.16)',
     borderWidth: 1,
     borderColor: 'rgba(255, 143, 0, 0.4)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 4,
+    marginBottom: 6,
   },
   avatarInitial: {
-    fontSize: 16,
+    fontSize: 22,
     fontFamily: 'PoppinsBold',
     color: '#FF8F00',
   },
   playerName: {
-    fontSize: 13,
+    fontSize: 14,
     fontFamily: 'PoppinsSemiBold',
     color: 'rgba(255, 255, 255, 0.85)',
     textAlign: 'center',
-    marginBottom: 1,
-  },
-  player1: {
-    textAlign: 'center',
-  },
-  player2: {
-    textAlign: 'center',
+    marginBottom: 2,
   },
   flagText: {
-    fontSize: 13,
-    marginBottom: 2,
+    fontSize: 14,
+  },
+  // CENTER ZONE
+  centerZone: {
+    paddingHorizontal: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  scoreRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   // The score is the loudest element on the hero scoreboard — everything
   // else (avatar, name, flag) is deliberately smaller/quieter than this.
@@ -105,22 +108,32 @@ export const createMatchStyles = (colors: any) => StyleSheet.create({
   winnerScore: {
     color: '#FF8F00',
   },
-  vsContainer: {
-    alignItems: 'center',
-    paddingHorizontal: 6,
-  },
-  vsText: {
-    fontSize: 8,
+  scoreSeparator: {
+    fontSize: 20,
     fontFamily: 'PoppinsMedium',
     color: 'rgba(255, 255, 255, 0.4)',
-    marginTop: 1,
+    marginHorizontal: 6,
+  },
+  vsText: {
+    fontSize: 20,
+    fontFamily: 'PoppinsMedium',
+    color: 'rgba(255, 255, 255, 0.4)',
+  },
+  statusBadgeRow: {
+    marginTop: 6,
   },
 
   // TABS - DARK, COMPACT, MODERN
+  // Strict height so this can never grow into the giant vertical blocks bug —
+  // the ScrollView itself is capped, and its content row is centered inside it.
   tabContainer: {
-    flexDirection: 'row',
-    paddingHorizontal: 10,
+    height: 48,
     marginBottom: 10,
+  },
+  tabContainerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
   },
   tabButton: {
     flex: 1,
