@@ -38,6 +38,16 @@ export const createMatchStyles = (colors: any) => StyleSheet.create({
     padding: 6,
   },
 
+  // CUSTOM TOP ACTION ROW - replaces the native Stack header entirely
+  topActionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 4,
+  },
+
   // PLAYER SCORE HEADER - HERO SCOREBOARD, STRICT 3-ZONE FLEX LAYOUT
   // Solid (not translucent) background — this sits sticky above scrolling
   // tab content, and a translucent one lets that content bleed through it.

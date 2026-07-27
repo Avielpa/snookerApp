@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
-import { useLocalSearchParams, Stack } from 'expo-router';
+import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -22,10 +22,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Import types and modular components
 import { MatchDetails, EventDetails, FrameScore, MatchStats, H2HData, H2HResponse, TabType } from './types';
-import { 
-  PlayerScoreHeader, 
-  TabNavigation, 
-  OverviewTab, 
+import {
+  PlayerScoreHeader,
+  TopActionRow,
+  TabNavigation,
+  OverviewTab,
   FramesTab,
   StatsTab,
   H2HTab,
@@ -49,6 +50,7 @@ import { isMatchMutedSync, isMatchMutedAsync, toggleMatchMute } from '../../serv
  * - Modern glassmorphism design
  */
 export default function MatchEnhanced() {
+  const router = useRouter();
   const params = useLocalSearchParams<{ matchId: string }>();
   const apiMatchId = useMemo(() => {
     const id = params.matchId ? parseInt(params.matchId, 10) : NaN;
@@ -819,7 +821,9 @@ export default function MatchEnhanced() {
   // Loading state
   if (loading && !matchDetails) {
     return (
-      <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
+      <SafeAreaView style={styles.container} edges={['top', 'bottom', 'left', 'right']}>
+        <Stack.Screen options={{ headerShown: false }} />
+        <TopActionRow colors={colors} styles={styles} onBack={() => router.back()} />
         <View style={styles.centerContent}>
           <ActivityIndicator size="large" color={colors.primary} />
           <Text style={styles.loadingText}>Loading Match Details...</Text>
@@ -831,7 +835,9 @@ export default function MatchEnhanced() {
   // Error state
   if (error && !matchDetails) {
     return (
-      <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
+      <SafeAreaView style={styles.container} edges={['top', 'bottom', 'left', 'right']}>
+        <Stack.Screen options={{ headerShown: false }} />
+        <TopActionRow colors={colors} styles={styles} onBack={() => router.back()} />
         <View style={styles.centerContent}>
           <Ionicons name="alert-circle-outline" size={48} color={colors.error} />
           <Text style={[styles.loadingText, { color: colors.error }]}>Error: {error}</Text>
@@ -845,7 +851,9 @@ export default function MatchEnhanced() {
 
   if (!matchDetails) {
     return (
-      <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
+      <SafeAreaView style={styles.container} edges={['top', 'bottom', 'left', 'right']}>
+        <Stack.Screen options={{ headerShown: false }} />
+        <TopActionRow colors={colors} styles={styles} onBack={() => router.back()} />
         <View style={styles.centerContent}>
           <Text style={styles.loadingText}>Match data could not be loaded.</Text>
         </View>
@@ -854,41 +862,25 @@ export default function MatchEnhanced() {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
-      <Stack.Screen
-        options={{
-          headerShown: true,
-          title: '',
-          headerTitle: () => null,
-          headerBackTitle: '',
-          headerStyle: { backgroundColor: colors.background },
-          headerTintColor: colors.primary,
-          headerRight: () => (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
-              {isPinned && (
-                <TouchableOpacity
-                  onPress={handleToggleMute}
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                >
-                  <Ionicons
-                    name={isMuted ? 'notifications-off' : 'notifications'}
-                    size={22}
-                    color={colors.primary}
-                  />
-                </TouchableOpacity>
-              )}
-              <TouchableOpacity onPress={handleShare} style={styles.shareButton}>
-                <Ionicons name="share-outline" size={24} color={colors.primary} />
-              </TouchableOpacity>
-            </View>
-          ),
-        }}
+    <SafeAreaView style={styles.container} edges={['top', 'bottom', 'left', 'right']}>
+      <Stack.Screen options={{ headerShown: false }} />
+
+      {/* Custom top row — replaces the native header entirely so iOS can't
+          reserve unpredictable vertical space for back-title text. */}
+      <TopActionRow
+        colors={colors}
+        styles={styles}
+        onBack={() => router.back()}
+        onShare={handleShare}
+        showMute={isPinned}
+        isMuted={isMuted}
+        onToggleMute={handleToggleMute}
       />
 
       {/* Score Header */}
-      <PlayerScoreHeader 
-        matchDetails={matchDetails} 
-        styles={styles} 
+      <PlayerScoreHeader
+        matchDetails={matchDetails}
+        styles={styles}
       />
 
       {/* Tab Navigation */}

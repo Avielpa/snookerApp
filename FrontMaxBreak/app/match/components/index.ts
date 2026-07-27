@@ -1,5 +1,6 @@
 // app/match/components/index.ts
 export { PlayerScoreHeader } from './PlayerScoreHeader';
+export { TopActionRow } from './TopActionRow';
 export { TabNavigation } from './TabNavigation';
 export { FrameScoreCard } from './FrameScoreCard';
 export { OverviewTab } from './OverviewTab';
