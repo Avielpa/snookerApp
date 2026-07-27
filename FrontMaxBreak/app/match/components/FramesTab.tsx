@@ -226,17 +226,20 @@ export function FramesTab({
   // masked by rainbow colors like every prior round. Remove once resolved.
   const scrollRef = useRef<ScrollView>(null);
   const titleRef = useRef<View>(null);
-  const [measurements, setMeasurements] = useState<{ scrollTop?: number; titleTop?: number }>({});
+  const [measurements, setMeasurements] = useState<{ scrollTop?: number; titleTop?: number; ts?: number }>({});
   useEffect(() => {
-    const t = setTimeout(() => {
+    // Re-measure continuously (not once) — every reproduction of this bug
+    // has been on a LIVE match with a 30s auto-refresh poll, so a one-shot
+    // measurement can easily go stale before a screenshot is actually taken.
+    const id = setInterval(() => {
       (scrollRef.current as any)?.measureInWindow((x: number, y: number) => {
-        setMeasurements((m) => ({ ...m, scrollTop: y }));
+        setMeasurements((m) => ({ ...m, scrollTop: y, ts: Date.now() }));
       });
       (titleRef.current as any)?.measureInWindow((x: number, y: number) => {
-        setMeasurements((m) => ({ ...m, titleTop: y }));
+        setMeasurements((m) => ({ ...m, titleTop: y, ts: Date.now() }));
       });
     }, 1000);
-    return () => clearTimeout(t);
+    return () => clearInterval(id);
   }, []);
 
   return (
@@ -261,7 +264,7 @@ export function FramesTab({
         style={{ position: 'absolute', top: 4, right: 4, zIndex: 999, backgroundColor: 'black', padding: 6, borderRadius: 6 }}
       >
         <Text style={{ color: '#0F0', fontSize: 11, fontFamily: 'monospace' }}>
-          {`scrollTop: ${measurements.scrollTop ?? '?'}\ntitleTop: ${measurements.titleTop ?? '?'}\ndiff: ${measurements.scrollTop != null && measurements.titleTop != null ? (measurements.titleTop - measurements.scrollTop).toFixed(1) : '?'}`}
+          {`scrollTop: ${measurements.scrollTop ?? '?'}\ntitleTop: ${measurements.titleTop ?? '?'}\ndiff: ${measurements.scrollTop != null && measurements.titleTop != null ? (measurements.titleTop - measurements.scrollTop).toFixed(1) : '?'}\nlast measured: ${measurements.ts ? new Date(measurements.ts).toLocaleTimeString() : '?'} (updates every 1s)`}
         </Text>
       </View>
       <View ref={titleRef} style={styles.framesContainer}>
