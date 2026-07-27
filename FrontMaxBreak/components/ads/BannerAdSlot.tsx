@@ -18,8 +18,7 @@ export default function BannerAdSlot() {
   }
 
   return (
-    // DEBUG: precision test — remove after confirming ad vs container position
-    <View style={[styles.container, { backgroundColor: 'cyan' }]}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.frame, { borderColor: colors.cardBorder }]}>
         <BannerAd
           unitId={BANNER_AD_UNIT_ID}
