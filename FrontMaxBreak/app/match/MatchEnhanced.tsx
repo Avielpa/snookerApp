@@ -11,6 +11,7 @@ import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import * as Updates from 'expo-updates';
 
 // Import services
 import { getMatchDetails, getHeadToHead, getMatchFormat as getApiMatchFormat, fetchPredictionStats, submitPrediction, PredictionStats, getMatchFrameScores, MatchFrameScore } from '../../services/matchServices';
@@ -896,6 +897,26 @@ export default function MatchEnhanced() {
           BannerAdSlot after the data (never before it). */}
       <View style={styles.contentContainer}>
         {renderTabContent()}
+      </View>
+
+      {/* DEBUG: build watermark — proves whether this device is actually
+          running this exact OTA update, or a stale cached one. Remove once
+          bundle freshness is confirmed. */}
+      <View
+        pointerEvents="none"
+        style={{
+          position: 'absolute',
+          bottom: 4,
+          left: 4,
+          right: 4,
+          backgroundColor: 'black',
+          padding: 4,
+          borderRadius: 6,
+        }}
+      >
+        <Text style={{ color: '#0F0', fontSize: 9, fontFamily: 'monospace' }}>
+          {`build: ${Updates.updateId ?? 'embedded/dev'} @ ${Updates.createdAt?.toISOString() ?? 'n/a'}`}
+        </Text>
       </View>
     </View>
   );
