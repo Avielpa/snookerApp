@@ -22,7 +22,8 @@
       },
       "ios": {
         "distribution": "store",
-        "buildConfiguration": "Release"
+        "buildConfiguration": "Release",
+        "image": "macos-sequoia-15.6-xcode-26.0"
       },
       "env": {
         "NODE_ENV": "production",
