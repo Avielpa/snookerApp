@@ -31,7 +31,6 @@ export function StatsTab({
   isRefreshing,
   onRefresh,
 }: StatsTabProps) {
-
   return (
     <ScrollView
       style={{ flex: 1 }}

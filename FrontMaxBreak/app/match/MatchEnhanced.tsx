@@ -863,12 +863,10 @@ export default function MatchEnhanced() {
 
   return (
     <View style={[styles.container, { paddingBottom: insets.bottom, paddingLeft: insets.left, paddingRight: insets.right }]}>
-      {/* animation: 'none' overrides the global Stack fade transition
-          (_layout.tsx) for this screen only — testing whether a native
-          screen-transition animation that doesn't fully settle before
-          interaction is the cause of a persistent visual gap that
-          measureInWindow (Yoga's model-layer position) never detects,
-          reported on the Frames tab. */}
+      {/* Per-route override of the global Stack fade transition
+          (_layout.tsx's screenOptions) — Match Details rebuilds its own
+          top row/header on mount and reads live match data, so skipping
+          the fade avoids a flash of unstyled/incomplete content. */}
       <Stack.Screen options={{ headerShown: false, animation: 'none' }} />
 
       {/* Custom top row — replaces the native header entirely. No top inset

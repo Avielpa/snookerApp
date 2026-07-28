@@ -147,6 +147,7 @@ export const createMatchStyles = (colors: any) => StyleSheet.create({
     height: 40,
     marginTop: 12,
     marginBottom: 0,
+    overflow: 'hidden',
   },
   tabContainerContent: {
     flexDirection: 'row',
