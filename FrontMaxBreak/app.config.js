@@ -59,6 +59,7 @@ module.exports = {
       ...(isIosBuild ? [
         './plugins/withFmtFix',
       ] : []),
+      './plugins/withNonTranslatableStrings',
     ],
   },
 };
