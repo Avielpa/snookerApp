@@ -122,7 +122,16 @@ const ThemedLayout = () => {
                                 },
                                 animation: 'fade',
                             }}
-                        />
+                        >
+                            {/* Match Details: overriding animation:'none' from inside the
+                                pushed screen itself (MatchEnhanced.tsx) never worked because
+                                the entrance-transition animation is decided by the navigator
+                                at push time, before the destination screen has rendered its
+                                own <Stack.Screen> options. The real override has to live here,
+                                at the navigator level, to actually suppress the fade-in this
+                                screen was pushed with. */}
+                            <Stack.Screen name="match/[matchId]" options={{ animation: 'none' }} />
+                        </Stack>
                     </View>
                 </View>
 

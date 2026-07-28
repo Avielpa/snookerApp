@@ -109,18 +109,26 @@ export function TabNavigation({ selectedTab, onTabChange, colors, styles }: TabN
   };
 
   return (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      style={styles.tabContainer}
-      // NOTE: RN's horizontal ScrollView does NOT automatically apply
-      // flexDirection: 'row' to its content container just because
-      // `horizontal` is set — omitting this was the actual cause of tabs
-      // rendering as full-width vertical blocks (each button stacked in
-      // the default column direction, stretched to the viewport width).
-      contentContainerStyle={styles.tabContainerContent}
-    >
-      {TAB_CONFIG.map(renderTabButton)}
-    </ScrollView>
+    // Plain View wrapper with a hard-coded height + overflow:hidden — the
+    // horizontal ScrollView's own `style.height` was proven (via a native
+    // view-hierarchy dump: android.widget.HorizontalScrollView bounds
+    // reported ~680px tall vs. its ~80px of actual visible content) to not
+    // reliably constrain the native Android view's real layout height on
+    // its own. Wrapping in a plain View forces the hard limit at a layer
+    // Android always respects.
+    <View style={styles.tabContainer}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        // NOTE: RN's horizontal ScrollView does NOT automatically apply
+        // flexDirection: 'row' to its content container just because
+        // `horizontal` is set — omitting this was the actual cause of tabs
+        // rendering as full-width vertical blocks (each button stacked in
+        // the default column direction, stretched to the viewport width).
+        contentContainerStyle={styles.tabContainerContent}
+      >
+        {TAB_CONFIG.map(renderTabButton)}
+      </ScrollView>
+    </View>
   );
 }
