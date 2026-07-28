@@ -38,9 +38,12 @@ module.exports = {
     },
     ios: {
       ...baseConfig.ios,
-      bundleIdentifier: isPreview
-        ? 'com.avielpahima.maxbreaksnooker.preview'
-        : baseConfig.ios.bundleIdentifier,
+      // Always the real App Store bundle ID, even for preview builds — iOS
+      // TestFlight requires the same bundle identifier as the production
+      // app to submit as a build of it (not a separate app). Preview vs
+      // production is distinguished by EAS update channel, not bundle ID.
+      // (Android keeps a distinct .preview package for sideloaded APKs.)
+      bundleIdentifier: baseConfig.ios.bundleIdentifier,
       // Prefer an explicitly-provisioned plist written from the EAS secret, if present.
       googleServicesFile: fs.existsSync(plistPath) ? './GoogleService-Info.plist' : baseConfig.ios.googleServicesFile,
     },

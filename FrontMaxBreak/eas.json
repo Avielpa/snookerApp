@@ -21,6 +21,7 @@
         "buildType": "apk"
       },
       "ios": {
+        "distribution": "store",
         "buildConfiguration": "Release"
       },
       "env": {
@@ -92,6 +93,13 @@
       "android": {
         "serviceAccountKeyPath": "./google-play-service-account.json",
         "track": "internal"
+      }
+    },
+    "preview": {
+      "ios": {
+        "appleId": "avielpahima@gmail.com",
+        "ascAppId": "6762826909",
+        "appleTeamId": "HPNS9888XR"
       }
     }
   }
