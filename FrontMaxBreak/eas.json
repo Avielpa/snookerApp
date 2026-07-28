@@ -21,7 +21,9 @@
         "buildType": "apk"
       },
       "ios": {
-        "buildConfiguration": "Release"
+        "distribution": "store",
+        "buildConfiguration": "Release",
+        "image": "macos-sequoia-15.6-xcode-26.0"
       },
       "env": {
         "NODE_ENV": "production",
@@ -92,6 +94,13 @@
       "android": {
         "serviceAccountKeyPath": "./google-play-service-account.json",
         "track": "internal"
+      }
+    },
+    "preview": {
+      "ios": {
+        "appleId": "avielpahima@gmail.com",
+        "ascAppId": "6762826909",
+        "appleTeamId": "HPNS9888XR"
       }
     }
   }
