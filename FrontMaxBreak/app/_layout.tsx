@@ -14,6 +14,7 @@ import { initPushNotifications } from '../utils/notifications';
 import { loadFavorites } from '../services/favoritesService';
 import { useDeviceType } from '../hooks/useDeviceType';
 import { useAnalyticsScreenTracking } from '../hooks/useAnalyticsScreenTracking';
+import { useTrackingPermissions } from '../hooks/useTrackingPermissions';
 import { shouldShowScoreboardBanner } from '../services/scoreboardBannerService';
 
 // --- Component Imports ---
@@ -39,6 +40,11 @@ const ThemedLayout = () => {
 
     // Log a screen_view analytics event on every route change
     useAnalyticsScreenTracking();
+
+    // App Tracking Transparency (iOS only) — prompt as early as launch as
+    // possible, ahead of any ad SDK initialization triggered by a screen's
+    // own BannerAdSlot mounting later.
+    useTrackingPermissions();
 
     // Hide the native splash screen once critical initial state (auth) is
     // resolved, instead of the default "as soon as JS renders" auto-hide —

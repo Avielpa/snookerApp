@@ -204,7 +204,12 @@
       "Bash(\"/c/Users/PC/AppData/Roaming/npm/node_modules/@anthropic-ai/claude-code/bin/claude.exe\" doctor *)",
       "mcp__railway__get-status",
       "Bash(where railway *)",
-      "Bash(where npx *)"
+      "Bash(where npx *)",
+      "Bash(node game_test.mjs)",
+      "Bash(node train_test.mjs)",
+      "Bash(node mega_test.mjs)",
+      "Bash(node freeball_test.mjs)",
+      "Bash(node stats_test.mjs)"
     ],
     "deny": [],
     "ask": [],
