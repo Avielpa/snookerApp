@@ -55,10 +55,17 @@ module.exports = {
         {
           androidAppId: 'ca-app-pub-7026436404209900~6184340367',
           iosAppId: 'ca-app-pub-7026436404209900~7553262356',
+          // Injects NSUserTrackingUsageDescription into iOS Info.plist —
+          // required by Apple whenever an ad SDK is present in the bundle
+          // (App Store Review Guideline 5.1.2 / ATT policy), regardless of
+          // whether the ads are personalized.
+          userTrackingUsageDescription:
+            'This identifier will be used to deliver personalized ads to you.',
         },
       ],
       '@react-native-firebase/app',
       '@react-native-firebase/analytics',
+      'expo-tracking-transparency',
       ...(isIosBuild ? [
         './plugins/withFmtFix',
       ] : []),

@@ -8,6 +8,7 @@ import mobileAds, {
   TestIds,
 } from 'react-native-google-mobile-ads';
 import { logger } from '../utils/logger';
+import { ensureTrackingPermissionRequested } from '../hooks/useTrackingPermissions';
 import {
   ADMOB_ANDROID_BANNER_ID,
   ADMOB_ANDROID_INTERSTITIAL_ID,
@@ -30,14 +31,19 @@ export function initAds(): Promise<void> {
     return Promise.resolve();
   }
   if (!sdkInitPromise) {
-    sdkInitPromise = mobileAds()
-      .initialize()
-      .then(() => {
-        logger.log('[Ads] Mobile Ads SDK initialized');
-      })
-      .catch((error: any) => {
-        logger.warn('[Ads] SDK init failed — app continues without ads:', error?.message);
-      });
+    // ATT must be requested before the ad SDK initializes on iOS — routing
+    // every ad-init call site through this same function guarantees the
+    // ordering regardless of which component mounts first.
+    sdkInitPromise = ensureTrackingPermissionRequested().then(() =>
+      mobileAds()
+        .initialize()
+        .then(() => {
+          logger.log('[Ads] Mobile Ads SDK initialized');
+        })
+        .catch((error: any) => {
+          logger.warn('[Ads] SDK init failed — app continues without ads:', error?.message);
+        })
+    );
   }
   return sdkInitPromise;
 }
