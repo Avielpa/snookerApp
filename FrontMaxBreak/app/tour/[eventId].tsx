@@ -21,6 +21,7 @@ import { DeviceAwareFilterScrollView } from '../../components/DeviceAwareFilterS
 import { FONT_SIZE_PRIMARY } from '../../constants/typography';
 import { DeviceAwareFilterButton } from '../../components/DeviceAwareFilterButton';
 import { DrawTab } from './components/DrawTab';
+import { computeKnockoutChain, inferRoundNameFromCount } from './utils/bracketChain';
 import { getNationalityFlag } from '../../utils/nationalityFlag';
 import BannerAdSlot from '../../components/ads/BannerAdSlot';
 
@@ -207,7 +208,10 @@ const ICONS: { [key: string]: IoniconName } = { livePlaying: 'play-circle-outlin
 // --- Utility Functions (Moved outside component) ---
 const formatDate = (dateString: string | null): string => { if (!dateString || dateString === "Invalid Date Format" || dateString === null) return 'TBD'; try { const d=new Date(dateString); if(isNaN(d.getTime())) return 'Invalid'; return d.toLocaleString('en-GB',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit',hour12:false}); } catch{ return 'Error'; } };
 const formatSimpleDate = (dateString: string | null): string => { if (!dateString || dateString === "Invalid Date Format" || dateString === null) return 'N/A'; try { const d=new Date(dateString); if(isNaN(d.getTime())) return 'Invalid'; return d.toLocaleDateString('en-GB',{month:'short',day:'numeric',year:'numeric'}); } catch { return 'Error'; } };
-const getRoundName = (round: number | null | undefined): string => { if (round === null || round === undefined) return 'Unknown Round'; if (round >= 15) return "Final"; if (round === 14) return "Semi-Finals"; if (round === 13) return "Quarter-Finals"; if (round === 12) return "Last 16"; if (round === 11) return "Last 32"; if (round === 10) return "Last 64"; if (round === 9) return "Last 128"; return `Round ${round}`; };
+// Generic label used only for a round that isn't in the computed knockout
+// chain (see bracketChain.ts) and has no backend-provided name either — an
+// honest "Round N" rather than guessing it's a Final/SF/QF/etc.
+const genericRoundName = (round: number | null | undefined): string => { if (round === null || round === undefined) return 'Unknown Round'; return `Round ${round}`; };
 
 // --- Reusable Components ---
 // MatchItem: Accessing properties using snake_case with consistent winner/score logic
@@ -404,6 +408,20 @@ const TournamentDetailsScreen = () => {
             logger.warn(`[TourScreen MatchProcessing] ⚠️  Removed ${matches.length - deduplicatedMatches.length} duplicate matches`);
         }
 
+        // Computed once across the whole event's matches — this is what
+        // decides which rounds are genuinely part of the knockout chain
+        // (Round1..Final) versus an extra round (Wild Card, qualifiers)
+        // that must never be forced into a Final/SF/QF label. See
+        // ../utils/bracketChain.ts.
+        const knockoutChain = computeKnockoutChain(deduplicatedMatches);
+        const resolveRoundName = (round: number | null | undefined): string => {
+            if (round === null || round === undefined) return genericRoundName(round);
+            if (roundNames[round]) return roundNames[round];
+            const chainEntry = knockoutChain.get(round);
+            if (chainEntry) return inferRoundNameFromCount(chainEntry.matchCount);
+            return genericRoundName(round);
+        };
+
         const categories: Record<MatchCategory, { title: string; icon: keyof typeof Ionicons.glyphMap; matches: MatchListItem[] }> = {
             livePlaying: { title: 'Playing Now', icon: ICONS.livePlaying, matches: [] },
             onBreak: { title: 'On Break', icon: ICONS.onBreak, matches: [] },
@@ -437,14 +455,24 @@ const TournamentDetailsScreen = () => {
             return (a.number ?? 999) - (b.number ?? 999); 
         };
         
-        const sortByRoundThenEndDateDesc = (a: Match, b: Match): number => { 
-            const rA = a.round ?? -1; 
-            const rB = b.round ?? -1; 
-            if (rA !== rB) return rB - rA; 
-            const dA = new Date(a.end_date || a.start_date || a.scheduled_date || 0).getTime(); 
-            const dB = new Date(b.end_date || b.start_date || b.scheduled_date || 0).getTime(); 
-            if (dA !== dB) return dB - dA; 
-            return (a.number ?? 999) - (b.number ?? 999); 
+        const sortByRoundThenEndDateDesc = (a: Match, b: Match): number => {
+            const rA = a.round ?? -1;
+            const rB = b.round ?? -1;
+            const aInChain = rA !== -1 && knockoutChain.has(rA);
+            const bInChain = rB !== -1 && knockoutChain.has(rB);
+            // Both rounds are confirmed knockout-chain rounds: their real
+            // round numbers are already correctly depth-ordered (7<8<13<14
+            // <15), so sort by round number same as before. Otherwise (an
+            // extra round like a Wild Card Round is involved) round number
+            // isn't trustworthy for ordering — fall back to chronology so
+            // the extra round lands near its true position instead of
+            // floating above the Final purely because its number is higher.
+            if (aInChain && bInChain && rA !== rB) return rB - rA;
+            const dA = new Date(a.end_date || a.start_date || a.scheduled_date || 0).getTime();
+            const dB = new Date(b.end_date || b.start_date || b.scheduled_date || 0).getTime();
+            if (dA !== dB) return dB - dA;
+            if (rA !== rB) return rB - rA;
+            return (a.number ?? 999) - (b.number ?? 999);
         };
         
         categories.livePlaying.matches.sort(sortByRoundThenDate); 
@@ -472,9 +500,7 @@ const TournamentDetailsScreen = () => {
                     const matchRound = match.round ?? null;
                     if (matchRound !== currentRound) {
                         currentRound = matchRound;
-                        const roundName = (currentRound != null && roundNames[currentRound])
-                            ? roundNames[currentRound]
-                            : getRoundName(currentRound);
+                        const roundName = resolveRoundName(currentRound);
                         const uniqueRoundHeaderId = `roundHeader-${key}-${currentRound ?? 'unknown'}-${roundHeaderIndex++}`;
                         processedList.push({ 
                             type: 'roundHeader', 

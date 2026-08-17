@@ -4,12 +4,17 @@ import React, { useMemo } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { getNationalityFlag } from '../../../utils/nationalityFlag';
+import { computeKnockoutChain, inferRoundNameFromCount } from '../utils/bracketChain';
 
 export interface DrawMatch {
   id: number;
   api_match_id?: number | null;
   number?: number | null;
   round?: number | null;
+  event_id?: number | null;
+  scheduled_date?: string | null;
+  start_date?: string | null;
+  end_date?: string | null;
   player1_name?: string;
   player2_name?: string;
   player1_id?: number | null;
@@ -30,18 +35,10 @@ interface DrawTabProps {
   colors: any;
 }
 
-// ─── Round name inference ─────────────────────────────────────────────────────
-// Primary: infer from match count (works regardless of API round numbering)
-export function inferRoundNameFromCount(count: number): string {
-  if (count === 1) return 'Final';
-  if (count === 2) return 'Semi-Finals';
-  if (count === 4) return 'Quarter-Finals';
-  if (count === 8) return 'Last 16';
-  if (count === 16) return 'Last 32';
-  if (count === 32) return 'Last 64';
-  if (count === 64) return 'Last 128';
-  return `Round (${count} matches)`;
-}
+// Round name inference (count-based) and the knockout chain builder now
+// live in ../utils/bracketChain.ts, shared with [eventId].tsx and Home's
+// results list so all three can never disagree with each other again.
+export { inferRoundNameFromCount };
 
 export interface BracketRound {
   roundNumber: number;
@@ -64,36 +61,10 @@ export function computeBracketRounds(
     byRound.get(r)!.push(m);
   });
 
-  const allRounds = Array.from(byRound.keys()).sort((a, b) => a - b);
-
-  // Build bracket by chaining backwards from the last round:
-  // valid bracket = chain where each earlier round has exactly 2x the matches
-  // (e.g. Final=1, SF=2, QF=4, R16=8, Last32=16, Last64=32) — up to 7 rounds shown
-  let chain: number[] = [];
-  // Find last round with ≤ 32 matches as starting point (covers Last 64 as first round)
-  for (let i = allRounds.length - 1; i >= 0; i--) {
-    if ((byRound.get(allRounds[i])?.length ?? 0) <= 32) {
-      chain = [allRounds[i]];
-      break;
-    }
-  }
-  if (chain.length > 0) {
-    let needed = (byRound.get(chain[0])?.length ?? 1) * 2;
-    const startIdx = allRounds.indexOf(chain[0]) - 1;
-    for (let i = startIdx; i >= 0 && chain.length < 7; i--) {
-      const r = allRounds[i];
-      const count = byRound.get(r)?.length ?? 0;
-      if (count === needed) {
-        chain.unshift(r);
-        needed = count * 2;
-      }
-    }
-  }
-
-  // Fallback: if no chain found, take last 7 rounds with ≤ 32 matches
-  let mainRounds = chain.length > 0
-    ? chain
-    : allRounds.filter((r) => (byRound.get(r)?.length ?? 0) <= 32).slice(-7);
+  const chain = computeKnockoutChain(matches);
+  const mainRounds = Array.from(chain.values())
+    .sort((a, b) => a.chainIndex - b.chainIndex)
+    .map((c) => c.roundNumber);
 
   return mainRounds.map((r) => ({
     roundNumber: r,
@@ -106,18 +77,6 @@ export function computeBracketRounds(
       return aPos - bPos;
     }),
   }));
-}
-
-// Fallback: infer from round number (only used when count isn't a clean power of 2)
-export function inferRoundName(round: number): string {
-  if (round >= 15) return 'Final';
-  if (round === 14) return 'Semi-Finals';
-  if (round === 13) return 'Quarter-Finals';
-  if (round === 12) return 'Last 16';
-  if (round === 11) return 'Last 32';
-  if (round === 10) return 'Last 64';
-  if (round === 9) return 'Last 128';
-  return `Round ${round}`;
 }
 
 // ─── Layout constants ─────────────────────────────────────────────────────────

@@ -1,10 +1,18 @@
 // home_drawtab_test.mjs — logic-parity baseline for the Draw tab / Home redesign.
 // Runs in Node.js, no React/RN. Mirrors the exported pure functions in
 // app/tour/components/DrawTab.tsx exactly (getTop, totalHeight,
-// inferRoundNameFromCount, inferRoundName, computeBracketRounds) so this
-// file can be re-run byte-for-byte after the style-only redesign (connector
-// line color/thickness polish only) lands, to prove the bracket-chain
-// inference and card geometry never changed.
+// inferRoundNameFromCount, computeBracketRounds) so this file can be
+// re-run byte-for-byte to prove card geometry never changed.
+//
+// computeBracketRounds now delegates its chain-selection to
+// app/tour/utils/bracketChain.ts's computeKnockoutChain (count+date based,
+// not round-number based) — see bracket_chain_test.mjs for that function's
+// own dedicated coverage. This file's computeBracketRounds mirror below
+// inlines a minimal copy of that same chain logic so the "roundNames
+// override / roundFormat+roundPrize passthrough / match sort order" glue
+// around it stays covered here without duplicating the chain's own tests.
+// The old standalone inferRoundName (round-number-based fallback) was
+// dead code and has been removed from the real source; removed here too.
 
 let pass = 0;
 let fail = 0;
@@ -50,15 +58,74 @@ function inferRoundNameFromCount(count) {
   return `Round (${count} matches)`;
 }
 
-function inferRoundName(round) {
-  if (round >= 15) return 'Final';
-  if (round === 14) return 'Semi-Finals';
-  if (round === 13) return 'Quarter-Finals';
-  if (round === 12) return 'Last 16';
-  if (round === 11) return 'Last 32';
-  if (round === 10) return 'Last 64';
-  if (round === 9) return 'Last 128';
-  return `Round ${round}`;
+// Minimal inline copy of computeKnockoutChain (see bracket_chain_test.mjs
+// for that function's own dedicated, exhaustive coverage) — kept here only
+// so this file's roundNames/roundFormats/roundPrizes/sort-order assertions
+// don't depend on importing across test files.
+const MAX_CHAIN_DEPTH = 7;
+function representativeDateMs(matches) {
+  const times = matches
+    .map((m) => {
+      const raw = m.scheduled_date || m.start_date || m.end_date;
+      if (!raw) return null;
+      const t = new Date(raw).getTime();
+      return isNaN(t) ? null : t;
+    })
+    .filter((t) => t !== null);
+  if (times.length === 0) return 0;
+  return Math.min(...times);
+}
+function computeKnockoutChain(matches) {
+  const byRound = new Map();
+  matches.forEach((m) => {
+    const r = m.round;
+    if (r === null || r === undefined) return;
+    if (!byRound.has(r)) byRound.set(r, []);
+    byRound.get(r).push(m);
+  });
+  const rounds = Array.from(byRound.keys());
+  if (rounds.length === 0) return new Map();
+
+  const MAX_ANCHOR_COUNT = 32;
+  let anchor = null, anchorCount = Infinity, anchorDate = -Infinity;
+  for (const r of rounds) {
+    const ms = byRound.get(r);
+    const count = ms.length;
+    if (count === 0 || count > MAX_ANCHOR_COUNT) continue;
+    const date = representativeDateMs(ms);
+    if (count < anchorCount || (count === anchorCount && date > anchorDate)) {
+      anchor = r; anchorCount = count; anchorDate = date;
+    }
+  }
+  if (anchor === null) return new Map();
+
+  const chain = [anchor];
+  const used = new Set([anchor]);
+  let neededCount = anchorCount * 2;
+  let earliestDateInChain = anchorDate;
+
+  while (chain.length < MAX_CHAIN_DEPTH) {
+    let bestBefore = null, bestAfter = null;
+    for (const r of rounds) {
+      if (used.has(r)) continue;
+      const ms = byRound.get(r);
+      if (ms.length !== neededCount) continue;
+      const date = representativeDateMs(ms);
+      const diff = earliestDateInChain - date;
+      if (diff >= 0) { if (!bestBefore || diff < bestBefore.diff) bestBefore = { r, date, diff }; }
+      else { const absDiff = -diff; if (!bestAfter || absDiff < bestAfter.diff) bestAfter = { r, date, diff: absDiff }; }
+    }
+    const chosen = bestBefore ?? bestAfter;
+    if (!chosen) break;
+    chain.unshift(chosen.r);
+    used.add(chosen.r);
+    earliestDateInChain = chosen.date;
+    neededCount *= 2;
+  }
+
+  const result = new Map();
+  chain.forEach((r, idx) => result.set(r, { roundNumber: r, matchCount: byRound.get(r).length, chainIndex: idx }));
+  return result;
 }
 
 function computeBracketRounds(matches, roundNames, roundFormats, roundPrizes) {
@@ -69,31 +136,10 @@ function computeBracketRounds(matches, roundNames, roundFormats, roundPrizes) {
     byRound.get(r).push(m);
   });
 
-  const allRounds = Array.from(byRound.keys()).sort((a, b) => a - b);
-
-  let chain = [];
-  for (let i = allRounds.length - 1; i >= 0; i--) {
-    if ((byRound.get(allRounds[i])?.length ?? 0) <= 32) {
-      chain = [allRounds[i]];
-      break;
-    }
-  }
-  if (chain.length > 0) {
-    let needed = (byRound.get(chain[0])?.length ?? 1) * 2;
-    const startIdx = allRounds.indexOf(chain[0]) - 1;
-    for (let i = startIdx; i >= 0 && chain.length < 7; i--) {
-      const r = allRounds[i];
-      const count = byRound.get(r)?.length ?? 0;
-      if (count === needed) {
-        chain.unshift(r);
-        needed = count * 2;
-      }
-    }
-  }
-
-  let mainRounds = chain.length > 0
-    ? chain
-    : allRounds.filter((r) => (byRound.get(r)?.length ?? 0) <= 32).slice(-7);
+  const chain = computeKnockoutChain(matches);
+  const mainRounds = Array.from(chain.values())
+    .sort((a, b) => a.chainIndex - b.chainIndex)
+    .map((c) => c.roundNumber);
 
   return mainRounds.map((r) => ({
     roundNumber: r,
@@ -130,7 +176,10 @@ assertEqual(getTop(1, 2), 28 + 192, 'round 1, match 2 -> two doubled slots down 
 assertTrue(Number.isFinite(getTop(6, 0)), 'round 6 (max supported chain length-1) produces a finite number');
 assertEqual(totalHeight(32), 1536, 'totalHeight(32) = 1536');
 
-// ── Section 2: inferRoundNameFromCount (14 assertions) ──────────────────────
+// ── Section 2: inferRoundNameFromCount (10 assertions) ──────────────────────
+// (the old standalone inferRoundName — round-number-based, "round >= 15 ->
+// Final" — was dead code even before this fix, and has been removed from
+// the real source entirely; nothing to mirror here anymore.)
 console.log('\n── inferRoundNameFromCount ──');
 assertEqual(inferRoundNameFromCount(1), 'Final', 'count=1 -> Final');
 assertEqual(inferRoundNameFromCount(2), 'Semi-Finals', 'count=2 -> Semi-Finals');
@@ -142,10 +191,6 @@ assertEqual(inferRoundNameFromCount(64), 'Last 128', 'count=64 -> Last 128');
 assertEqual(inferRoundNameFromCount(3), 'Round (3 matches)', 'non-power-of-2 count falls back to generic label');
 assertEqual(inferRoundNameFromCount(0), 'Round (0 matches)', 'count=0 falls back to generic label');
 assertEqual(inferRoundNameFromCount(5), 'Round (5 matches)', 'count=5 falls back to generic label');
-assertEqual(inferRoundName(15), 'Final', 'round>=15 -> Final');
-assertEqual(inferRoundName(20), 'Final', 'round well above 15 -> still Final');
-assertEqual(inferRoundName(14), 'Semi-Finals', 'round=14 -> Semi-Finals');
-assertEqual(inferRoundName(1), 'Round 1', 'low round number -> generic Round N label');
 
 // ── Section 3: computeBracketRounds (32 assertions) ─────────────────────────
 console.log('\n── computeBracketRounds (bracket-chain inference) ──');
@@ -236,10 +281,17 @@ function mkMatch(id, round, number) {
   assertEqual(rounds[0].roundPrize, null, 'roundPrize defaults to null when not provided');
 }
 {
-  // Matches missing `round` default to bucket 0
+  // Matches missing `round` entirely are excluded from the chain (and so
+  // never appear in the bracket) — the chain builder only considers
+  // matches with a real round number (bracketChain.ts skips null/undefined
+  // rounds outright). This is a deliberate behavior change from the old
+  // algorithm, which used to bucket a roundless match into a fake "round
+  // 0" and still display it — fabricating bracket membership for a match
+  // whose real stage is unknown was itself part of the class of bug this
+  // fix addresses, so it's intentionally excluded now instead.
   const matches = [{ id: 1, number: 0 }];
   const rounds = computeBracketRounds(matches, {});
-  assertEqual(rounds[0].roundNumber, 0, 'match with no round field buckets into round 0');
+  assertEqual(rounds.length, 0, 'match with no round field is excluded from the bracket entirely, not fabricated into round 0');
 }
 {
   // Chain capped at 7 rounds even if more valid doubling rounds exist
@@ -262,10 +314,8 @@ function mkMatch(id, round, number) {
   assertEqual(rounds[0].matches.map(m => m.id), [10, 20], 'sort falls back to api_match_id when number is absent');
 }
 
-// ── Section 4: additional edge cases (12 assertions) ────────────────────────
+// ── Section 4: additional edge cases (10 assertions) ────────────────────────
 console.log('\n── additional edge cases ──');
-assertEqual(inferRoundName(8), 'Round 8', 'round=8 (below the named-round thresholds) -> generic label');
-assertEqual(inferRoundName(0), 'Round 0', 'round=0 -> generic label');
 assertEqual(inferRoundNameFromCount(128), 'Round (128 matches)', 'count=128 exceeds named thresholds -> generic label');
 assertEqual(totalHeight(2), 96, 'totalHeight(2) = 96');
 assertEqual(getTop(4, 0), (48 * 16 - 40) / 2, 'round 4 slot = BASE_SLOT*16, centered');

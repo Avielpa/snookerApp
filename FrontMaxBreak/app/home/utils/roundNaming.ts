@@ -1,11 +1,14 @@
 // app/home/utils/roundNaming.ts
+//
+// Generic fallback label only — the real stage naming (Final/SF/QF/etc.)
+// now comes from ../../tour/utils/bracketChain.ts's knockout-chain
+// inference (used by matchProcessing.ts), which correctly ignores extra
+// rounds (Wild Card Round etc.) instead of forcing them into a guessed
+// label based purely on round number. This function only covers the two
+// cases the chain can't: no round at all, and a round genuinely outside
+// the knockout chain.
 
 export const getRoundName = (round: number | null | undefined): string => {
     if (round === null || round === undefined) return '';
-    if (round >= 15) return 'Final';
-    if (round === 14) return 'Semi-Finals';
-    if (round === 13) return 'Quarter-Finals';
-    if (round >= 8) return `Round ${16 - round + 1}`;
-    if (round === 7) return 'Round 1 (L32)';
     return `Round ${round}`;
 };
