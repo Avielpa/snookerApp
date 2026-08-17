@@ -209,7 +209,13 @@
       "Bash(node train_test.mjs)",
       "Bash(node mega_test.mjs)",
       "Bash(node freeball_test.mjs)",
-      "Bash(node stats_test.mjs)"
+      "Bash(node stats_test.mjs)",
+      "Bash(where python *)",
+      "Bash(/c/Users/Aviel/vsprojects/snookerApp/venv/Scripts/python.exe -c ' *)",
+      "Bash(/c/Users/Aviel/vsprojects/snookerApp/venv/Scripts/python.exe *)",
+      "Bash(grep -E '^[0-9a-f]{40}|^[a-z0-9]{7,40} 20')",
+      "Bash(cp /tmp/screen1.png /c/Users/Aviel/vsprojects/snookerApp/.claude/worktrees/screen1.png)",
+      "Bash(cygpath -w /tmp/screen1.png)"
     ],
     "deny": [],
     "ask": [],
