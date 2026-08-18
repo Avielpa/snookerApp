@@ -159,7 +159,8 @@ interface FrameSnapshot {
 | `potBall(ball)` | Adds points, updates awaiting/phase/redsRemaining. **No-op if `freeBallActive`** |
 | `addExtraRed()` | For multiple reds on one shot — score +1, redsRemaining -1, awaiting stays `'color'`. **No-op if `freeBallActive`** |
 | `endVisit()` | Switches player, resets `currentBreak` to 0, **awaiting carries over**, resets `freeBallActive` |
-| `applyFoul(value, opponentPlays)` | Gives points to opponent; **awaiting is NEVER reset**; resets `freeBallActive` |
+| `applyFoul(value, opponentPlays, redsAccidentallyPotted=0, colourPotted=null)` | Gives points to opponent; **awaiting is NEVER reset**; resets `freeBallActive`. `redsAccidentallyPotted` removes that many reds from the table permanently, no score. `colourPotted` names a non-red ball also potted this shot — if it's the true on-ball (colours phase) it leaves the table permanently with no score to the striker; any other ball (or any colour named during the reds phase) is a no-op, since reds-phase colours always respot regardless |
+| `convertLastPotToFoul(value, opponentPlays)` | Re-scores the most recent shot (top of `breakBalls`/`history`) as a foul instead — for when a ball button was tapped before realizing the cue ball also went in. Only the single most recent shot; reach an earlier one via `undo()` first. Mathematically equivalent to "undo this pot, then re-enter as a foul" but as one atomic history step |
 | `declareFreesBall()` | Sets `freeBallActive = true`, pushes to history (undoable) |
 | `applyFreeBall(nominatedBall)` | Scores on-ball value, advances state correctly, resets `freeBallActive` |
 | `undo()` | Pops last snapshot from history stack |

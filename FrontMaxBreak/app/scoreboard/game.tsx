@@ -48,7 +48,7 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
   };
 
   useKeepAwake();
-  const { state, potBall, addExtraRed, endVisit, applyFoul, undo, concede, confirmFrameEnd, declareFreesBall, applyFreeBall, chooseRespotBreaker } = useSnookerGame(config, initialState);
+  const { state, potBall, addExtraRed, endVisit, applyFoul, convertLastPotToFoul, undo, concede, confirmFrameEnd, declareFreesBall, applyFreeBall, chooseRespotBreaker } = useSnookerGame(config, initialState);
   const { current: snap, framesWon, frameNumber, frameHighestBreak, isMatchOver, matchWinner } = state;
 
   const { setGameActive } = useGameContext();
@@ -109,6 +109,7 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
   );
 
   const [showFoul, setShowFoul] = useState(false);
+  const [foulModalMode, setFoulModalMode] = useState<'foul' | 'convert'>('foul');
   const [showFrameSummary, setShowFrameSummary] = useState(false);
   const [pendingWinner, setPendingWinner] = useState<0 | 1>(0);
   const [lastCelebratedFrame, setLastCelebratedFrame] = useState<number | null>(null);
@@ -295,9 +296,13 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
     );
   }
 
-  function handleFoulConfirm(value: number, opponentPlays: boolean, redsAccidentallyPotted: number) {
+  function handleFoulConfirm(value: number, opponentPlays: boolean, redsAccidentallyPotted: number, colourPotted: BallType | null) {
     setShowFoul(false);
-    applyFoul(value, opponentPlays, redsAccidentallyPotted);
+    if (foulModalMode === 'convert') {
+      convertLastPotToFoul(value, opponentPlays);
+    } else {
+      applyFoul(value, opponentPlays, redsAccidentallyPotted, colourPotted);
+    }
     if (opponentPlays) {
       Alert.alert(
         'Free ball?',
@@ -439,6 +444,14 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
         const breakChainBlock = !snap.isFrameOver && (
           <View style={styles.breakChainWrap}>
             <BreakChain breakBalls={snap.breakBalls} currentBreak={snap.currentBreak} />
+            {snap.breakBalls.length > 0 && (
+              <TouchableOpacity
+                style={styles.convertFoulBtn}
+                onPress={() => { setFoulModalMode('convert'); setShowFoul(true); }}
+              >
+                <Text style={[styles.convertFoulText, { color: c.error }]}>⚠ This was a foul</Text>
+              </TouchableOpacity>
+            )}
           </View>
         );
 
@@ -485,7 +498,7 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
             onPot={(ball: BallType) => potBall(ball)}
             onExtraRed={addExtraRed}
             onMiss={isTrainMode ? concede : endVisit}
-            onFoul={() => setShowFoul(true)}
+            onFoul={() => { setFoulModalMode('foul'); setShowFoul(true); }}
             onUndo={undo}
             onConcede={isTrainMode ? handleTrainEndSession : handleConcede}
             canUndo={state.history.length > 0}
@@ -549,6 +562,10 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
         opponentName={isTrainMode ? playerNames[0] : playerNames[snap.currentPlayer === 0 ? 1 : 0]}
         phase={snap.phase}
         redsRemaining={snap.redsRemaining}
+        colorsRemaining={snap.colorsRemaining}
+        freeBallActive={snap.freeBallActive}
+        mode={foulModalMode}
+        convertingBall={foulModalMode === 'convert' ? snap.breakBalls[snap.breakBalls.length - 1] ?? null : null}
         onConfirm={handleFoulConfirm}
         onCancel={() => setShowFoul(false)}
       />
@@ -632,6 +649,15 @@ const styles = StyleSheet.create({
   breakChainWrap: {
     marginHorizontal: 16,
     marginTop: 10,
+  },
+  convertFoulBtn: {
+    alignSelf: 'flex-start',
+    marginTop: 6,
+    paddingVertical: 2,
+  },
+  convertFoulText: {
+    fontSize: 11,
+    fontFamily: 'PoppinsBold',
   },
   snookerRibbon: {
     flexDirection: 'row',

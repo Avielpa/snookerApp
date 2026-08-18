@@ -113,6 +113,33 @@ export function getSnookersNeeded(scores: [number, number], pointsOnTable: numbe
   return [need0, need1];
 }
 
+// Shared tie-check for when colorsRemaining empties out (via a clean pot, a free ball,
+// or a foul-with-a-potted-colour) — a level score respots the black instead of ending
+// the frame. Single source of truth so every caller resolves this identically.
+function resolveColoursExhausted(scores: [number, number]): { isFrameOver: boolean; awaitingRespotChoice: boolean } {
+  if (scores[0] === scores[1]) return { isFrameOver: false, awaitingRespotChoice: true };
+  return { isFrameOver: true, awaitingRespotChoice: false };
+}
+
+// Given the snapshot as it stood immediately before a shot, and the single non-red ball
+// reported as potted alongside a foul (or null/omitted), decides whether that ball leaves
+// the table permanently or is respotted. Reds are handled separately via the
+// redsAccidentallyPotted count (reds are fungible — there is no "wrong red").
+// Derives the on-ball/wrong-ball distinction automatically instead of requiring it as
+// separate input: during the reds phase a colour always respots regardless (real rule —
+// colours never leave the table until all reds are gone); during the colours phase (or a
+// free ball taken within it) only the actual on-ball (colorsRemaining[0]) can leave the
+// table, so naming any other ball is definitionally "wrong ball" and always respots.
+function resolveFoulPotOutcome(
+  preShotSnap: FrameSnapshot,
+  pottedBall: BallType | null,
+): { removesFromTable: boolean } {
+  if (!pottedBall || pottedBall === 'red' || preShotSnap.phase === 'reds') {
+    return { removesFromTable: false };
+  }
+  return { removesFromTable: pottedBall === preShotSnap.colorsRemaining[0] };
+}
+
 export function getAvailableBalls(snap: FrameSnapshot): BallType[] {
   if (snap.isFrameOver) return [];
   if (snap.freeBallActive) return [...COLORS_SEQUENCE, 'red'] as BallType[];
@@ -174,12 +201,7 @@ export function useSnookerGame(config: MatchConfig, initialState?: GameState) {
         // Colors phase — balls stay off
         newColorsRemaining = newColorsRemaining.slice(1);
         if (newColorsRemaining.length === 0) {
-          // A level score after the black respots instead of ending the frame.
-          if (newScores[0] === newScores[1]) {
-            awaitingRespotChoice = true;
-          } else {
-            isFrameOver = true;
-          }
+          ({ isFrameOver, awaitingRespotChoice } = resolveColoursExhausted(newScores));
         }
       }
 
@@ -252,7 +274,7 @@ export function useSnookerGame(config: MatchConfig, initialState?: GameState) {
     });
   }, []);
 
-  const applyFoul = useCallback((foulValue: number, opponentPlays: boolean, redsAccidentallyPotted: number = 0) => {
+  const applyFoul = useCallback((foulValue: number, opponentPlays: boolean, redsAccidentallyPotted: number = 0, colourPotted: BallType | null = null) => {
     setState(prev => {
       if (prev.isMatchOver || prev.current.isFrameOver) return prev;
       const snap = prev.current;
@@ -278,6 +300,20 @@ export function useSnookerGame(config: MatchConfig, initialState?: GameState) {
       // Reds accidentally potted on a foul stay off the table (reds are never respotted).
       const newRedsRemaining = Math.max(0, snap.redsRemaining - redsAccidentallyPotted);
 
+      // A colour potted alongside the foul (e.g. the on-colour + an in-off cue ball):
+      // no score for the striker either way, but if it was the true on-ball it still
+      // leaves the table permanently, same as a clean pot would have.
+      const { removesFromTable } = resolveFoulPotOutcome(snap, colourPotted);
+      let newColorsRemaining = snap.colorsRemaining;
+      let isFrameOver = false;
+      let awaitingRespotChoice = false;
+      if (removesFromTable) {
+        newColorsRemaining = snap.colorsRemaining.slice(1);
+        if (newColorsRemaining.length === 0) {
+          ({ isFrameOver, awaitingRespotChoice } = resolveColoursExhausted(newScores));
+        }
+      }
+
       const newSnapshot: FrameSnapshot = {
         ...snap,
         scores: newScores,
@@ -285,12 +321,85 @@ export function useSnookerGame(config: MatchConfig, initialState?: GameState) {
         currentPlayer: newPlayer,
         awaiting: newAwaiting,
         redsRemaining: newRedsRemaining,
-        pointsOnTable: calcPointsOnTable(snap.phase, newRedsRemaining, newAwaiting, snap.colorsRemaining),
+        colorsRemaining: newColorsRemaining,
+        pointsOnTable: isFrameOver
+          ? 0
+          : calcPointsOnTable(snap.phase, newRedsRemaining, newAwaiting, newColorsRemaining),
+        isFrameOver,
+        awaitingRespotChoice,
         freeBallActive: false,
         breakBalls: [],
       };
 
       return { ...prev, current: newSnapshot, history: [...prev.history, snap] };
+    });
+  }, []);
+
+  // Converts the most recently potted ball (the top of the live break's breakBalls
+  // chain) into a foul outcome in one atomic step — for when a player already tapped a
+  // ball button and only then realizes the cue ball also went in on that same shot.
+  // Mathematically equivalent to "undo this one pot, then re-enter it as a foul," but
+  // as a single history step. Only ever operates on the single most recent shot; an
+  // earlier shot must be reached via undo() first, then converted.
+  const convertLastPotToFoul = useCallback((foulValue: number, opponentPlays: boolean) => {
+    setState(prev => {
+      if (prev.isMatchOver || prev.current.isFrameOver) return prev;
+      if (prev.current.breakBalls.length === 0 || prev.history.length === 0) return prev;
+      const preShot = prev.history[prev.history.length - 1];
+      if (preShot.awaitingRespotChoice) return prev; // must choose a breaker first
+
+      const pottedBall = prev.current.breakBalls[prev.current.breakBalls.length - 1];
+      const opponent: 0 | 1 = preShot.currentPlayer === 0 ? 1 : 0;
+      const newScores: [number, number] = [preShot.scores[0], preShot.scores[1]];
+      newScores[opponent] += foulValue;
+
+      if (preShot.respottedBlackActive) {
+        return {
+          ...prev,
+          current: { ...preShot, scores: newScores, currentBreak: 0, isFrameOver: true, respotForfeitWinner: opponent, breakBalls: [] },
+          history: [...prev.history, prev.current],
+        };
+      }
+
+      const newPlayer: 0 | 1 = opponentPlays ? opponent : preShot.currentPlayer;
+      const newAwaiting: AwaitingType = preShot.awaiting;
+      const redsAccidentallyPotted = pottedBall === 'red' ? 1 : 0;
+      const newRedsRemaining = Math.max(0, preShot.redsRemaining - redsAccidentallyPotted);
+      const colourPotted = pottedBall === 'red' ? null : pottedBall;
+      const { removesFromTable } = resolveFoulPotOutcome(preShot, colourPotted);
+
+      let newColorsRemaining = preShot.colorsRemaining;
+      let isFrameOver = false;
+      let awaitingRespotChoice = false;
+      if (removesFromTable) {
+        newColorsRemaining = preShot.colorsRemaining.slice(1);
+        if (newColorsRemaining.length === 0) {
+          ({ isFrameOver, awaitingRespotChoice } = resolveColoursExhausted(newScores));
+        }
+      }
+
+      const newSnapshot: FrameSnapshot = {
+        ...preShot,
+        scores: newScores,
+        currentBreak: 0,
+        currentPlayer: newPlayer,
+        awaiting: newAwaiting,
+        redsRemaining: newRedsRemaining,
+        colorsRemaining: newColorsRemaining,
+        pointsOnTable: isFrameOver
+          ? 0
+          : calcPointsOnTable(preShot.phase, newRedsRemaining, newAwaiting, newColorsRemaining),
+        isFrameOver,
+        awaitingRespotChoice,
+        freeBallActive: false,
+        breakBalls: [],
+      };
+
+      // Pushes the pre-conversion (wrongly-scored) snapshot onto history, not preShot —
+      // one undo() after a conversion reverts to "the pot as it was mis-scored" (in case
+      // the conversion itself was the mistake); a second undo() reaches the true pre-shot
+      // state. Consistent with every other action, which always pushes prev.current.
+      return { ...prev, current: newSnapshot, history: [...prev.history, prev.current] };
     });
   }, []);
 
@@ -372,7 +481,6 @@ export function useSnookerGame(config: MatchConfig, initialState?: GameState) {
       let newRedsRemaining = snap.redsRemaining;
       let newAwaiting: AwaitingType = snap.awaiting;
       let newColorsRemaining = [...snap.colorsRemaining];
-      let isFrameOver = false;
 
       if (snap.phase === 'reds') {
         if (snap.awaiting === 'red') {
@@ -397,13 +505,18 @@ export function useSnookerGame(config: MatchConfig, initialState?: GameState) {
         scoreValue = BALL_VALUES[newColorsRemaining[0]];
         if (nominatedBall === newColorsRemaining[0]) {
           newColorsRemaining = newColorsRemaining.slice(1);
-          if (newColorsRemaining.length === 0) isFrameOver = true;
         }
       }
 
       const newScores: [number, number] = [snap.scores[0], snap.scores[1]];
       newScores[snap.currentPlayer] += scoreValue;
       const newBreak = snap.currentBreak + scoreValue;
+
+      let isFrameOver = false;
+      let awaitingRespotChoice = false;
+      if (newPhase === 'colors' && newColorsRemaining.length === 0) {
+        ({ isFrameOver, awaitingRespotChoice } = resolveColoursExhausted(newScores));
+      }
 
       const newHighest: [number, number] = [prev.frameHighestBreak[0], prev.frameHighestBreak[1]];
       if (newBreak > newHighest[snap.currentPlayer]) newHighest[snap.currentPlayer] = newBreak;
@@ -416,6 +529,7 @@ export function useSnookerGame(config: MatchConfig, initialState?: GameState) {
         redsRemaining: newRedsRemaining,
         awaiting: newAwaiting,
         colorsRemaining: newColorsRemaining,
+        awaitingRespotChoice,
         pointsOnTable: isFrameOver
           ? 0
           : calcPointsOnTable(newPhase, newRedsRemaining, newAwaiting, newColorsRemaining),
@@ -496,5 +610,5 @@ export function useSnookerGame(config: MatchConfig, initialState?: GameState) {
     });
   }, []);
 
-  return { state, potBall, addExtraRed, endVisit, applyFoul, undo, concede, confirmFrameEnd, declareFreesBall, applyFreeBall, chooseRespotBreaker };
+  return { state, potBall, addExtraRed, endVisit, applyFoul, convertLastPotToFoul, undo, concede, confirmFrameEnd, declareFreesBall, applyFreeBall, chooseRespotBreaker };
 }
