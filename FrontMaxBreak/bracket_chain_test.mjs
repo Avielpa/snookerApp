@@ -338,6 +338,44 @@ console.log('\n── computeKnockoutChainsByEvent (multi-event Home feed) ─�
   assertTrue(chains.has('9:1') && chains.has('9:2') && chains.has('9:3'), 'single-event input produces the full chain keyed by event');
 }
 
+function sequentialRoundName(chainIndex) {
+  return `Round ${chainIndex + 1}`;
+}
+
+function buildSequentialRoundLabels(matches) {
+  const chain = computeKnockoutChain(matches);
+  const labels = new Map();
+  const ordered = Array.from(chain.values()).sort((a, b) => a.chainIndex - b.chainIndex);
+  ordered.forEach((entry, index) => {
+    labels.set(entry.roundNumber, sequentialRoundName(index));
+  });
+  const leftover = [...new Set(matches.map((m) => m.round).filter((r) => r != null && !labels.has(r)))].sort((a, b) => a - b);
+  leftover.forEach((roundNumber, index) => {
+    labels.set(roundNumber, sequentialRoundName(ordered.length + index));
+  });
+  return labels;
+}
+
+console.log('\n── sequential Round 1..N labels ──');
+{
+  const matches = [
+    ...Array.from({ length: 32 }, (_, i) => mkMatch(i, 7, { date: '2026-08-23' })),
+    ...Array.from({ length: 16 }, (_, i) => mkMatch(100 + i, 8, { date: '2026-08-25' })),
+    ...Array.from({ length: 8 }, (_, i) => mkMatch(200 + i, 9, { date: '2026-08-27' })),
+    ...Array.from({ length: 4 }, (_, i) => mkMatch(300 + i, 13, { date: '2026-08-28' })),
+    ...Array.from({ length: 2 }, (_, i) => mkMatch(400 + i, 14, { date: '2026-08-29' })),
+    mkMatch(500, 15, { date: '2026-08-30' }),
+  ];
+  const labels = buildSequentialRoundLabels(matches);
+  assertEqual(labels.get(7), 'Round 1', 'last-64 stage is Round 1');
+  assertEqual(labels.get(8), 'Round 2', 'last-32 stage is Round 2');
+  assertEqual(labels.get(9), 'Round 3', 'last-16 stage is Round 3');
+  assertEqual(labels.get(13), 'Round 4', 'quarter-final stage is Round 4');
+  assertEqual(labels.get(14), 'Round 5', 'semi-final stage is Round 5');
+  assertEqual(labels.get(15), 'Round 6', 'final stage is Round 6');
+}
+assertEqual(sequentialRoundName(0), 'Round 1', 'index 0 -> Round 1');
+
 // ── Summary ──────────────────────────────────────────────────────────────
 console.log(`\n${fail === 0 ? '✅' : '❌'} ${pass}/${pass + fail} assertions passed`);
 if (fail > 0) process.exit(1);

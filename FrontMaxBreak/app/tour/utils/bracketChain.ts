@@ -65,6 +65,35 @@ export function inferRoundNameFromCount(count: number): string {
   return `Round (${count} matches)`;
 }
 
+/** User-facing label: one sequential path, Round 1 then Round 2, never Last 64 / QF mix. */
+export function sequentialRoundName(chainIndex: number): string {
+  return `Round ${chainIndex + 1}`;
+}
+
+/**
+ * Map API round numbers onto Round 1..N in knockout order.
+ * Leftover rounds (not in the doubling chain) continue the same sequence.
+ */
+export function buildSequentialRoundLabels(matches: ChainMatch[]): Map<number, string> {
+  const chain = computeKnockoutChain(matches);
+  const labels = new Map<number, string>();
+  const ordered = Array.from(chain.values()).sort((a, b) => a.chainIndex - b.chainIndex);
+  ordered.forEach((entry, index) => {
+    labels.set(entry.roundNumber, sequentialRoundName(index));
+  });
+  const leftoverRounds = [
+    ...new Set(
+      matches
+        .map((m) => m.round)
+        .filter((r): r is number => r !== null && r !== undefined && !labels.has(r))
+    ),
+  ].sort((a, b) => a - b);
+  leftoverRounds.forEach((roundNumber, index) => {
+    labels.set(roundNumber, sequentialRoundName(ordered.length + index));
+  });
+  return labels;
+}
+
 /**
  * Computes the real knockout bracket chain for matches known to belong to a
  * single event. Anchors on the round with the globally fewest matches

@@ -2,7 +2,7 @@
 import { logger } from '../../../utils/logger';
 import { Match, MatchCategory, MatchListItem, ListItem, IoniconName } from '../types';
 import { getRoundName } from './roundNaming';
-import { computeKnockoutChainsByEvent, inferRoundNameFromCount } from '../../tour/utils/bracketChain';
+import { buildSequentialRoundLabels } from '../../tour/utils/bracketChain';
 import { ICONS } from './icons';
 
 export const processMatchesForList = (matches: Match[]): ListItem[] => {
@@ -160,19 +160,13 @@ export const processMatchesForList = (matches: Match[]): ListItem[] => {
     categories.upcoming.matches.sort(sortByRoundThenDate);
     categories.finished.matches.sort(sortByRoundThenEndDateDesc);
 
-    // Grouped by event_id internally (see bracketChain.ts) so two different
-    // concurrent tournaments that happen to reuse the same round number
-    // never collide. Home has no backend round_names source for this list
-    // (unlike the Tour screen), so this chain-based inference is the only
-    // naming signal available here — but it replaces the old flat
-    // "round >= 15 -> Final" guess, which had the same duplicate/mislabeled
-    // stage bug as the Tour screen for any event with an extra round.
-    const knockoutChainByEvent = computeKnockoutChainsByEvent(deduplicatedMatches);
-    const resolveRoundName = (round: number | null | undefined, eventId: number | null | undefined): string => {
+    // One path: Round 1, Round 2, Round 3 in knockout order. API names
+    // (Last 64 / QF / "Round 7") are ignored. Qualifier Last-64 matches are
+    // already merged into this list by the backend.
+    const sequentialLabels = buildSequentialRoundLabels(deduplicatedMatches);
+    const resolveRoundName = (round: number | null | undefined, _eventId: number | null | undefined): string => {
         if (round === null || round === undefined) return getRoundName(round);
-        const chainEntry = knockoutChainByEvent.get(`${eventId ?? 'unknown'}:${round}`);
-        if (chainEntry) return inferRoundNameFromCount(chainEntry.matchCount);
-        return getRoundName(round);
+        return sequentialLabels.get(round) ?? getRoundName(round);
     };
 
     const processedList: ListItem[] = [];

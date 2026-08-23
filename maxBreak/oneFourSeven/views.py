@@ -164,7 +164,7 @@ def _format_datetime_for_json(dt: Optional[datetime]) -> Optional[str]:
 
 
 # --- Helper Function: _build_match_dict ---
-def _build_match_dict(match: MatchesOfAnEvent, player_names_map: Dict[int, str], broadcasters: list = None, player_nationality_map: Dict[int, Optional[str]] = None) -> Dict[str, Any]:
+def _build_match_dict(match: MatchesOfAnEvent, player_names_map: Dict[int, str], broadcasters: list = None, player_nationality_map: Dict[int, Optional[str]] = None, path_round: Optional[int] = None) -> Dict[str, Any]:
     """
     Builds the dictionary representation of a single match, suitable for JSON response.
     Includes player names fetched separately and formats dates.
@@ -217,6 +217,7 @@ def _build_match_dict(match: MatchesOfAnEvent, player_names_map: Dict[int, str],
         "broadcasters": broadcasters if broadcasters is not None else [],
         "player1_nationality": (player_nationality_map or {}).get(p1_id) if p1_id else None,
         "player2_nationality": (player_nationality_map or {}).get(p2_id) if p2_id else None,
+        "path_round": path_round,
     }
     return match_data
 
@@ -587,10 +588,10 @@ def matches_of_an_event_view(request, event_id):
     event_instance = get_object_or_404(Event, pk=event_id) # Use Django PK for Event lookup
     logger.debug(f"Event found: {event_instance.Name}")
 
-    # Fetch all matches for this event from the database
-    # Use prefetch_related if accessing related models frequently (not needed here for players)
-    matches_qs = MatchesOfAnEvent.objects.filter(Event=event_instance)
-    matches_list = list(matches_qs) # Evaluate queryset to get list in memory
+    # One knockout path: this event plus qualifier main-draw matches (Last 64
+    # often lives on the Qualifiers event). Qualifier pages stay unmerged.
+    from .tournament_path import path_matches_for_event, sequential_round_map
+    matches_list = path_matches_for_event(event_instance)
     match_count = len(matches_list)
     logger.debug(f"Fetched {match_count} matches from DB for event {event_id}.")
 
@@ -633,8 +634,15 @@ def matches_of_an_event_view(request, event_id):
     # Build the final list of match data dictionaries using the helper
     response_data = []
     try:
+        round_map = sequential_round_map(sorted_matches)
         for match in sorted_matches:
-            response_data.append(_build_match_dict(match, player_names_map, broadcasters=event_broadcasters, player_nationality_map=player_nationality_map))
+            response_data.append(_build_match_dict(
+                match,
+                player_names_map,
+                broadcasters=event_broadcasters,
+                player_nationality_map=player_nationality_map,
+                path_round=round_map.get(match.Round),
+            ))
         logger.debug(f"Prepared {len(response_data)} matches for JSON response for event {event_id}.")
     except Exception as e:
         logger.error(f"Error building match dictionary for event {event_id}: {e}", exc_info=True)
@@ -681,7 +689,13 @@ def match_detail_view(request, api_match_id):
 
     # Build the response dictionary using the helper
     try:
-        match_data = _build_match_dict(match_instance, player_names_map, player_nationality_map=player_nationality_map)
+        from .tournament_path import path_round_for_match
+        match_data = _build_match_dict(
+            match_instance,
+            player_names_map,
+            player_nationality_map=player_nationality_map,
+            path_round=path_round_for_match(match_instance),
+        )
         return Response(match_data)
     except Exception as e:
         logger.error(f"Error building dictionary for match api_id {api_match_id}: {e}", exc_info=True)

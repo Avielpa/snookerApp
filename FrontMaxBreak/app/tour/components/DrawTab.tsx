@@ -4,7 +4,7 @@ import React, { useMemo } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { getNationalityFlag } from '../../../utils/nationalityFlag';
-import { computeKnockoutChain, inferRoundNameFromCount } from '../utils/bracketChain';
+import { computeKnockoutChain, buildSequentialRoundLabels } from '../utils/bracketChain';
 
 export interface DrawMatch {
   id: number;
@@ -35,10 +35,7 @@ interface DrawTabProps {
   colors: any;
 }
 
-// Round name inference (count-based) and the knockout chain builder now
-// live in ../utils/bracketChain.ts, shared with [eventId].tsx and Home's
-// results list so all three can never disagree with each other again.
-export { inferRoundNameFromCount };
+export { sequentialRoundName } from '../utils/bracketChain';
 
 export interface BracketRound {
   roundNumber: number;
@@ -54,6 +51,7 @@ export function computeBracketRounds(
   roundFormats?: Record<number, string>,
   roundPrizes?: Record<number, any>
 ): BracketRound[] {
+  void roundNames;
   const byRound = new Map<number, DrawMatch[]>();
   matches.forEach((m) => {
     const r = m.round ?? 0;
@@ -62,13 +60,14 @@ export function computeBracketRounds(
   });
 
   const chain = computeKnockoutChain(matches);
+  const sequentialLabels = buildSequentialRoundLabels(matches);
   const mainRounds = Array.from(chain.values())
     .sort((a, b) => a.chainIndex - b.chainIndex)
     .map((c) => c.roundNumber);
 
   return mainRounds.map((r) => ({
     roundNumber: r,
-    roundName: roundNames[r] || inferRoundNameFromCount(byRound.get(r)!.length),
+    roundName: sequentialLabels.get(r) || `Round ${r}`,
     roundFormat: roundFormats?.[r] ?? null,
     roundPrize: roundPrizes?.[r] ?? null,
     matches: (byRound.get(r) || []).slice().sort((a, b) => {

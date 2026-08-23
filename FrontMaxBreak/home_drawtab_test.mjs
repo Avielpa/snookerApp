@@ -128,6 +128,20 @@ function computeKnockoutChain(matches) {
   return result;
 }
 
+function sequentialRoundName(chainIndex) {
+  return `Round ${chainIndex + 1}`;
+}
+
+function buildSequentialRoundLabels(matches) {
+  const chain = computeKnockoutChain(matches);
+  const labels = new Map();
+  const ordered = Array.from(chain.values()).sort((a, b) => a.chainIndex - b.chainIndex);
+  ordered.forEach((entry, index) => {
+    labels.set(entry.roundNumber, sequentialRoundName(index));
+  });
+  return labels;
+}
+
 function computeBracketRounds(matches, roundNames, roundFormats, roundPrizes) {
   const byRound = new Map();
   matches.forEach((m) => {
@@ -137,13 +151,14 @@ function computeBracketRounds(matches, roundNames, roundFormats, roundPrizes) {
   });
 
   const chain = computeKnockoutChain(matches);
+  const sequentialLabels = buildSequentialRoundLabels(matches);
   const mainRounds = Array.from(chain.values())
     .sort((a, b) => a.chainIndex - b.chainIndex)
     .map((c) => c.roundNumber);
 
   return mainRounds.map((r) => ({
     roundNumber: r,
-    roundName: roundNames[r] || inferRoundNameFromCount(byRound.get(r).length),
+    roundName: sequentialLabels.get(r) || `Round ${r}`,
     roundFormat: roundFormats?.[r] ?? null,
     roundPrize: roundPrizes?.[r] ?? null,
     matches: (byRound.get(r) || []).slice().sort((a, b) => {
@@ -210,19 +225,19 @@ function mkMatch(id, round, number) {
   const rounds = computeBracketRounds(matches, {});
   assertEqual(rounds.length, 4, 'valid doubling chain produces all 4 rounds');
   assertEqual(rounds[0].matches.length, 8, 'first round in chain has 8 matches (Last 16)');
-  assertEqual(rounds[0].roundName, 'Last 16', 'first round name inferred correctly');
-  assertEqual(rounds[1].matches.length, 4, 'second round has 4 matches (QF)');
-  assertEqual(rounds[1].roundName, 'Quarter-Finals', 'second round name inferred correctly');
-  assertEqual(rounds[2].matches.length, 2, 'third round has 2 matches (SF)');
-  assertEqual(rounds[3].matches.length, 1, 'fourth round has 1 match (Final)');
-  assertEqual(rounds[3].roundName, 'Final', 'final round name inferred correctly');
+  assertEqual(rounds[0].roundName, 'Round 1', 'first knockout round is Round 1');
+  assertEqual(rounds[1].matches.length, 4, 'second round has 4 matches');
+  assertEqual(rounds[1].roundName, 'Round 2', 'second knockout round is Round 2');
+  assertEqual(rounds[2].matches.length, 2, 'third round has 2 matches');
+  assertEqual(rounds[3].matches.length, 1, 'fourth round has 1 match');
+  assertEqual(rounds[3].roundName, 'Round 4', 'final knockout round is Round 4');
   assertEqual(rounds.map(r => r.roundNumber), [8, 9, 10, 11], 'rounds returned in ascending round-number order');
 }
 {
-  // Backend-provided round names take priority over inference
+  // API names are ignored — UI is always Round 1, Round 2, …
   const matches = [mkMatch(1, 5, 0)];
-  const rounds = computeBracketRounds(matches, { 5: 'Custom Round Name' });
-  assertEqual(rounds[0].roundName, 'Custom Round Name', 'backend roundNames takes priority over count-based inference');
+  const rounds = computeBracketRounds(matches, { 5: 'Quarter-Finals' });
+  assertEqual(rounds[0].roundName, 'Round 1', 'backend Last-64/QF names are not shown');
 }
 {
   // Broken chain (bye) — round 2 has 3 matches instead of the required 4,
@@ -325,15 +340,15 @@ assertEqual(getTop(4, 0), (48 * 16 - 40) / 2, 'round 4 slot = BASE_SLOT*16, cent
   // for both rounds to survive the backward walk from the starting round.
   const matches = [mkMatch(1, 5, 0), mkMatch(2, 5, 1), mkMatch(3, 6, 0)];
   const rounds = computeBracketRounds(matches, { 5: 'Custom' });
-  assertEqual(rounds[0].roundName, 'Custom', 'round 5 uses backend-provided name');
-  assertEqual(rounds[1].roundName, 'Final', 'round 6 (no backend name, 1 match) falls back to count-based inference');
+  assertEqual(rounds[0].roundName, 'Round 1', 'API custom names are not shown');
+  assertEqual(rounds[1].roundName, 'Round 2', 'second knockout round is Round 2');
 }
 {
   // Single round of 1 match only
   const matches = [mkMatch(1, 1, 0)];
   const rounds = computeBracketRounds(matches, {});
   assertEqual(rounds.length, 1, 'single round with 1 match produces exactly one bracket round');
-  assertEqual(rounds[0].roundName, 'Final', 'single 1-match round infers as Final');
+  assertEqual(rounds[0].roundName, 'Round 1', 'single 1-match round is Round 1');
 }
 {
   // All rounds exceed 32 matches -> no valid starting point -> fallback to last-7-<=32 (empty)
@@ -344,8 +359,8 @@ assertEqual(getTop(4, 0), (48 * 16 - 40) / 2, 'round 4 slot = BASE_SLOT*16, cent
 {
   const matches = [mkMatch(1, 2, 0), mkMatch(2, 2, 1)];
   const rounds = computeBracketRounds(matches, {});
-  assertEqual(rounds[0].matches.length, 2, 'exactly-2-match round infers as Semi-Finals via count');
-  assertEqual(rounds[0].roundName, 'Semi-Finals', 'confirmed Semi-Finals label');
+  assertEqual(rounds[0].matches.length, 2, 'exactly-2-match round stays in the chain');
+  assertEqual(rounds[0].roundName, 'Round 1', 'exactly-2-match round is Round 1');
 }
 assertTrue(getTop(5, 0) > getTop(4, 0), 'round 5 top offset exceeds round 4 (continued monotonic growth)');
 
