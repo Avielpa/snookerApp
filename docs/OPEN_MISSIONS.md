@@ -45,6 +45,34 @@ Running list of known issues, deferred work, and follow-ups that are NOT current
 - **Impact**: cosmetic-but-confusing — any frontend code trusting the raw `status_display` string can show the wrong word for an on-break match. Fixed for the one place that surfaced it (`app/match/utils/matchStatusLabel.ts` now derives the label from `status_code` using the frontend's own convention instead), but `status_display`/`match.Status`'s underlying meaning is still inconsistent with `status_code` at the source.
 - **Next step when picked up**: needs a real backend investigation (bug-fix-expert workflow, not a drive-by) — determine whether `MatchesOfAnEvent.Status` is really a separate field from the `on_break`-producing status logic, whether `auto_live_monitor.py`/sync commands ever actually write `Status=2` for a live-but-on-break match (confirming the mismatch actually manifests, not just a theoretical clash), and whether the fix is renaming/aligning one model's choices, or dropping `status_display` from the API in favor of a single frontend-computed label everywhere.
 
+### 8. Backend `RoundDetails` missing/empty for most current-season events (Tour Results/Draw round-labeling root data gap)
+- **Found**: 2026-08-17, while investigating the duplicate-"Final"-header / broken-bracket bug (`docs/SESSION_2026-08-17_TOUR_ROUND_LABELING_AND_BRACKET_CHAIN_FIX.md`).
+- **Status**: Explicitly scoped OUT of that fix at the user's direction ("leave it now, this is not the root cause"). The frontend-side symptom (duplicate/mislabeled rounds) was fixed without touching this — but the underlying data gap is real and still there.
+- **Root cause found**: `auto_live_monitor.py`'s daily `update_round_details` job selects events via `Event.objects.filter(Season=season).order_by('-StartDate')[:limit=10]`. Since a "Season" spans two calendar years (Aug→Apr/May), ordering by `-StartDate` puts events *furthest in the future* first (World Championship 2027, Tour Championship, etc.), so an already-finished or currently-active event near "today" (e.g. China Open, at index 36 in a 86-row query during this investigation) never gets reached within `limit=10`. Confirmed empty for China Open, Shanghai Masters, and several Qualifiers events — likely most of the current season's already-played events.
+- **Impact**: any event with empty `RoundDetails` loses the backend's authoritative stage names (e.g. "Round 1" for round 7) and falls back to the frontend's own count-based inference (`bracketChain.ts`, fixed this session) — which is a reasonable generic label but not snooker.org's actual terminology, and can't recover data the backend never fetched.
+- **Also found**: a second command, `daily_rounds_update.py`, already has close-to-correct "only fetch if RoundDetails count is low" logic but isn't wired into the scheduler (`auto_live_monitor.py`) anywhere — worth checking why before building a third fetch strategy.
+- **Next step when picked up**: bug-fix-expert workflow — change `update_round_details`'s event-selection to target events near *today* (not furthest in the future), or activate `daily_rounds_update.py` instead; then backfill `RoundDetails` for the whole current season's already-empty events (`update_round_details --event-id <id>` per event, or a one-off management command).
+
+### 9. Draw tab has no display treatment for extra rounds (Wild Card Round etc.) — currently cleanly omitted
+- **Found**: 2026-08-17, same session as #8 above.
+- **Status**: Deliberate scope decision, not a bug. The user asked to "start with clean display" first — `computeKnockoutChain` (`app/tour/utils/bracketChain.ts`) now only ever returns the confirmed linear knockout chain (Round 1 → Final); any round outside it (Wild Card Round, a stray qualifier, etc.) is real tournament data that simply never renders in the Draw tab at all. The Results tab still shows it, honestly labeled (`Round N`), just not the bracket.
+- **Impact**: cosmetic-only, nothing incorrect is shown — but a Wild Card Round's real matches are invisible from Draw specifically, which some users may expect to see somewhere in the bracket UI.
+- **Next step when picked up**: product/design decision (not just a code fix) — decide whether extra rounds should get their own bracket column/stage treatment (e.g. a "Wild Card" prefix column before Round 1) versus staying Results-only. Needs `docs/HOME_SCREEN_REDESIGN_MOCKUP_NOTES.md`-style mockup discussion before implementation, per this repo's design-then-build convention.
+
+### 10. `FoulModal` has no scroll/height guard — new picker can overflow on short viewports
+- **Found**: 2026-08-24, during multi-agent code review of PR #1 (`docs/SESSION_2026-08-24_PR1_FOUL_SCORING_REVIEW_AND_RESPOT_GUARD_FIX.md`), confidence-scored 80/100.
+- **Status**: Flagged in the PR review comment, not fixed — out of scope for a review pass (would require a plan + its own verification, not a drive-by inside a review task).
+- **Root cause**: `FoulModal.tsx`'s card (`styles.card`, `maxWidth: 380`, no `maxHeight`/`ScrollView`) is a fixed `<Modal>` view. PR #1 stacked a new `FoulPottedBallsPicker` row (up to 7 ball chips) on top of the existing foul-value list (up to 4-7 buttons), optional reds picker, and player-toggle row. On a short viewport (phone landscape especially), the modal's content can exceed available height and push Confirm/Cancel off-screen/unreachable — the same failure mode the codebase already fixed once for the main game screen (commits `62fb5062`, `04ee1abb`, see MEMORY.md's "Scoreboard game screen redesign" entry).
+- **Impact**: real device/orientation-dependent — colours-phase fouls (common) with the modal open in landscape could make Confirm unreachable.
+- **Next step when picked up**: wrap `FoulModal`'s card content in a `ScrollView` or cap `maxHeight` and add scroll, verified in landscape on a real/emulated short viewport.
+
+### 11. `convertLastPotToFoul`'s colour picker is shown-but-inert during the respotted-black shootout
+- **Found**: 2026-08-24, same PR #1 review session, confidence-scored 65/100 (below the auto-comment threshold, logged here instead of lost).
+- **Status**: Not fixed — cosmetic only, no wrong score or broken state.
+- **Root cause**: `FoulModal.tsx`'s `showColourPicker = !isConvert && (phase === 'colors' || !!freeBallActive)`. During the `respottedBlackActive` shootout, `phase` is forced to `'colors'` by `chooseRespotBreaker`, so the picker renders — but `applyFoul`'s `respottedBlackActive` branch ignores `colourPotted` entirely and forfeits the frame unconditionally regardless of the answer.
+- **Impact**: purely UX — asks a question with no effect on the outcome during sudden-death.
+- **Next step when picked up**: extend `showColourPicker`'s exclusion condition to also check `!respottedBlackActive`.
+
 ## Resolved / closed
 (move items here with a one-line resolution note when closed, don't delete history)
 
