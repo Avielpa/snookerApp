@@ -444,7 +444,7 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
         const breakChainBlock = !snap.isFrameOver && (
           <View style={styles.breakChainWrap}>
             <BreakChain breakBalls={snap.breakBalls} currentBreak={snap.currentBreak} />
-            {snap.breakBalls.length > 0 && (
+            {snap.breakBalls.length > 0 && !snap.awaitingRespotChoice && (
               <TouchableOpacity
                 style={styles.convertFoulBtn}
                 onPress={() => { setFoulModalMode('convert'); setShowFoul(true); }}

@@ -144,9 +144,9 @@ function applyFoul(state, foulValue, opponentPlays=true, redsAccidentallyPotted=
 }
 
 function convertLastPotToFoul(state, foulValue, opponentPlays=true) {
+  if (state.current.awaitingRespotChoice) return state;
   if (state.current.breakBalls.length === 0 || state.history.length === 0) return state;
   const preShot = state.history[state.history.length - 1];
-  if (preShot.awaitingRespotChoice) return state;
 
   const pottedBall = state.current.breakBalls[state.current.breakBalls.length - 1];
   const opponent = preShot.currentPlayer===0?1:0;
@@ -485,6 +485,20 @@ section('SECTION 4 — Regression / cross-cutting');
   let g47pot = applyPot(g47, 'black');
   let g47c = convertLastPotToFoul(g47pot, 7, true);
   assert('[47b] convert during shootout also forfeits outright', g47c.current.isFrameOver === true && g47c.current.respotForfeitWinner === 1);
+
+  // Test 48: real-gameplay reachability of the awaitingRespotChoice guard — regression
+  // for a bug where convertLastPotToFoul checked the PRE-SHOT snapshot's awaitingRespotChoice
+  // instead of the LIVE current snapshot's, letting it slip through exactly when every other
+  // action in the file is blocked (7 other guards all check the live snapshot). Drives the
+  // real sequence via applyPot (not hand-spliced state) to reproduce the actual reachable path:
+  // pot the final black to a tied score, which itself flips awaitingRespotChoice true, then
+  // immediately attempt to convert that same pot to a foul before a breaker is chosen.
+  let g48 = makeGame(15);
+  g48 = { ...g48, current: { ...g48.current, phase: 'colors', colorsRemaining: ['black'], scores: [23, 30], currentPlayer: 0 } };
+  g48 = applyPot(g48, 'black');
+  assert('[48] potting final black to a tie sets awaitingRespotChoice on the LIVE snapshot', g48.current.awaitingRespotChoice === true);
+  let g48c = convertLastPotToFoul(g48, 7, true);
+  assert('[48] convert is blocked (no-op) while awaiting a respot choice, same as every other action', g48c === g48);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

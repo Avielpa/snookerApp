@@ -344,9 +344,9 @@ export function useSnookerGame(config: MatchConfig, initialState?: GameState) {
   const convertLastPotToFoul = useCallback((foulValue: number, opponentPlays: boolean) => {
     setState(prev => {
       if (prev.isMatchOver || prev.current.isFrameOver) return prev;
+      if (prev.current.awaitingRespotChoice) return prev; // must choose a breaker first
       if (prev.current.breakBalls.length === 0 || prev.history.length === 0) return prev;
       const preShot = prev.history[prev.history.length - 1];
-      if (preShot.awaitingRespotChoice) return prev; // must choose a breaker first
 
       const pottedBall = prev.current.breakBalls[prev.current.breakBalls.length - 1];
       const opponent: 0 | 1 = preShot.currentPlayer === 0 ? 1 : 0;
