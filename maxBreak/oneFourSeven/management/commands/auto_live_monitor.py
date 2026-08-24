@@ -195,9 +195,22 @@ class Command(BaseCommand):
             self.stdout.write(f'[STARTUP] Match import failed: {e}')
 
         try:
-            self.stdout.write('[STARTUP] Refreshing player match history for top 128...')
-            call_command('update_player_details', '--top', '128')
-            self.stdout.write('[STARTUP] Player match history refreshed')
+            from oneFourSeven.models import PlayerMatchHistory
+            # This call is ~30-90s PER PLAYER (128 players => up to ~2 hours) and
+            # runs as a blocking prefix before the main loop's live-score checks.
+            # Every git push restarts this service, so without a freshness gate
+            # a routine deploy mid-tournament could stall live scores for up to
+            # ~2 hours. Skip if we've refreshed recently -- same "skip if recent"
+            # pattern already used by _update_upcoming_matches_fallback below.
+            recent_refresh = PlayerMatchHistory.objects.filter(
+                updated_at__gte=timezone.now() - timedelta(hours=6)
+            ).exists()
+            if recent_refresh:
+                self.stdout.write('[STARTUP] Player match history refreshed recently — skipping')
+            else:
+                self.stdout.write('[STARTUP] Refreshing player match history for top 128...')
+                call_command('update_player_details', '--top', '128')
+                self.stdout.write('[STARTUP] Player match history refreshed')
         except Exception as e:
             logger.error(f'Startup player history sync failed: {e}')
             self.stdout.write(f'[STARTUP] Player history sync failed: {e}')
@@ -918,7 +931,13 @@ class Command(BaseCommand):
         """
         try:
             self.stdout.write('[FRAMES] Fetching frame scores for completed matches...')
-            call_command('fetch_frame_scores', '--top-ranked', '128')
+            # Bounded on purpose: this runs after EVERY live-update cycle while a
+            # tournament is active, in the same synchronous loop that refreshes
+            # live scores. Matches that repeatedly fail CueTracker lookup are
+            # never marked done (see fetch_frame_scores.py), so an unbounded run
+            # re-scans that growing backlog every cycle -- observed taking 16+
+            # minutes and starving live score updates for the whole tournament.
+            call_command('fetch_frame_scores', '--top-ranked', '128', '--limit', '15')
             self.stdout.write('[FRAMES] Frame scores fetch completed')
         except Exception as e:
             logger.error(f'fetch_frame_scores error (non-fatal): {e}')
