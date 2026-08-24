@@ -26,7 +26,7 @@ NEW FEATURES:
 - Smart duplicate prevention with cleanup
 
 DEPLOYMENT:
-Add to Procfile: live_monitor: cd maxBreak && python manage.py auto_live_monitor
+Add to Procfile: live_monitor: cd maxBreak && python manage.py auto_live_monitor --active-interval 35
 """
 
 import time
