@@ -178,6 +178,14 @@ class Command(BaseCommand):
     def _startup_sync(self):
         """On startup: import current season events + any missing match data."""
         try:
+            self.stdout.write('[STARTUP] Repairing known stuck matches from 2026-08-24 outage...')
+            call_command('repair_stuck_matches')
+            self.stdout.write('[STARTUP] Stuck-match repair pass complete')
+        except Exception as e:
+            logger.error(f'Stuck-match repair failed (non-fatal): {e}')
+            self.stdout.write(f'[STARTUP] Stuck-match repair failed (non-fatal): {e}')
+
+        try:
             from oneFourSeven.constants import current_season_int
             self.stdout.write('[STARTUP] Syncing current season events...')
             call_command('update_tournaments', '--season', str(current_season_int()), '--tour', 'main')
