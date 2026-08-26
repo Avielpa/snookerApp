@@ -322,7 +322,7 @@ export default function RivalryScreen() {
       />
 
       {/* ── Edit player names modal ── */}
-      <Modal visible={editingMatch !== null} transparent animationType="fade">
+      <Modal visible={editingMatch !== null} transparent animationType="fade" onRequestClose={() => setEditingMatch(null)}>
         <View style={styles.editOverlay}>
           <View style={[styles.editCard, { backgroundColor: c.backgroundSecondary, borderColor: c.cardBorder }]}>
             <Text style={[styles.editTitle, { color: c.textPrimary }]}>Edit Player Names</Text>

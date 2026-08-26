@@ -14,7 +14,10 @@ export default function RespotBreakerModal({ visible, playerNames, onChoose }: P
   const c = scoreboardColors;
 
   return (
-    <Modal visible={visible} transparent animationType="fade">
+    // No cancel/back path: the frame can't continue until a breaker is chosen, so Android
+    // back is swallowed here (no-op) instead of leaving the modal open with a dead touch
+    // responder chain (the bug this guards against — see FoulModal's onRequestClose).
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={() => {}}>
       <View style={styles.overlay}>
         <View style={[styles.card, { backgroundColor: c.backgroundSecondary, borderColor: c.primary }]}>
           <Text style={[styles.title, { color: c.primary }]}>Black Re-spotted</Text>

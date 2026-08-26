@@ -31,7 +31,10 @@ export default function FrameSummary({
     const breakScore = scores[0];
     const breaksCompleted = framesWon[0];
     return (
-      <Modal visible={visible} transparent animationType="slide">
+      // No cancel/back path: the session can't continue until Next Break/End Session is
+      // tapped, so Android back is swallowed here (no-op) rather than leaving the modal
+      // open with a dead touch responder chain (see FoulModal's onRequestClose for the bug).
+      <Modal visible={visible} transparent animationType="slide" onRequestClose={() => {}}>
         <View style={styles.overlay}>
           <View style={[styles.card, { backgroundColor: c.backgroundSecondary, borderColor: c.primary }]}>
             <Text style={[styles.badge, { color: c.textMuted }]}>Break {breaksCompleted}</Text>
@@ -80,7 +83,9 @@ export default function FrameSummary({
   }
 
   return (
-    <Modal visible={visible} transparent animationType="slide">
+    // Same no-op back guard as the train-mode branch above — Next Frame/End Match must be
+    // tapped explicitly.
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={() => {}}>
       <View style={styles.overlay}>
         <View style={[styles.card, { backgroundColor: c.backgroundSecondary, borderColor: c.primary }]}>
 

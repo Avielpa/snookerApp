@@ -45,7 +45,7 @@ export default function FoulModal({ visible, foulingPlayer, opponentName, phase,
   const redOptions = Array.from({ length: maxRedOptions + 1 }, (_, i) => i); // [0, 1, ..., maxRedOptions]
 
   return (
-    <Modal visible={visible} transparent animationType="fade">
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={handleCancel}>
       <View style={styles.overlay}>
         <View style={[styles.card, { backgroundColor: c.backgroundSecondary, borderColor: c.error }]}>
           <Text style={[styles.title, { color: c.error }]}>Foul</Text>

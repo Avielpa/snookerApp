@@ -73,6 +73,13 @@ Running list of known issues, deferred work, and follow-ups that are NOT current
 - **Impact**: purely UX — asks a question with no effect on the outcome during sudden-death.
 - **Next step when picked up**: extend `showColourPicker`'s exclusion condition to also check `!respottedBlackActive`.
 
+### 12. Test device's `com.avielpahima.maxbreaksnooker.preview` APK is stale — crashes on any current OTA
+- **Found**: 2026-08-25, while verifying the scoreboard-modal `onRequestClose` fix (Foul → Android back → touch freeze bug) on a connected physical device.
+- **Status**: Not fixed — needs a native build, out of scope for a JS-only bug fix.
+- **Root cause**: the preview-channel APK installed on this test device was built before commit `e578dcee` ("add App Tracking Transparency (ATT) for iOS ad compliance"), which added the `expo-tracking-transparency` native module. Publishing today's `eas update --channel preview` (current `master` JS) to that stale binary crashes it on launch: `FATAL EXCEPTION: expo-updates-error-recovery` → `JavascriptException: Error: Cannot find native module 'ExpoTrackingTransparency'`. Same failure class as the `runtimeVersion`/OTA-delivery incident already in MEMORY.md — JS referencing a native module the installed binary doesn't have compiled in.
+- **Impact**: blocks on-device OTA verification on this specific test device until it gets a fresh preview APK. Any other device/tester still running a pre-ATT preview build would hit the same crash on next preview OTA.
+- **Next step when picked up**: `eas build --profile preview --platform android`, install the new APK on this device (and any other stale preview installs), confirm ATT + the current OTA bundle both load cleanly.
+
 ## Resolved / closed
 (move items here with a one-line resolution note when closed, don't delete history)
 
