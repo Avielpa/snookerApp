@@ -70,6 +70,7 @@ module.exports = {
         './plugins/withFmtFix',
       ] : []),
       './plugins/withNonTranslatableStrings',
+      './plugins/withDisablePredictiveBack',
     ],
   },
 };
