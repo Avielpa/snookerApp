@@ -164,7 +164,7 @@ def _format_datetime_for_json(dt: Optional[datetime]) -> Optional[str]:
 
 
 # --- Helper Function: _build_match_dict ---
-def _build_match_dict(match: MatchesOfAnEvent, player_names_map: Dict[int, str], broadcasters: list = None, player_nationality_map: Dict[int, Optional[str]] = None, path_round: Optional[int] = None) -> Dict[str, Any]:
+def _build_match_dict(match: MatchesOfAnEvent, player_names_map: Dict[int, str], broadcasters: list = None, player_nationality_map: Dict[int, Optional[str]] = None, path_round: Optional[int] = None, path_event_id: Optional[int] = None) -> Dict[str, Any]:
     """
     Builds the dictionary representation of a single match, suitable for JSON response.
     Includes player names fetched separately and formats dates.
@@ -218,6 +218,7 @@ def _build_match_dict(match: MatchesOfAnEvent, player_names_map: Dict[int, str],
         "player1_nationality": (player_nationality_map or {}).get(p1_id) if p1_id else None,
         "player2_nationality": (player_nationality_map or {}).get(p2_id) if p2_id else None,
         "path_round": path_round,
+        "path_event_id": path_event_id,
     }
     return match_data
 
@@ -642,6 +643,10 @@ def matches_of_an_event_view(request, event_id):
                 broadcasters=event_broadcasters,
                 player_nationality_map=player_nationality_map,
                 path_round=round_map.get(match.Round),
+                # Every row in sorted_matches is on event_instance's own path
+                # by construction (own matches + any merged qualifier
+                # matches) — so they all share this one path_event_id.
+                path_event_id=event_instance.ID,
             ))
         logger.debug(f"Prepared {len(response_data)} matches for JSON response for event {event_id}.")
     except Exception as e:
@@ -689,12 +694,13 @@ def match_detail_view(request, api_match_id):
 
     # Build the response dictionary using the helper
     try:
-        from .tournament_path import path_round_for_match
+        from .tournament_path import path_round_for_match, path_event_id_for_match
         match_data = _build_match_dict(
             match_instance,
             player_names_map,
             player_nationality_map=player_nationality_map,
             path_round=path_round_for_match(match_instance),
+            path_event_id=path_event_id_for_match(match_instance),
         )
         return Response(match_data)
     except Exception as e:

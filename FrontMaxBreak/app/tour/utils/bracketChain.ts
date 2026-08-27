@@ -17,6 +17,11 @@
 export interface ChainMatch {
   round?: number | null;
   event_id?: number | null;
+  // ID of the event whose path this match belongs to — differs from
+  // event_id for a qualifier match merged into a main event's path (e.g.
+  // Last 64). Falls back to event_id when absent (data sources that never
+  // merge across events, e.g. Home's multi-day fallback feed).
+  path_event_id?: number | null;
   scheduled_date?: string | null;
   start_date?: string | null;
   end_date?: string | null;
@@ -202,6 +207,35 @@ export function computeKnockoutChainsByEvent(matches: ChainMatch[]): Map<string,
     const chain = computeKnockoutChain(eventMatches);
     chain.forEach((round, roundNumber) => {
       result.set(`${eventKey}:${roundNumber}`, round);
+    });
+  });
+  return result;
+}
+
+/**
+ * Same as buildSequentialRoundLabels, but for match lists that may span more
+ * than one concurrent event (e.g. Home's combined live+upcoming feed).
+ * Groups by path_event_id first (falling back to event_id when absent) so
+ * two different events that happen to reuse the same round number never
+ * collide — while a merged qualifier match (whose own event_id differs from
+ * its path's event_id, e.g. a Last-64 match merged from the Qualifiers
+ * event) stays grouped with the rest of its real path instead of being
+ * split into its own bucket. Returns a single map keyed by
+ * "<path_event_id>:<round>".
+ */
+export function buildSequentialRoundLabelsByEvent(matches: ChainMatch[]): Map<string, string> {
+  const byEvent = new Map<string, ChainMatch[]>();
+  matches.forEach((m) => {
+    const key = String(m.path_event_id ?? m.event_id ?? 'unknown');
+    if (!byEvent.has(key)) byEvent.set(key, []);
+    byEvent.get(key)!.push(m);
+  });
+
+  const result = new Map<string, string>();
+  byEvent.forEach((eventMatches, eventKey) => {
+    const labels = buildSequentialRoundLabels(eventMatches);
+    labels.forEach((label, roundNumber) => {
+      result.set(`${eventKey}:${roundNumber}`, label);
     });
   });
   return result;

@@ -170,7 +170,7 @@ export default function MatchEnhanced() {
 
   const getRoundName = (round: number | null, pathRound?: number | null): string => {
     if (pathRound) return `Round ${pathRound}`;
-    if (!round) return '';
+    if (!round) return 'Qualifying';
     return `Round ${round}`;
   };
 

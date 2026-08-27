@@ -2,7 +2,7 @@
 import { logger } from '../../../utils/logger';
 import { Match, MatchCategory, MatchListItem, ListItem, IoniconName } from '../types';
 import { getRoundName } from './roundNaming';
-import { buildSequentialRoundLabels } from '../../tour/utils/bracketChain';
+import { buildSequentialRoundLabelsByEvent } from '../../tour/utils/bracketChain';
 import { ICONS } from './icons';
 
 export const processMatchesForList = (matches: Match[]): ListItem[] => {
@@ -160,13 +160,17 @@ export const processMatchesForList = (matches: Match[]): ListItem[] => {
     categories.upcoming.matches.sort(sortByRoundThenDate);
     categories.finished.matches.sort(sortByRoundThenEndDateDesc);
 
-    // One path: Round 1, Round 2, Round 3 in knockout order. API names
-    // (Last 64 / QF / "Round 7") are ignored. Qualifier Last-64 matches are
-    // already merged into this list by the backend.
-    const sequentialLabels = buildSequentialRoundLabels(deduplicatedMatches);
-    const resolveRoundName = (round: number | null | undefined, _eventId: number | null | undefined): string => {
+    // One path per event: Round 1, Round 2, Round 3 in knockout order. API
+    // names (Last 64 / QF / "Round 7") are ignored. Qualifier Last-64 matches
+    // are already merged into this list by the backend. Grouped by
+    // path_event_id (see bracketChain.ts) so two different concurrent
+    // tournaments that happen to reuse the same round number never collide,
+    // while a merged qualifier match still groups with the rest of its path.
+    const sequentialLabelsByEvent = buildSequentialRoundLabelsByEvent(deduplicatedMatches);
+    const resolveRoundName = (round: number | null | undefined, pathEventId: number | null | undefined): string => {
         if (round === null || round === undefined) return getRoundName(round);
-        return sequentialLabels.get(round) ?? getRoundName(round);
+        const key = `${pathEventId ?? 'unknown'}:${round}`;
+        return sequentialLabelsByEvent.get(key) ?? getRoundName(round);
     };
 
     const processedList: ListItem[] = [];
@@ -181,7 +185,7 @@ export const processMatchesForList = (matches: Match[]): ListItem[] => {
                 currentRound = matchRound;
                 processedList.push({
                     type: 'roundHeader',
-                    roundName: resolveRoundName(currentRound, match.event_id),
+                    roundName: resolveRoundName(currentRound, match.path_event_id ?? match.event_id),
                     id: `roundHeader-${key}-${currentRound ?? 'unknown'}-${roundHeaderIndex++}`,
                     round: currentRound,
                 });
