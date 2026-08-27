@@ -80,6 +80,12 @@ Running list of known issues, deferred work, and follow-ups that are NOT current
 - **Impact**: blocks on-device OTA verification on this specific test device until it gets a fresh preview APK. Any other device/tester still running a pre-ATT preview build would hit the same crash on next preview OTA.
 - **Next step when picked up**: `eas build --profile preview --platform android`, install the new APK on this device (and any other stale preview installs), confirm ATT + the current OTA bundle both load cleanly.
 
+### 13. Frontend `.mjs` test suites hand-reimplement `useSnookerGame.ts` instead of importing it
+- **Found**: 2026-08-18, during the cue-ball-in-off foul fix (last red + cue ball potted together, plus the broader colours-phase/free-ball/convert-to-foul work — see `docs/SCOREBOARD.md`'s `applyFoul`/`convertLastPotToFoul` reference).
+- **Status**: Explicitly scoped OUT of that fix (user decision: defer and log, not fix now). `game_test.mjs`, `train_test.mjs`, `mega_test.mjs`, `freeball_test.mjs` (and now `foulconvert_test.mjs`) each hand-copy the reducer logic inline rather than importing the real hook — confirmed the existing reds-side `redsAccidentallyPotted` primitive had zero test coverage prior to this fix specifically because of this drift, since no test file exercised it at all despite it existing in the real code.
+- **Impact**: growing maintenance risk — every new engine function/parameter must be manually mirrored into up to 7 test files or "all assertions pass" gives false confidence about code the tests never actually touch. The risk compounds with each new engine feature.
+- **Next step when picked up**: convert at least one suite (likely the newest/smallest, `foulconvert_test.mjs`, as a pilot) to import `hooks/useSnookerGame.ts` directly via a lightweight React-hook-testing shim (e.g. `@testing-library/react-hooks` or a minimal manual `renderHook`-style harness), proving the pattern before migrating the larger suites.
+
 ## Resolved / closed
 (move items here with a one-line resolution note when closed, don't delete history)
 

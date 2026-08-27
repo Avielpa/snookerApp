@@ -1,6 +1,12 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, BackHandler } from 'react-native';
 import { scoreboardColors } from '../../../constants/scoreboardTheme';
+import { BallType, COLORS_SEQUENCE } from '../../../hooks/useSnookerGame';
+import FoulPottedBallsPicker from './FoulPottedBallsPicker';
+
+const BALL_LABELS: Record<BallType, string> = {
+  red: 'Red', yellow: 'Yellow', green: 'Green', brown: 'Brown', blue: 'Blue', pink: 'Pink', black: 'Black',
+};
 
 interface Props {
   visible: boolean;
@@ -8,7 +14,14 @@ interface Props {
   opponentName: string;
   phase: 'reds' | 'colors';
   redsRemaining: number;
-  onConfirm: (value: number, opponentPlays: boolean, redsAccidentallyPotted: number) => void;
+  colorsRemaining: BallType[];
+  freeBallActive?: boolean;
+  // 'convert' re-scores the most recent shot (already known — see BreakChain's "This was
+  // a foul" action) as a foul instead; the ball/reds pickers are hidden since the ball is
+  // already known, only foul value + who-plays-next are collected.
+  mode?: 'foul' | 'convert';
+  convertingBall?: BallType | null;
+  onConfirm: (value: number, opponentPlays: boolean, redsAccidentallyPotted: number, colourPotted: BallType | null) => void;
   onCancel: () => void;
 }
 
@@ -20,23 +33,31 @@ const FOUL_LABELS: Record<number, string> = {
   7: '7 pts  (black involved)',
 };
 
-export default function FoulModal({ visible, foulingPlayer, opponentName, phase, redsRemaining, onConfirm, onCancel }: Props) {
+export default function FoulModal({
+  visible, foulingPlayer, opponentName, phase, redsRemaining, colorsRemaining, freeBallActive,
+  mode = 'foul', convertingBall, onConfirm, onCancel,
+}: Props) {
   const c = scoreboardColors;
+  const isConvert = mode === 'convert';
   const [selected, setSelected] = useState<number>(4);
   const [opponentPlays, setOpponentPlays] = useState(true);
   const [redsAccidentallyPotted, setRedsAccidentallyPotted] = useState(0);
+  const [colourPotted, setColourPotted] = useState<BallType | null>(null);
 
-  function handleConfirm() {
-    onConfirm(selected, opponentPlays, redsAccidentallyPotted);
+  function reset() {
     setSelected(4);
     setOpponentPlays(true);
     setRedsAccidentallyPotted(0);
+    setColourPotted(null);
+  }
+
+  function handleConfirm() {
+    onConfirm(selected, opponentPlays, redsAccidentallyPotted, colourPotted);
+    reset();
   }
 
   function handleCancel() {
-    setSelected(4);
-    setOpponentPlays(true);
-    setRedsAccidentallyPotted(0);
+    reset();
     onCancel();
   }
 
@@ -56,16 +77,25 @@ export default function FoulModal({ visible, foulingPlayer, opponentName, phase,
 
   if (!visible) return null;
 
-  const showRedPicker = phase === 'reds' && redsRemaining > 0;
+  const showRedPicker = !isConvert && phase === 'reds' && redsRemaining > 0;
   const maxRedOptions = Math.min(redsRemaining, 3);
   const redOptions = Array.from({ length: maxRedOptions + 1 }, (_, i) => i); // [0, 1, ..., maxRedOptions]
+
+  // A colour is only ever meaningful to ask about when it can actually leave the table
+  // (colours phase, or a free ball that can nominate any ball) — during a plain reds-phase
+  // foul, any colour potted alongside it always respots regardless of which one, so asking
+  // would be a question with no effect on the outcome.
+  const showColourPicker = !isConvert && (phase === 'colors' || !!freeBallActive);
+  const colourOptions = phase === 'colors' ? colorsRemaining : COLORS_SEQUENCE;
 
   return (
     <View style={styles.overlay}>
       <View style={[styles.card, { backgroundColor: c.backgroundSecondary, borderColor: c.error }]}>
-        <Text style={[styles.title, { color: c.error }]}>Foul</Text>
+        <Text style={[styles.title, { color: c.error }]}>{isConvert ? 'Convert to Foul' : 'Foul'}</Text>
         <Text style={[styles.subtitle, { color: c.textSecondary }]}>
-          {foulingPlayer} commits a foul
+          {isConvert
+            ? `${foulingPlayer}'s last shot was actually a foul${convertingBall ? ` — ${BALL_LABELS[convertingBall]} potted` : ''}`
+            : `${foulingPlayer} commits a foul`}
         </Text>
 
         <Text style={[styles.sectionLabel, { color: c.textMuted }]}>Foul value</Text>
@@ -136,6 +166,15 @@ export default function FoulModal({ visible, foulingPlayer, opponentName, phase,
               ))}
             </View>
           </View>
+        )}
+
+        {showColourPicker && (
+          <FoulPottedBallsPicker
+            label="Ball potted alongside this foul?"
+            options={colourOptions}
+            value={colourPotted}
+            onChange={setColourPotted}
+          />
         )}
 
         <View style={styles.btnRow}>
