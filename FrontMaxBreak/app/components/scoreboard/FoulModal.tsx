@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, Modal, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, BackHandler } from 'react-native';
 import { scoreboardColors } from '../../../constants/scoreboardTheme';
 
 interface Props {
@@ -40,118 +40,138 @@ export default function FoulModal({ visible, foulingPlayer, opponentName, phase,
     onCancel();
   }
 
+  // Plain-View overlay (no native Modal/Dialog) — Android's predictive-back
+  // gesture dismisses a native Dialog at the OS level before Modal.onRequestClose
+  // or BackHandler ever run, desyncing JS state and freezing the screen behind
+  // it. Handling back here in JS (with no native Dialog to race against) keeps
+  // state and dismissal always in sync.
+  React.useEffect(() => {
+    if (!visible) return;
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      handleCancel();
+      return true;
+    });
+    return () => sub.remove();
+  }, [visible]);
+
+  if (!visible) return null;
+
   const showRedPicker = phase === 'reds' && redsRemaining > 0;
   const maxRedOptions = Math.min(redsRemaining, 3);
   const redOptions = Array.from({ length: maxRedOptions + 1 }, (_, i) => i); // [0, 1, ..., maxRedOptions]
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={handleCancel}>
-      <View style={styles.overlay}>
-        <View style={[styles.card, { backgroundColor: c.backgroundSecondary, borderColor: c.error }]}>
-          <Text style={[styles.title, { color: c.error }]}>Foul</Text>
-          <Text style={[styles.subtitle, { color: c.textSecondary }]}>
-            {foulingPlayer} commits a foul
-          </Text>
+    <View style={styles.overlay}>
+      <View style={[styles.card, { backgroundColor: c.backgroundSecondary, borderColor: c.error }]}>
+        <Text style={[styles.title, { color: c.error }]}>Foul</Text>
+        <Text style={[styles.subtitle, { color: c.textSecondary }]}>
+          {foulingPlayer} commits a foul
+        </Text>
 
-          <Text style={[styles.sectionLabel, { color: c.textMuted }]}>Foul value</Text>
-          {FOUL_VALUES.map(val => (
-            <TouchableOpacity
-              key={val}
-              style={[
-                styles.option,
-                { borderColor: selected === val ? c.error : c.cardBorder },
-                selected === val && { backgroundColor: 'rgba(248,113,113,0.12)' },
-              ]}
-              onPress={() => setSelected(val)}
-            >
-              <Text style={[styles.optionText, { color: selected === val ? c.error : c.textSecondary }]}>
-                {FOUL_LABELS[val]}
-              </Text>
-            </TouchableOpacity>
-          ))}
+        <Text style={[styles.sectionLabel, { color: c.textMuted }]}>Foul value</Text>
+        {FOUL_VALUES.map(val => (
+          <TouchableOpacity
+            key={val}
+            style={[
+              styles.option,
+              { borderColor: selected === val ? c.error : c.cardBorder },
+              selected === val && { backgroundColor: 'rgba(248,113,113,0.12)' },
+            ]}
+            onPress={() => setSelected(val)}
+          >
+            <Text style={[styles.optionText, { color: selected === val ? c.error : c.textSecondary }]}>
+              {FOUL_LABELS[val]}
+            </Text>
+          </TouchableOpacity>
+        ))}
 
-          <Text style={[styles.sectionLabel, { color: c.textMuted, marginTop: 14 }]}>Who plays next?</Text>
-          <View style={styles.toggleRow}>
-            <TouchableOpacity
-              style={[
-                styles.toggleBtn,
-                { borderColor: opponentPlays ? c.primary : c.cardBorder },
-                opponentPlays && { backgroundColor: 'rgba(255,183,77,0.12)' },
-              ]}
-              onPress={() => setOpponentPlays(true)}
-            >
-              <Text style={{ color: opponentPlays ? c.primary : c.textSecondary, fontSize: 13 }}>
-                {opponentName}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.toggleBtn,
-                { borderColor: !opponentPlays ? c.primary : c.cardBorder },
-                !opponentPlays && { backgroundColor: 'rgba(255,183,77,0.12)' },
-              ]}
-              onPress={() => setOpponentPlays(false)}
-            >
-              <Text style={{ color: !opponentPlays ? c.primary : c.textSecondary, fontSize: 13 }}>
-                {foulingPlayer} (again)
-              </Text>
-            </TouchableOpacity>
-          </View>
+        <Text style={[styles.sectionLabel, { color: c.textMuted, marginTop: 14 }]}>Who plays next?</Text>
+        <View style={styles.toggleRow}>
+          <TouchableOpacity
+            style={[
+              styles.toggleBtn,
+              { borderColor: opponentPlays ? c.primary : c.cardBorder },
+              opponentPlays && { backgroundColor: 'rgba(255,183,77,0.12)' },
+            ]}
+            onPress={() => setOpponentPlays(true)}
+          >
+            <Text style={{ color: opponentPlays ? c.primary : c.textSecondary, fontSize: 13 }}>
+              {opponentName}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.toggleBtn,
+              { borderColor: !opponentPlays ? c.primary : c.cardBorder },
+              !opponentPlays && { backgroundColor: 'rgba(255,183,77,0.12)' },
+            ]}
+            onPress={() => setOpponentPlays(false)}
+          >
+            <Text style={{ color: !opponentPlays ? c.primary : c.textSecondary, fontSize: 13 }}>
+              {foulingPlayer} (again)
+            </Text>
+          </TouchableOpacity>
+        </View>
 
-          {showRedPicker && (
-            <View>
-              <Text style={[styles.sectionLabel, { color: c.textMuted, marginTop: 14 }]}>
-                Reds accidentally potted?
-              </Text>
-              <View style={styles.redPickerRow}>
-                {redOptions.map(n => (
-                  <TouchableOpacity
-                    key={n}
-                    style={[
-                      styles.redPickerBtn,
-                      { borderColor: redsAccidentallyPotted === n ? c.error : c.cardBorder },
-                      redsAccidentallyPotted === n && { backgroundColor: 'rgba(248,113,113,0.12)' },
-                    ]}
-                    onPress={() => setRedsAccidentallyPotted(n)}
-                  >
-                    <Text style={[styles.redPickerText, { color: redsAccidentallyPotted === n ? c.error : c.textSecondary }]}>
-                      {n}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
+        {showRedPicker && (
+          <View>
+            <Text style={[styles.sectionLabel, { color: c.textMuted, marginTop: 14 }]}>
+              Reds accidentally potted?
+            </Text>
+            <View style={styles.redPickerRow}>
+              {redOptions.map(n => (
+                <TouchableOpacity
+                  key={n}
+                  style={[
+                    styles.redPickerBtn,
+                    { borderColor: redsAccidentallyPotted === n ? c.error : c.cardBorder },
+                    redsAccidentallyPotted === n && { backgroundColor: 'rgba(248,113,113,0.12)' },
+                  ]}
+                  onPress={() => setRedsAccidentallyPotted(n)}
+                >
+                  <Text style={[styles.redPickerText, { color: redsAccidentallyPotted === n ? c.error : c.textSecondary }]}>
+                    {n}
+                  </Text>
+                </TouchableOpacity>
+              ))}
             </View>
-          )}
-
-          <View style={styles.btnRow}>
-            <TouchableOpacity
-              style={[styles.btn, { backgroundColor: c.backgroundTertiary }]}
-              onPress={handleCancel}
-            >
-              <Text style={{ color: c.textSecondary, fontFamily: 'PoppinsBold' }}>Cancel</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.btn, { backgroundColor: c.error }]}
-              onPress={handleConfirm}
-            >
-              <Text style={{ color: '#fff', fontFamily: 'PoppinsBold' }}>
-                +{selected} to {opponentName}
-              </Text>
-            </TouchableOpacity>
           </View>
+        )}
+
+        <View style={styles.btnRow}>
+          <TouchableOpacity
+            style={[styles.btn, { backgroundColor: c.backgroundTertiary }]}
+            onPress={handleCancel}
+          >
+            <Text style={{ color: c.textSecondary, fontFamily: 'PoppinsBold' }}>Cancel</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.btn, { backgroundColor: c.error }]}
+            onPress={handleConfirm}
+          >
+            <Text style={{ color: '#fff', fontFamily: 'PoppinsBold' }}>
+              +{selected} to {opponentName}
+            </Text>
+          </TouchableOpacity>
         </View>
       </View>
-    </Modal>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   overlay: {
-    flex: 1,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     backgroundColor: 'rgba(0,0,0,0.75)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
+    zIndex: 1000,
+    elevation: 1000,
   },
   card: {
     width: '100%',
