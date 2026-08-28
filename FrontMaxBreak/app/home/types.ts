@@ -5,6 +5,11 @@ export interface Match {
     id: number;
     api_match_id: number | null;
     event_id?: number;
+    // ID of the event whose sequential Round-N path this match belongs to —
+    // differs from event_id for a qualifier match merged into a main
+    // event's path (e.g. Last 64). Round-grouping must key off this, not
+    // event_id, or a merged path splits back into two. See tournament_path.py.
+    path_event_id?: number | null;
     player1_id: number | null;
     player2_id: number | null;
     score1: number | null;

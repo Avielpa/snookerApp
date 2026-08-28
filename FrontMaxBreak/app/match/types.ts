@@ -8,6 +8,7 @@ export interface MatchDetails {
   api_match_id: number | null;
   event_id: number | null;
   round: number | null;
+  path_round?: number | null;
   number: number | null;
   player1_id: number | null;
   player1_name: string | null;

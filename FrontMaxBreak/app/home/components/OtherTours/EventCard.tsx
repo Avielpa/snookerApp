@@ -18,14 +18,9 @@ const TOUR_LABEL: Record<string, string> = {
     qtour: 'Q Tour',
 };
 
-function getRoundLabel(round: number, maxRound: number): string {
-    const fromEnd = maxRound - round;
-    if (fromEnd === 0) return 'Final';
-    if (fromEnd === 1) return 'Semi-finals';
-    if (fromEnd === 2) return 'Quarter-finals';
-    if (fromEnd === 3) return 'Last 16';
-    if (fromEnd === 4) return 'Last 32';
-    return `Round ${round}`;
+function sequentialRoundLabels(matches: OtherTourMatch[]): Map<number, string> {
+    const roundNumbers = [...new Set(matches.map((m) => m.round ?? 0))].sort((a, b) => a - b);
+    return new Map(roundNumbers.map((round, index) => [round, `Round ${index + 1}`]));
 }
 
 function groupByRound(matches: OtherTourMatch[]): { label: string; matches: OtherTourMatch[] }[] {
@@ -36,10 +31,13 @@ function groupByRound(matches: OtherTourMatch[]): { label: string; matches: Othe
         if (!rounds.has(r)) rounds.set(r, []);
         rounds.get(r)!.push(m);
     }
-    const maxRound = Math.max(...rounds.keys());
+    const labels = sequentialRoundLabels(matches);
     return Array.from(rounds.entries())
-        .sort(([a], [b]) => b - a) // highest round first (Final at top)
-        .map(([round, ms]) => ({ label: getRoundLabel(round, maxRound), matches: ms }));
+        .sort(([a], [b]) => b - a) // later rounds first
+        .map(([round, ms]) => ({
+            label: labels.get(round) ?? `Round ${round}`,
+            matches: ms,
+        }));
 }
 
 function formatDateRange(start: string | null, end: string | null): string {
