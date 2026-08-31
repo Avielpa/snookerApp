@@ -34,7 +34,7 @@ import { useOtherLiveMatches } from './home/hooks/useOtherLiveMatches';
 import { OtherLiveSection } from './home/components/OtherLiveSection';
 import { useTodayMatches } from './home/hooks/useTodayMatches';
 import { TodayMatchesToggle } from './home/components/TodayMatchesToggle';
-import { buildTodayMatchesListItems } from './home/utils/todayMatchesListItems';
+import { buildTodayMatchesListItems, excludeEventFromGroups } from './home/utils/todayMatchesListItems';
 import { DrawTab } from './tour/components/DrawTab';
 import { OtherToursTab } from './home/components/OtherTours';
 import { shouldRedirectToMedia } from './home/utils/mediaFallback';
@@ -276,13 +276,23 @@ const HomeScreen = (): React.ReactElement | null => {
     // Today's Matches — its own always-visible summary row, independent of
     // whichever tab is selected. Rendered as real list items (not a separate
     // boxed panel) so the whole screen scrolls together as one list.
+    //
+    // The tournament currently shown below (currentTournamentId) already
+    // lists its own today's-round matches in the normal Upcoming/Live
+    // section, so it's excluded here to avoid showing the same match twice.
+    // A qualifier event has a different event_id from its main draw, so its
+    // today's matches (the actual reason this section exists) still show.
+    const todayGroupsExcludingCurrentTournament = useMemo(
+        () => excludeEventFromGroups(todayGroups, currentTournamentId),
+        [todayGroups, currentTournamentId]
+    );
     const todayTotalMatches = useMemo(
-        () => todayGroups.reduce((sum, group) => sum + group.matches.length, 0),
-        [todayGroups]
+        () => todayGroupsExcludingCurrentTournament.reduce((sum, group) => sum + group.matches.length, 0),
+        [todayGroupsExcludingCurrentTournament]
     );
     const todayListItems = useMemo(
-        () => (isTodayExpanded ? buildTodayMatchesListItems(todayGroups) : []),
-        [todayGroups, isTodayExpanded]
+        () => (isTodayExpanded ? buildTodayMatchesListItems(todayGroupsExcludingCurrentTournament) : []),
+        [todayGroupsExcludingCurrentTournament, isTodayExpanded]
     );
     const finalListData = useMemo(
         () => [...todayListItems, ...displayData],

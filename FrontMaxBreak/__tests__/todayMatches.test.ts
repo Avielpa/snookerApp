@@ -5,7 +5,7 @@
 // docs/PLAN_2026-08-31_TODAY_MATCHES_SECTION.md.
 
 import { matchStatusToCategory, addMatchItemFields, TodayMatchGroupWithItems } from '../app/home/hooks/useTodayMatches';
-import { buildTodayMatchesListItems } from '../app/home/utils/todayMatchesListItems';
+import { buildTodayMatchesListItems, excludeEventFromGroups } from '../app/home/utils/todayMatchesListItems';
 import { TodayMatchGroup } from '../services/todayMatchesService';
 
 describe('matchStatusToCategory', () => {
@@ -182,6 +182,41 @@ describe('buildTodayMatchesListItems', () => {
         const items = buildTodayMatchesListItems([makeGroup({ matches: [] })]);
         expect(items).toHaveLength(1);
         expect(items[0].type).toBe('roundHeader');
+    });
+});
+
+describe('excludeEventFromGroups', () => {
+    function makeGroups(): TodayMatchGroupWithItems[] {
+        return [
+            { event_id: 1, event_name: 'British Open', is_qualifier: false, matches: [] },
+            { event_id: 2, event_name: 'British Open Qualifiers', is_qualifier: true, matches: [] },
+        ];
+    }
+
+    it('removes the group matching the given event id', () => {
+        const result = excludeEventFromGroups(makeGroups(), 1);
+        expect(result.map((g) => g.event_id)).toEqual([2]);
+    });
+
+    it('keeps every group when the given event id matches none of them', () => {
+        const result = excludeEventFromGroups(makeGroups(), 999);
+        expect(result).toHaveLength(2);
+    });
+
+    it('keeps every group when the given event id is null (no tournament currently shown)', () => {
+        const result = excludeEventFromGroups(makeGroups(), null);
+        expect(result).toHaveLength(2);
+    });
+
+    it('does not remove a qualifier group just because its main draw is excluded', () => {
+        // Qualifiers has a different event_id (2) from its main draw (1) —
+        // excluding the main draw must not touch the Qualifiers group.
+        const result = excludeEventFromGroups(makeGroups(), 1);
+        expect(result.some((g) => g.event_id === 2)).toBe(true);
+    });
+
+    it('returns an empty list unchanged', () => {
+        expect(excludeEventFromGroups([], 1)).toEqual([]);
     });
 });
 
