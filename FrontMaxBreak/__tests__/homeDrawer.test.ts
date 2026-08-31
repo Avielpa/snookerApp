@@ -5,9 +5,9 @@ import { TodayMatchGroupWithItems } from '../app/home/hooks/useTodayMatches';
 import {
     resolveHomeDrawerMode,
     shouldShowOtherLiveFooter,
-    isLiveOrOnBreak,
     matchIdentityKey,
-    excludeLiveFromGroups,
+    relevantTodayCategories,
+    filterGroupsByCategories,
     collectOtherLiveGroups,
     countGroupMatches,
 } from '../app/home/utils/homeDrawer';
@@ -81,24 +81,6 @@ describe('shouldShowOtherLiveFooter', () => {
     });
 });
 
-describe('isLiveOrOnBreak', () => {
-    it('treats livePlaying as live-or-break', () => {
-        expect(isLiveOrOnBreak('livePlaying')).toBe(true);
-    });
-
-    it('treats onBreak as live-or-break', () => {
-        expect(isLiveOrOnBreak('onBreak')).toBe(true);
-    });
-
-    it('does not treat upcoming as live-or-break', () => {
-        expect(isLiveOrOnBreak('upcoming')).toBe(false);
-    });
-
-    it('does not treat finished as live-or-break', () => {
-        expect(isLiveOrOnBreak('finished')).toBe(false);
-    });
-});
-
 describe('matchIdentityKey', () => {
     it('prefers api_match_id when present', () => {
         expect(matchIdentityKey({ id: 9, api_match_id: 400 })).toBe('api:400');
@@ -113,9 +95,43 @@ describe('matchIdentityKey', () => {
     });
 });
 
-describe('excludeLiveFromGroups', () => {
+describe('relevantTodayCategories', () => {
+    // The Results-tab leak bug (2026-08-31): Today's Matches showed
+    // not-yet-played matches under Results because it never scoped its
+    // content to the selected tab, same class of bug as the Live-tab
+    // flapping fix. Each single-category tab now sees only its own category.
+    it('Results tab wants only finished matches', () => {
+        expect(relevantTodayCategories('finished')).toEqual(['finished']);
+    });
+
+    it('Upcoming tab wants only upcoming matches', () => {
+        expect(relevantTodayCategories('upcoming')).toEqual(['upcoming']);
+    });
+
+    it('Draw tab keeps the mixed upcoming+finished view (no single category context)', () => {
+        expect(relevantTodayCategories('draw')).toEqual(['upcoming', 'finished']);
+    });
+
+    it('Other Tours tab keeps the mixed view', () => {
+        expect(relevantTodayCategories('otherTours')).toEqual(['upcoming', 'finished']);
+    });
+
+    it('All filter keeps the mixed view', () => {
+        expect(relevantTodayCategories('all')).toEqual(['upcoming', 'finished']);
+    });
+
+    it('never includes live or on-break — those belong only in Also Live', () => {
+        (['finished', 'upcoming', 'draw', 'otherTours', 'all', 'onBreak'] as const).forEach((filter) => {
+            const categories = relevantTodayCategories(filter);
+            expect(categories).not.toContain('livePlaying');
+            expect(categories).not.toContain('onBreak');
+        });
+    });
+});
+
+describe('filterGroupsByCategories', () => {
     it('drops live matches so they do not appear on Upcoming', () => {
-        const result = excludeLiveFromGroups([
+        const result = filterGroupsByCategories([
             group({
                 event_id: 2,
                 matches: [
@@ -123,23 +139,50 @@ describe('excludeLiveFromGroups', () => {
                     matchItem(201, { matchCategory: 'upcoming' }),
                 ],
             }),
-        ]);
+        ], ['upcoming', 'finished']);
         expect(result).toHaveLength(1);
         expect(result[0].matches.map((m) => m.api_match_id)).toEqual([201]);
     });
 
-    it('drops on-break matches so they stay on the Live tab', () => {
-        const result = excludeLiveFromGroups([
+    it('on the Results tab, drops a not-yet-played match from the same group as a finished one', () => {
+        const result = filterGroupsByCategories([
             group({
                 event_id: 2,
-                matches: [matchItem(210, { matchCategory: 'onBreak' })],
+                event_name: 'British Open Qualifiers',
+                matches: [
+                    matchItem(200, { matchCategory: 'finished' }),
+                    matchItem(201, { matchCategory: 'upcoming' }),
+                ],
             }),
-        ]);
+        ], relevantTodayCategories('finished'));
+        expect(result[0].matches.map((m) => m.api_match_id)).toEqual([200]);
+    });
+
+    it('on the Upcoming tab, drops a finished match from the same group as an upcoming one', () => {
+        const result = filterGroupsByCategories([
+            group({
+                event_id: 2,
+                matches: [
+                    matchItem(200, { matchCategory: 'finished' }),
+                    matchItem(201, { matchCategory: 'upcoming' }),
+                ],
+            }),
+        ], relevantTodayCategories('upcoming'));
+        expect(result[0].matches.map((m) => m.api_match_id)).toEqual([201]);
+    });
+
+    it('drops a group left with zero matches after filtering', () => {
+        const result = filterGroupsByCategories([
+            group({
+                event_id: 2,
+                matches: [matchItem(200, { matchCategory: 'upcoming' })],
+            }),
+        ], relevantTodayCategories('finished'));
         expect(result).toEqual([]);
     });
 
-    it('keeps finished and upcoming matches for Today\'s Matches', () => {
-        const result = excludeLiveFromGroups([
+    it('keeps finished and upcoming matches together for the mixed (Draw/All) view', () => {
+        const result = filterGroupsByCategories([
             group({
                 event_id: 2,
                 matches: [
@@ -147,23 +190,31 @@ describe('excludeLiveFromGroups', () => {
                     matchItem(203, { matchCategory: 'upcoming' }),
                 ],
             }),
-        ]);
+        ], relevantTodayCategories('draw'));
         expect(result[0].matches.map((m) => m.matchCategory)).toEqual(['finished', 'upcoming']);
     });
 
     it('drops a group that is only live matches', () => {
-        const result = excludeLiveFromGroups([
+        const result = filterGroupsByCategories([
             group({
                 event_id: 80,
                 event_name: 'Q Tour Event 7',
                 matches: [matchItem(800, { matchCategory: 'livePlaying' })],
             }),
-        ]);
+        ], relevantTodayCategories('all'));
         expect(result).toEqual([]);
     });
 
     it('returns empty for an empty input', () => {
-        expect(excludeLiveFromGroups([])).toEqual([]);
+        expect(filterGroupsByCategories([], ['upcoming', 'finished'])).toEqual([]);
+    });
+
+    it('filters independently across multiple groups', () => {
+        const result = filterGroupsByCategories([
+            group({ event_id: 1, matches: [matchItem(1, { matchCategory: 'finished' })] }),
+            group({ event_id: 2, matches: [matchItem(2, { matchCategory: 'upcoming' })] }),
+        ], relevantTodayCategories('finished'));
+        expect(result.map((g) => g.event_id)).toEqual([1]);
     });
 });
 

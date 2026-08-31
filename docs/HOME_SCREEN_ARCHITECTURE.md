@@ -64,7 +64,7 @@ Text/data structure alone doesn't show what a user sees. Rough wireframes, curre
 │ └────────────────────────────┘│
 └──────────────────────────────┘
 ```
-On Upcoming/Results the upper drawer is **Today's Matches** (expanded) and **excludes live/on-break** — those belong only on the Live tab. On Live it swaps to **Also Live** (collapsed) so the focused event's live cards stay first. Expanding Also Live prepends other events' live/on-break matches (qualifier siblings, Q-Tour, women's, seniors — any `event_id` except the focused one). The old footer `OtherLiveSection` is hidden on the Live tab to avoid a duplicate list. See `app/home/utils/homeDrawer.ts`.
+On Upcoming/Results the upper drawer is **Today's Matches** (expanded) and is **scoped to that tab's own category** — Results shows only finished-today leftovers, Upcoming shows only upcoming-today leftovers, never live/on-break (those belong only on the Live tab). Draw/Other Tours/All have no single-category context, so they keep the mixed upcoming+finished view. On Live it swaps to **Also Live** (collapsed) so the focused event's live cards stay first. Expanding Also Live prepends other events' live/on-break matches (qualifier siblings, Q-Tour, women's, seniors — any `event_id` except the focused one). The old footer `OtherLiveSection` is hidden on the Live tab to avoid a duplicate list. See `app/home/utils/homeDrawer.ts` (`relevantTodayCategories`, `filterGroupsByCategories`).
 Every match card is a full `MatchItem` (§3.1) — same visual weight whether there are 2 matches or 40. This is the exact pain point behind the "cards too big" / "long scroll" feedback: nothing shrinks or collapses based on list length today.
 
 **Draw tab**:

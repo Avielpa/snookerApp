@@ -40,7 +40,8 @@ import {
     shouldShowOtherLiveFooter,
     collectOtherLiveGroups,
     countGroupMatches,
-    excludeLiveFromGroups,
+    relevantTodayCategories,
+    filterGroupsByCategories,
     OTHER_LIVE_ACCENT,
 } from './home/utils/homeDrawer';
 import { DrawTab } from './tour/components/DrawTab';
@@ -290,8 +291,8 @@ const HomeScreen = (): React.ReactElement | null => {
         [todayGroups, currentTournamentId]
     );
     const todayGroupsForDrawer = useMemo(
-        () => excludeLiveFromGroups(todayGroupsExcludingCurrentTournament),
-        [todayGroupsExcludingCurrentTournament]
+        () => filterGroupsByCategories(todayGroupsExcludingCurrentTournament, relevantTodayCategories(activeFilter)),
+        [todayGroupsExcludingCurrentTournament, activeFilter]
     );
     const todayTotalMatches = useMemo(
         () => countGroupMatches(todayGroupsForDrawer),

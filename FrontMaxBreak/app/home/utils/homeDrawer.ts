@@ -20,24 +20,32 @@ export function shouldShowOtherLiveFooter(drawerMode: HomeDrawerMode): boolean {
     return drawerMode === 'today';
 }
 
-export function isLiveOrOnBreak(category: MatchCategory): boolean {
-    return category === 'livePlaying' || category === 'onBreak';
-}
-
 export function matchIdentityKey(match: { id: number; api_match_id?: number | null }): string {
     if (match.api_match_id != null) return `api:${match.api_match_id}`;
     return `id:${match.id}`;
 }
 
-export function excludeLiveFromGroup(group: TodayMatchGroupWithItems): TodayMatchGroupWithItems | null {
-    const matches = group.matches.filter((match) => !isLiveOrOnBreak(match.matchCategory));
-    if (matches.length === 0) return null;
-    return { ...group, matches };
+// The Today's Matches drawer must never show live/on-break matches (those
+// belong only in Also Live), and on a single-category tab (Results,
+// Upcoming) it must show ONLY that tab's own category — otherwise a
+// not-yet-played match leaks into the Results tab's drawer alongside real
+// finished matches. Draw/Other Tours/All have no single-category context,
+// so they keep the mixed upcoming+finished view.
+export function relevantTodayCategories(activeFilter: ActiveFilterType): MatchCategory[] {
+    if (activeFilter === 'finished') return ['finished'];
+    if (activeFilter === 'upcoming') return ['upcoming'];
+    return ['upcoming', 'finished'];
 }
 
-export function excludeLiveFromGroups(groups: TodayMatchGroupWithItems[]): TodayMatchGroupWithItems[] {
+export function filterGroupsByCategories(
+    groups: TodayMatchGroupWithItems[],
+    categories: MatchCategory[]
+): TodayMatchGroupWithItems[] {
     return groups
-        .map(excludeLiveFromGroup)
+        .map((group) => {
+            const matches = group.matches.filter((match) => categories.includes(match.matchCategory));
+            return matches.length > 0 ? { ...group, matches } : null;
+        })
         .filter((group): group is TodayMatchGroupWithItems => group != null);
 }
 

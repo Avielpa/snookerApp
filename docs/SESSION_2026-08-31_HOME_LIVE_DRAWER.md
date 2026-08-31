@@ -43,6 +43,11 @@ Fix: since the earlier backend change (`all_live_matches_view` no longer exclude
 Tradeoff: the "· Qualifiers" header suffix (sourced from `todayGroups`' `is_qualifier` flag) no longer appears on a qualifier's group inside Also Live specifically — Today's Matches on Upcoming/Results is unaffected.
 Separate, unrelated finding logged as Open Mission #14 (not fixed): `update_live_matches.py`'s stuck-match repair writes `Status=2` believing it means "Finished," while every runtime reader treats it as "On Break." Doesn't cause flapping — only mislabels already-finished tournaments' stuck matches.
 
+## Follow-up 3 — Results tab leaked not-yet-played matches
+Confirmed live on the Galaxy S24 (`RFCX11GB0MK`, preview build): the Results tab's Today's Matches drawer showed 3 upcoming (17:00, no score) matches mixed in with 2 real finished ones under "British Open Qualifiers". Root cause: `todayGroupsForDrawer` only stripped live/on-break, keeping upcoming+finished together on every tab — same class of bug as the Live-tab flapping (drawer content not scoped to the selected tab).
+Fix: `excludeLiveFromGroups`/`excludeLiveFromGroup` replaced with `relevantTodayCategories(activeFilter)` + `filterGroupsByCategories(groups, categories)`. Results tab → `['finished']` only. Upcoming tab → `['upcoming']` only. Draw/Other Tours/All → `['upcoming', 'finished']` (unchanged mixed view, no single-category context there). Also removed `isLiveOrOnBreak`, now dead code with no remaining caller.
+
 ## Lesson
 Do not treat "other live" as "not main tour". The generic rule is "not the focused `event_id`". Qualifier siblings are a different event and belong in Also Live.
 Do not merge two data sources with different poll cadences into one derived view without an explicit freshness rule — the "combine todayGroups + otherLiveMatches" pattern looked reasonable but silently let a 120s-stale snapshot overwrite a 30s-fresh one on every render.
+A drawer that appears under every tab needs its content scoped to that tab's own semantics — "exclude live" alone isn't enough once the same drawer surfaces under a single-category tab (Results, Upcoming); it will otherwise leak the other category in.
