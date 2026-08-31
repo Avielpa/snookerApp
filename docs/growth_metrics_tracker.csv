@@ -1,0 +1,68 @@
+Date Pulled,Metric,Value,Source,Period,Notes
+2026-08-25,Android MAU (30-day active users),124,Firebase Analytics (GA4 - combined property),Jul 28 - Aug 24 2026,Combined across Android+iOS - single GA4 property
+2026-08-25,WAU (7-day active users),36,Firebase Analytics (GA4 - combined property),Last 7 days as of Aug 24,Combined across Android+iOS
+2026-08-25,DAU (1-day active users),10,Firebase Analytics (GA4 - combined property),Aug 24 2026,Combined across Android+iOS
+2026-08-25,Android installs (current release),52,Google Play Console Dashboard,Since Jul 29 2026 release,Not lifetime total - just current release
+2026-08-25,Android install base %,63.4%,Google Play Console Dashboard,Current,Retained installs vs uninstalled
+2026-08-25,Android Monthly Active Devices,46,Google Play Console Grow Users,Last 28 days vs previous 28 days,Trending +24% - pre-campaign baseline
+2026-08-25,Android Device acquisitions,35,Google Play Console Grow Users,Last 28 days vs previous 28 days,Trending -5% - pre-campaign baseline (flat/declining)
+2026-08-25,iOS Total Downloads,12,App Store Connect Analytics,Jul 25 - Aug 23 2026,Data lags ~2 days
+2026-08-25,iOS Product Page Views,53,App Store Connect Analytics,Jul 25 - Aug 23 2026,Conversion rate ~23% (12/53) views-to-downloads
+2026-08-25,Play Store public badge,100+,Play Store public listing,Lifetime (bucketed range),Google rounds to buckets (100+/500+/1K+) - imprecise
+2026-08-25,AdMob earnings - today,ILS 0.18,AdMob Home dashboard,2026-08-25,
+2026-08-25,AdMob earnings - yesterday,ILS 0.02,AdMob Home dashboard,2026-08-24,
+2026-08-25,AdMob earnings - this month,ILS 2.34,AdMob Home dashboard,Aug 2026 so far,
+2026-08-25,AdMob earnings - last month,ILS 3.27,AdMob Home dashboard,Jul 2026,
+2026-08-25,AdMob impressions (7d),227,AdMob Home dashboard,Last 7 days vs previous 7 days,-22.26% vs prior week
+2026-08-25,AdMob ad requests (7d),301,AdMob Home dashboard,Last 7 days vs previous 7 days,-39.80% vs prior week
+2026-08-25,AdMob match rate (7d),92.03%,AdMob Home dashboard,Last 7 days vs previous 7 days,+10.61% vs prior week
+2026-08-25,Realtime active users (Android, last 30 min),0,Firebase Realtime Analytics,2026-08-25 14:33 local,Baseline snapshot at match start - Wuhan Open
+2026-08-25,Realtime active users (Android, last 30 min),1,Firebase Realtime Analytics,2026-08-25 ~15:14 local,Mid-match check ~40min after Wuhan Open start - single blip ~10min ago not sustained
+2026-08-25,Realtime active users (Android, last 30 min),0,Firebase Realtime Analytics,2026-08-25 15:07 local (scheduled check),Wuhan Open live ~34min in - back to 0, prior 15:14 manual check showed 1 (single blip, not sustained); baseline at 14:33 start was also 0
+2026-08-26,Firebase DAU,12,Firebase Analytics Dashboard,2026-08-26 (vs comparable day),+140% - real positive signal
+2026-08-26,Firebase 7-day active users,38,Firebase Analytics Dashboard,Last 7 days as of Aug 26,
+2026-08-26,Firebase 30-day active users,120,Firebase Analytics Dashboard,Last 30 days as of Aug 26,
+2026-08-26,Android Device impressions,1540,Google Play Console Grow Users,Last 28 days vs previous 28 days,-52%
+2026-08-26,Android Device acquisitions,26,Google Play Console Grow Users,Last 28 days vs previous 28 days,-42% (28-day window dilutes 1-2 day recent campaign tail; reporting lag still applies)
+2026-08-26,Android Device first opens,11,Google Play Console Grow Users,Last 28 days vs previous 28 days,-35%
+2026-08-26,Android Monthly active devices,46,Google Play Console Grow Users,Last 28 days vs previous 28 days,+15%
+2026-08-26,Android 7-day device retention,5,Google Play Console Grow Users,Last 28 days vs previous 28 days,+67% - strong retention signal
+2026-08-26,Android installed audience (current),84,Google Play Console app list,2026-08-26,
+2026-08-26,AdMob earnings - today,ILS 0.16,AdMob Home dashboard,2026-08-26,
+2026-08-26,AdMob earnings - yesterday,ILS 0.35,AdMob Home dashboard,2026-08-25,
+2026-08-26,AdMob earnings - this month,ILS 2.66,AdMob Home dashboard,Aug 2026 so far,
+2026-08-26,AdMob impressions (7d),349,AdMob Home dashboard,Last 7 days vs previous 7 days,+40.16% - real usage increase
+2026-08-26,AdMob ad requests (7d),439,AdMob Home dashboard,Last 7 days vs previous 7 days,+7.86%
+2026-08-26,AdMob match rate (7d),97.27%,AdMob Home dashboard,Last 7 days vs previous 7 days,+12.01%
+2026-08-26,AdMob eCPM (7d),ILS 2.15,AdMob Home dashboard,Last 7 days vs previous 7 days,-46.36% - revenue per impression down despite more traffic
+2026-08-26,AdMob estimated earnings (7d),ILS 0.75,AdMob Home dashboard,Last 7 days vs previous 7 days,-24.82% - eCPM drop outweighing impression growth
+2026-08-26,Play Console policy status,SEE NOTES,Google Play Console Policy status,2026-08-26,App must target Android 15 (API 35) - already enforced; must target Android 16 (API 36) by Aug 31 2026 (5 days away) or future updates rejected. Not a content/spam violation - routine SDK targeting requirement. Code change needed - flagged not actioned.
+2026-08-27,Firebase 30-day active users,119,Firebase Analytics Dashboard,Last 30 days as of Aug 27,~flat vs 120 on Aug 26
+2026-08-27,Firebase 7-day active users,52,Firebase Analytics Dashboard,Last 7 days as of Aug 27,+37% vs 38 on Aug 26 - real jump
+2026-08-27,Firebase DAU,26,Firebase Analytics Dashboard,2026-08-27,+117% vs 12 on Aug 26 - strong signal
+2026-08-27,Android installed audience (current),84,Google Play Console app list,2026-08-27,unchanged vs Aug 26 - reporting lag
+2026-08-27,Android Device impressions,1540,Google Play Console Grow Users,Last 28 days vs previous 28 days,-52% - identical to Aug 26 snapshot; window not yet refreshed (2-3 day lag)
+2026-08-27,Android Device acquisitions,26,Google Play Console Grow Users,Last 28 days vs previous 28 days,-42% - identical to Aug 26 snapshot; window not yet refreshed
+2026-08-27,Android Monthly active devices,46,Google Play Console Grow Users,Last 28 days vs previous 28 days,+15% - identical to Aug 26 snapshot
+2026-08-27,Android 7-day device retention,5,Google Play Console Grow Users,Last 28 days vs previous 28 days,+67% - identical to Aug 26 snapshot
+2026-08-27,AdMob earnings - today,ILS 0.01,AdMob Home dashboard,2026-08-27,
+2026-08-27,AdMob earnings - yesterday,ILS 0.23,AdMob Home dashboard,2026-08-26,
+2026-08-27,AdMob earnings - this month,ILS 2.74,AdMob Home dashboard,Aug 2026 so far,
+2026-08-27,AdMob impressions (7d),420,AdMob Home dashboard,Last 7 days vs previous 7 days,+71.43% - up from +40.16% yesterday - real continued usage growth
+2026-08-27,AdMob ad requests (7d),531,AdMob Home dashboard,Last 7 days vs previous 7 days,+36.86% - up from +7.86% yesterday
+2026-08-27,AdMob match rate (7d),97.74%,AdMob Home dashboard,Last 7 days vs previous 7 days,+15.62%
+2026-08-27,AdMob eCPM (7d),ILS 2.07,AdMob Home dashboard,Last 7 days vs previous 7 days,-46.86% - still the drag on revenue despite more traffic
+2026-08-27,AdMob estimated earnings (7d),ILS 0.87,AdMob Home dashboard,Last 7 days vs previous 7 days,-8.91% - improved from -24.82% yesterday as impression growth catches up to eCPM drop
+2026-08-27,Firebase 30-day active users,119,Firebase Analytics Dashboard,Last 30 days as of Aug 27 evening,unchanged vs morning pull
+2026-08-27,Firebase 7-day active users,52,Firebase Analytics Dashboard,Last 7 days as of Aug 27 evening,unchanged vs morning pull; +37% vs Aug 25's 38
+2026-08-27,Firebase DAU,26,Firebase Analytics Dashboard,2026-08-27 evening,unchanged vs morning pull; +117% vs Aug 25's 12
+2026-08-27,Realtime active users (last 30 min),2,Firebase Realtime Analytics,2026-08-27 evening check,1 Israel + 1 United States
+2026-08-27,Android installed audience (current),84,Google Play Console app list,2026-08-27 evening,unchanged vs Aug 26/27 morning
+2026-08-27,Android Device impressions,1480,Google Play Console Grow Users,Last 28 days vs previous 28 days,-51% - still declining, window rolled forward one day from 1540/-52%
+2026-08-27,Android Device acquisitions,23,Google Play Console Grow Users,Last 28 days vs previous 28 days,-52% - DOWN further from 26 this morning and 35 on Aug 25; declining trend continuing despite promo push
+2026-08-27,Android Device first opens,6,Google Play Console Grow Users,Last 28 days vs previous 28 days,-68% - DOWN sharply from 11 this morning
+2026-08-27,Android Monthly active devices,46,Google Play Console Grow Users,Last 28 days vs previous 28 days,+10% - same count as before but growth rate softened from +15%
+2026-08-27,Android 7-day device retention,4,Google Play Console Grow Users,Last 28 days vs previous 28 days,0% growth - DOWN from 5/+67% this morning
+2026-08-27,AdMob earnings - today so far,ILS 0.07,AdMob Home dashboard,2026-08-27 evening,
+2026-08-27,AdMob earnings - this month,ILS 2.80,AdMob Home dashboard,Aug 2026 so far,up slightly from 2.74 this morning
+2026-08-27,AdMob impressions/requests (7d),420 / 531,AdMob Home dashboard,Last 7 days vs previous 7 days,unchanged vs this morning's pull - AdMob data not yet refreshed for today
