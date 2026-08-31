@@ -248,3 +248,77 @@ class IterAllPlayersTests(TestCase):
         Player.objects.create(ID=1, FirstName='A', LastName='A')
         ids = [p.ID for p in iter_all_players()]
         self.assertEqual(ids, [1, 5])
+
+
+import json
+
+from django.test import SimpleTestCase
+
+from oneFourSeven.nightly_stats_checks import load_cursor, save_cursor, select_batch
+
+
+class CursorPersistenceTests(SimpleTestCase):
+    def test_load_cursor_returns_zero_when_file_missing(self, tmp_path=None):
+        import tempfile, pathlib
+        with tempfile.TemporaryDirectory() as d:
+            path = pathlib.Path(d) / 'cursor.json'
+            self.assertEqual(load_cursor(path), 0)
+
+    def test_load_cursor_returns_zero_on_corrupt_json(self):
+        import tempfile, pathlib
+        with tempfile.TemporaryDirectory() as d:
+            path = pathlib.Path(d) / 'cursor.json'
+            path.write_text('not json')
+            self.assertEqual(load_cursor(path), 0)
+
+    def test_save_then_load_roundtrips(self):
+        import tempfile, pathlib
+        with tempfile.TemporaryDirectory() as d:
+            path = pathlib.Path(d) / 'cursor.json'
+            save_cursor(path, 42)
+            self.assertEqual(load_cursor(path), 42)
+
+    def test_save_cursor_writes_valid_json(self):
+        import tempfile, pathlib
+        with tempfile.TemporaryDirectory() as d:
+            path = pathlib.Path(d) / 'cursor.json'
+            save_cursor(path, 7)
+            data = json.loads(path.read_text())
+            self.assertEqual(data, {'next_player_id': 7})
+
+
+class SelectBatchTests(SimpleTestCase):
+    def test_selects_batch_size_from_cursor(self):
+        ids = list(range(1, 11))  # 1..10
+        batch, next_cursor = select_batch(ids, cursor=0, batch_size=3)
+        self.assertEqual(batch, [1, 2, 3])
+        self.assertEqual(next_cursor, 3)
+
+    def test_continues_from_previous_cursor(self):
+        ids = list(range(1, 11))
+        batch, next_cursor = select_batch(ids, cursor=3, batch_size=3)
+        self.assertEqual(batch, [4, 5, 6])
+        self.assertEqual(next_cursor, 6)
+
+    def test_wraps_around_when_cursor_past_end(self):
+        ids = list(range(1, 11))
+        batch, next_cursor = select_batch(ids, cursor=9, batch_size=4)
+        self.assertEqual(batch, [10, 1, 2, 3])
+        self.assertEqual(next_cursor, 3)
+
+    def test_cursor_beyond_list_length_resets_to_start(self):
+        ids = list(range(1, 6))
+        batch, next_cursor = select_batch(ids, cursor=99, batch_size=2)
+        self.assertEqual(batch, [1, 2])
+        self.assertEqual(next_cursor, 2)
+
+    def test_batch_size_larger_than_list_returns_whole_list_once(self):
+        ids = [1, 2, 3]
+        batch, next_cursor = select_batch(ids, cursor=0, batch_size=10)
+        self.assertEqual(batch, [1, 2, 3])
+        self.assertEqual(next_cursor, 0)
+
+    def test_empty_player_list_returns_empty_batch(self):
+        batch, next_cursor = select_batch([], cursor=0, batch_size=5)
+        self.assertEqual(batch, [])
+        self.assertEqual(next_cursor, 0)

@@ -155,3 +155,44 @@ def build_snapshot(player, current_season: int, top32_ids: set) -> PlayerSnapsho
         finals_reached=finals_reached, rn_pct=rn_pct,
         orphaned_seasons=orphaned, is_top32=player.ID in top32_ids,
     )
+
+
+import json as _json
+
+
+def load_cursor(path) -> int:
+    """Read the next-player-id cursor. Returns 0 (start of roster) if the
+    file is missing or unreadable — a reset is harmless, it just means
+    the sweep starts over from the first player by ID."""
+    from pathlib import Path
+
+    path = Path(path)
+    if not path.exists():
+        return 0
+    try:
+        data = _json.loads(path.read_text())
+        return int(data.get('next_player_id', 0))
+    except Exception:
+        return 0
+
+
+def save_cursor(path, next_player_id: int) -> None:
+    from pathlib import Path
+
+    Path(path).write_text(_json.dumps({'next_player_id': next_player_id}))
+
+
+def select_batch(player_ids: list, cursor: int, batch_size: int):
+    """Return (batch, next_cursor) — batch_size player IDs starting at
+    cursor's *position* in the sorted id list, wrapping to the start once
+    the end of the roster is reached. cursor is a position index, not a
+    player ID, so a shrinking/growing roster degrades gracefully instead
+    of raising."""
+    n = len(player_ids)
+    if n == 0:
+        return [], 0
+
+    start = cursor if cursor < n else 0
+    batch = [player_ids[(start + i) % n] for i in range(min(batch_size, n))]
+    next_cursor = (start + len(batch)) % n
+    return batch, next_cursor
