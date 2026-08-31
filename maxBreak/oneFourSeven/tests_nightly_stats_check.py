@@ -147,3 +147,104 @@ class IsAutoFixableTests(SimpleTestCase):
 
     def test_unknown_flag_alone_not_auto_fixable_no_finals(self):
         self.assertFalse(is_auto_fixable([Flag('NO_FINALS', 'NO_FINALS')]))
+
+
+from django.test import TestCase
+
+from oneFourSeven.models import Player, PlayerMatchHistory, Ranking
+from oneFourSeven.nightly_stats_checks import build_snapshot, get_top32_ids, iter_all_players
+
+
+class BuildSnapshotTests(TestCase):
+    def setUp(self):
+        self.player = Player.objects.create(
+            ID=1001, FirstName='Ronnie', LastName='OSullivan', FirstSeasonAsPro=2005,
+        )
+
+    def _add_match(self, **overrides):
+        defaults = dict(
+            api_match_id=1, player_id=self.player.ID, event_id=1,
+            round_number=1, round_name='Final',
+            player1_id=self.player.ID, player1_name='Ronnie OSullivan',
+            player2_id=2002, player2_name='Opponent',
+            winner_id=self.player.ID, season=2024,
+        )
+        defaults.update(overrides)
+        defaults['api_match_id'] = PlayerMatchHistory.objects.count() + 1
+        return PlayerMatchHistory.objects.create(**defaults)
+
+    def test_snapshot_with_no_matches(self):
+        snap = build_snapshot(self.player, current_season=2026, top32_ids=set())
+        self.assertEqual(snap.total_matches, 0)
+        self.assertEqual(snap.wins, 0)
+        self.assertEqual(snap.losses, 0)
+        self.assertEqual(snap.finals_reached, 0)
+        self.assertEqual(snap.rn_pct, 0.0)
+        self.assertFalse(snap.is_top32)
+        # every season from 2005..2026 is orphaned with zero rows
+        self.assertEqual(len(snap.orphaned_seasons), 22)
+
+    def test_snapshot_counts_wins_losses_and_finals(self):
+        self._add_match(round_name='Final', winner_id=self.player.ID, season=2024)
+        self._add_match(round_name='Semi-Final', winner_id=2002, season=2024, round_number=2)
+        snap = build_snapshot(self.player, current_season=2026, top32_ids=set())
+        self.assertEqual(snap.total_matches, 2)
+        self.assertEqual(snap.wins, 1)
+        self.assertEqual(snap.losses, 1)
+        self.assertEqual(snap.finals_reached, 1)
+        self.assertEqual(snap.rn_pct, 100.0)
+
+    def test_snapshot_is_top32_reflects_membership(self):
+        snap_in = build_snapshot(self.player, current_season=2026, top32_ids={1001, 5})
+        snap_out = build_snapshot(self.player, current_season=2026, top32_ids={5})
+        self.assertTrue(snap_in.is_top32)
+        self.assertFalse(snap_out.is_top32)
+
+    def test_snapshot_years_as_pro_defaults_when_first_season_missing(self):
+        rookie = Player.objects.create(ID=1002, FirstName='New', LastName='Pro', FirstSeasonAsPro=None)
+        snap = build_snapshot(rookie, current_season=2026, top32_ids=set())
+        self.assertEqual(snap.years_as_pro, 2026 - 2005 + 1)
+
+    def test_snapshot_name_joins_first_and_last(self):
+        snap = build_snapshot(self.player, current_season=2026, top32_ids=set())
+        self.assertEqual(snap.name, 'Ronnie OSullivan')
+
+    def test_snapshot_orphaned_season_present_when_a_gap_exists(self):
+        self._add_match(season=2024)
+        snap = build_snapshot(self.player, current_season=2025, top32_ids=set())
+        self.assertIn(2023, snap.orphaned_seasons)
+        self.assertNotIn(2024, snap.orphaned_seasons)
+
+    def test_snapshot_round_name_coverage_partial(self):
+        self._add_match(round_name='Final', season=2024)
+        self._add_match(round_name=None, season=2024, round_number=2)
+        snap = build_snapshot(self.player, current_season=2026, top32_ids=set())
+        self.assertEqual(snap.rn_pct, 50.0)
+
+
+class GetTop32IdsTests(TestCase):
+    def test_returns_top32_by_position_across_two_seasons(self):
+        p1 = Player.objects.create(ID=1, FirstName='A', LastName='A')
+        p2 = Player.objects.create(ID=2, FirstName='B', LastName='B')
+        Ranking.objects.create(ID=1, Player=p1, Season=2026, Position=1, Type='MoneyRankings')
+        Ranking.objects.create(ID=2, Player=p2, Season=2025, Position=2, Type='MoneyRankings')
+        ids = get_top32_ids(current_season=2026)
+        self.assertEqual(ids, {1, 2})
+
+    def test_ignores_non_money_ranking_types(self):
+        p1 = Player.objects.create(ID=1, FirstName='A', LastName='A')
+        Ranking.objects.create(ID=1, Player=p1, Season=2026, Position=1, Type='OneYear')
+        self.assertEqual(get_top32_ids(current_season=2026), set())
+
+    def test_ignores_seasons_outside_current_or_previous(self):
+        p1 = Player.objects.create(ID=1, FirstName='A', LastName='A')
+        Ranking.objects.create(ID=1, Player=p1, Season=2020, Position=1, Type='MoneyRankings')
+        self.assertEqual(get_top32_ids(current_season=2026), set())
+
+
+class IterAllPlayersTests(TestCase):
+    def test_returns_every_player_ordered_by_id(self):
+        Player.objects.create(ID=5, FirstName='E', LastName='E')
+        Player.objects.create(ID=1, FirstName='A', LastName='A')
+        ids = [p.ID for p in iter_all_players()]
+        self.assertEqual(ids, [1, 5])

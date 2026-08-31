@@ -92,3 +92,66 @@ def compute_api_flags(snapshot: PlayerSnapshot, api_titles) -> list:
 def is_auto_fixable(flags: list) -> bool:
     """True only if every flag on this player is in the known-safe set."""
     return bool(flags) and all(f.code in AUTO_FIXABLE_CODES for f in flags)
+
+
+def get_top32_ids(current_season: int) -> set:
+    """Player IDs in the top 32 of MoneyRankings across the current and
+    previous season — same lookup used by verify_player_stats.py and
+    validate_career_data.py."""
+    from oneFourSeven.models import Ranking
+
+    ids = Ranking.objects.filter(
+        Type='MoneyRankings',
+        Season__in=[current_season, current_season - 1],
+    ).order_by('Position').values_list('Player_id', flat=True)[:32]
+    return set(ids)
+
+
+def iter_all_players():
+    """Every Player row, ordered by ID for stable, resumable iteration."""
+    from oneFourSeven.models import Player
+
+    return Player.objects.order_by('ID')
+
+
+def build_snapshot(player, current_season: int, top32_ids: set) -> PlayerSnapshot:
+    """Query PlayerMatchHistory for one player and turn the results into
+    a PlayerSnapshot the flag rules can run against.
+
+    Note: unlike backfill_career_history.py's progress-file bookkeeping
+    (backfill_progress.json, meant for a one-time manual backfill run),
+    this treats every season with zero rows as orphaned — the nightly
+    check is meant to be strict, and auto-fix (Task 5) already knows how
+    to repair a real ORPHAN flag safely.
+    """
+    from oneFourSeven.models import PlayerMatchHistory
+
+    first = player.FirstSeasonAsPro or 2005
+    years_as_pro = current_season - first + 1
+
+    total = PlayerMatchHistory.objects.filter(player_id=player.ID).count()
+    wins = PlayerMatchHistory.objects.filter(player_id=player.ID, winner_id=player.ID).count()
+    losses = PlayerMatchHistory.objects.filter(
+        player_id=player.ID
+    ).exclude(winner_id=player.ID).exclude(winner_id__isnull=True).count()
+    finals_reached = PlayerMatchHistory.objects.filter(
+        player_id=player.ID, round_name__iexact='Final'
+    ).count()
+    named_rounds = PlayerMatchHistory.objects.filter(
+        player_id=player.ID, round_name__isnull=False,
+    ).count()
+    rn_pct = (named_rounds / total * 100) if total else 0.0
+
+    orphaned = [
+        season for season in range(first, current_season + 1)
+        if not PlayerMatchHistory.objects.filter(player_id=player.ID, season=season).exists()
+    ]
+
+    name = f'{player.FirstName or ""} {player.LastName or ""}'.strip()
+
+    return PlayerSnapshot(
+        player_id=player.ID, name=name, years_as_pro=years_as_pro,
+        total_matches=total, wins=wins, losses=losses,
+        finals_reached=finals_reached, rn_pct=rn_pct,
+        orphaned_seasons=orphaned, is_top32=player.ID in top32_ids,
+    )
