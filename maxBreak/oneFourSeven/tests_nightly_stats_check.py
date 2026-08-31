@@ -745,16 +745,69 @@ class NightlyStatsCheckCommandTests(TestCase):
 
     @patch('oneFourSeven.nightly_stats_checks.build_snapshot')
     def test_build_snapshot_exception_for_one_player_is_logged_not_raised(self, mock_snapshot):
-        from oneFourSeven.nightly_stats_checks import build_snapshot as real_build_snapshot
-
+        # NOTE: `build_snapshot` here is the name imported at the top of
+        # this file (line ~155), captured before any @patch is active — it
+        # is genuinely the original function. Re-importing it *inside* the
+        # test body (`from oneFourSeven.nightly_stats_checks import
+        # build_snapshot as real_build_snapshot`) would instead fetch
+        # whatever nsc.build_snapshot currently is, which during this test
+        # is the mock itself — calling "real_build_snapshot" would then
+        # recurse back into this same side_effect for every player, every
+        # time, until RecursionError. Reusing the pre-patch module-level
+        # name avoids that trap.
         def side_effect(player, current_season, top32_ids):
             if player.ID == self.healthy.ID:
                 raise Exception('boom')
-            return real_build_snapshot(player, current_season, top32_ids)
+            return build_snapshot(player, current_season, top32_ids)
 
         mock_snapshot.side_effect = side_effect
         with self.assertRaises(SystemExit):
             self._run(notify_token='tok')  # broken player still flags -> exits 1
+
+    @patch('oneFourSeven.nightly_stats_checks.attempt_autofix', return_value=True)
+    @patch('oneFourSeven.nightly_stats_checks.build_snapshot')
+    def test_recheck_build_snapshot_exception_does_not_crash_the_run(self, mock_snapshot, mock_autofix):
+        # Distinct from test_build_snapshot_exception_for_one_player_is_logged_not_raised
+        # above: that test covers the *initial* per-player build_snapshot()
+        # call raising. This covers the *second* call — the post-autofix
+        # re-verify — raising, which is a separate code path. Before this
+        # fix, the except branch there set `remaining = flags` but never
+        # bound `recheck_snapshot`, so `still_flagged.append((recheck_snapshot,
+        # remaining))` raised an uncaught UnboundLocalError and aborted the
+        # whole run (no summary line, no notification, no other players
+        # checked).
+        #
+        # Uses the pre-patch module-level `build_snapshot` name (see the
+        # note on the neighboring test above) rather than re-importing it
+        # inside this function, which would recurse into the mock.
+        call_counts = {}
+
+        def side_effect(player, current_season, top32_ids):
+            call_counts[player.ID] = call_counts.get(player.ID, 0) + 1
+            if player.ID == self.broken.ID and call_counts[player.ID] == 2:
+                # Second call for this player = the post-autofix recheck.
+                raise Exception('recheck boom')
+            return build_snapshot(player, current_season, top32_ids)
+
+        mock_snapshot.side_effect = side_effect
+
+        # Should not raise UnboundLocalError (or anything uncaught) — the
+        # run completes and reports normally; it only raises SystemExit(1)
+        # because the recheck couldn't confirm the fix and there's an error.
+        with self.assertRaises(SystemExit) as ctx:
+            self._run()
+        self.assertEqual(ctx.exception.code, 1)
+
+        output = self._last_output.getvalue()
+        # The player isn't silently dropped — it's reported as still
+        # flagged (with the original, pre-recheck flag detail) rather than
+        # crashing the loop.
+        self.assertIn('Broken Player', output)
+        self.assertIn('auto-fix attempted, still flagged', output)
+        self.assertIn('ERRORS: 1', output)
+        # The healthy player still got processed and reported — proof the
+        # loop kept going past the recheck error instead of aborting.
+        self.assertIn('Healthy Player', output)
 
     def test_clean_run_reports_zero_errors_in_summary(self):
         output = self._run(dry_run=True)

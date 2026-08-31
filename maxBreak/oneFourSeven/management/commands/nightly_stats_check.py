@@ -130,6 +130,7 @@ class Command(BaseCommand):
                         recheck_snapshot = nsc.build_snapshot(player, current_season, top32_ids)
                         remaining = nsc.compute_db_flags(recheck_snapshot)
                     except Exception as e:
+                        recheck_snapshot = snapshot  # fall back to the pre-fix snapshot; recheck itself failed
                         remaining = flags
                         errors.append(f'Re-check failed for player {player.ID}: {e}')
 
