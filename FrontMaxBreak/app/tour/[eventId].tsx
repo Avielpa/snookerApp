@@ -21,7 +21,7 @@ import { DeviceAwareFilterScrollView } from '../../components/DeviceAwareFilterS
 import { FONT_SIZE_PRIMARY } from '../../constants/typography';
 import { DeviceAwareFilterButton } from '../../components/DeviceAwareFilterButton';
 import { DrawTab } from './components/DrawTab';
-import { computeKnockoutChain, inferRoundNameFromCount } from './utils/bracketChain';
+import { computeKnockoutChain, buildSequentialRoundLabels } from './utils/bracketChain';
 import { getNationalityFlag } from '../../utils/nationalityFlag';
 import BannerAdSlot from '../../components/ads/BannerAdSlot';
 
@@ -414,12 +414,10 @@ const TournamentDetailsScreen = () => {
         // that must never be forced into a Final/SF/QF label. See
         // ../utils/bracketChain.ts.
         const knockoutChain = computeKnockoutChain(deduplicatedMatches);
+        const sequentialLabels = buildSequentialRoundLabels(deduplicatedMatches);
         const resolveRoundName = (round: number | null | undefined): string => {
             if (round === null || round === undefined) return genericRoundName(round);
-            if (roundNames[round]) return roundNames[round];
-            const chainEntry = knockoutChain.get(round);
-            if (chainEntry) return inferRoundNameFromCount(chainEntry.matchCount);
-            return genericRoundName(round);
+            return sequentialLabels.get(round) ?? genericRoundName(round);
         };
 
         const categories: Record<MatchCategory, { title: string; icon: keyof typeof Ionicons.glyphMap; matches: MatchListItem[] }> = {

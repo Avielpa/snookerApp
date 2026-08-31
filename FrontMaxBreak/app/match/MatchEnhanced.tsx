@@ -168,17 +168,9 @@ export default function MatchEnhanced() {
     return match ? parseInt(match[1], 10) : null;
   };
 
-  const getRoundName = (round: number | null): string => {
+  const getRoundName = (round: number | null, pathRound?: number | null): string => {
+    if (pathRound) return `Round ${pathRound}`;
     if (!round) return 'Qualifying';
-    if (round >= 15) return 'Final';
-    if (round === 14) return 'Semi-Finals';
-    if (round === 13) return 'Quarter-Finals';
-    if (round === 12) return 'Round 1 (L16)';
-    if (round === 11) return 'Round 1 (L16)';
-    if (round === 10) return 'Round 1 (L16)';
-    if (round === 9) return 'Round 2 (L32)';
-    if (round === 8) return 'Round 2 (L32)';
-    if (round === 7) return 'Round 1 (L32)';
     return `Round ${round}`;
   };
 
@@ -422,7 +414,7 @@ export default function MatchEnhanced() {
       isLive: matchDetails.status_code === 1,
       isOnBreak: matchDetails.status_code === 2,
       isFinished: matchDetails.status_code === 3,
-      roundName: getRoundName(matchDetails.round),
+      roundName: getRoundName(matchDetails.round, matchDetails.path_round),
     };
   }, [frameScores, matchDetails, realMatchFormat]); // Add realMatchFormat to dependency
 

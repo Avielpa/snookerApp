@@ -144,7 +144,14 @@ function computeKnockoutChainsByEvent(matches) {
 
 // ── Helpers ──────────────────────────────────────────────────────────────
 function mkMatch(id, round, opts = {}) {
-  return { id, round, number: opts.number ?? id, scheduled_date: opts.date ?? null, event_id: opts.eventId ?? null };
+  return {
+    id,
+    round,
+    number: opts.number ?? id,
+    scheduled_date: opts.date ?? null,
+    event_id: opts.eventId ?? null,
+    path_event_id: opts.pathEventId ?? null,
+  };
 }
 
 function chainRoundNumbers(chain) {
@@ -337,6 +344,98 @@ console.log('\n── computeKnockoutChainsByEvent (multi-event Home feed) ─�
   const chains = computeKnockoutChainsByEvent(matches);
   assertTrue(chains.has('9:1') && chains.has('9:2') && chains.has('9:3'), 'single-event input produces the full chain keyed by event');
 }
+
+function sequentialRoundName(chainIndex) {
+  return `Round ${chainIndex + 1}`;
+}
+
+function buildSequentialRoundLabels(matches) {
+  const chain = computeKnockoutChain(matches);
+  const labels = new Map();
+  const ordered = Array.from(chain.values()).sort((a, b) => a.chainIndex - b.chainIndex);
+  ordered.forEach((entry, index) => {
+    labels.set(entry.roundNumber, sequentialRoundName(index));
+  });
+  const leftover = [...new Set(matches.map((m) => m.round).filter((r) => r != null && !labels.has(r)))].sort((a, b) => a - b);
+  leftover.forEach((roundNumber, index) => {
+    labels.set(roundNumber, sequentialRoundName(ordered.length + index));
+  });
+  return labels;
+}
+
+function buildSequentialRoundLabelsByEvent(matches) {
+  const byEvent = new Map();
+  matches.forEach((m) => {
+    const key = String(m.path_event_id ?? m.event_id ?? 'unknown');
+    if (!byEvent.has(key)) byEvent.set(key, []);
+    byEvent.get(key).push(m);
+  });
+
+  const result = new Map();
+  byEvent.forEach((eventMatches, eventKey) => {
+    const labels = buildSequentialRoundLabels(eventMatches);
+    labels.forEach((label, roundNumber) => {
+      result.set(`${eventKey}:${roundNumber}`, label);
+    });
+  });
+  return result;
+}
+
+console.log('\n── buildSequentialRoundLabelsByEvent (multi-event Home feed) ──');
+{
+  // Two genuinely different concurrent tournaments both using round 7/8,
+  // numbered "backwards" relative to each other — must never collide.
+  const matches = [
+    ...Array.from({ length: 8 }, (_, i) => mkMatch(i, 7, { date: '2026-01-01', eventId: 100 })),
+    ...Array.from({ length: 4 }, (_, i) => mkMatch(100 + i, 8, { date: '2026-01-03', eventId: 100 })),
+    mkMatch(200, 8, { date: '2026-01-01', eventId: 200 }),
+    mkMatch(201, 8, { date: '2026-01-01', eventId: 200 }),
+    mkMatch(300, 7, { date: '2026-01-03', eventId: 200 }),
+  ];
+  const byEvent = buildSequentialRoundLabelsByEvent(matches);
+  assertEqual(byEvent.get('100:7'), 'Round 1', 'event 100 round 7 -> Round 1 (its own chain)');
+  assertEqual(byEvent.get('100:8'), 'Round 2', 'event 100 round 8 -> Round 2');
+  assertEqual(byEvent.get('200:8'), 'Round 1', 'event 200 round 8 -> Round 1 (own chain, unaffected by event 100)');
+  assertEqual(byEvent.get('200:7'), 'Round 2', 'event 200 round 7 -> Round 2 (inverted vs event 100, proving no cross-event bleed)');
+}
+{
+  // The actual regression this test exists to prevent: a merged qualifier
+  // Last-64 match keeps its OWN event_id (the Qualifiers event) but its
+  // PATH is the main event's — grouping must key off path_event_id so this
+  // one path isn't split back into two round-1 buckets.
+  const matches = [
+    ...Array.from({ length: 32 }, (_, i) =>
+      mkMatch(i, 7, { date: '2026-08-23', eventId: 2758, pathEventId: 2757 })
+    ),
+    ...Array.from({ length: 16 }, (_, i) =>
+      mkMatch(100 + i, 8, { date: '2026-08-25', eventId: 2757, pathEventId: 2757 })
+    ),
+  ];
+  const byEvent = buildSequentialRoundLabelsByEvent(matches);
+  assertEqual(byEvent.get('2757:7'), 'Round 1', 'merged Last-64 (own event 2758) grouped under path_event_id 2757 as Round 1');
+  assertEqual(byEvent.get('2757:8'), 'Round 2', 'main event Last-32 (event 2757) grouped as Round 2, same path');
+  assertEqual(byEvent.has('2758:7'), false, 'no separate bucket created for the Last-64\'s own (pre-merge) event_id');
+}
+
+console.log('\n── sequential Round 1..N labels ──');
+{
+  const matches = [
+    ...Array.from({ length: 32 }, (_, i) => mkMatch(i, 7, { date: '2026-08-23' })),
+    ...Array.from({ length: 16 }, (_, i) => mkMatch(100 + i, 8, { date: '2026-08-25' })),
+    ...Array.from({ length: 8 }, (_, i) => mkMatch(200 + i, 9, { date: '2026-08-27' })),
+    ...Array.from({ length: 4 }, (_, i) => mkMatch(300 + i, 13, { date: '2026-08-28' })),
+    ...Array.from({ length: 2 }, (_, i) => mkMatch(400 + i, 14, { date: '2026-08-29' })),
+    mkMatch(500, 15, { date: '2026-08-30' }),
+  ];
+  const labels = buildSequentialRoundLabels(matches);
+  assertEqual(labels.get(7), 'Round 1', 'last-64 stage is Round 1');
+  assertEqual(labels.get(8), 'Round 2', 'last-32 stage is Round 2');
+  assertEqual(labels.get(9), 'Round 3', 'last-16 stage is Round 3');
+  assertEqual(labels.get(13), 'Round 4', 'quarter-final stage is Round 4');
+  assertEqual(labels.get(14), 'Round 5', 'semi-final stage is Round 5');
+  assertEqual(labels.get(15), 'Round 6', 'final stage is Round 6');
+}
+assertEqual(sequentialRoundName(0), 'Round 1', 'index 0 -> Round 1');
 
 // ── Summary ──────────────────────────────────────────────────────────────
 console.log(`\n${fail === 0 ? '✅' : '❌'} ${pass}/${pass + fail} assertions passed`);
