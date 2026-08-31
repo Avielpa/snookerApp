@@ -104,7 +104,16 @@ class Command(BaseCommand):
                 
                 # Check if we have active tournaments with matches
                 has_active_matches = self._has_active_matches(current_time)
-                
+
+                # Check for recently finished tournaments needing final ranking/player
+                # updates. Must run every tick regardless of active/idle branch below --
+                # Qualifiers events keep has_active_matches True almost continuously
+                # through the season, so gating this inside the idle-only branch left it
+                # starved (rankings could go days without refreshing after a main event
+                # ended while other events' qualifiers were still running).
+                if self._check_tournament_end_updates():
+                    self.stdout.write('[AUTOMATION] Tournament end updates completed')
+
                 if has_active_matches:
                     self.stdout.write('[ACTIVE] ACTIVE TOURNAMENTS FOUND - Starting live updates')
                     self._run_live_updates()
@@ -141,11 +150,7 @@ class Command(BaseCommand):
                     # Check for upcoming tournaments needing match data (every 4 hours)
                     if self._check_upcoming_tournament_updates():
                         self.stdout.write('[AUTOMATION] Upcoming tournament updates completed')
-                    
-                    # Check for recently finished tournaments needing final updates
-                    if self._check_tournament_end_updates():
-                        self.stdout.write('[AUTOMATION] Tournament end updates completed')
-                    
+
                     next_check = sleep_interval
                     self.stdout.write(f'[TIMER] Next check in {next_check//60} minutes')
                 
