@@ -32,7 +32,9 @@ import { getDeviceTabConfig } from '../config/deviceTabConfig';
 import { DeviceAwareFilterScrollView } from '../components/DeviceAwareFilterScrollView';
 import { useOtherLiveMatches } from './home/hooks/useOtherLiveMatches';
 import { OtherLiveSection } from './home/components/OtherLiveSection';
-import { TodayMatchesSection } from './home/components/TodayMatchesSection';
+import { useTodayMatches } from './home/hooks/useTodayMatches';
+import { TodayMatchesToggle } from './home/components/TodayMatchesToggle';
+import { buildTodayMatchesListItems } from './home/utils/todayMatchesListItems';
 import { DrawTab } from './tour/components/DrawTab';
 import { OtherToursTab } from './home/components/OtherTours';
 import { shouldRedirectToMedia } from './home/utils/mediaFallback';
@@ -109,6 +111,8 @@ const HomeScreen = (): React.ReactElement | null => {
     } = useHomeData();
 
     const { matches: otherLiveMatches } = useOtherLiveMatches(currentTournamentId);
+    const { groups: todayGroups } = useTodayMatches();
+    const [isTodayExpanded, setIsTodayExpanded] = useState(true);
     const [searchQuery, setSearchQuery] = useState('')
 
 
@@ -269,6 +273,22 @@ const HomeScreen = (): React.ReactElement | null => {
             );
         });
 
+    // Today's Matches — its own always-visible summary row, independent of
+    // whichever tab is selected. Rendered as real list items (not a separate
+    // boxed panel) so the whole screen scrolls together as one list.
+    const todayTotalMatches = useMemo(
+        () => todayGroups.reduce((sum, group) => sum + group.matches.length, 0),
+        [todayGroups]
+    );
+    const todayListItems = useMemo(
+        () => (isTodayExpanded ? buildTodayMatchesListItems(todayGroups) : []),
+        [todayGroups, isTodayExpanded]
+    );
+    const finalListData = useMemo(
+        () => [...todayListItems, ...displayData],
+        [todayListItems, displayData]
+    );
+
     // rawMatches for DrawTab comes directly from useHomeData (unprocessed, no dedup)
 
     // Create styles with dynamic colors
@@ -335,6 +355,12 @@ const HomeScreen = (): React.ReactElement | null => {
                     </View>
                 )}
             </View>
+            <TodayMatchesToggle
+                COLORS={COLORS}
+                totalMatches={todayTotalMatches}
+                isExpanded={isTodayExpanded}
+                onToggle={() => setIsTodayExpanded((prev) => !prev)}
+            />
             {tournamentPrize && (
                 <View style={styles.prizeContainer}>
                     <Ionicons name="diamond-outline" size={14} color={COLORS.accentLight} />
@@ -416,8 +442,6 @@ const HomeScreen = (): React.ReactElement | null => {
                     </View>
                 )}
                 
-                <TodayMatchesSection COLORS={COLORS} />
-
                 <View style={styles.listArea}>
 
                     <TextInput
@@ -462,20 +486,22 @@ const HomeScreen = (): React.ReactElement | null => {
                         <OtherToursTab colors={COLORS} />
                     ) : (
                         <FlatList
-                            data={displayData}
+                            data={finalListData}
                             renderItem={renderListItem}
-                            keyExtractor={(item: ListItem) => {
+                            keyExtractor={(item: ListItem, index: number) => {
                                 if (item.type === 'match') {
                                     // ENHANCED KEY: Include ALL critical data to force re-render when any relevant data changes
                                     // This fixes the emulator vs physical device score display inconsistency
+                                    // Index is included too: the same match can legitimately appear twice
+                                    // (once in Today's Matches, once in its normal tab section below).
                                     const scoreKey = `${item.score1 || 'null'}-${item.score2 || 'null'}`;
                                     const statusKey = `${item.status_code || 'null'}`;
                                     const winnerKey = `${item.winner_id || 'null'}`;
                                     const nameKey = `${item.player1_name || 'null'}_${item.player2_name || 'null'}`;
                                     const combinedKey = `${scoreKey}-${statusKey}-${winnerKey}-${nameKey}`;
-                                    return `match-${item.id}-${item.api_match_id}-${combinedKey}`;
+                                    return `match-${index}-${item.id}-${item.api_match_id}-${combinedKey}`;
                                 }
-                                return item.id;
+                                return `${item.id}-${index}`;
                             }}
                             ListHeaderComponent={tournamentSectionHeader}
                             stickyHeaderIndices={[0]}

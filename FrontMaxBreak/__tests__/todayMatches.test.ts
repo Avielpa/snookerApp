@@ -4,7 +4,8 @@
 // getTodayMatches (todayMatchesService.ts). See
 // docs/PLAN_2026-08-31_TODAY_MATCHES_SECTION.md.
 
-import { matchStatusToCategory, addMatchItemFields } from '../app/home/hooks/useTodayMatches';
+import { matchStatusToCategory, addMatchItemFields, TodayMatchGroupWithItems } from '../app/home/hooks/useTodayMatches';
+import { buildTodayMatchesListItems } from '../app/home/utils/todayMatchesListItems';
 import { TodayMatchGroup } from '../services/todayMatchesService';
 
 describe('matchStatusToCategory', () => {
@@ -98,6 +99,89 @@ describe('addMatchItemFields', () => {
         const result = addMatchItemFields(group);
         expect(result.matches[0].matchCategory).toBe('upcoming');
         expect(result.matches[1].matchCategory).toBe('livePlaying');
+    });
+});
+
+describe('buildTodayMatchesListItems', () => {
+    const matchItem = (apiMatchId: number, overrides = {}) => ({
+        id: apiMatchId,
+        api_match_id: apiMatchId,
+        player1_id: 10,
+        player2_id: 20,
+        score1: null,
+        score2: null,
+        note: null,
+        scheduled_date: null,
+        winner_id: null,
+        status_code: 0,
+        type: 'match' as const,
+        matchCategory: 'upcoming' as const,
+        ...overrides,
+    });
+
+    function makeGroup(overrides: Partial<TodayMatchGroupWithItems> = {}): TodayMatchGroupWithItems {
+        return {
+            event_id: 1,
+            event_name: 'British Open',
+            is_qualifier: false,
+            matches: [matchItem(100)],
+            ...overrides,
+        };
+    }
+
+    it('returns an empty list for no groups', () => {
+        expect(buildTodayMatchesListItems([])).toEqual([]);
+    });
+
+    it('emits one roundHeader followed by that group\'s matches', () => {
+        const items = buildTodayMatchesListItems([makeGroup()]);
+        expect(items[0].type).toBe('roundHeader');
+        expect(items[1].type).toBe('match');
+        expect(items).toHaveLength(2);
+    });
+
+    it('labels a qualifier group\'s header with "· Qualifiers"', () => {
+        const items = buildTodayMatchesListItems([makeGroup({ is_qualifier: true })]);
+        expect((items[0] as any).roundName).toBe('British Open · Qualifiers');
+    });
+
+    it('does not add "· Qualifiers" for a non-qualifier group', () => {
+        const items = buildTodayMatchesListItems([makeGroup({ is_qualifier: false })]);
+        expect((items[0] as any).roundName).toBe('British Open');
+    });
+
+    it('emits a separate roundHeader per group, in the given order', () => {
+        const items = buildTodayMatchesListItems([
+            makeGroup({ event_id: 1, event_name: 'British Open' }),
+            makeGroup({ event_id: 2, event_name: 'British Open Qualifiers', is_qualifier: true }),
+        ]);
+        const headers = items.filter((i) => i.type === 'roundHeader');
+        expect(headers).toHaveLength(2);
+        expect((headers[0] as any).roundName).toBe('British Open');
+        expect((headers[1] as any).roundName).toBe('British Open Qualifiers · Qualifiers');
+    });
+
+    it('gives every roundHeader a unique id even across groups', () => {
+        const items = buildTodayMatchesListItems([
+            makeGroup({ event_id: 1 }),
+            makeGroup({ event_id: 2 }),
+        ]);
+        const headerIds = items.filter((i) => i.type === 'roundHeader').map((i: any) => i.id);
+        expect(new Set(headerIds).size).toBe(headerIds.length);
+    });
+
+    it('includes every match from a group with multiple matches', () => {
+        const items = buildTodayMatchesListItems([
+            makeGroup({ matches: [matchItem(100), matchItem(101), matchItem(102)] }),
+        ]);
+        const matchItems = items.filter((i) => i.type === 'match');
+        expect(matchItems).toHaveLength(3);
+    });
+
+    it('handles a group with zero matches (header only, no crash)', () => {
+        const items = buildTodayMatchesListItems([makeGroup({ matches: [] })]);
+        expect(items).toHaveLength(1);
+        expect(items[0].type).toBe('roundHeader');
     });
 });
 
