@@ -8,6 +8,7 @@ import {
     isLiveOrOnBreak,
     matchIdentityKey,
     liveMatchesFromGroup,
+    excludeLiveFromGroups,
     collectOtherLiveGroups,
     countGroupMatches,
 } from '../app/home/utils/homeDrawer';
@@ -146,6 +147,60 @@ describe('liveMatchesFromGroup', () => {
         expect(result?.event_id).toBe(2);
         expect(result?.is_qualifier).toBe(true);
         expect(result?.event_name).toBe('British Open Qualifiers');
+    });
+});
+
+describe('excludeLiveFromGroups', () => {
+    it('drops live matches so they do not appear on Upcoming', () => {
+        const result = excludeLiveFromGroups([
+            group({
+                event_id: 2,
+                matches: [
+                    matchItem(200, { matchCategory: 'livePlaying' }),
+                    matchItem(201, { matchCategory: 'upcoming' }),
+                ],
+            }),
+        ]);
+        expect(result).toHaveLength(1);
+        expect(result[0].matches.map((m) => m.api_match_id)).toEqual([201]);
+    });
+
+    it('drops on-break matches so they stay on the Live tab', () => {
+        const result = excludeLiveFromGroups([
+            group({
+                event_id: 2,
+                matches: [matchItem(210, { matchCategory: 'onBreak' })],
+            }),
+        ]);
+        expect(result).toEqual([]);
+    });
+
+    it('keeps finished and upcoming matches for Today\'s Matches', () => {
+        const result = excludeLiveFromGroups([
+            group({
+                event_id: 2,
+                matches: [
+                    matchItem(202, { matchCategory: 'finished' }),
+                    matchItem(203, { matchCategory: 'upcoming' }),
+                ],
+            }),
+        ]);
+        expect(result[0].matches.map((m) => m.matchCategory)).toEqual(['finished', 'upcoming']);
+    });
+
+    it('drops a group that is only live matches', () => {
+        const result = excludeLiveFromGroups([
+            group({
+                event_id: 80,
+                event_name: 'Q Tour Event 7',
+                matches: [matchItem(800, { matchCategory: 'livePlaying' })],
+            }),
+        ]);
+        expect(result).toEqual([]);
+    });
+
+    it('returns empty for an empty input', () => {
+        expect(excludeLiveFromGroups([])).toEqual([]);
     });
 });
 

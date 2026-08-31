@@ -35,6 +35,18 @@ export function liveMatchesFromGroup(group: TodayMatchGroupWithItems): TodayMatc
     return { ...group, matches };
 }
 
+export function excludeLiveFromGroup(group: TodayMatchGroupWithItems): TodayMatchGroupWithItems | null {
+    const matches = group.matches.filter((match) => !isLiveOrOnBreak(match.matchCategory));
+    if (matches.length === 0) return null;
+    return { ...group, matches };
+}
+
+export function excludeLiveFromGroups(groups: TodayMatchGroupWithItems[]): TodayMatchGroupWithItems[] {
+    return groups
+        .map(excludeLiveFromGroup)
+        .filter((group): group is TodayMatchGroupWithItems => group != null);
+}
+
 export function countGroupMatches(groups: TodayMatchGroupWithItems[]): number {
     return groups.reduce((sum, group) => sum + group.matches.length, 0);
 }

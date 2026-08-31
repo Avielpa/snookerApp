@@ -34,5 +34,8 @@ Tab-aware single upper drawer, generic by `event_id` (not by tour name):
 - Qualifier/Q-Tour live appear under Also Live when expanded
 - Open mission #12: a stale pre-ATT preview APK will crash on this OTA — needs a fresh preview build first
 
+## Follow-up
+Upcoming still showed live cards because Today's Matches included every status. `excludeLiveFromGroups` now strips live/on-break from that drawer so they only appear on the Live tab.
+
 ## Lesson
 Do not treat "other live" as "not main tour". The generic rule is "not the focused `event_id`". Qualifier siblings are a different event and belong in Also Live.

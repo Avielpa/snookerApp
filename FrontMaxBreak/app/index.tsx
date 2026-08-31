@@ -40,6 +40,7 @@ import {
     shouldShowOtherLiveFooter,
     collectOtherLiveGroups,
     countGroupMatches,
+    excludeLiveFromGroups,
     OTHER_LIVE_ACCENT,
 } from './home/utils/homeDrawer';
 import { DrawTab } from './tour/components/DrawTab';
@@ -288,9 +289,13 @@ const HomeScreen = (): React.ReactElement | null => {
         () => excludeEventFromGroups(todayGroups, currentTournamentId),
         [todayGroups, currentTournamentId]
     );
-    const todayTotalMatches = useMemo(
-        () => todayGroupsExcludingCurrentTournament.reduce((sum, group) => sum + group.matches.length, 0),
+    const todayGroupsForDrawer = useMemo(
+        () => excludeLiveFromGroups(todayGroupsExcludingCurrentTournament),
         [todayGroupsExcludingCurrentTournament]
+    );
+    const todayTotalMatches = useMemo(
+        () => countGroupMatches(todayGroupsForDrawer),
+        [todayGroupsForDrawer]
     );
     const drawerMode = resolveHomeDrawerMode(activeFilter);
     const otherLiveGroups = useMemo(
@@ -305,13 +310,13 @@ const HomeScreen = (): React.ReactElement | null => {
         if (drawerMode === 'otherLive') {
             return isOtherLiveExpanded ? buildTodayMatchesListItems(otherLiveGroups) : [];
         }
-        return isTodayExpanded ? buildTodayMatchesListItems(todayGroupsExcludingCurrentTournament) : [];
+        return isTodayExpanded ? buildTodayMatchesListItems(todayGroupsForDrawer) : [];
     }, [
         drawerMode,
         isOtherLiveExpanded,
         isTodayExpanded,
         otherLiveGroups,
-        todayGroupsExcludingCurrentTournament,
+        todayGroupsForDrawer,
     ]);
     const finalListData = useMemo(
         () => [...drawerListItems, ...displayData],
