@@ -30,11 +30,14 @@ def get_today_date() -> date:
 
 
 def get_matches_scheduled_today():
-    """Every match scheduled for today, in any event, any tour, any status."""
+    """Every match scheduled for today, in any event, any tour, any status —
+    ordered by kickoff time so a match earlier in the day always comes
+    before a later one, regardless of which event it belongs to."""
     return (
         MatchesOfAnEvent.objects
         .filter(ScheduledDate__date=get_today_date())
         .select_related('Event')
+        .order_by('ScheduledDate')
     )
 
 
@@ -60,7 +63,12 @@ def build_today_match_row(match, player_names_map: dict) -> dict:
 
 def group_matches_by_event(rows: list) -> list:
     """Groups a flat list of match rows into one entry per event, ordered by
-    event name. Pure function — no DB access."""
+    that group's earliest kickoff time. Pure function — no DB access.
+
+    Assumes rows already arrive time-ordered (see get_matches_scheduled_today's
+    .order_by('ScheduledDate')) — each group's first appended row is then
+    already its earliest match, so matches stay time-ordered within their
+    group too, with no extra sort needed here."""
     groups_by_event_id = {}
     for row in rows:
         event_id = row['event_id']
@@ -75,7 +83,7 @@ def group_matches_by_event(rows: list) -> list:
         groups_by_event_id[event_id]['matches'].append(row)
 
     groups = list(groups_by_event_id.values())
-    groups.sort(key=lambda group: group['event_name'] or '')
+    groups.sort(key=lambda group: group['matches'][0].get('scheduled_date') or '')
     return groups
 
 

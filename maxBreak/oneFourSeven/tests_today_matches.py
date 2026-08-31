@@ -147,13 +147,26 @@ class GroupMatchesByEventTest(TestCase):
         groups = group_matches_by_event(rows)
         self.assertEqual(len(groups), 2)
 
-    def test_groups_ordered_by_event_name(self):
+    def test_groups_ordered_by_earliest_match_time_not_event_name(self):
+        # "Wuhan Open" is a group's earliest match at 09:00; "British Open" at
+        # 11:00 — Wuhan's group must come first despite the alphabetical name.
         rows = [
-            {'event_id': 2, 'event_name': 'Wuhan Open', 'event_tour': 'main', 'is_qualifier': False},
-            {'event_id': 1, 'event_name': 'British Open', 'event_tour': 'main', 'is_qualifier': False},
+            {'event_id': 2, 'event_name': 'Wuhan Open', 'event_tour': 'main', 'is_qualifier': False, 'scheduled_date': '2026-08-31T09:00:00Z'},
+            {'event_id': 1, 'event_name': 'British Open', 'event_tour': 'main', 'is_qualifier': False, 'scheduled_date': '2026-08-31T11:00:00Z'},
         ]
         groups = group_matches_by_event(rows)
-        self.assertEqual([g['event_name'] for g in groups], ['British Open', 'Wuhan Open'])
+        self.assertEqual([g['event_name'] for g in groups], ['Wuhan Open', 'British Open'])
+
+    def test_matches_within_a_group_stay_in_the_order_given(self):
+        # group_matches_by_event trusts its caller to pass already
+        # time-ordered rows (get_matches_scheduled_today does this) —
+        # it must not silently re-sort within a group.
+        rows = [
+            {'event_id': 1, 'event_name': 'British Open', 'event_tour': 'main', 'is_qualifier': False, 'scheduled_date': '2026-08-31T09:00:00Z', 'api_match_id': 100},
+            {'event_id': 1, 'event_name': 'British Open', 'event_tour': 'main', 'is_qualifier': False, 'scheduled_date': '2026-08-31T11:00:00Z', 'api_match_id': 101},
+        ]
+        groups = group_matches_by_event(rows)
+        self.assertEqual([m['api_match_id'] for m in groups[0]['matches']], [100, 101])
 
     def test_empty_input_gives_empty_output(self):
         self.assertEqual(group_matches_by_event([]), [])
@@ -237,6 +250,28 @@ class TodayMatchesViewTest(TestCase):
         response = self.client.get('/oneFourSeven/matches/today/')
         event_ids = {g['event_id'] for g in response.data['groups']}
         self.assertIn(6, event_ids)
+
+    def test_response_orders_groups_and_matches_by_time_not_alphabetically(self):
+        # Qualifiers plays earlier in the day than the main draw today —
+        # despite "British Open" alphabetically preceding "British Open
+        # Qualifiers", the earlier-kicking-off group must come first.
+        main = _event(1, 'British Open')
+        qual = _event(2, 'British Open Qualifiers', event_type='Qualifying', main=1)
+        _match(qual, 6, 1, 200, TODAY + timedelta(hours=9))
+        _match(main, 1, 1, 100, TODAY + timedelta(hours=12))
+
+        response = self.client.get('/oneFourSeven/matches/today/')
+        event_ids_in_order = [g['event_id'] for g in response.data['groups']]
+        self.assertEqual(event_ids_in_order, [2, 1])
+
+    def test_matches_within_the_response_are_time_ordered(self):
+        main = _event(1, 'British Open')
+        _match(main, 1, 2, 102, TODAY + timedelta(hours=14), status=0)
+        _match(main, 1, 1, 101, TODAY + timedelta(hours=10), status=0)
+
+        response = self.client.get('/oneFourSeven/matches/today/')
+        match_ids_in_order = [m['api_match_id'] for m in response.data['groups'][0]['matches']]
+        self.assertEqual(match_ids_in_order, [101, 102])
 
     def test_missing_player_name_does_not_crash(self):
         main = _event(1, 'British Open')
