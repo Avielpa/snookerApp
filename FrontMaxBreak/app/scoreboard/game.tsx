@@ -25,6 +25,7 @@ import { detectGameSituations, pickInsight, SituationKey } from '../../services/
 import { computeWinProbability } from '../../services/winProbability';
 import { computeMomentumSeries } from '../../services/momentum';
 import BannerAdSlot from '../../components/ads/BannerAdSlot';
+import { useScoreboardFrameCompleteInterstitial } from '../../services/adsService';
 
 function GameScreen({ initialState }: { initialState?: GameState }) {
   const c = scoreboardColors;
@@ -130,6 +131,10 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
       setShowFrameSummary(true);
     }
   }, [snap.isFrameOver]);
+
+  // First interstitial opportunity in the scoreboard flow — gated on the first
+  // completed frame so it never interrupts before the user has used the feature.
+  useScoreboardFrameCompleteInterstitial(snap.isFrameOver);
 
   function buildFinalState(): { fw: [number, number]; results: typeof state.frameResults } {
     const fw: [number, number] = [framesWon[0], framesWon[1]];

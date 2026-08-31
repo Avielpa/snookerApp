@@ -277,7 +277,9 @@
       "Bash(bash -c ' *)",
       "Bash(ANDROID_SERIAL=emulator-5556 npx expo run:android --device emulator-5556)",
       "PowerShell(& \"$env:LOCALAPPDATA\\\\Android\\\\Sdk\\\\platform-tools\\\\adb.exe\" devices -l)",
-      "Skill(loop)"
+      "Skill(loop)",
+      "WebFetch(domain:livescore.snooker.org)",
+      "WebFetch(domain:www.worldsnookerseniorstour.com)"
     ],
     "deny": [],
     "ask": [],

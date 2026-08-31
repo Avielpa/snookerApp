@@ -53,15 +53,19 @@ export function initAds(): Promise<void> {
 // the instant the app launches is a well-documented uninstall driver.
 const INTERSTITIAL_DELAY_MS = 5000;
 
-// Each interstitial trigger (app-launch, scoreboard-entry, ...) gets its own
-// one-time-per-session cap, keyed by label — so app-launch showing an ad
-// doesn't block scoreboard-entry from showing its own later, and vice versa.
+// Each interstitial trigger gets its own one-time-per-session cap, keyed by
+// label — so one trigger showing an ad doesn't block another from showing
+// its own later, and vice versa.
 const shownThisSessionByLabel: Record<string, boolean> = {};
 
+// `trigger` gates the whole effect: while false, nothing is scheduled. Pass
+// `true` (the default) for a fire-on-mount hook, or a condition that flips
+// true later (e.g. "first frame finished") to delay the earliest an ad can
+// be requested until real value has been delivered.
 function createOnceInterstitialHook(label: string) {
-  return function useOnceInterstitial(): void {
+  return function useOnceInterstitial(trigger: boolean = true): void {
     useEffect(() => {
-      if (!ADS_ENABLED || shownThisSessionByLabel[label] || !INTERSTITIAL_AD_UNIT_ID) return;
+      if (!trigger || !ADS_ENABLED || shownThisSessionByLabel[label] || !INTERSTITIAL_AD_UNIT_ID) return;
 
       let isMounted = true;
       let unsubscribeLoaded: (() => void) | undefined;
@@ -96,14 +100,14 @@ function createOnceInterstitialHook(label: string) {
         unsubscribeLoaded?.();
         unsubscribeError?.();
       };
-    }, []);
+    }, [trigger]);
   };
 }
 
-// Shown once per app process, the first time the scoreboard setup screen is opened —
-// independent cap from the app-launch interstitial above, so this can still
-// fire even if the app-launch ad already showed earlier in the session.
-export const useScoreboardEntryInterstitial = createOnceInterstitialHook('scoreboard-entry');
+// Shown once per app process, the first time a scoreboard frame is completed
+// (not on scoreboard entry) — so the user experiences the feature before any
+// ad can interrupt them. Caller passes `snap.isFrameOver` as the trigger.
+export const useScoreboardFrameCompleteInterstitial = createOnceInterstitialHook('scoreboard-frame-complete');
 
 const MEDIA_INTERSTITIAL_COOLDOWN_KEY = '@maxbreak_media_interstitial_last_shown';
 export const MEDIA_INTERSTITIAL_COOLDOWN_MS = 4 * 60 * 60 * 1000; // 4 hours
