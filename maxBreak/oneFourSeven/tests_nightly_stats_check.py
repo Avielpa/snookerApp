@@ -439,34 +439,64 @@ class SendAdminNotificationTests(SimpleTestCase):
 
 
 from io import StringIO
+import contextlib
 
 from django.core.management import call_command as django_call_command
+from oneFourSeven.constants import current_season_int
 
 
 class NightlyStatsCheckCommandTests(TestCase):
     def setUp(self):
+        # Anchor everything to "now" rather than a hardcoded calendar year —
+        # a fixed year here would silently drift out of sync with
+        # build_snapshot's years_as_pro = current_season - FirstSeasonAsPro
+        # + 1 math as real time advances (see
+        # project_season_detection_bug_pattern in project memory).
+        self.current_season = current_season_int()
         self.healthy = Player.objects.create(
-            ID=2001, FirstName='Healthy', LastName='Player', FirstSeasonAsPro=2024,
+            ID=2001, FirstName='Healthy', LastName='Player',
+            FirstSeasonAsPro=self.current_season - 1,
         )
         self.broken = Player.objects.create(
-            ID=2002, FirstName='Broken', LastName='Player', FirstSeasonAsPro=2010,
+            ID=2002, FirstName='Broken', LastName='Player',
+            FirstSeasonAsPro=self.current_season - 1,
         )
-        # Healthy player: enough matches for 2 years as pro (>=20), all named rounds.
+        # Healthy player: years_as_pro == 2 (turned pro last season), so
+        # min_expected == 20 matches — 25 clears that. Split across both
+        # seasons so neither is orphaned, all with a named round.
         for i in range(25):
+            season = self.current_season - 1 if i < 13 else self.current_season
             PlayerMatchHistory.objects.create(
                 api_match_id=i, player_id=self.healthy.ID, event_id=1,
                 round_number=i, round_name='Last 32',
                 player1_id=self.healthy.ID, player2_id=9999,
                 winner_id=self.healthy.ID if i % 2 == 0 else 9999,
-                season=2024,
+                season=season,
             )
-        # Broken player: zero matches despite being pro since 2010 -> NO_MATCHES/LOW_MATCHES/ORPHAN.
+        # Broken player: same years_as_pro as healthy (2), but zero real
+        # matches -> NO_MATCHES/LOW_MATCHES/ORPHAN(2 seasons), forever,
+        # regardless of what "today" is.
 
     def _run(self, **kwargs):
         out = StringIO()
+        self._last_output = out
         kwargs.setdefault('no_api', True)
         django_call_command('nightly_stats_check', stdout=out, **kwargs)
         return out.getvalue()
+
+    def _add_healthy_matches_for(self, player_id, count=25):
+        """Give a player enough real match history (split across both of
+        the fixture's two active seasons, like self.healthy) that a
+        recheck of NO_MATCHES/LOW_MATCHES/ORPHAN comes back clean — used
+        to simulate attempt_autofix() actually having worked."""
+        for i in range(count):
+            season = self.current_season - 1 if i < (count + 1) // 2 else self.current_season
+            PlayerMatchHistory.objects.get_or_create(
+                api_match_id=100000 + player_id * 1000 + i, player_id=player_id, event_id=1,
+                round_number=i, round_name='Last 32',
+                player1_id=player_id, player2_id=9999,
+                winner_id=player_id, season=season,
+            )
 
     @patch('oneFourSeven.nightly_stats_checks.attempt_autofix')
     def test_dry_run_does_not_call_autofix_or_notify(self, mock_autofix):
@@ -477,24 +507,17 @@ class NightlyStatsCheckCommandTests(TestCase):
 
     @patch('oneFourSeven.nightly_stats_checks.attempt_autofix', return_value=True)
     def test_autofixable_flag_triggers_autofix_attempt(self, mock_autofix):
-        self._run()
+        # attempt_autofix "succeeds" but adds no real data, so the restored
+        # re-verify correctly finds the player still flagged -> exit 1.
+        with self.assertRaises(SystemExit):
+            self._run()
         mock_autofix.assert_any_call(self.broken.ID)
 
     @patch('oneFourSeven.nightly_stats_checks.attempt_autofix', return_value=True)
     def test_no_notification_when_autofix_succeeds_and_reverify_clean(self, mock_autofix):
         # Simulate the repair actually having worked by adding matches
         # once attempt_autofix "runs" — patch to add data as a side effect.
-        def fake_fix(player_id):
-            for i in range(200, 216):
-                PlayerMatchHistory.objects.get_or_create(
-                    api_match_id=i, player_id=player_id, event_id=1,
-                    round_number=i, round_name='Last 32',
-                    player1_id=player_id, player2_id=9999,
-                    winner_id=player_id, season=2024,
-                )
-            return True
-
-        mock_autofix.side_effect = fake_fix
+        mock_autofix.side_effect = lambda player_id: self._add_healthy_matches_for(player_id) or True
         with patch('oneFourSeven.nightly_stats_checks.send_admin_notification') as mock_notify:
             self._run()
             mock_notify.assert_not_called()
@@ -502,7 +525,8 @@ class NightlyStatsCheckCommandTests(TestCase):
     @patch('oneFourSeven.nightly_stats_checks.attempt_autofix', return_value=False)
     def test_notification_sent_when_autofix_fails(self, mock_autofix):
         with patch('oneFourSeven.nightly_stats_checks.send_admin_notification') as mock_notify:
-            self._run(notify_token='tok')
+            with self.assertRaises(SystemExit):
+                self._run(notify_token='tok')
             mock_notify.assert_called_once()
             token_arg = mock_notify.call_args[0][0]
             self.assertEqual(token_arg, 'tok')
@@ -511,15 +535,19 @@ class NightlyStatsCheckCommandTests(TestCase):
     def test_max_autofix_cap_is_respected(self, mock_autofix):
         mock_autofix.return_value = False
         extra_broken = [
-            Player.objects.create(ID=3000 + i, FirstName='X', LastName=str(i), FirstSeasonAsPro=2010)
+            Player.objects.create(ID=3000 + i, FirstName='X', LastName=str(i),
+                                   FirstSeasonAsPro=self.current_season - 1)
             for i in range(5)
         ]
-        self._run(max_autofix=2)
+        with self.assertRaises(SystemExit):
+            self._run(max_autofix=2)
         self.assertLessEqual(mock_autofix.call_count, 2)
 
-    def test_no_api_flag_skips_network_calls(self):
+    @patch('oneFourSeven.nightly_stats_checks.attempt_autofix', return_value=False)
+    def test_no_api_flag_skips_network_calls(self, mock_autofix):
         with patch('oneFourSeven.nightly_stats_checks.fetch_api_titles') as mock_fetch:
-            self._run(no_api=True)
+            with self.assertRaises(SystemExit):
+                self._run(no_api=True)
             mock_fetch.assert_not_called()
 
     @patch('oneFourSeven.nightly_stats_checks.attempt_autofix', return_value=False)
@@ -541,19 +569,28 @@ class NightlyStatsCheckCommandTests(TestCase):
         with self.assertRaises(SystemExit):
             self._run()
 
-    def test_report_printed_to_stdout(self):
-        output = self._run()
+    @patch('oneFourSeven.nightly_stats_checks.attempt_autofix', return_value=False)
+    def test_report_printed_to_stdout(self, mock_autofix):
+        with self.assertRaises(SystemExit):
+            self._run()
+        output = self._last_output.getvalue()
         self.assertIn('Broken Player', output)
 
-    def test_summary_line_counts_are_consistent(self):
-        output = self._run()
+    @patch('oneFourSeven.nightly_stats_checks.attempt_autofix', return_value=False)
+    def test_summary_line_counts_are_consistent(self, mock_autofix):
+        with self.assertRaises(SystemExit):
+            self._run()
+        output = self._last_output.getvalue()
         self.assertIn('OK:', output)
         self.assertIn('AUTO-FIXED:', output)
         self.assertIn('STILL FLAGGED:', output)
         self.assertIn('ERRORS:', output)
 
-    def test_healthy_player_reported_ok(self):
-        output = self._run()
+    @patch('oneFourSeven.nightly_stats_checks.attempt_autofix', return_value=False)
+    def test_healthy_player_reported_ok(self, mock_autofix):
+        with self.assertRaises(SystemExit):
+            self._run()
+        output = self._last_output.getvalue()
         self.assertIn('Healthy Player', output)
         self.assertIn('Healthy Player', output.split('Broken Player')[0] + output)
 
@@ -568,16 +605,20 @@ class NightlyStatsCheckCommandTests(TestCase):
     def test_second_broken_player_also_gets_autofix_attempt(self, mock_autofix):
         mock_autofix.return_value = True
         second_broken = Player.objects.create(
-            ID=2003, FirstName='Also', LastName='Broken', FirstSeasonAsPro=2011,
+            ID=2003, FirstName='Also', LastName='Broken', FirstSeasonAsPro=self.current_season - 1,
         )
-        self._run()
+        # attempt_autofix "succeeds" but adds no real data for either
+        # player, so the restored re-verify correctly leaves both flagged.
+        with self.assertRaises(SystemExit):
+            self._run()
         called_ids = {call.args[0] for call in mock_autofix.call_args_list}
         self.assertIn(self.broken.ID, called_ids)
         self.assertIn(second_broken.ID, called_ids)
 
     @patch('oneFourSeven.nightly_stats_checks.attempt_autofix', return_value=True)
     def test_autofix_attempt_count_matches_autofixable_players_under_cap(self, mock_autofix):
-        self._run(max_autofix=50)
+        with self.assertRaises(SystemExit):
+            self._run(max_autofix=50)
         self.assertEqual(mock_autofix.call_count, 1)  # only self.broken is auto-fixable here
 
     def test_dry_run_still_prints_flags_but_leaves_data_untouched(self):
@@ -586,25 +627,32 @@ class NightlyStatsCheckCommandTests(TestCase):
         after = PlayerMatchHistory.objects.filter(player_id=self.broken.ID).count()
         self.assertEqual(before, after)
 
+    @patch('oneFourSeven.nightly_stats_checks.attempt_autofix', return_value=False)
     @patch('oneFourSeven.nightly_stats_checks.fetch_api_titles')
     @patch('time.sleep')
-    def test_api_enabled_pass_calls_fetch_and_sleeps(self, mock_sleep, mock_fetch):
+    def test_api_enabled_pass_calls_fetch_and_sleeps(self, mock_sleep, mock_fetch, mock_autofix):
         mock_fetch.return_value = 0
-        self._run(no_api=False, batch_size=10, sleep_seconds=0)
+        with self.assertRaises(SystemExit):
+            self._run(no_api=False, batch_size=10, sleep_seconds=0)
         self.assertTrue(mock_fetch.called)
 
+    @patch('oneFourSeven.nightly_stats_checks.attempt_autofix', return_value=False)
     @patch('oneFourSeven.nightly_stats_checks.fetch_api_titles', return_value=None)
-    def test_api_fetch_returning_none_does_not_raise_finals_flag(self, mock_fetch):
+    def test_api_fetch_returning_none_does_not_raise_finals_flag(self, mock_fetch, mock_autofix):
         # api_titles=None must never be treated as "0 titles" by compute_api_flags
         with patch('time.sleep'):
-            output = self._run(no_api=False, batch_size=10, sleep_seconds=0)
+            with self.assertRaises(SystemExit):
+                self._run(no_api=False, batch_size=10, sleep_seconds=0)
+        output = self._last_output.getvalue()
         self.assertNotIn('FINALS_LT_TITLES', output)
 
+    @patch('oneFourSeven.nightly_stats_checks.attempt_autofix', return_value=False)
     @patch('oneFourSeven.nightly_stats_checks.save_cursor')
-    def test_cursor_saved_after_api_enabled_run(self, mock_save):
+    def test_cursor_saved_after_api_enabled_run(self, mock_save, mock_autofix):
         with patch('oneFourSeven.nightly_stats_checks.fetch_api_titles', return_value=0), \
              patch('time.sleep'):
-            self._run(no_api=False, batch_size=10, sleep_seconds=0)
+            with self.assertRaises(SystemExit):
+                self._run(no_api=False, batch_size=10, sleep_seconds=0)
         mock_save.assert_called_once()
 
     @patch('oneFourSeven.nightly_stats_checks.save_cursor')
@@ -612,9 +660,11 @@ class NightlyStatsCheckCommandTests(TestCase):
         self._run(dry_run=True, no_api=False)
         mock_save.assert_not_called()
 
+    @patch('oneFourSeven.nightly_stats_checks.attempt_autofix', return_value=False)
     @patch('oneFourSeven.nightly_stats_checks.save_cursor')
-    def test_cursor_not_saved_when_no_api(self, mock_save):
-        self._run(no_api=True)
+    def test_cursor_not_saved_when_no_api(self, mock_save, mock_autofix):
+        with self.assertRaises(SystemExit):
+            self._run(no_api=True)
         mock_save.assert_not_called()
 
     @patch('oneFourSeven.nightly_stats_checks.attempt_autofix', return_value=False)
@@ -632,22 +682,26 @@ class NightlyStatsCheckCommandTests(TestCase):
 
     @patch('oneFourSeven.nightly_stats_checks.attempt_autofix')
     def test_autofix_not_attempted_for_non_autofixable_flag(self, mock_autofix):
+        mock_autofix.return_value = False
         # Give the healthy player a BAD_WIN_RATE-shaped history (not auto-fixable)
         for i in range(25, 55):
             PlayerMatchHistory.objects.create(
                 api_match_id=1000 + i, player_id=self.healthy.ID, event_id=1,
                 round_number=i, round_name='Last 32',
                 player1_id=self.healthy.ID, player2_id=9999,
-                winner_id=self.healthy.ID, season=2024,
+                winner_id=self.healthy.ID, season=self.current_season,
             )
         with patch('oneFourSeven.nightly_stats_checks.fetch_api_titles', return_value=0), \
              patch('time.sleep'):
-            self._run(no_api=False, batch_size=10, sleep_seconds=0)
+            with self.assertRaises(SystemExit):
+                self._run(no_api=False, batch_size=10, sleep_seconds=0)
         called_ids = {call.args[0] for call in mock_autofix.call_args_list}
         self.assertNotIn(self.healthy.ID, called_ids)
 
-    def test_batch_size_option_is_accepted(self):
-        self._run(batch_size=5, no_api=True)
+    @patch('oneFourSeven.nightly_stats_checks.attempt_autofix', return_value=False)
+    def test_batch_size_option_is_accepted(self, mock_autofix):
+        with self.assertRaises(SystemExit):
+            self._run(batch_size=5, no_api=True)
 
     def test_max_autofix_zero_disables_all_autofix(self):
         with patch('oneFourSeven.nightly_stats_checks.attempt_autofix') as mock_autofix:
@@ -658,37 +712,31 @@ class NightlyStatsCheckCommandTests(TestCase):
     @patch('oneFourSeven.nightly_stats_checks.attempt_autofix', side_effect=[True, False])
     def test_mixed_autofix_outcomes_across_two_broken_players(self, mock_autofix):
         second_broken = Player.objects.create(
-            ID=2004, FirstName='Second', LastName='Broken', FirstSeasonAsPro=2012,
+            ID=2004, FirstName='Second', LastName='Broken', FirstSeasonAsPro=self.current_season - 1,
         )
         with self.assertRaises(SystemExit):
             self._run()
         self.assertEqual(mock_autofix.call_count, 2)
 
-    def test_command_accepts_custom_cursor_file_path(self):
+    @patch('oneFourSeven.nightly_stats_checks.attempt_autofix', return_value=False)
+    def test_command_accepts_custom_cursor_file_path(self, mock_autofix):
         import tempfile, pathlib
         with tempfile.TemporaryDirectory() as d:
             cursor_path = str(pathlib.Path(d) / 'custom_cursor.json')
-            self._run(cursor_file=cursor_path)
+            with self.assertRaises(SystemExit):
+                self._run(cursor_file=cursor_path)
 
     @patch('oneFourSeven.nightly_stats_checks.attempt_autofix', return_value=True)
     def test_autofixed_player_not_double_counted_as_still_flagged(self, mock_autofix):
-        def fake_fix(player_id):
-            for i in range(300, 316):
-                PlayerMatchHistory.objects.get_or_create(
-                    api_match_id=i, player_id=player_id, event_id=1,
-                    round_number=i, round_name='Last 32',
-                    player1_id=player_id, player2_id=9999,
-                    winner_id=player_id, season=2024,
-                )
-            return True
-
-        mock_autofix.side_effect = fake_fix
+        mock_autofix.side_effect = lambda player_id: self._add_healthy_matches_for(player_id) or True
         output = self._run()
         self.assertIn('auto-fixed', output)
 
     @patch('oneFourSeven.nightly_stats_checks.attempt_autofix', return_value=False)
     def test_still_flagged_output_mentions_auto_fix_failed(self, mock_autofix):
-        output = self._run(notify_token='tok')
+        with self.assertRaises(SystemExit):
+            self._run(notify_token='tok')
+        output = self._last_output.getvalue()
         self.assertIn('auto-fix failed', output)
 
     def test_dry_run_reports_not_auto_fixable_marker_for_untouched_flags(self):
@@ -713,33 +761,35 @@ class NightlyStatsCheckCommandTests(TestCase):
         self.assertIn('ERRORS: 0', output)
 
     def test_command_help_text_documents_dry_run_flag(self):
+        # --help writes straight to real sys.stdout via argparse's own
+        # _HelpAction (bypassing the Command's self.stdout), and always
+        # raises SystemExit(0) — universal argparse/Django behavior, not
+        # something any command's handle() can prevent.
         out = StringIO()
-        django_call_command('nightly_stats_check', '--help', stdout=out)
+        with self.assertRaises(SystemExit) as ctx:
+            with contextlib.redirect_stdout(out):
+                django_call_command('nightly_stats_check', '--help')
+        self.assertEqual(ctx.exception.code, 0)
         self.assertIn('--dry-run', out.getvalue())
 
     def test_command_help_text_documents_notify_token_flag(self):
         out = StringIO()
-        django_call_command('nightly_stats_check', '--help', stdout=out)
+        with self.assertRaises(SystemExit) as ctx:
+            with contextlib.redirect_stdout(out):
+                django_call_command('nightly_stats_check', '--help')
+        self.assertEqual(ctx.exception.code, 0)
         self.assertIn('--notify-token', out.getvalue())
 
     @patch('oneFourSeven.nightly_stats_checks.attempt_autofix', return_value=True)
     def test_autofix_success_message_includes_original_flag_detail(self, mock_autofix):
-        def fake_fix(player_id):
-            for i in range(400, 416):
-                PlayerMatchHistory.objects.get_or_create(
-                    api_match_id=i, player_id=player_id, event_id=1,
-                    round_number=i, round_name='Last 32',
-                    player1_id=player_id, player2_id=9999,
-                    winner_id=player_id, season=2024,
-                )
-            return True
-
-        mock_autofix.side_effect = fake_fix
+        mock_autofix.side_effect = lambda player_id: self._add_healthy_matches_for(player_id) or True
         output = self._run()
         self.assertIn('NO_MATCHES', output)
 
-    def test_sleep_seconds_option_accepted_without_error(self):
-        self._run(no_api=True, sleep_seconds=0)
+    @patch('oneFourSeven.nightly_stats_checks.attempt_autofix', return_value=False)
+    def test_sleep_seconds_option_accepted_without_error(self, mock_autofix):
+        with self.assertRaises(SystemExit):
+            self._run(no_api=True, sleep_seconds=0)
 
     @patch('oneFourSeven.nightly_stats_checks.attempt_autofix', return_value=False)
     def test_multiple_runs_are_idempotent_on_a_clean_reverify(self, mock_autofix):

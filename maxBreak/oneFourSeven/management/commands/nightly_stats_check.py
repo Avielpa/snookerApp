@@ -126,10 +126,24 @@ class Command(BaseCommand):
                     errors.append(f'Auto-fix raised for player {player.ID}: {e}')
 
                 if fixed_ok:
-                    autofixed.append(snapshot)
-                    self.stdout.write(self.style.SUCCESS(
-                        f'{snapshot.name} (ID={snapshot.player_id}): auto-fixed ({flag_str})'
-                    ))
+                    try:
+                        recheck_snapshot = nsc.build_snapshot(player, current_season, top32_ids)
+                        remaining = nsc.compute_db_flags(recheck_snapshot)
+                    except Exception as e:
+                        remaining = flags
+                        errors.append(f'Re-check failed for player {player.ID}: {e}')
+
+                    if remaining:
+                        still_flagged.append((recheck_snapshot, remaining))
+                        self.stdout.write(self.style.WARNING(
+                            f'{snapshot.name} (ID={snapshot.player_id}): auto-fix attempted, '
+                            f'still flagged: {", ".join(f.detail for f in remaining)}'
+                        ))
+                    else:
+                        autofixed.append(snapshot)
+                        self.stdout.write(self.style.SUCCESS(
+                            f'{snapshot.name} (ID={snapshot.player_id}): auto-fixed ({flag_str})'
+                        ))
                 else:
                     still_flagged.append((snapshot, flags))
                     self.stdout.write(self.style.WARNING(
