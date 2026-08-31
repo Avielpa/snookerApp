@@ -381,3 +381,58 @@ class AttemptAutofixTests(SimpleTestCase):
     def test_returns_false_when_backfill_raises(self, mock_call):
         mock_call.side_effect = Exception('API down')
         self.assertFalse(attempt_autofix(1001))
+
+
+from oneFourSeven.nightly_stats_checks import build_notification, send_admin_notification
+
+
+class BuildNotificationTests(SimpleTestCase):
+    def test_returns_none_when_everything_clean(self):
+        self.assertIsNone(build_notification(still_flagged=[], autofixed=[], errors=[]))
+
+    def test_returns_none_when_only_autofixed_and_no_errors(self):
+        snap = make_snapshot(player_id=1, name='Fixed Player')
+        self.assertIsNone(build_notification(still_flagged=[], autofixed=[snap], errors=[]))
+
+    def test_mentions_still_flagged_player_names_and_flags(self):
+        snap = make_snapshot(player_id=1, name='Judd Trump')
+        flags = [Flag('BAD_WIN_RATE', 'BAD_WIN_RATE(95%)')]
+        title, body = build_notification(still_flagged=[(snap, flags)], autofixed=[], errors=[])
+        self.assertIn('1', title)
+        self.assertIn('Judd Trump', body)
+        self.assertIn('BAD_WIN_RATE(95%)', body)
+
+    def test_mentions_error_count(self):
+        title, body = build_notification(still_flagged=[], autofixed=[], errors=['boom'])
+        self.assertIn('error', body.lower())
+
+    def test_combines_still_flagged_and_errors_in_one_message(self):
+        snap = make_snapshot(player_id=1, name='Judd Trump')
+        flags = [Flag('BAD_WIN_RATE', 'BAD_WIN_RATE(95%)')]
+        title, body = build_notification(
+            still_flagged=[(snap, flags)], autofixed=[], errors=['t=4 timeout for player 42'],
+        )
+        self.assertIn('Judd Trump', body)
+        self.assertIn('t=4 timeout for player 42', body)
+
+    def test_truncates_long_flagged_list_in_body(self):
+        snaps = [
+            (make_snapshot(player_id=i, name=f'Player {i}'), [Flag('BAD_WIN_RATE', 'x')])
+            for i in range(30)
+        ]
+        title, body = build_notification(still_flagged=snaps, autofixed=[], errors=[])
+        self.assertIn('30', title)
+        self.assertLess(len(body), 2000)  # stays a reasonable push-notification size
+
+
+class SendAdminNotificationTests(SimpleTestCase):
+    @patch('oneFourSeven.nightly_stats_checks.send_expo_push')
+    def test_sends_to_single_token(self, mock_send):
+        send_admin_notification('ExponentPushToken[abc]', 'Title', 'Body')
+        mock_send.assert_called_once_with(['ExponentPushToken[abc]'], 'Title', 'Body')
+
+    @patch('oneFourSeven.nightly_stats_checks.send_expo_push')
+    def test_swallows_send_errors(self, mock_send):
+        mock_send.side_effect = Exception('expo down')
+        # Should not raise — a failed notification must not crash the run.
+        send_admin_notification('token', 'Title', 'Body')

@@ -223,6 +223,7 @@ def fetch_api_titles(player_id: int):
 
 
 from django.core.management import call_command
+from oneFourSeven.push_notifications import send_expo_push
 
 
 def attempt_autofix(player_id: int) -> bool:
@@ -234,3 +235,37 @@ def attempt_autofix(player_id: int) -> bool:
         return True
     except Exception:
         return False
+
+
+def build_notification(still_flagged: list, autofixed: list, errors: list):
+    """Build (title, body) for the admin push, or None if there's nothing
+    worth waking up for. A clean night, or a night where every flag was
+    auto-fixed with no errors, sends nothing."""
+    if not still_flagged and not errors:
+        return None
+
+    title = f'⚠️ Nightly stats check: {len(still_flagged)} player(s) flagged'
+
+    lines = []
+    for snapshot, flags in still_flagged[:10]:
+        flag_str = ', '.join(f.detail for f in flags)
+        lines.append(f'{snapshot.name} (ID={snapshot.player_id}): {flag_str}')
+    if len(still_flagged) > 10:
+        lines.append(f'...and {len(still_flagged) - 10} more')
+
+    if errors:
+        lines.append(f'{len(errors)} error(s) during the run:')
+        lines.extend(errors[:5])
+
+    body = '\n'.join(lines)
+    return title, body
+
+
+def send_admin_notification(token: str, title: str, body: str) -> None:
+    """Send one push to the developer's device. Failure here must never
+    crash the run — the report already printed to stdout is the durable
+    record regardless."""
+    try:
+        send_expo_push([token], title, body)
+    except Exception:
+        pass
