@@ -322,3 +322,42 @@ class SelectBatchTests(SimpleTestCase):
         batch, next_cursor = select_batch([], cursor=0, batch_size=5)
         self.assertEqual(batch, [])
         self.assertEqual(next_cursor, 0)
+
+
+from unittest.mock import patch, Mock
+
+from oneFourSeven.nightly_stats_checks import fetch_api_titles
+
+
+class FetchApiTitlesTests(SimpleTestCase):
+    @patch('oneFourSeven.nightly_stats_checks.requests.get')
+    def test_returns_titles_on_success(self, mock_get):
+        mock_get.return_value = Mock(status_code=200, json=lambda: [{'NumRankingTitles': 5}])
+        self.assertEqual(fetch_api_titles(1), 5)
+
+    @patch('oneFourSeven.nightly_stats_checks.requests.get')
+    def test_returns_zero_when_field_missing(self, mock_get):
+        mock_get.return_value = Mock(status_code=200, json=lambda: [{}])
+        self.assertEqual(fetch_api_titles(1), 0)
+
+    @patch('oneFourSeven.nightly_stats_checks.requests.get')
+    def test_returns_none_on_non_200_status(self, mock_get):
+        mock_get.return_value = Mock(status_code=500, json=lambda: [])
+        self.assertIsNone(fetch_api_titles(1))
+
+    @patch('oneFourSeven.nightly_stats_checks.requests.get')
+    def test_returns_none_on_empty_body(self, mock_get):
+        mock_get.return_value = Mock(status_code=200, json=lambda: [])
+        self.assertIsNone(fetch_api_titles(1))
+
+    @patch('oneFourSeven.nightly_stats_checks.requests.get')
+    def test_returns_none_on_request_exception(self, mock_get):
+        mock_get.side_effect = Exception('network down')
+        self.assertIsNone(fetch_api_titles(1))
+
+    @patch('oneFourSeven.nightly_stats_checks.requests.get')
+    def test_sends_required_header(self, mock_get):
+        mock_get.return_value = Mock(status_code=200, json=lambda: [{'NumRankingTitles': 1}])
+        fetch_api_titles(1)
+        _, kwargs = mock_get.call_args
+        self.assertEqual(kwargs['headers'], {'X-Requested-By': 'FahimaApp128'})

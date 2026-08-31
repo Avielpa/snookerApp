@@ -196,3 +196,27 @@ def select_batch(player_ids: list, cursor: int, batch_size: int):
     batch = [player_ids[(start + i) % n] for i in range(min(batch_size, n))]
     next_cursor = (start + len(batch)) % n
     return batch, next_cursor
+
+
+import requests
+
+
+def fetch_api_titles(player_id: int):
+    """Fetch NumRankingTitles from snooker.org's t=4 career-aggregate
+    endpoint for one player. Returns None on any failure — the caller
+    treats a None the same as "couldn't verify this one," never as
+    "titles is zero.\""""
+    from oneFourSeven.constants import API_BASE_URL, HEADERS
+
+    try:
+        resp = requests.get(
+            f'{API_BASE_URL}?t=4&p={player_id}', headers=HEADERS, timeout=15
+        )
+        if resp.status_code != 200:
+            return None
+        data = resp.json()
+        if not data:
+            return None
+        return data[0].get('NumRankingTitles') or 0
+    except Exception:
+        return None
