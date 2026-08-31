@@ -1,0 +1,44 @@
+name: Nightly Player Stats Check
+
+on:
+  schedule:
+    - cron: '0 3 * * *'  # 03:00 UTC nightly
+  workflow_dispatch: {}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        working-directory: maxBreak
+        run: pip install -r requirements.txt
+
+      - name: Restore rolling-sweep cursor
+        uses: actions/cache@v4
+        with:
+          path: maxBreak/nightly_stats_cursor.json
+          key: nightly-stats-cursor
+          restore-keys: nightly-stats-cursor
+
+      - name: Run nightly stats check
+        working-directory: maxBreak
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          SECRET_KEY: ${{ secrets.SECRET_KEY }}
+        run: |
+          python manage.py nightly_stats_check --notify-token "${{ secrets.ADMIN_EXPO_PUSH_TOKEN }}"
+
+      - name: Save rolling-sweep cursor
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: maxBreak/nightly_stats_cursor.json
+          key: nightly-stats-cursor
