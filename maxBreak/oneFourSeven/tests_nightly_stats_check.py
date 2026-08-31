@@ -222,6 +222,48 @@ class BuildSnapshotTests(TestCase):
         self.assertEqual(snap.rn_pct, 50.0)
 
 
+class BuildSnapshotOrphanProgressFileTests(TestCase):
+    """Critical #1: a season with zero PlayerMatchHistory rows should only
+    count as ORPHAN if it's also absent from backfill_progress.json — a
+    season backfill_career_history --force already confirmed as genuinely
+    empty (progress[key] == 0) must not be flagged forever."""
+
+    def setUp(self):
+        self.player = Player.objects.create(
+            ID=4001, FirstName='Long', LastName='Career', FirstSeasonAsPro=2020,
+        )
+
+    def _patch_progress_file(self, contents: dict):
+        import tempfile, pathlib, json as _json
+        d = tempfile.TemporaryDirectory()
+        self.addCleanup(d.cleanup)
+        path = pathlib.Path(d.name) / 'backfill_progress.json'
+        path.write_text(_json.dumps(contents))
+        return patch('oneFourSeven.nightly_stats_checks.PROGRESS_FILE', path)
+
+    def test_season_in_progress_file_is_not_orphaned(self):
+        # 2020..2026 is 7 seasons; confirm 2021 (value 0 = genuinely empty
+        # at the source) is excluded from orphaned_seasons.
+        with self._patch_progress_file({'4001:2021': 0}):
+            snap = build_snapshot(self.player, current_season=2026, top32_ids=set())
+        self.assertNotIn(2021, snap.orphaned_seasons)
+
+    def test_season_not_in_progress_file_is_still_orphaned(self):
+        with self._patch_progress_file({'4001:2021': 0}):
+            snap = build_snapshot(self.player, current_season=2026, top32_ids=set())
+        # 2022 has zero rows and no progress entry -> still flagged.
+        self.assertIn(2022, snap.orphaned_seasons)
+
+    def test_missing_progress_file_treats_all_gaps_as_orphaned(self):
+        import tempfile, pathlib
+        d = tempfile.TemporaryDirectory()
+        self.addCleanup(d.cleanup)
+        missing_path = pathlib.Path(d.name) / 'does_not_exist.json'
+        with patch('oneFourSeven.nightly_stats_checks.PROGRESS_FILE', missing_path):
+            snap = build_snapshot(self.player, current_season=2026, top32_ids=set())
+        self.assertEqual(len(snap.orphaned_seasons), 7)  # 2020..2026 inclusive
+
+
 class GetTop32IdsTests(TestCase):
     def test_returns_top32_by_position_across_two_seasons(self):
         p1 = Player.objects.create(ID=1, FirstName='A', LastName='A')
@@ -415,6 +457,21 @@ class BuildNotificationTests(SimpleTestCase):
         self.assertIn('Judd Trump', body)
         self.assertIn('t=4 timeout for player 42', body)
 
+    def test_title_reads_error_count_when_only_errors_and_no_flags(self):
+        # Minor #8: "0 player(s) flagged" is confusing on a lock-screen
+        # notification when the run had errors but nobody was flagged.
+        title, body = build_notification(still_flagged=[], autofixed=[], errors=['boom', 'bang'])
+        self.assertIn('2 error(s)', title)
+        self.assertNotIn('player(s) flagged', title)
+
+    def test_title_keeps_flagged_wording_when_both_flagged_and_errors(self):
+        snap = make_snapshot(player_id=1, name='Judd Trump')
+        flags = [Flag('BAD_WIN_RATE', 'BAD_WIN_RATE(95%)')]
+        title, body = build_notification(
+            still_flagged=[(snap, flags)], autofixed=[], errors=['boom'],
+        )
+        self.assertIn('1 player(s) flagged', title)
+
     def test_truncates_long_flagged_list_in_body(self):
         snaps = [
             (make_snapshot(player_id=i, name=f'Player {i}'), [Flag('BAD_WIN_RATE', 'x')])
@@ -601,6 +658,16 @@ class NightlyStatsCheckCommandTests(TestCase):
                 self._run(notify_token=None)
             mock_notify.assert_not_called()
 
+    @patch('oneFourSeven.nightly_stats_checks.attempt_autofix', return_value=False)
+    def test_missing_notify_token_prints_warning_when_something_flagged(self, mock_autofix):
+        # Important #4: a silently-skipped notification (empty/unset token)
+        # must still leave a visible trace in the Actions log.
+        with self.assertRaises(SystemExit):
+            self._run(notify_token=None)
+        output = self._last_output.getvalue()
+        self.assertIn('Notification skipped', output)
+        self.assertIn('no --notify-token', output)
+
     @patch('oneFourSeven.nightly_stats_checks.attempt_autofix')
     def test_second_broken_player_also_gets_autofix_attempt(self, mock_autofix):
         mock_autofix.return_value = True
@@ -743,8 +810,9 @@ class NightlyStatsCheckCommandTests(TestCase):
         output = self._run(dry_run=True)
         self.assertIn('[dry-run, no fix attempted]', output)
 
+    @patch('oneFourSeven.nightly_stats_checks.attempt_autofix', return_value=False)
     @patch('oneFourSeven.nightly_stats_checks.build_snapshot')
-    def test_build_snapshot_exception_for_one_player_is_logged_not_raised(self, mock_snapshot):
+    def test_build_snapshot_exception_for_one_player_is_logged_not_raised(self, mock_snapshot, mock_autofix):
         # NOTE: `build_snapshot` here is the name imported at the top of
         # this file (line ~155), captured before any @patch is active — it
         # is genuinely the original function. Re-importing it *inside* the

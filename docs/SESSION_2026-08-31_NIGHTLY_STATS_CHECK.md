@@ -70,7 +70,7 @@ this idea before any code was written:
 - The cursor's actual sweep rate against the real player roster size
   hasn't been measured — the design assumes ~100/night is a reasonable
   batch given the roster size, but this should be sanity-checked after
-  the first few real runs (check `maxBreak/oneFourSeven/nightly_stats_cursor.json`'s
+  the first few real runs (check `maxBreak/nightly_stats_cursor.json`'s
   restored value in the Action logs' cache step across a few nights).
 
 ## Lessons for the next agent

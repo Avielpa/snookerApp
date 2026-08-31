@@ -12,6 +12,17 @@ See docs/superpowers/specs/2026-08-31-nightly-player-stats-check-design.md.
 """
 
 from dataclasses import dataclass
+from pathlib import Path
+
+import json as _json
+import requests
+from django.core.management import call_command
+
+# oneFourSeven/nightly_stats_checks.py lives one level shallower than
+# management/commands/*.py, so this needs one fewer .parent than
+# backfill_career_history.py's/validate_career_data.py's PROGRESS_FILE to
+# land on the same maxBreak/backfill_progress.json.
+PROGRESS_FILE = Path(__file__).resolve().parent.parent / 'backfill_progress.json'
 
 MIN_MATCHES_PER_SEASON = 10
 WIN_RATE_MIN = 0.30
@@ -118,11 +129,17 @@ def build_snapshot(player, current_season: int, top32_ids: set) -> PlayerSnapsho
     """Query PlayerMatchHistory for one player and turn the results into
     a PlayerSnapshot the flag rules can run against.
 
-    Note: unlike backfill_career_history.py's progress-file bookkeeping
-    (backfill_progress.json, meant for a one-time manual backfill run),
-    this treats every season with zero rows as orphaned — the nightly
-    check is meant to be strict, and auto-fix (Task 5) already knows how
-    to repair a real ORPHAN flag safely.
+    Note: this deliberately MIRRORS backfill_career_history.py's /
+    validate_career_data.py's progress-file bookkeeping (backfill_progress.json)
+    for orphan detection, rather than diverging from it. A season with zero
+    PlayerMatchHistory rows is only ORPHAN-flagged if it's also absent from
+    backfill_progress.json — if attempt_autofix() already ran
+    backfill_career_history --force for that season and it genuinely came
+    back empty (player didn't play any ranking event that season),
+    _save_progress() records `{player_id}:{season} = 0` there, and this
+    function needs to treat that as "confirmed empty, not a data gap" so a
+    legitimately-empty season stops being flagged instead of paging the
+    developer every single night forever.
     """
     from oneFourSeven.models import PlayerMatchHistory
 
@@ -142,9 +159,20 @@ def build_snapshot(player, current_season: int, top32_ids: set) -> PlayerSnapsho
     ).count()
     rn_pct = (named_rounds / total * 100) if total else 0.0
 
+    progress = {}
+    if PROGRESS_FILE.exists():
+        try:
+            progress = _json.loads(PROGRESS_FILE.read_text())
+        except Exception:
+            pass
+
+    seasons_with_data = set(
+        PlayerMatchHistory.objects.filter(player_id=player.ID)
+        .values_list('season', flat=True).distinct()
+    )
     orphaned = [
         season for season in range(first, current_season + 1)
-        if not PlayerMatchHistory.objects.filter(player_id=player.ID, season=season).exists()
+        if season not in seasons_with_data and f'{player.ID}:{season}' not in progress
     ]
 
     name = f'{player.FirstName or ""} {player.LastName or ""}'.strip()
@@ -155,9 +183,6 @@ def build_snapshot(player, current_season: int, top32_ids: set) -> PlayerSnapsho
         finals_reached=finals_reached, rn_pct=rn_pct,
         orphaned_seasons=orphaned, is_top32=player.ID in top32_ids,
     )
-
-
-import json as _json
 
 
 def load_cursor(path) -> int:
@@ -192,13 +217,10 @@ def select_batch(player_ids: list, cursor: int, batch_size: int):
     if n == 0:
         return [], 0
 
-    start = cursor if cursor < n else 0
+    start = max(0, cursor) if cursor < n else 0
     batch = [player_ids[(start + i) % n] for i in range(min(batch_size, n))]
     next_cursor = (start + len(batch)) % n
     return batch, next_cursor
-
-
-import requests
 
 
 def fetch_api_titles(player_id: int):
@@ -222,7 +244,6 @@ def fetch_api_titles(player_id: int):
         return None
 
 
-from django.core.management import call_command
 from oneFourSeven.push_notifications import send_expo_push
 
 
@@ -244,7 +265,10 @@ def build_notification(still_flagged: list, autofixed: list, errors: list):
     if not still_flagged and not errors:
         return None
 
-    title = f'⚠️ Nightly stats check: {len(still_flagged)} player(s) flagged'
+    if still_flagged:
+        title = f'⚠️ Nightly stats check: {len(still_flagged)} player(s) flagged'
+    else:
+        title = f'⚠️ Nightly stats check: {len(errors)} error(s) during run'
 
     lines = []
     for snapshot, flags in still_flagged[:10]:

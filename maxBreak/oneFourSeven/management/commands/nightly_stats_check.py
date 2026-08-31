@@ -90,6 +90,7 @@ class Command(BaseCommand):
         autofixed = []
         errors = []
         autofix_attempts = 0
+        ok_count = 0
 
         for player in players:
             try:
@@ -105,6 +106,7 @@ class Command(BaseCommand):
                 continue
 
             if not flags:
+                ok_count += 1
                 self.stdout.write(f'{snapshot.name} (ID={snapshot.player_id}): OK')
                 continue
 
@@ -160,15 +162,21 @@ class Command(BaseCommand):
             nsc.save_cursor(cursor_file, next_cursor)
 
         self.stdout.write('')
-        self.stdout.write(f'OK: {len(players) - len(still_flagged) - len(autofixed)}  '
+        self.stdout.write(f'OK: {ok_count}  '
                           f'AUTO-FIXED: {len(autofixed)}  STILL FLAGGED: {len(still_flagged)}  '
                           f'ERRORS: {len(errors)}')
 
         if not dry_run:
             notification = nsc.build_notification(still_flagged, autofixed, errors)
-            if notification and options['notify_token']:
-                title, body = notification
-                nsc.send_admin_notification(options['notify_token'], title, body)
+            if notification:
+                if options['notify_token']:
+                    title, body = notification
+                    nsc.send_admin_notification(options['notify_token'], title, body)
+                else:
+                    self.stdout.write(self.style.WARNING(
+                        'Notification skipped: something was flagged but no --notify-token '
+                        '(ADMIN_EXPO_PUSH_TOKEN) was configured.'
+                    ))
 
         if not dry_run and (still_flagged or errors):
             raise SystemExit(1)
