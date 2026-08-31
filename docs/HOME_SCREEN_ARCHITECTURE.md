@@ -48,7 +48,8 @@ Text/data structure alone doesn't show what a user sees. Rough wireframes, curre
 ├──────────────────────────────┤
 │ 🔍 Search Player               │  ← always present
 ├──────────────────────────────┤
-│ ▎PLAYING NOW              (1) │  ← statusHeader (this tab's section only)
+│ Also Live (N)            ▾    │  ← Live tab only; collapsed by default
+│ ▎PLAYING NOW              (1) │  ← focused event's live matches first
 │  ─────── Round 19 ───────      │  ← roundHeader
 │ ┌────────────────────────────┐│
 │ │ Player A   3 — 1   Player B ││  ← MatchItem: glass card,
@@ -61,14 +62,9 @@ Text/data structure alone doesn't show what a user sees. Rough wireframes, curre
 │ ┌────────────────────────────┐│
 │ │ ...                         ││
 │ └────────────────────────────┘│
-├──────────────────────────────┤
-│ ▎ALSO LIVE                     │  ← OtherLiveSection, FlatList footer
-│  Q TOUR EVENT 7                │    (only on Live/onBreak/all tabs)
-│ ┌────────────────────────────┐│
-│ │ Player E   2 — 1   Player F ││
-│ └────────────────────────────┘│
 └──────────────────────────────┘
 ```
+On Upcoming/Results the upper drawer is **Today's Matches** (expanded). On Live it swaps to **Also Live** (collapsed) so the focused event's live cards stay first. Expanding Also Live prepends other events' live/on-break matches (qualifier siblings, Q-Tour, women's, seniors — any `event_id` except the focused one). The old footer `OtherLiveSection` is hidden on the Live tab to avoid a duplicate list. See `app/home/utils/homeDrawer.ts`.
 Every match card is a full `MatchItem` (§3.1) — same visual weight whether there are 2 matches or 40. This is the exact pain point behind the "cards too big" / "long scroll" feedback: nothing shrinks or collapses based on list length today.
 
 **Draw tab**:
@@ -176,9 +172,15 @@ Wrapped in `ModernGlassCard` (glassmorphism: gradient fill, 1px border, rounded 
 - **Footer** (`detailsRow`): `LIVE` badge (green pill) if live, `TBC` badge (amber pill) if on break, calendar icon + formatted scheduled date, star/favorite toggle (amber when starred) — star only shown for non-finished matches.
 - Tapping the card navigates to `/match/{api_match_id}` (disabled if no valid id). 5 rapid taps force-clears that match's cache (debug feature).
 
-### 3.2 `OtherLiveSection` — FlatList footer
+### 3.2 Other-live — Live-tab drawer, not a Live-tab footer
 
-Rendered as the `ListFooterComponent` of the main FlatList — **only** when `activeFilter` is `'all'`, `'livePlaying'`, or `'onBreak'`. Shows live/on-break matches from OTHER tournaments (not the one currently loaded), grouped by event name, under an "Also Live" (green) or "Also on Break" (amber) header. Uses the same `MatchItem` component. Empty → renders nothing.
+`resolveHomeDrawerMode(activeFilter)` in `app/home/utils/homeDrawer.ts`:
+- `'livePlaying'` → upper drawer is **Also Live**, starts collapsed, footer `OtherLiveSection` is not rendered
+- any other filter → upper drawer is **Today's Matches**, footer `OtherLiveSection` still mounts (and still only paints on `'all'` / `'onBreak'`)
+
+`collectOtherLiveGroups(todayGroups, otherLiveMatches, focusedEventId)` is the generic rule: keep live/on-break matches whose `event_id` is not the focused tournament. Not "not main tour" — a qualifier sibling, a Championship League group, or a Q-Tour event all qualify the same way.
+
+`all_live_matches_view` excludes only `exclude_event_id`, not `Tour='main'`.
 
 ---
 

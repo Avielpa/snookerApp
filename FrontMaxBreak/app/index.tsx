@@ -35,6 +35,13 @@ import { OtherLiveSection } from './home/components/OtherLiveSection';
 import { useTodayMatches } from './home/hooks/useTodayMatches';
 import { TodayMatchesToggle } from './home/components/TodayMatchesToggle';
 import { buildTodayMatchesListItems, excludeEventFromGroups } from './home/utils/todayMatchesListItems';
+import {
+    resolveHomeDrawerMode,
+    shouldShowOtherLiveFooter,
+    collectOtherLiveGroups,
+    countGroupMatches,
+    OTHER_LIVE_ACCENT,
+} from './home/utils/homeDrawer';
 import { DrawTab } from './tour/components/DrawTab';
 import { OtherToursTab } from './home/components/OtherTours';
 import { shouldRedirectToMedia } from './home/utils/mediaFallback';
@@ -113,6 +120,7 @@ const HomeScreen = (): React.ReactElement | null => {
     const { matches: otherLiveMatches } = useOtherLiveMatches(currentTournamentId);
     const { groups: todayGroups } = useTodayMatches();
     const [isTodayExpanded, setIsTodayExpanded] = useState(true);
+    const [isOtherLiveExpanded, setIsOtherLiveExpanded] = useState(false);
     const [searchQuery, setSearchQuery] = useState('')
 
 
@@ -273,15 +281,9 @@ const HomeScreen = (): React.ReactElement | null => {
             );
         });
 
-    // Today's Matches — its own always-visible summary row, independent of
-    // whichever tab is selected. Rendered as real list items (not a separate
-    // boxed panel) so the whole screen scrolls together as one list.
-    //
-    // The tournament currently shown below (currentTournamentId) already
-    // lists its own today's-round matches in the normal Upcoming/Live
-    // section, so it's excluded here to avoid showing the same match twice.
-    // A qualifier event has a different event_id from its main draw, so its
-    // today's matches (the actual reason this section exists) still show.
+    // Upper drawer is tab-aware: Live → collapsed Also Live (other events);
+    // every other tab → Today's Matches. Focused event is excluded so its
+    // own matches are not shown twice. Qualifier siblings stay (different id).
     const todayGroupsExcludingCurrentTournament = useMemo(
         () => excludeEventFromGroups(todayGroups, currentTournamentId),
         [todayGroups, currentTournamentId]
@@ -290,13 +292,30 @@ const HomeScreen = (): React.ReactElement | null => {
         () => todayGroupsExcludingCurrentTournament.reduce((sum, group) => sum + group.matches.length, 0),
         [todayGroupsExcludingCurrentTournament]
     );
-    const todayListItems = useMemo(
-        () => (isTodayExpanded ? buildTodayMatchesListItems(todayGroupsExcludingCurrentTournament) : []),
-        [todayGroupsExcludingCurrentTournament, isTodayExpanded]
+    const drawerMode = resolveHomeDrawerMode(activeFilter);
+    const otherLiveGroups = useMemo(
+        () => collectOtherLiveGroups(todayGroups, otherLiveMatches, currentTournamentId),
+        [todayGroups, otherLiveMatches, currentTournamentId]
     );
+    const otherLiveTotal = useMemo(
+        () => countGroupMatches(otherLiveGroups),
+        [otherLiveGroups]
+    );
+    const drawerListItems = useMemo(() => {
+        if (drawerMode === 'otherLive') {
+            return isOtherLiveExpanded ? buildTodayMatchesListItems(otherLiveGroups) : [];
+        }
+        return isTodayExpanded ? buildTodayMatchesListItems(todayGroupsExcludingCurrentTournament) : [];
+    }, [
+        drawerMode,
+        isOtherLiveExpanded,
+        isTodayExpanded,
+        otherLiveGroups,
+        todayGroupsExcludingCurrentTournament,
+    ]);
     const finalListData = useMemo(
-        () => [...todayListItems, ...displayData],
-        [todayListItems, displayData]
+        () => [...drawerListItems, ...displayData],
+        [drawerListItems, displayData]
     );
 
     // rawMatches for DrawTab comes directly from useHomeData (unprocessed, no dedup)
@@ -367,9 +386,16 @@ const HomeScreen = (): React.ReactElement | null => {
             </View>
             <TodayMatchesToggle
                 COLORS={COLORS}
-                totalMatches={todayTotalMatches}
-                isExpanded={isTodayExpanded}
-                onToggle={() => setIsTodayExpanded((prev) => !prev)}
+                totalMatches={drawerMode === 'otherLive' ? otherLiveTotal : todayTotalMatches}
+                isExpanded={drawerMode === 'otherLive' ? isOtherLiveExpanded : isTodayExpanded}
+                onToggle={
+                    drawerMode === 'otherLive'
+                        ? () => setIsOtherLiveExpanded((prev) => !prev)
+                        : () => setIsTodayExpanded((prev) => !prev)
+                }
+                label={drawerMode === 'otherLive' ? 'Also Live' : "Today's Matches"}
+                iconName={drawerMode === 'otherLive' ? 'radio-outline' : 'today-outline'}
+                accentColor={drawerMode === 'otherLive' ? OTHER_LIVE_ACCENT : undefined}
             />
             {tournamentPrize && (
                 <View style={styles.prizeContainer}>
@@ -528,11 +554,13 @@ const HomeScreen = (): React.ReactElement | null => {
                                 />
                             }
                             ListFooterComponent={
-                                <OtherLiveSection
-                                    matches={otherLiveMatches}
-                                    activeFilter={activeFilter}
-                                    COLORS={COLORS}
-                                />
+                                shouldShowOtherLiveFooter(drawerMode) ? (
+                                    <OtherLiveSection
+                                        matches={otherLiveMatches}
+                                        activeFilter={activeFilter}
+                                        COLORS={COLORS}
+                                    />
+                                ) : null
                             }
                             initialNumToRender={15}
                             maxToRenderPerBatch={10}
