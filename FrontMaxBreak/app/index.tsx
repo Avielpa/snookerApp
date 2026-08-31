@@ -32,6 +32,7 @@ import { getDeviceTabConfig } from '../config/deviceTabConfig';
 import { DeviceAwareFilterScrollView } from '../components/DeviceAwareFilterScrollView';
 import { useOtherLiveMatches } from './home/hooks/useOtherLiveMatches';
 import { OtherLiveSection } from './home/components/OtherLiveSection';
+import { TodayMatchesSection } from './home/components/TodayMatchesSection';
 import { DrawTab } from './tour/components/DrawTab';
 import { OtherToursTab } from './home/components/OtherTours';
 import { shouldRedirectToMedia } from './home/utils/mediaFallback';
@@ -415,6 +416,8 @@ const HomeScreen = (): React.ReactElement | null => {
                     </View>
                 )}
                 
+                <TodayMatchesSection COLORS={COLORS} />
+
                 <View style={styles.listArea}>
 
                     <TextInput

@@ -11,6 +11,7 @@ from .views_stats import (
     stats_title_leaders_view,
 )
 from .views_frame_scores import match_frame_scores_view
+from .today_matches import today_matches_view
 from .views import (
     # Generic List Views
     EventList,
@@ -112,7 +113,9 @@ urlpatterns = [
     path('events/<int:event_id>/matches/', matches_of_an_event_view, name='event-matches'),
     # Get details for a specific match by its API ID
     path('matches/<int:api_match_id>/', match_detail_view, name='match-detail'),
-    
+    # Every match scheduled for today, across every event/tour — see today_matches.py
+    path('matches/today/', today_matches_view, name='matches-today'),
+
     # --- Prize Money URLs ---
     # Get tournament prize money breakdown
     path('prize-money/<int:event_id>/', prize_money_view, name='prize-money'),
