@@ -1,0 +1,295 @@
+"""
+Pure flag-computation logic for the nightly player-stats accuracy check.
+
+Deliberately free of Django ORM queries and network calls so the rules
+that decide "this player's data looks wrong" can be unit tested without a
+database or the internet. The management command
+(management/commands/nightly_stats_check.py) is the only place that wires
+this module up to real Player/PlayerMatchHistory rows, the snooker.org
+API, backfill_career_history, and the push notification.
+
+See docs/superpowers/specs/2026-08-31-nightly-player-stats-check-design.md.
+"""
+
+from dataclasses import dataclass
+from pathlib import Path
+
+import json as _json
+import requests
+from django.core.management import call_command
+
+# oneFourSeven/nightly_stats_checks.py lives one level shallower than
+# management/commands/*.py, so this needs one fewer .parent than
+# backfill_career_history.py's/validate_career_data.py's PROGRESS_FILE to
+# land on the same maxBreak/backfill_progress.json.
+PROGRESS_FILE = Path(__file__).resolve().parent.parent / 'backfill_progress.json'
+
+MIN_MATCHES_PER_SEASON = 10
+WIN_RATE_MIN = 0.30
+WIN_RATE_MAX = 0.90
+
+# Flags in this set describe *missing* data, not a data anomaly that needs
+# human judgement — they're the exact cases backfill_career_history --force
+# already exists to repair. Anything not in this set always goes to the
+# notify path untouched.
+AUTO_FIXABLE_CODES = frozenset({'NO_MATCHES', 'LOW_MATCHES', 'ORPHAN'})
+
+
+@dataclass(frozen=True)
+class Flag:
+    code: str
+    detail: str
+
+
+@dataclass
+class PlayerSnapshot:
+    """Precomputed per-player numbers the flag rules run against."""
+    player_id: int
+    name: str
+    years_as_pro: int
+    total_matches: int
+    wins: int
+    losses: int
+    finals_reached: int
+    rn_pct: float
+    orphaned_seasons: list
+    is_top32: bool
+
+
+def compute_db_flags(snapshot: PlayerSnapshot) -> list:
+    """Internal-consistency checks — no network, no snooker.org
+    comparison. Adapted from validate_career_data.py's flag rules."""
+    flags = []
+    s = snapshot
+
+    if s.years_as_pro >= 2 and s.total_matches == 0:
+        flags.append(Flag('NO_MATCHES', 'NO_MATCHES'))
+
+    min_expected = s.years_as_pro * MIN_MATCHES_PER_SEASON
+    if s.years_as_pro >= 2 and s.total_matches < min_expected:
+        flags.append(Flag('LOW_MATCHES', f'LOW_MATCHES({s.total_matches}<{min_expected})'))
+
+    if s.is_top32 and s.years_as_pro >= 5 and s.finals_reached == 0:
+        flags.append(Flag('NO_FINALS', 'NO_FINALS'))
+
+    if s.total_matches >= 20 and s.rn_pct < 80:
+        flags.append(Flag('LOW_ROUND_NAME_COVERAGE', f'LOW_ROUND_NAME_COVERAGE({s.rn_pct:.0f}%)'))
+
+    if s.orphaned_seasons:
+        flags.append(Flag('ORPHAN', f'ORPHAN({len(s.orphaned_seasons)}seasons)'))
+
+    return flags
+
+
+def compute_api_flags(snapshot: PlayerSnapshot, api_titles) -> list:
+    """Source-of-truth cross-check against snooker.org t=4 data. Adapted
+    from verify_player_stats.py's flag rules. Never mutates anything —
+    the caller decides what, if anything, to do with the flags."""
+    flags = []
+    s = snapshot
+    total_decided = s.wins + s.losses
+
+    if total_decided > 20:
+        win_rate = s.wins / total_decided
+        if not (WIN_RATE_MIN <= win_rate <= WIN_RATE_MAX):
+            flags.append(Flag('BAD_WIN_RATE', f'BAD_WIN_RATE({win_rate:.0%})'))
+
+    if api_titles and api_titles > 0 and s.finals_reached < api_titles:
+        flags.append(Flag('FINALS_LT_TITLES', f'FINALS_LT_TITLES({s.finals_reached}<{api_titles})'))
+
+    return flags
+
+
+def is_auto_fixable(flags: list) -> bool:
+    """True only if every flag on this player is in the known-safe set."""
+    return bool(flags) and all(f.code in AUTO_FIXABLE_CODES for f in flags)
+
+
+def get_top32_ids(current_season: int) -> set:
+    """Player IDs in the top 32 of MoneyRankings across the current and
+    previous season — same lookup used by verify_player_stats.py and
+    validate_career_data.py."""
+    from oneFourSeven.models import Ranking
+
+    ids = Ranking.objects.filter(
+        Type='MoneyRankings',
+        Season__in=[current_season, current_season - 1],
+    ).order_by('Position').values_list('Player_id', flat=True)[:32]
+    return set(ids)
+
+
+def iter_all_players():
+    """Every Player row, ordered by ID for stable, resumable iteration."""
+    from oneFourSeven.models import Player
+
+    return Player.objects.order_by('ID')
+
+
+def build_snapshot(player, current_season: int, top32_ids: set) -> PlayerSnapshot:
+    """Query PlayerMatchHistory for one player and turn the results into
+    a PlayerSnapshot the flag rules can run against.
+
+    Note: this deliberately MIRRORS backfill_career_history.py's /
+    validate_career_data.py's progress-file bookkeeping (backfill_progress.json)
+    for orphan detection, rather than diverging from it. A season with zero
+    PlayerMatchHistory rows is only ORPHAN-flagged if it's also absent from
+    backfill_progress.json — if attempt_autofix() already ran
+    backfill_career_history --force for that season and it genuinely came
+    back empty (player didn't play any ranking event that season),
+    _save_progress() records `{player_id}:{season} = 0` there, and this
+    function needs to treat that as "confirmed empty, not a data gap" so a
+    legitimately-empty season stops being flagged instead of paging the
+    developer every single night forever.
+    """
+    from oneFourSeven.models import PlayerMatchHistory
+
+    first = player.FirstSeasonAsPro or 2005
+    years_as_pro = current_season - first + 1
+
+    total = PlayerMatchHistory.objects.filter(player_id=player.ID).count()
+    wins = PlayerMatchHistory.objects.filter(player_id=player.ID, winner_id=player.ID).count()
+    losses = PlayerMatchHistory.objects.filter(
+        player_id=player.ID
+    ).exclude(winner_id=player.ID).exclude(winner_id__isnull=True).count()
+    finals_reached = PlayerMatchHistory.objects.filter(
+        player_id=player.ID, round_name__iexact='Final'
+    ).count()
+    named_rounds = PlayerMatchHistory.objects.filter(
+        player_id=player.ID, round_name__isnull=False,
+    ).count()
+    rn_pct = (named_rounds / total * 100) if total else 0.0
+
+    progress = {}
+    if PROGRESS_FILE.exists():
+        try:
+            progress = _json.loads(PROGRESS_FILE.read_text())
+        except Exception:
+            pass
+
+    seasons_with_data = set(
+        PlayerMatchHistory.objects.filter(player_id=player.ID)
+        .values_list('season', flat=True).distinct()
+    )
+    orphaned = [
+        season for season in range(first, current_season + 1)
+        if season not in seasons_with_data and f'{player.ID}:{season}' not in progress
+    ]
+
+    name = f'{player.FirstName or ""} {player.LastName or ""}'.strip()
+
+    return PlayerSnapshot(
+        player_id=player.ID, name=name, years_as_pro=years_as_pro,
+        total_matches=total, wins=wins, losses=losses,
+        finals_reached=finals_reached, rn_pct=rn_pct,
+        orphaned_seasons=orphaned, is_top32=player.ID in top32_ids,
+    )
+
+
+def load_cursor(path) -> int:
+    """Read the next-player-id cursor. Returns 0 (start of roster) if the
+    file is missing or unreadable — a reset is harmless, it just means
+    the sweep starts over from the first player by ID."""
+    from pathlib import Path
+
+    path = Path(path)
+    if not path.exists():
+        return 0
+    try:
+        data = _json.loads(path.read_text())
+        return int(data.get('next_player_id', 0))
+    except Exception:
+        return 0
+
+
+def save_cursor(path, next_player_id: int) -> None:
+    from pathlib import Path
+
+    Path(path).write_text(_json.dumps({'next_player_id': next_player_id}))
+
+
+def select_batch(player_ids: list, cursor: int, batch_size: int):
+    """Return (batch, next_cursor) — batch_size player IDs starting at
+    cursor's *position* in the sorted id list, wrapping to the start once
+    the end of the roster is reached. cursor is a position index, not a
+    player ID, so a shrinking/growing roster degrades gracefully instead
+    of raising."""
+    n = len(player_ids)
+    if n == 0:
+        return [], 0
+
+    start = max(0, cursor) if cursor < n else 0
+    batch = [player_ids[(start + i) % n] for i in range(min(batch_size, n))]
+    next_cursor = (start + len(batch)) % n
+    return batch, next_cursor
+
+
+def fetch_api_titles(player_id: int):
+    """Fetch NumRankingTitles from snooker.org's t=4 career-aggregate
+    endpoint for one player. Returns None on any failure — the caller
+    treats a None the same as "couldn't verify this one," never as
+    "titles is zero.\""""
+    from oneFourSeven.constants import API_BASE_URL, HEADERS
+
+    try:
+        resp = requests.get(
+            f'{API_BASE_URL}?t=4&p={player_id}', headers=HEADERS, timeout=15
+        )
+        if resp.status_code != 200:
+            return None
+        data = resp.json()
+        if not data:
+            return None
+        return data[0].get('NumRankingTitles') or 0
+    except Exception:
+        return None
+
+
+from oneFourSeven.push_notifications import send_expo_push
+
+
+def attempt_autofix(player_id: int) -> bool:
+    """Repair a player flagged with one of AUTO_FIXABLE_CODES by re-running
+    the existing, already-manually-used backfill command for that one
+    player. This is the ONLY write path in the whole nightly check."""
+    try:
+        call_command('backfill_career_history', player_id=player_id, force=True)
+        return True
+    except Exception:
+        return False
+
+
+def build_notification(still_flagged: list, autofixed: list, errors: list):
+    """Build (title, body) for the admin push, or None if there's nothing
+    worth waking up for. A clean night, or a night where every flag was
+    auto-fixed with no errors, sends nothing."""
+    if not still_flagged and not errors:
+        return None
+
+    if still_flagged:
+        title = f'⚠️ Nightly stats check: {len(still_flagged)} player(s) flagged'
+    else:
+        title = f'⚠️ Nightly stats check: {len(errors)} error(s) during run'
+
+    lines = []
+    for snapshot, flags in still_flagged[:10]:
+        flag_str = ', '.join(f.detail for f in flags)
+        lines.append(f'{snapshot.name} (ID={snapshot.player_id}): {flag_str}')
+    if len(still_flagged) > 10:
+        lines.append(f'...and {len(still_flagged) - 10} more')
+
+    if errors:
+        lines.append(f'{len(errors)} error(s) during the run:')
+        lines.extend(errors[:5])
+
+    body = '\n'.join(lines)
+    return title, body
+
+
+def send_admin_notification(token: str, title: str, body: str) -> None:
+    """Send one push to the developer's device. Failure here must never
+    crash the run — the report already printed to stdout is the durable
+    record regardless."""
+    try:
+        send_expo_push([token], title, body)
+    except Exception:
+        pass

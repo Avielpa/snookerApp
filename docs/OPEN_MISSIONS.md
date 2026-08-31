@@ -94,6 +94,12 @@ Running list of known issues, deferred work, and follow-ups that are NOT current
 - **Impact**: a stuck/force-closed match from a tournament that ended 3+ days ago gets permanently mislabeled as "on break" and can surface inside the live "Also Live" bucket indefinitely, even though nothing about it is live.
 - **Next step when picked up**: bug-fix-expert workflow — decide whether `_fix_finished_tournaments` should write `Status=3` instead (matching what every reader expects for "finished"), audit whether any other repair/backfill command shares this same off-by-one belief, and check for already-affected rows in the DB that need a one-off backfill.
 
+### 15. Nightly stats check covers only PlayerMatchHistory/career-title accuracy, not the full stats surface
+- **Found**: 2026-08-31, while scoping the nightly player-stats accuracy check (`docs/superpowers/specs/2026-08-31-nightly-player-stats-check-design.md`).
+- **Status**: Explicitly scoped out at design time — the nightly job (`nightly_stats_check` management command) only validates `PlayerMatchHistory` completeness and cross-checks `Player.NumRankingTitles` against snooker.org's t=4 endpoint, matching what the pre-existing `validate_career_data.py`/`verify_player_stats.py` commands already covered.
+- **Impact**: `PlayerCareerStats`, `CenturyRecord`, and `Ranking` rows have no automated nightly accuracy check — a data bug in the century-break leaderboard or all-time stats records would not be caught by this job.
+- **Next step when picked up**: brainstorm a follow-up spec extending the same auto-fix/notify pattern to those models, likely with a different repair command per model (there is no single existing "re-sync this one row" command for `CenturyRecord`/`PlayerCareerStats` the way `backfill_career_history` exists for match history).
+
 ## Resolved / closed
 (move items here with a one-line resolution note when closed, don't delete history)
 

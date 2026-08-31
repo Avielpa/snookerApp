@@ -52,6 +52,7 @@ python manage.py scrape_century_stats     # Scrape century break leaderboard
 python manage.py sync_other_tours         # Sync Women's/Seniors/Q-Tour events
 python manage.py send_test_notification   # Send push notification (--broadcast for all)
 python manage.py rebuild_player_stats     # Recompute derived player stats
+python manage.py nightly_stats_check      # Nightly player-stats accuracy check (auto-fix + notify)
 ```
 
 ## Architecture

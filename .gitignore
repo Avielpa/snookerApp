@@ -23,6 +23,8 @@ FrontMaxBreak/dist/
 maxBreak/staticfiles/
 maxBreak/media/
 *.sqlite3
+nightly_stats_cursor.json
+backfill_progress.json
 
 # OS
 .DS_Store
