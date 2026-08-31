@@ -220,3 +220,17 @@ def fetch_api_titles(player_id: int):
         return data[0].get('NumRankingTitles') or 0
     except Exception:
         return None
+
+
+from django.core.management import call_command
+
+
+def attempt_autofix(player_id: int) -> bool:
+    """Repair a player flagged with one of AUTO_FIXABLE_CODES by re-running
+    the existing, already-manually-used backfill command for that one
+    player. This is the ONLY write path in the whole nightly check."""
+    try:
+        call_command('backfill_career_history', player_id=player_id, force=True)
+        return True
+    except Exception:
+        return False

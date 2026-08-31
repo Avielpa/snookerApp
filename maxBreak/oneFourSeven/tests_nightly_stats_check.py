@@ -361,3 +361,23 @@ class FetchApiTitlesTests(SimpleTestCase):
         fetch_api_titles(1)
         _, kwargs = mock_get.call_args
         self.assertEqual(kwargs['headers'], {'X-Requested-By': 'FahimaApp128'})
+
+
+from oneFourSeven.nightly_stats_checks import attempt_autofix
+
+
+class AttemptAutofixTests(SimpleTestCase):
+    @patch('oneFourSeven.nightly_stats_checks.call_command')
+    def test_calls_backfill_with_force_and_player_id(self, mock_call):
+        attempt_autofix(1001)
+        mock_call.assert_called_once_with('backfill_career_history', player_id=1001, force=True)
+
+    @patch('oneFourSeven.nightly_stats_checks.call_command')
+    def test_returns_true_on_success(self, mock_call):
+        mock_call.return_value = None
+        self.assertTrue(attempt_autofix(1001))
+
+    @patch('oneFourSeven.nightly_stats_checks.call_command')
+    def test_returns_false_when_backfill_raises(self, mock_call):
+        mock_call.side_effect = Exception('API down')
+        self.assertFalse(attempt_autofix(1001))
