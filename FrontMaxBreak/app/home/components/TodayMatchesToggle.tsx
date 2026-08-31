@@ -12,10 +12,22 @@ interface TodayMatchesToggleProps {
     totalMatches: number;
     isExpanded: boolean;
     onToggle: () => void;
+    label?: string;
+    iconName?: keyof typeof Ionicons.glyphMap;
+    accentColor?: string;
 }
 
-export const TodayMatchesToggle = ({ COLORS, totalMatches, isExpanded, onToggle }: TodayMatchesToggleProps) => {
+export const TodayMatchesToggle = ({
+    COLORS,
+    totalMatches,
+    isExpanded,
+    onToggle,
+    label = "Today's Matches",
+    iconName = 'today-outline',
+    accentColor,
+}: TodayMatchesToggleProps) => {
     if (totalMatches === 0) return null;
+    const color = accentColor ?? COLORS.accentLight;
 
     return (
         <TouchableOpacity
@@ -34,10 +46,10 @@ export const TodayMatchesToggle = ({ COLORS, totalMatches, isExpanded, onToggle 
                 gap: 6,
             }}
         >
-            <View style={{ width: 3, height: 16, backgroundColor: COLORS.accentLight, borderRadius: 2 }} />
-            <Ionicons name="today-outline" size={15} color={COLORS.accentLight} />
-            <Text style={{ color: COLORS.accentLight, fontSize: 13, fontFamily: 'PoppinsSemiBold', letterSpacing: 0.3 }}>
-                Today's Matches
+            <View style={{ width: 3, height: 16, backgroundColor: color, borderRadius: 2 }} />
+            <Ionicons name={iconName} size={15} color={color} />
+            <Text style={{ color, fontSize: 13, fontFamily: 'PoppinsSemiBold', letterSpacing: 0.3 }}>
+                {label}
             </Text>
             <View style={{
                 backgroundColor: 'rgba(255,255,255,0.08)',

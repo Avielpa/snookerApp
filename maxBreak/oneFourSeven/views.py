@@ -1693,17 +1693,15 @@ def other_tours_view(request):
 @permission_classes([AllowAny])
 def all_live_matches_view(request):
     """
-    Returns live/on-break matches from non-main tours only (women's, seniors, other).
-    Main tour is always excluded — it's already shown in the main home screen list.
-    This prevents the same match appearing twice on the home screen.
+    Returns live/on-break matches from every tour except the focused event.
+    Qualifier siblings and other main-tour events are included — the frontend
+    already hides the focused event's own live list, so Tour='main' must not
+    be blanket-excluded (that hid qualifier live matches from Also Live).
     """
     exclude_event_id = request.query_params.get('exclude_event_id')
 
-    # Always exclude main tour to prevent duplicates on the home screen
     live_qs = MatchesOfAnEvent.objects.filter(
         Status__in=[1, 2],  # 1=Running, 2=On Break
-    ).exclude(
-        Event__Tour='main'
     ).select_related('Event')
 
     if exclude_event_id:
