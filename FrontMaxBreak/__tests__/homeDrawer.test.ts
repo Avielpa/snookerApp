@@ -7,7 +7,6 @@ import {
     shouldShowOtherLiveFooter,
     isLiveOrOnBreak,
     matchIdentityKey,
-    liveMatchesFromGroup,
     excludeLiveFromGroups,
     collectOtherLiveGroups,
     countGroupMatches,
@@ -114,42 +113,6 @@ describe('matchIdentityKey', () => {
     });
 });
 
-describe('liveMatchesFromGroup', () => {
-    it('keeps only live and on-break matches', () => {
-        const result = liveMatchesFromGroup(group({
-            matches: [
-                matchItem(1, { matchCategory: 'livePlaying' }),
-                matchItem(2, { matchCategory: 'onBreak' }),
-                matchItem(3, { matchCategory: 'upcoming' }),
-                matchItem(4, { matchCategory: 'finished' }),
-            ],
-        }));
-        expect(result?.matches.map((m) => m.api_match_id)).toEqual([1, 2]);
-    });
-
-    it('returns null when a group has no live or on-break matches', () => {
-        expect(liveMatchesFromGroup(group({
-            matches: [matchItem(3, { matchCategory: 'upcoming' })],
-        }))).toBeNull();
-    });
-
-    it('returns null for an empty group', () => {
-        expect(liveMatchesFromGroup(group({ matches: [] }))).toBeNull();
-    });
-
-    it('preserves event metadata on the filtered group', () => {
-        const result = liveMatchesFromGroup(group({
-            event_id: 2,
-            event_name: 'British Open Qualifiers',
-            is_qualifier: true,
-            matches: [matchItem(5, { matchCategory: 'livePlaying' })],
-        }));
-        expect(result?.event_id).toBe(2);
-        expect(result?.is_qualifier).toBe(true);
-        expect(result?.event_name).toBe('British Open Qualifiers');
-    });
-});
-
 describe('excludeLiveFromGroups', () => {
     it('drops live matches so they do not appear on Upcoming', () => {
         const result = excludeLiveFromGroups([
@@ -204,13 +167,25 @@ describe('excludeLiveFromGroups', () => {
     });
 });
 
+function liveMatch(apiMatchId: number, overrides: Partial<MatchListItem> & { event_id?: number; event_name?: string; event_tour?: string } = {}) {
+    return {
+        ...matchItem(apiMatchId, { matchCategory: 'livePlaying', ...overrides }),
+        event_id: 70,
+        event_name: 'Senior Masters',
+        event_tour: 'seniors',
+        ...overrides,
+    };
+}
+
 describe('collectOtherLiveGroups', () => {
+    // Single-sourced from the live/on-break poll only (see 2026-08-31 fix:
+    // merging in a second, slower-polling source caused live/break to flap
+    // every time the two polls disagreed — SESSION_2026-08-31_HOME_LIVE_DRAWER.md).
     const focusedId = 1;
 
     it('drops the focused event even when that event has live matches', () => {
         const result = collectOtherLiveGroups(
-            [group({ event_id: 1, matches: [matchItem(100, { matchCategory: 'livePlaying' })] })],
-            [],
+            [liveMatch(100, { event_id: 1, event_name: 'British Open' })],
             focusedId,
         );
         expect(result).toEqual([]);
@@ -218,13 +193,7 @@ describe('collectOtherLiveGroups', () => {
 
     it('keeps a qualifier sibling live match (different event_id, same family)', () => {
         const result = collectOtherLiveGroups(
-            [group({
-                event_id: 2,
-                event_name: 'British Open Qualifiers',
-                is_qualifier: true,
-                matches: [matchItem(200, { matchCategory: 'livePlaying' })],
-            })],
-            [],
+            [liveMatch(200, { event_id: 2, event_name: 'British Open Qualifiers', event_tour: 'main' })],
             focusedId,
         );
         expect(result).toHaveLength(1);
@@ -232,93 +201,37 @@ describe('collectOtherLiveGroups', () => {
         expect(result[0].matches[0].api_match_id).toBe(200);
     });
 
-    it('drops leftover upcoming/finished today matches from the Also Live drawer', () => {
+    it('keeps a Q-Tour live match', () => {
         const result = collectOtherLiveGroups(
-            [group({
-                event_id: 2,
-                is_qualifier: true,
-                matches: [
-                    matchItem(201, { matchCategory: 'upcoming' }),
-                    matchItem(202, { matchCategory: 'finished' }),
-                ],
-            })],
-            [],
-            focusedId,
-        );
-        expect(result).toEqual([]);
-    });
-
-    it('keeps a Q-Tour live match from today groups', () => {
-        const result = collectOtherLiveGroups(
-            [group({
-                event_id: 80,
-                event_name: 'Q Tour Event 7',
-                matches: [matchItem(800, { matchCategory: 'livePlaying' })],
-            })],
-            [],
+            [liveMatch(800, { event_id: 80, event_name: 'Q Tour Event 7', event_tour: 'other' })],
             focusedId,
         );
         expect(result.map((g) => g.event_id)).toEqual([80]);
     });
 
-    it('keeps a women\'s-tour live match from today groups', () => {
+    it('keeps a women\'s-tour live match', () => {
         const result = collectOtherLiveGroups(
-            [group({
-                event_id: 90,
-                event_name: "World Women's Championship",
-                matches: [matchItem(900, { matchCategory: 'livePlaying' })],
-            })],
-            [],
+            [liveMatch(900, { event_id: 90, event_name: "World Women's Championship", event_tour: 'womens' })],
             focusedId,
         );
         expect(result.map((g) => g.event_id)).toEqual([90]);
     });
 
-    it('adds other-live API matches that are not already in today groups', () => {
-        const extra = {
-            ...matchItem(700),
-            event_id: 70,
-            event_name: 'Senior Masters',
-            event_tour: 'seniors',
-        };
-        const result = collectOtherLiveGroups([], [extra], focusedId);
-        expect(result).toHaveLength(1);
-        expect(result[0].event_id).toBe(70);
-        expect(result[0].matches[0].api_match_id).toBe(700);
-    });
-
-    it('does not duplicate a match that appears in both today groups and other-live', () => {
-        const shared = matchItem(200, { matchCategory: 'livePlaying' });
-        const result = collectOtherLiveGroups(
-            [group({
-                event_id: 2,
-                event_name: 'British Open Qualifiers',
-                is_qualifier: true,
-                matches: [shared],
-            })],
-            [{ ...shared, event_id: 2, event_name: 'British Open Qualifiers', event_tour: 'main' }],
-            focusedId,
-        );
-        expect(countGroupMatches(result)).toBe(1);
-    });
-
     it('excludes an other-live match that belongs to the focused event', () => {
         const result = collectOtherLiveGroups(
-            [],
-            [{ ...matchItem(100), event_id: 1, event_name: 'British Open', event_tour: 'main' }],
+            [liveMatch(100, { event_id: 1, event_name: 'British Open', event_tour: 'main' })],
             focusedId,
         );
         expect(result).toEqual([]);
     });
 
-    it('returns empty when both sources are empty', () => {
-        expect(collectOtherLiveGroups([], [], focusedId)).toEqual([]);
+    it('returns empty when the source is empty', () => {
+        expect(collectOtherLiveGroups([], focusedId)).toEqual([]);
     });
 
     it('does not exclude anything when focusedEventId is null', () => {
         const result = collectOtherLiveGroups(
-            [group({ event_id: 1, matches: [matchItem(100, { matchCategory: 'livePlaying' })] })],
-            [],
+            [liveMatch(100, { event_id: 1, event_name: 'British Open' })],
             null,
         );
         expect(result).toHaveLength(1);
@@ -327,23 +240,18 @@ describe('collectOtherLiveGroups', () => {
 
     it('keeps on-break matches from a non-focused event', () => {
         const result = collectOtherLiveGroups(
-            [group({
-                event_id: 2,
-                matches: [matchItem(210, { matchCategory: 'onBreak' })],
-            })],
-            [],
+            [liveMatch(210, { event_id: 2, matchCategory: 'onBreak' } as any)],
             focusedId,
         );
         expect(result[0].matches[0].matchCategory).toBe('onBreak');
     });
 
-    it('groups leftover other-live matches by event_id', () => {
+    it('groups matches by event_id', () => {
         const result = collectOtherLiveGroups(
-            [],
             [
-                { ...matchItem(701), event_id: 70, event_name: 'Senior Masters', event_tour: 'seniors' },
-                { ...matchItem(702), event_id: 70, event_name: 'Senior Masters', event_tour: 'seniors' },
-                { ...matchItem(801), event_id: 80, event_name: 'Q Tour Event 7', event_tour: 'other' },
+                liveMatch(701, { event_id: 70, event_name: 'Senior Masters' }),
+                liveMatch(702, { event_id: 70, event_name: 'Senior Masters' }),
+                liveMatch(801, { event_id: 80, event_name: 'Q Tour Event 7' }),
             ],
             focusedId,
         );
@@ -351,23 +259,29 @@ describe('collectOtherLiveGroups', () => {
         expect(result.find((g) => g.event_id === 70)?.matches).toHaveLength(2);
     });
 
-    it('does not list the same extra match twice', () => {
-        const extra = { ...matchItem(701), event_id: 70, event_name: 'Senior Masters', event_tour: 'seniors' };
-        const result = collectOtherLiveGroups([], [extra, extra], focusedId);
+    it('does not list the same match twice if the API returns a duplicate', () => {
+        const extra = liveMatch(701, { event_id: 70 });
+        const result = collectOtherLiveGroups([extra, extra], focusedId);
         expect(countGroupMatches(result)).toBe(1);
     });
 
     it('is generic: a Championship League group sibling is other-live', () => {
         const result = collectOtherLiveGroups(
-            [group({
-                event_id: 55,
-                event_name: 'Championship League Group 2',
-                matches: [matchItem(550, { matchCategory: 'livePlaying' })],
-            })],
-            [],
+            [liveMatch(550, { event_id: 55, event_name: 'Championship League Group 2' })],
             54,
         );
         expect(result[0].event_id).toBe(55);
+    });
+
+    it('does not flap between calls when the underlying data is unchanged (regression: dual-source race)', () => {
+        // Simulates two consecutive polls of the SAME single source returning
+        // the SAME match — output must be identical every time, since there
+        // is no second, slower-polling source left to disagree with it.
+        const snapshot = [liveMatch(200, { event_id: 2, event_name: 'British Open Qualifiers' })];
+        const first = collectOtherLiveGroups(snapshot, focusedId);
+        const second = collectOtherLiveGroups(snapshot, focusedId);
+        expect(first).toEqual(second);
+        expect(first[0].matches[0].matchCategory).toBe('livePlaying');
     });
 });
 

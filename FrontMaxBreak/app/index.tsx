@@ -299,8 +299,8 @@ const HomeScreen = (): React.ReactElement | null => {
     );
     const drawerMode = resolveHomeDrawerMode(activeFilter);
     const otherLiveGroups = useMemo(
-        () => collectOtherLiveGroups(todayGroups, otherLiveMatches, currentTournamentId),
-        [todayGroups, otherLiveMatches, currentTournamentId]
+        () => collectOtherLiveGroups(otherLiveMatches, currentTournamentId),
+        [otherLiveMatches, currentTournamentId]
     );
     const otherLiveTotal = useMemo(
         () => countGroupMatches(otherLiveGroups),

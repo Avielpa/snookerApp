@@ -29,12 +29,6 @@ export function matchIdentityKey(match: { id: number; api_match_id?: number | nu
     return `id:${match.id}`;
 }
 
-export function liveMatchesFromGroup(group: TodayMatchGroupWithItems): TodayMatchGroupWithItems | null {
-    const matches = group.matches.filter((match) => isLiveOrOnBreak(match.matchCategory));
-    if (matches.length === 0) return null;
-    return { ...group, matches };
-}
-
 export function excludeLiveFromGroup(group: TodayMatchGroupWithItems): TodayMatchGroupWithItems | null {
     const matches = group.matches.filter((match) => !isLiveOrOnBreak(match.matchCategory));
     if (matches.length === 0) return null;
@@ -55,26 +49,6 @@ function isFocusedEvent(eventId: number, focusedEventId: number | null): boolean
     return focusedEventId != null && eventId === focusedEventId;
 }
 
-function liveGroupsExcludingFocus(
-    todayGroups: TodayMatchGroupWithItems[],
-    focusedEventId: number | null
-): TodayMatchGroupWithItems[] {
-    return todayGroups
-        .filter((group) => !isFocusedEvent(group.event_id, focusedEventId))
-        .map(liveMatchesFromGroup)
-        .filter((group): group is TodayMatchGroupWithItems => group != null);
-}
-
-function allMatchKeys(groups: TodayMatchGroupWithItems[]): Set<string> {
-    const keys = new Set<string>();
-    for (const group of groups) {
-        for (const match of group.matches) {
-            keys.add(matchIdentityKey(match));
-        }
-    }
-    return keys;
-}
-
 function addToEventGroup(
     byEvent: Map<number, TodayMatchGroupWithItems>,
     match: OtherLiveSourceMatch
@@ -93,12 +67,19 @@ function addToEventGroup(
     });
 }
 
-function unmatchedOtherLive(
+// Single source of truth: the live/on-break poll (useOtherLiveMatches, 30s
+// interval). Do NOT merge in a second, slower-polling source (e.g. the
+// today's-matches poll) — combining two sources with different refresh
+// cadences caused a real bug where a match's displayed status flapped
+// between live/on-break every time the two polls landed at different
+// moments and disagreed (see SESSION_2026-08-31_HOME_LIVE_DRAWER.md,
+// "Follow-up" section, 2026-08-31).
+export function collectOtherLiveGroups(
     otherLiveMatches: OtherLiveSourceMatch[],
-    focusedEventId: number | null,
-    seen: Set<string>
+    focusedEventId: number | null
 ): TodayMatchGroupWithItems[] {
     const byEvent = new Map<number, TodayMatchGroupWithItems>();
+    const seen = new Set<string>();
     for (const match of otherLiveMatches) {
         if (match.event_id != null && isFocusedEvent(match.event_id, focusedEventId)) continue;
         const key = matchIdentityKey(match);
@@ -107,14 +88,4 @@ function unmatchedOtherLive(
         addToEventGroup(byEvent, match);
     }
     return Array.from(byEvent.values());
-}
-
-export function collectOtherLiveGroups(
-    todayGroups: TodayMatchGroupWithItems[],
-    otherLiveMatches: OtherLiveSourceMatch[],
-    focusedEventId: number | null
-): TodayMatchGroupWithItems[] {
-    const fromToday = liveGroupsExcludingFocus(todayGroups, focusedEventId);
-    const extras = unmatchedOtherLive(otherLiveMatches, focusedEventId, allMatchKeys(fromToday));
-    return [...fromToday, ...extras];
 }

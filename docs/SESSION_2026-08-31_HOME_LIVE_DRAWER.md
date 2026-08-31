@@ -37,5 +37,12 @@ Tab-aware single upper drawer, generic by `event_id` (not by tour name):
 ## Follow-up
 Upcoming still showed live cards because Today's Matches included every status. `excludeLiveFromGroups` now strips live/on-break from that drawer so they only appear on the Live tab.
 
+## Follow-up 2 — flapping live/on-break in Also Live
+Investigated by [Investigate flapping live/on-break status](9ff40886-0b26-4ff7-b9bd-2d1419107aff). Root cause: `collectOtherLiveGroups` merged two sources with different poll intervals (`useTodayMatches`, 120s; `useOtherLiveMatches`, 30s) and let the stale 120s copy win on collision — the badge flipped every time the two polls disagreed. Not a snooker.org API issue; both endpoints read the identical `Status` column.
+Fix: since the earlier backend change (`all_live_matches_view` no longer excludes `Tour='main'`) already made `useOtherLiveMatches` a complete generic source, dropped the `todayGroups`-derived half entirely — `collectOtherLiveGroups` is now single-sourced from the 30s poll only. Removed now-dead helpers (`liveMatchesFromGroup`, `liveGroupsExcludingFocus`, `allMatchKeys`). Signature changed from `(todayGroups, otherLiveMatches, focusedEventId)` to `(otherLiveMatches, focusedEventId)`.
+Tradeoff: the "· Qualifiers" header suffix (sourced from `todayGroups`' `is_qualifier` flag) no longer appears on a qualifier's group inside Also Live specifically — Today's Matches on Upcoming/Results is unaffected.
+Separate, unrelated finding logged as Open Mission #14 (not fixed): `update_live_matches.py`'s stuck-match repair writes `Status=2` believing it means "Finished," while every runtime reader treats it as "On Break." Doesn't cause flapping — only mislabels already-finished tournaments' stuck matches.
+
 ## Lesson
 Do not treat "other live" as "not main tour". The generic rule is "not the focused `event_id`". Qualifier siblings are a different event and belong in Also Live.
+Do not merge two data sources with different poll cadences into one derived view without an explicit freshness rule — the "combine todayGroups + otherLiveMatches" pattern looked reasonable but silently let a 120s-stale snapshot overwrite a 30s-fresh one on every render.
