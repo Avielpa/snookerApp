@@ -22,11 +22,12 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Restore rolling-sweep cursor
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: maxBreak/nightly_stats_cursor.json
-          key: nightly-stats-cursor
-          restore-keys: nightly-stats-cursor
+          key: nightly-stats-cursor-${{ github.run_id }}
+          restore-keys: |
+            nightly-stats-cursor-
 
       - name: Run nightly stats check
         working-directory: maxBreak
@@ -41,4 +42,4 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: maxBreak/nightly_stats_cursor.json
-          key: nightly-stats-cursor
+          key: nightly-stats-cursor-${{ github.run_id }}
