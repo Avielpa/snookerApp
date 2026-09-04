@@ -14,6 +14,16 @@ to work) and `docs/GROWTH_UTM_TRACKING.md` (link tagging — every outbound link
 The most recent session doc under `docs/SESSION_*growth*.md` or `docs/HANDOFF_*.md` (newest
 date wins) has the freshest state — read it before posting anything.
 
+**Also check memory before acting.** `MEMORY.md` is auto-loaded into context at session
+start, but actually open the growth-related memory files it links, not just skim the
+one-line pointers — they carry corrections that override stale doc content:
+`project_2026-08-25_growth_campaign.md`, `project_2026-09-03_reddit_account_growth.md`,
+`feedback_reddit_ai_text_detection.md`, `feedback_fb_live_content_playbook.md`,
+`project_2026-09-04_fb_page_and_icon_bug.md`, and any newer `project_*growth*`/`feedback_*fb*`
+file MEMORY.md points to — a newer memory entry can supersede a status shown in §1 below (e.g.
+a group flipping from 🟡 to ✅/❌) faster than this file gets edited. If memory and this
+skill disagree, memory is more current — trust it, then update this file to match.
+
 ## 0. Ground rules (non-negotiable, established over multiple sessions)
 
 - **Never fabricate content.** Every score, stat, headline, or "who's playing" claim must
@@ -141,6 +151,12 @@ surfaced inside the Gemini web app (gemini.google.com):
 - **Baseline snapshot**: `docs/ANALYTICS_BASELINE_2026-09-03.md` has the pre-push Firebase/
   AdMob/Play Console numbers — use it as the before/after comparison point rather than
   re-deriving a baseline each time.
+- **Running log — append every session**: `docs/GROWTH_ANALYTICS_LOG.md` is the ongoing,
+  dated record of actual numbers over time (separate from the one-off baseline/handoff
+  docs, which are narrative snapshots). Read its latest entry at the start of a session to
+  see the trend since last time, and add a new dated entry at the end of every session per
+  its template — this is what makes "were analytics saved?" answerable with data, not just
+  prose buried in a session doc.
 - **Firebase MCP note**: the `plugin:firebase:firebase` MCP server has failed to connect in
   at least one recent session (30s timeout). If it's unavailable, check analytics manually
   via the Firebase Console web UI (browser automation) rather than assuming there's no
