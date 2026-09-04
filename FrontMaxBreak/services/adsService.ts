@@ -1,5 +1,5 @@
 // services/adsService.ts
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import mobileAds, {
@@ -64,8 +64,19 @@ const shownThisSessionByLabel: Record<string, boolean> = {};
 // be requested until real value has been delivered.
 function createOnceInterstitialHook(label: string) {
   return function useOnceInterstitial(trigger: boolean = true): void {
+    // One-way latch: only ever transitions false -> true, never back. This
+    // keeps "notice the trigger fired" separate from "run the ad timer", so
+    // a rapid true->false flip of `trigger` (e.g. tapping "Next Frame"
+    // inside the delay window) can never re-run the timer effect's cleanup
+    // and cancel a pending ad.
+    const [armed, setArmed] = useState(false);
+
     useEffect(() => {
-      if (!trigger || !ADS_ENABLED || shownThisSessionByLabel[label] || !INTERSTITIAL_AD_UNIT_ID) return;
+      if (trigger) setArmed(true);
+    }, [trigger]);
+
+    useEffect(() => {
+      if (!armed || !ADS_ENABLED || shownThisSessionByLabel[label] || !INTERSTITIAL_AD_UNIT_ID) return;
 
       let isMounted = true;
       let unsubscribeLoaded: (() => void) | undefined;
@@ -100,7 +111,7 @@ function createOnceInterstitialHook(label: string) {
         unsubscribeLoaded?.();
         unsubscribeError?.();
       };
-    }, [trigger]);
+    }, [armed]);
   };
 }
 

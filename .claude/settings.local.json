@@ -279,7 +279,11 @@
       "PowerShell(& \"$env:LOCALAPPDATA\\\\Android\\\\Sdk\\\\platform-tools\\\\adb.exe\" devices -l)",
       "Skill(loop)",
       "WebFetch(domain:livescore.snooker.org)",
-      "WebFetch(domain:www.worldsnookerseniorstour.com)"
+      "WebFetch(domain:www.worldsnookerseniorstour.com)",
+      "Bash(gh run *)",
+      "PowerShell(& \"C:\\\\Users\\\\Aviel\\\\AppData\\\\Local\\\\Android\\\\Sdk\\\\platform-tools\\\\adb.exe\" devices -l)",
+      "PowerShell(python -m pip install qrcode --quiet)",
+      "Bash(pip install *)"
     ],
     "deny": [],
     "ask": [],

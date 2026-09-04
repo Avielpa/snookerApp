@@ -100,6 +100,13 @@ Running list of known issues, deferred work, and follow-ups that are NOT current
 - **Impact**: `PlayerCareerStats`, `CenturyRecord`, and `Ranking` rows have no automated nightly accuracy check — a data bug in the century-break leaderboard or all-time stats records would not be caught by this job.
 - **Next step when picked up**: brainstorm a follow-up spec extending the same auto-fix/notify pattern to those models, likely with a different repair command per model (there is no single existing "re-sync this one row" command for `CenturyRecord`/`PlayerCareerStats` the way `backfill_career_history` exists for match history).
 
+### 16. Production/testing tracks are running build 78, which lacks the native predictive-back scoreboard-freeze fix
+- **Found**: 2026-09-03, while auditing whether it was safe to publish build 78 (already live in production since Aug 26) to the Internal/Open testing tracks for a Play Store API-36 compliance fix (`docs/SESSION_2026-09-03_PLAY_STORE_API36_COMPLIANCE.md`).
+- **Status**: Not fixed — flagged only, deliberately not built as a drive-by inside the compliance task. User confirmed via live device test (button-nav) that the specific freeze doesn't currently reproduce for them and deferred a new build.
+- **Root cause**: commit `73e81413` (Aug 26, after build 78 was cut from `d3662ae1` on Aug 23) added `FrontMaxBreak/plugins/withDisablePredictiveBack.js` to fix a scoreboard freeze where Android's **predictive-back edge-swipe gesture** (gesture-nav only, Android 13+) dismisses the native Foul-dialog Modal at the OS level before RN's `BackHandler`/`onRequestClose` ever runs. That plugin is a native Expo config-plugin change — it cannot be delivered via OTA (`eas update`) and requires a fresh native build to take effect. Build 78 does not have it. The commit's JS-only mitigation (`onRequestClose` on scoreboard modals) is separately already live via OTA.
+- **Impact**: real, but nav-mode-dependent — only manifests for scoreboard users on **gesture navigation** (Android's default in most current devices) who open the Foul dialog and then use the edge-swipe back gesture. A live test on a 3-button-nav device (S24) did not reproduce it, which doesn't rule it out for gesture-nav users since the native fix genuinely isn't compiled into build 78.
+- **Next step when picked up**: `eas build --profile preview --platform android` from current `master` (includes the fix), test the same Foul-dialog scenario on a device explicitly switched to **gesture navigation** (`adb shell settings put secure navigation_mode 2`), then promote to production per the normal preview→production flow.
+
 ## Resolved / closed
 (move items here with a one-line resolution note when closed, don't delete history)
 
