@@ -223,6 +223,18 @@ export const MatchItem = ({
                             <Text style={styles.detailText}>{scheduledDate}</Text>
                         </View>
                     )}
+                    {/* Broadcaster indicator — compact, non-interactive (card tap already
+                        opens match details where the full tappable badge list lives).
+                        Hidden once finished: irrelevant clutter for a past match. */}
+                    {!isMatchFinished && !!item.broadcasters && item.broadcasters.length > 0 && (
+                        <View style={styles.detailItem}>
+                            <Ionicons name="tv-outline" size={11} color={COLORS.textSecondary} />
+                            <Text style={styles.detailText} numberOfLines={1}>
+                                {item.broadcasters[0].name}
+                                {item.broadcasters.length > 1 ? ` +${item.broadcasters.length - 1}` : ''}
+                            </Text>
+                        </View>
+                    )}
                     <View style={{ flex: 1 }} />
                     {(isLive || isOnBreak) && (
                         <View style={styles.liveBadgeFooter}>
