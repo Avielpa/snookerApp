@@ -4,7 +4,7 @@
     "slug": "MaxBreak",
     "version": "1.1.2",
     "orientation": "default",
-    "icon": "./assets/images/icon.jpeg",
+    "icon": "./assets/images/icon_v2.png",
     "scheme": "maxbreak",
     "userInterfaceStyle": "dark",
     "newArchEnabled": false,
@@ -30,7 +30,7 @@
     "android": {
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/icon.jpeg",
+        "foregroundImage": "./assets/images/icon_v2.png",
         "backgroundColor": "#0f172a"
       },
       "package": "com.avielpahima.maxbreaksnooker",
@@ -65,7 +65,7 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/images/icon.jpeg",
+          "icon": "./assets/images/icon_v2.png",
           "color": "#ffffff",
           "defaultChannel": "default"
         }

@@ -283,7 +283,9 @@
       "Bash(gh run *)",
       "PowerShell(& \"C:\\\\Users\\\\Aviel\\\\AppData\\\\Local\\\\Android\\\\Sdk\\\\platform-tools\\\\adb.exe\" devices -l)",
       "PowerShell(python -m pip install qrcode --quiet)",
-      "Bash(pip install *)"
+      "Bash(pip install *)",
+      "Bash(export MSYS_NO_PATHCONV=1)",
+      "Bash(\"/c/Users/Aviel/AppData/Local/Android/Sdk/platform-tools/adb.exe\" devices *)"
     ],
     "deny": [],
     "ask": [],
