@@ -99,9 +99,19 @@ ALLOWED_EVENT_TYPES = ['Ranking', 'Qualifying', 'Invitational']
 EXCLUDED_EVENT_NAME_PATTERNS = []
 
 # --- Rate Limiting Configuration ---
+# snooker.org's hard cap is 2 requests/minute. On 2026-09-10 a duplicate
+# Railway cron service (since removed) polled independently alongside the
+# main auto_live_monitor daemon — each stayed under the cap on its own, but
+# combined they exceeded it and the API owner revoked access for several
+# hours. RATE_LIMIT_SAFETY_MARGIN adds slack above the bare-minimum 30s
+# spacing so a single well-behaved poller has headroom, not just to survive
+# clock skew. This alone doesn't prevent a second concurrent poller from
+# being added again — see CLAUDE.md: never run a second process that calls
+# api.snooker.org.
 REQUESTS_PER_MINUTE = 2
 SECONDS_PER_MINUTE = 60
-MIN_REQUEST_INTERVAL = SECONDS_PER_MINUTE // REQUESTS_PER_MINUTE  # 30 seconds
+RATE_LIMIT_SAFETY_MARGIN = 10  # seconds
+MIN_REQUEST_INTERVAL = (SECONDS_PER_MINUTE // REQUESTS_PER_MINUTE) + RATE_LIMIT_SAFETY_MARGIN  # 40 seconds
 
 
 def current_season_int() -> int:

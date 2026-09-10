@@ -145,6 +145,7 @@ def apply_emergency_live_overlay(event_instance, response_data: list) -> list:
         if not overlay:
             return response_data
 
+        changed_count = 0
         for match_dict in response_data:
             # Only ever touch matches not already finished in our own DB.
             # (3=Finished is this codebase's real convention — see
@@ -167,6 +168,9 @@ def apply_emergency_live_overlay(event_instance, response_data: list) -> list:
             else:
                 s1, s2 = row["score2"], row["score1"]
 
+            if match_dict.get("score1") != s1 or match_dict.get("score2") != s2:
+                changed_count += 1
+
             match_dict["score1"] = s1
             match_dict["score2"] = s2
             if row["live"]:
@@ -184,6 +188,16 @@ def apply_emergency_live_overlay(event_instance, response_data: list) -> list:
                 if s1 != s2:
                     winning_player_id = row["player1_id"] if row["score1"] > row["score2"] else row["player2_id"]
                     match_dict["winner_id"] = winning_player_id
+
+        if changed_count:
+            # Visibility signal: this only fires when the overlay actually
+            # corrected stale DB data (e.g. api.snooker.org down/rate-limited
+            # again) — not on every request, so it's safe at info level and
+            # won't spam Railway logs during normal operation.
+            logger.info(
+                f"[emergency_live_overlay] active for event {event_instance.ID}: "
+                f"corrected {changed_count} match(es) from public results page"
+            )
 
         return response_data
     except Exception as e:
