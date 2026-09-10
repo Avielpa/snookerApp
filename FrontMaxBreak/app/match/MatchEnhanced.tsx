@@ -36,6 +36,7 @@ import { createMatchStyles } from './styles-modern';
 import { parseFrameScoresString } from './utils/frameScoreParser';
 import { isMatchFavouriteSync, isMatchFavouriteAsync } from '../../services/favoritesService';
 import { isMatchMutedSync, isMatchMutedAsync, toggleMatchMute } from '../../services/mutedMatchesService';
+import { useMatchDetailInterstitial } from '../../services/adsService';
 
 
 /**
@@ -85,6 +86,10 @@ export default function MatchEnhanced() {
     }
     // Scheduled (status_code === 0) or unknown — leave the 'overview' default
   }, [matchDetails]);
+
+  // Interstitial trigger: gated on match data actually being on screen (not
+  // raw mount), so it can never fire over the loading spinner.
+  useMatchDetailInterstitial(!loading && !!matchDetails);
   const [userPrediction, setUserPrediction] = useState<1 | 2 | null>(null);
   const [predictionStats, setPredictionStats] = useState<PredictionStats | null>(null);
   const [h2hData, setH2hData] = useState<H2HData | null>(null);

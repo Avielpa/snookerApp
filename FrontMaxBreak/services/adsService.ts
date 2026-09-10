@@ -120,6 +120,13 @@ function createOnceInterstitialHook(label: string) {
 // ad can interrupt them. Caller passes `snap.isFrameOver` as the trigger.
 export const useScoreboardFrameCompleteInterstitial = createOnceInterstitialHook('scoreboard-frame-complete');
 
+// Shown once per app process, on the Match Detail screen — gated by the
+// caller passing "match data has actually loaded" as the trigger (not raw
+// screen mount), so it can't fire over a blank/loading state. Independent
+// session cap from the other triggers above: opening a match after either
+// of those has already fired this session can still show this one too.
+export const useMatchDetailInterstitial = createOnceInterstitialHook('match-detail');
+
 const MEDIA_INTERSTITIAL_COOLDOWN_KEY = '@maxbreak_media_interstitial_last_shown';
 export const MEDIA_INTERSTITIAL_COOLDOWN_MS = 4 * 60 * 60 * 1000; // 4 hours
 
