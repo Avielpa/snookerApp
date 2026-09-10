@@ -115,6 +115,12 @@ Running list of known issues, deferred work, and follow-ups that are NOT current
 - **Prepared, ready to apply**: two 512×512 replacement candidates sitting on the user's Desktop (`maxbreak_store_icon_512.png`, built from the existing clean `icon.png`; `maxbreak_store_icon_512_v2_gemini.png`, freshly AI-generated — a plain red+white ball pair on baize, no text, generously padded). Either is safe to drop into the **Play Store listing** icon field right away (Play Console → app → Store presence → Store listings → Graphics → App icon) — that part needs no rebuild and updates instantly, but Play Console's uploader has no automatable file input, so a human has to click through it.
 - **Next step when picked up**: with the user, pick which design becomes the real icon (existing `icon.png`, or one of the two new candidates — or a fresh one), then: replace `icon.jpeg` (or repoint `app.json` to the chosen file), run `eas build` for both preview and production (icon changes are native, not OTA-deliverable), test on a real device before promoting, and only then update the Play Store listing icon to match.
 
+### 18. `corn for live matches` Railway service needs manual deletion
+- **Found**: 2026-09-10, during the api.snooker.org access-revocation incident (`docs/SESSION_2026-09-10_api_outage_and_live_fallback.md`).
+- **Status**: Disabled (start command replaced with a no-op, cron schedule removed), **not deleted**. Claude Code's `delete-service` action on Railway is blocked by a safety-classifier rule for this kind of destructive/irreversible action — attempted twice, both blocked.
+- **Root cause context**: this service was a redundant duplicate of the real `auto_live_monitor` daemon (`auto command`), independently polling `api.snooker.org` every 5 minutes. Combined with the daemon's own 2 req/min-compliant polling, the two together exceeded snooker.org's real rate limit and got our API access revoked for ~5 hours.
+- **Next step when picked up**: delete the service via the Railway dashboard (Project → `corn for live matches` → Settings → Delete Service) so a disabled zombie service can't get accidentally re-enabled or rediscovered as "already there, must be needed" by a future session.
+
 ## Resolved / closed
 (move items here with a one-line resolution note when closed, don't delete history)
 
