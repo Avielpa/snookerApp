@@ -656,6 +656,17 @@ def matches_of_an_event_view(request, event_id):
              status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
 
+    # EMERGENCY: overlay live scores from the public results page when our
+    # normal snooker.org API pipeline is down (api.snooker.org outage,
+    # 2026-09-10). Isolated, read-only, self-limiting — see
+    # emergency_live_overlay.py. Any failure here is swallowed internally
+    # and never affects this response.
+    try:
+        from .emergency_live_overlay import apply_emergency_live_overlay
+        response_data = apply_emergency_live_overlay(event_instance, response_data)
+    except Exception as e:
+        logger.debug(f"[matches_of_an_event_view] emergency overlay skipped: {e}")
+
     # Return the list of match dictionaries
     return Response(response_data)
 
