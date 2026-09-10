@@ -147,7 +147,9 @@ def apply_emergency_live_overlay(event_instance, response_data: list) -> list:
 
         for match_dict in response_data:
             # Only ever touch matches not already finished in our own DB.
-            if match_dict.get("status_code") == 2:
+            # (3=Finished is this codebase's real convention — see
+            # PlayerScoreHeader.tsx / MatchEnhanced.tsx.)
+            if match_dict.get("status_code") == 3:
                 continue
 
             key = (match_dict.get("round"), match_dict.get("number"))
@@ -168,8 +170,20 @@ def apply_emergency_live_overlay(event_instance, response_data: list) -> list:
             match_dict["score1"] = s1
             match_dict["score2"] = s2
             if row["live"]:
+                # Real convention used throughout this codebase: 1=Live, 2=On
+                # Break, 3=Finished (see PlayerScoreHeader.tsx / MatchEnhanced.tsx).
+                # The public page doesn't distinguish break from active play,
+                # so both map to 1 here — a harmless cosmetic simplification.
                 match_dict["status_code"] = 1
                 match_dict["status_display"] = "Running / Live"
+            else:
+                # Present on the page with a real score but not flagged
+                # "unfinished" -> the match has completed on their end.
+                match_dict["status_code"] = 3
+                match_dict["status_display"] = f"{s1}-{s2}"
+                if s1 != s2:
+                    winning_player_id = row["player1_id"] if row["score1"] > row["score2"] else row["player2_id"]
+                    match_dict["winner_id"] = winning_player_id
 
         return response_data
     except Exception as e:

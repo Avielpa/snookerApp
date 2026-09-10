@@ -34,8 +34,13 @@ logger = logging.getLogger(__name__)
 RESULTS_URL = "https://www.snooker.org/res/index.asp"
 
 # We only ever move a match INTO these two states from HTML scraping.
-STATUS_RUNNING = MatchesOfAnEvent.STATUS_RUNNING   # 1
-STATUS_FINISHED = MatchesOfAnEvent.STATUS_FINISHED  # 2
+# NOTE: the model's STATUS_CHOICES labels (0/1/2/3) don't match what the
+# real snooker.org API pipeline actually stores in practice, which is what
+# the frontend was built against (see PlayerScoreHeader.tsx /
+# MatchEnhanced.tsx): 1=Live, 2=On Break, 3=Finished. We use the real,
+# frontend-facing convention here, not the model constants.
+STATUS_RUNNING = 1
+STATUS_FINISHED = 3
 
 
 class Command(BaseCommand):
@@ -183,11 +188,17 @@ class Command(BaseCommand):
         else:
             new_score1, new_score2 = row["score2"], row["score1"]
 
-        new_status = STATUS_RUNNING if row["live"] else match.Status
+        # Present on the page with a real score: either still live (unfinished
+        # class) or, if not, the match has completed on their end.
+        new_status = STATUS_RUNNING if row["live"] else STATUS_FINISHED
+        new_winner_id = match.WinnerID
+        if not row["live"] and new_score1 != new_score2:
+            new_winner_id = match.Player1ID if new_score1 > new_score2 else match.Player2ID
+
         changed = (
             match.Score1 != new_score1
             or match.Score2 != new_score2
-            or (row["live"] and match.Status != STATUS_RUNNING)
+            or match.Status != new_status
         )
         if not changed:
             return "skipped"
@@ -201,6 +212,7 @@ class Command(BaseCommand):
             match.Score1 = new_score1
             match.Score2 = new_score2
             match.Status = new_status
-            match.save(update_fields=["Score1", "Score2", "Status"])
+            match.WinnerID = new_winner_id
+            match.save(update_fields=["Score1", "Score2", "Status", "WinnerID"])
 
         return "updated"
