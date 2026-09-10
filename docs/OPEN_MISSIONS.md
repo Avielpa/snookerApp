@@ -121,6 +121,12 @@ Running list of known issues, deferred work, and follow-ups that are NOT current
 - **Root cause context**: this service was a redundant duplicate of the real `auto_live_monitor` daemon (`auto command`), independently polling `api.snooker.org` every 5 minutes. Combined with the daemon's own 2 req/min-compliant polling, the two together exceeded snooker.org's real rate limit and got our API access revoked for ~5 hours.
 - **Next step when picked up**: delete the service via the Railway dashboard (Project → `corn for live matches` → Settings → Delete Service) so a disabled zombie service can't get accidentally re-enabled or rediscovered as "already there, must be needed" by a future session.
 
+### 19. `test_null_date_appears_last` fails in the full backend suite
+- **Found**: 2026-09-10, running the full `oneFourSeven` test suite (290 tests) as a regression check after the api.snooker.org overlay work — pre-existing, unrelated to anything touched that session.
+- **Status**: Not investigated — surfaced only, per the rule against fixing out-of-scope findings as a drive-by inside unrelated work.
+- **Symptom**: `PlayerMatchHistoryOrderingTest.test_null_date_appears_last` (`oneFourSeven/tests.py`) asserts `len(matches) == 3` but gets `1` — a NULL-`scheduled_date` ordering test for `PlayerMatchHistory`.
+- **Next step when picked up**: bug-fix-expert workflow starting from `oneFourSeven/tests.py::PlayerMatchHistoryOrderingTest` and whatever ordering/filter logic it exercises.
+
 ## Resolved / closed
 (move items here with a one-line resolution note when closed, don't delete history)
 

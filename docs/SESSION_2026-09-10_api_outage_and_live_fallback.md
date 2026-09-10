@@ -137,6 +137,22 @@ the real API/daemon resumes.
 - Confirmed live in production via direct API polling after each deploy.
 - `api.snooker.org` access restoration confirmed via direct curl
   (`200 OK` with real match data) after Hermund's email.
+- **Formal test suite added**: `oneFourSeven/tests_emergency_live_overlay.py`,
+  40 tests covering the HTML parser, `event_is_in_progress`, the overlay's
+  match/score/status logic (including player-order swapping, mismatch
+  guards, already-finished protection, network-failure/caching behavior).
+  Caught and fixed one real bug while writing these: when our DB doesn't
+  yet know a match's player IDs (both `None`, e.g. a brand-new draw slot),
+  the code was defaulting to *swapped* score assignment instead of the
+  safer same-order-as-the-page default.
+- **Full regression run**: all 290 existing `oneFourSeven` tests run
+  (individually, by module — the app-level `--pattern` discovery hits an
+  unrelated pre-existing quirk from a top-level `__init__.py`, not
+  investigated). Result: 1 pre-existing failure
+  (`PlayerMatchHistoryOrderingTest.test_null_date_appears_last`, unrelated
+  match-history-ordering logic never touched this session — logged as
+  `docs/OPEN_MISSIONS.md` #19) and 1 transient DNS/connection blip against
+  the remote test DB mid-run. Nothing regressed by today's changes.
 
 ## Still open (see docs/OPEN_MISSIONS.md)
 - Manually delete the `corn for live matches` Railway service (currently

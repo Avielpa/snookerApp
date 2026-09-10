@@ -163,10 +163,15 @@ def apply_emergency_live_overlay(event_instance, response_data: list) -> list:
             if None not in db_ids and db_ids != page_ids:
                 continue  # different match than we think — don't touch it
 
-            if match_dict.get("player1_id") == row["player1_id"]:
-                s1, s2 = row["score1"], row["score2"]
-            else:
+            if match_dict.get("player1_id") == row["player2_id"]:
+                # Explicitly the swapped case — our DB has this match's
+                # players in the opposite order from the page.
                 s1, s2 = row["score2"], row["score1"]
+            else:
+                # Either explicitly matching player1 order, or unknown
+                # (e.g. player IDs not backfilled yet) — best-effort default
+                # to the same order as the page rather than assuming swapped.
+                s1, s2 = row["score1"], row["score2"]
 
             if match_dict.get("score1") != s1 or match_dict.get("score2") != s2:
                 changed_count += 1
