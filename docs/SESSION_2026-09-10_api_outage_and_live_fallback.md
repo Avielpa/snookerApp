@@ -1,5 +1,15 @@
 # Session 2026-09-10: api.snooker.org access revocation + live-score fallback
 
+## Outcome
+**Fully resolved, confirmed on the real production app.** Access was
+restored by the API owner the same day (~17:52 local, see "Root-cause
+chain" below for how it was confirmed). User visually confirmed live
+matches displaying correctly on their S24 device the following morning
+(2026-09-11), and a direct backend check at that time showed the real
+pipeline flowing normally (4 matches finished, 2 live, 2 scheduled — all
+correct `status_code`s). No open action items from this incident except
+the manual Railway service deletion (see "Still open" below).
+
 ## Symptom
 Home screen showed only "upcoming"/stale matches for the live English Open —
 today's matches stuck at 0-0 "Scheduled" long after they should have been
