@@ -20,12 +20,17 @@ interface Props {
   // Optional: when provided, a "Share" button appears alongside Next/End. Kept
   // optional so any other caller of this component is unaffected.
   onShare?: () => void;
+  // Optional, Train mode only: when a guest (not logged in) finishes a break,
+  // shows a "Sign in to save this break" nudge tied to the moment instead of a
+  // generic pre-game banner. Independent of onShare — sharing works for guests
+  // too, this is specifically about personal-best tracking requiring an account.
+  onSignIn?: () => void;
 }
 
 export default function FrameSummary({
   visible, frameNumber, scores, highestBreak, playerNames, framesWon, winner,
   isMatchOver, matchWinner, bestOf, onNextFrame, onEndMatch, trainMode, sessionBest,
-  onShare,
+  onShare, onSignIn,
 }: Props) {
   const c = scoreboardColors;
 
@@ -83,6 +88,11 @@ export default function FrameSummary({
             {onShare && (
               <TouchableOpacity style={styles.shareLink} onPress={onShare}>
                 <Text style={[styles.shareLinkText, { color: c.textMuted }]}>Challenge a friend 📤</Text>
+              </TouchableOpacity>
+            )}
+            {onSignIn && breakScore > 0 && (
+              <TouchableOpacity style={styles.shareLink} onPress={onSignIn}>
+                <Text style={[styles.shareLinkText, { color: c.textMuted }]}>🔒 Sign in to save this break</Text>
               </TouchableOpacity>
             )}
           </View>

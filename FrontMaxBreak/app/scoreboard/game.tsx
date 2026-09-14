@@ -20,14 +20,17 @@ import RespotBreakerModal from '../components/scoreboard/RespotBreakerModal';
 import FrameRaceTracker from '../components/scoreboard/FrameRaceTracker';
 import BreakChain from '../components/scoreboard/BreakChain';
 import CenturyCelebration from '../components/scoreboard/CenturyCelebration';
+import PersonalBestCelebration from '../components/scoreboard/PersonalBestCelebration';
 import { shouldTriggerCentury } from '../../services/centuryTrigger';
 import { detectGameSituations, pickInsight, SituationKey } from '../../services/insightTemplates';
 import { computeWinProbability } from '../../services/winProbability';
 import { computeMomentumSeries } from '../../services/momentum';
 import BannerAdSlot from '../../components/ads/BannerAdSlot';
 import { useScoreboardFrameCompleteInterstitial } from '../../services/adsService';
-import { buildBreakShareMessage, buildFrameShareMessage, shareResult } from '../../services/shareService';
-import { submitBreak } from '../../services/bestBreakService';
+import { buildBreakShareMessage, buildFrameShareMessage, buildNewRecordShareMessage, shareResult } from '../../services/shareService';
+import { submitBreak, fetchBestBreakForRedsCount, isPotentialNewRecord } from '../../services/bestBreakService';
+import { useAuth } from '../../contexts/AuthContext';
+import AuthCard from '../components/AuthCard';
 
 function GameScreen({ initialState }: { initialState?: GameState }) {
   const c = scoreboardColors;
@@ -117,6 +120,26 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
   const [pendingWinner, setPendingWinner] = useState<0 | 1>(0);
   const [lastCelebratedFrame, setLastCelebratedFrame] = useState<number | null>(null);
 
+  // Personal-best tracking (Train mode only — see the frame-over effect below for
+  // why Match/Unlimited never submits: no player-to-account link exists there).
+  const { loggedIn } = useAuth();
+  const [authVisible, setAuthVisible] = useState(false);
+  const [knownBestBreak, setKnownBestBreak] = useState<number | null>(null);
+  const [lastPbCelebratedFrame, setLastPbCelebratedFrame] = useState<number | null>(null);
+  const [isNewRecordThisBreak, setIsNewRecordThisBreak] = useState(false);
+
+  useEffect(() => {
+    if (!isTrainMode || !loggedIn) return;
+    fetchBestBreakForRedsCount(config.numberOfReds).then(r => setKnownBestBreak(r?.best_break ?? null));
+  }, [isTrainMode, loggedIn, config.numberOfReds]);
+
+  // Fires once per break the live score first passes the known best — mirrors
+  // shouldTriggerCentury's own once-per-frame latch exactly.
+  const pbTrigger = isTrainMode && isPotentialNewRecord(snap.currentBreak, knownBestBreak) && lastPbCelebratedFrame !== frameNumber;
+  useEffect(() => {
+    if (pbTrigger) setLastPbCelebratedFrame(frameNumber);
+  }, [pbTrigger, frameNumber]);
+
   const playerNames: [string, string] = [config.player1Name, config.player2Name];
 
   // Best break so far across completed breaks this session
@@ -133,14 +156,18 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
       setShowFrameSummary(true);
 
       // Personal-best tracking (login-gated no-op for guests, see bestBreakService).
-      // Train mode has one player/one break per session; Match/Unlimited checks
-      // BOTH players' break for this frame — a break counts toward your personal
-      // best even in a frame you go on to lose.
+      // Train mode ONLY — "YOUR NAME" at setup guarantees the player is the
+      // logged-in account holder. Match/Unlimited mode intentionally does NOT
+      // submit: "Player 1"/"Player 2" are free-text names with no link to the
+      // device's logged-in account, so a local pass-and-play opponent's break
+      // would otherwise get misattributed as the account holder's personal best.
       if (isTrainMode) {
-        submitBreak(config.numberOfReds, snap.scores[0]);
-      } else {
-        submitBreak(config.numberOfReds, frameHighestBreak[0]);
-        submitBreak(config.numberOfReds, frameHighestBreak[1]);
+        setIsNewRecordThisBreak(false);
+        submitBreak(config.numberOfReds, snap.scores[0]).then(result => {
+          if (!result) return;
+          setKnownBestBreak(prev => Math.max(prev ?? 0, result.best_break));
+          setIsNewRecordThisBreak(result.is_new_record);
+        });
       }
     }
   }, [snap.isFrameOver]);
@@ -567,6 +594,10 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
         breakValue={snap.currentBreak}
       />
 
+      <PersonalBestCelebration trigger={pbTrigger} breakValue={snap.currentBreak} />
+
+      <AuthCard visible={authVisible} onClose={() => setAuthVisible(false)} />
+
       {/* Modals */}
       <RespotBreakerModal
         visible={!isTrainMode && snap.awaitingRespotChoice}
@@ -612,13 +643,16 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
             sessionBest={sessionBest}
             onShare={() => {
               const message = isTrainMode
-                ? buildBreakShareMessage(snap.scores[0])
+                ? isNewRecordThisBreak
+                  ? buildNewRecordShareMessage(snap.scores[0])
+                  : buildBreakShareMessage(snap.scores[0])
                 : buildFrameShareMessage(
                     playerNames[isOver ? mWinner : pendingWinner],
                     `${displayFW[0]}–${displayFW[1]}`
                   );
               shareResult(message);
             }}
+            onSignIn={isTrainMode && !loggedIn ? () => setAuthVisible(true) : undefined}
           />
         );
       })()}

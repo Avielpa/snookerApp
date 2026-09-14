@@ -31,6 +31,10 @@ function buildFrameShareMessage(winnerName, scoreline) {
   return `🎱 ${name} won ${scoreline} on MaxBreak147 — track your own frames free:\n\n${buildStoreLinksBlock()}`;
 }
 
+function buildNewRecordShareMessage(breakScore) {
+  return `🏆 New personal best! I just made a break of ${breakScore} on MaxBreak147! Think you can beat it?\n\n${buildStoreLinksBlock()}`;
+}
+
 // ── Test harness ──────────────────────────────────────────────────────────────────────
 
 let passed = 0, failed = 0;
@@ -156,6 +160,24 @@ for (const [name, scoreline] of nameScorelineCases) {
 // shows the human-readable line and the Play link first).
 assert(buildBreakShareMessage(36).endsWith(buildAppStoreLink()), 'break message ends with the App Store link');
 assert(buildFrameShareMessage('Aviel', '3–1').endsWith(buildAppStoreLink()), 'frame message ends with the App Store link');
+
+// ── Section 7: buildNewRecordShareMessage — Phase 2 new-record variant ──────────────
+
+for (const score of breakScoresToTest) {
+  const msg = buildNewRecordShareMessage(score);
+  assertIncludes(msg, 'New personal best', `new-record message for score ${score} leads with the achievement`);
+  assertIncludes(msg, `a break of ${score}`, `new-record message for score ${score} states the exact score`);
+  assertIncludes(msg, '🏆', `new-record message for score ${score} has the trophy emoji`);
+  assertIncludes(msg, buildPlayStoreLink(), `new-record message for score ${score} includes the Play Store link`);
+  assertIncludes(msg, buildAppStoreLink(), `new-record message for score ${score} includes the App Store link`);
+  assert(msg.length < 600, `new-record message for score ${score} stays well under a reasonable share-sheet length`);
+  assert(msg.endsWith(buildAppStoreLink()), `new-record message for score ${score} ends with the App Store link`);
+}
+// Distinct from the generic break message — never accidentally the same copy.
+assert(
+  buildNewRecordShareMessage(36) !== buildBreakShareMessage(36),
+  'new-record message is textually distinct from the generic break message for the same score'
+);
 
 // ── Report ────────────────────────────────────────────────────────────────────────────
 

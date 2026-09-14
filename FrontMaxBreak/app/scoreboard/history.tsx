@@ -7,6 +7,8 @@ import {
   loadAllMatches, deleteMatch, StoredMatch,
   computeTrainingStats, groupByRivalry, RivalryGroup,
 } from '../../services/gameStorage';
+import { fetchBestBreaks, BestBreakRecord } from '../../services/bestBreakService';
+import { useAuth } from '../../contexts/AuthContext';
 import BannerAdSlot from '../../components/ads/BannerAdSlot';
 
 export default function HistoryScreen() {
@@ -14,9 +16,13 @@ export default function HistoryScreen() {
   const insets = useSafeAreaInsets();
   const [matches, setMatches] = useState<StoredMatch[]>([]);
   const [activeTab, setActiveTab] = useState<'matches' | 'training'>('matches');
+  const { loggedIn } = useAuth();
+  const [bestBreaks, setBestBreaks] = useState<BestBreakRecord[]>([]);
 
   useFocusEffect(useCallback(() => {
     loadAllMatches().then(setMatches).catch(() => {});
+    // No-ops to [] for guests (fetchBestBreaks is login-gated) — safe unconditionally.
+    fetchBestBreaks().then(setBestBreaks).catch(() => setBestBreaks([]));
   }, []));
 
   const trainSessions = matches.filter(m => m.mode === 'train');
@@ -158,6 +164,30 @@ export default function HistoryScreen() {
     );
   }
 
+  // ── Your Records (personal-best breaks, server-synced, Train mode only) ─────
+
+  function YourRecords() {
+    if (!loggedIn || bestBreaks.length === 0) return null;
+    return (
+      <View style={{ marginBottom: 16 }}>
+        <Text style={[styles.sectionTitle, { color: c.textSecondary }]}>Your Records</Text>
+        <View style={[styles.statsCard, { backgroundColor: c.cardBackground, borderColor: c.cardBorder }]}>
+          <View style={styles.statsGrid}>
+            {bestBreaks
+              .slice()
+              .sort((a, b) => a.reds_count - b.reds_count)
+              .map(r => (
+                <View key={r.reds_count} style={styles.statItem}>
+                  <Text style={[styles.statValue, { color: c.primary }]}>🏆 {r.best_break}</Text>
+                  <Text style={[styles.statLabel, { color: c.textMuted }]}>{r.reds_count} reds</Text>
+                </View>
+              ))}
+          </View>
+        </View>
+      </View>
+    );
+  }
+
   // ── Training overall stats header ───────────────────────────────────────────
 
   function TrainingHeader() {
@@ -239,7 +269,7 @@ export default function HistoryScreen() {
           keyExtractor={m => m.id}
           renderItem={renderTrainSession}
           contentContainerStyle={styles.list}
-          ListHeaderComponent={<TrainingHeader />}
+          ListHeaderComponent={<><YourRecords /><TrainingHeader /></>}
           ListEmptyComponent={<Text style={[styles.empty, { color: c.textMuted }]}>{emptyText}</Text>}
         />
       )}

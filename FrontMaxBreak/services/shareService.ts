@@ -41,6 +41,14 @@ export function buildBreakShareMessage(breakScore: number): string {
   return `🎱 I just made ${scoreLabel} on MaxBreak147! Think you can beat it?\n\n${buildStoreLinksBlock()}`;
 }
 
+// Pure, testable: message for a break that just beat the player's own personal
+// best (server-confirmed via bestBreakService's is_new_record). Distinct copy
+// from buildBreakShareMessage — leads with the achievement, not a generic brag,
+// since a new record is the single best moment to prompt a share.
+export function buildNewRecordShareMessage(breakScore: number): string {
+  return `🏆 New personal best! I just made a break of ${breakScore} on MaxBreak147! Think you can beat it?\n\n${buildStoreLinksBlock()}`;
+}
+
 // Pure, testable: message for a completed Match/Unlimited-mode frame or match.
 // `winnerName` and `scoreline` (e.g. "3–1") come straight from the same values
 // FrameSummary already renders, so the shared text always matches what's on screen.

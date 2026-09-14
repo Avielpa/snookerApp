@@ -87,21 +87,36 @@ dotted module paths (`oneFourSeven.tests oneFourSeven.tests_best_break ...`) ins
 bare app label. Did not investigate/fix the stray `__init__.py` itself — out of scope for this
 session, logged here rather than fixed as a drive-by.
 
-## Verified, not yet deployed
+## Verified and shipped, end-to-end, same day
 
-Both backend and frontend changes are code-complete and test-verified, but **nothing has been
-pushed or published yet**:
-- Backend needs `git push master` (Railway auto-deploys + runs the migration) before the new
-  endpoint exists anywhere reachable.
-- Frontend needs an `eas update` (preview first, per standard workflow) — but it depends on
-  the backend being live first, since `bestBreakService.ts` calls the new endpoint.
-- User has asked for a **physical S24 test** once this is done — that requires the backend
-  live first (the device talks to the real Railway API, not a local dev server), so the
-  sequence is: backend push (needs approval) → preview OTA → device test → production.
+- **Backend pushed to production** (`git push master`, commit `a3ca7b95`) — Railway deploy
+  confirmed SUCCESS via MCP, migration `0026_playerbestbreak` applied (`Applying
+  oneFourSeven.0026_playerbestbreak... OK` in deploy logs), gunicorn up. Live-endpoint sanity
+  check: `curl` to `/scoreboard/best-break/` returns 401 (correctly requires auth).
+- **Frontend published to preview**, then **device-tested on the real S24**:
+  - Guest-session fix: resumed a pre-existing guest draft (break of 60), tapped End Session,
+    confirmed the break does **not** appear in History afterward (Training tab count
+    unchanged, still showing only the old pre-fix session) — the leak fix works.
+  - Logged-in path: registered a throwaway test account on-device, played a real Train-mode
+    break of 16 (15 reds), confirmed Play Mode's "🏆 Your best break: 16 (15 reds)" appears
+    immediately after.
+  - Upsert-only-if-higher: played a second break scoring 0 (no score) — confirmed via code
+    that `submitBreak` skips network calls for `breakValue <= 0`, and confirmed on-device that
+    "Your best break: 16" stayed unchanged after ending that session.
+  - Login flow itself was completed by the user directly on-device partway through (agent's
+    own registration attempt was interrupted mid-way; user logged into a real pre-existing
+    account instead — that account's existing History, e.g. "Kedem vs Aviel", "Y vs X",
+    correctly appeared post-login, confirming sync still works normally for real accounts).
+- **Frontend published to production** same day (`eas update --channel production`, update
+  group `43950687-0e84-4c45-905d-4acbd29fbed8`), after the user's explicit go-ahead.
+- **User asked mid-session "where can I see the global table?"** — clarified that Phase 1 is
+  deliberately personal-best-only, not a cross-user leaderboard (see "What was NOT built"
+  above) — worth remembering this question may come up again once more users have records.
 
-## Next session / immediate next step
+## Next session
 
-Get explicit approval to `git push master` (backend), then `eas update --channel preview`
-(frontend), then device-test on the S24: verify a guest never gets a History entry, verify a
-logged-in user's break correctly upserts via the new endpoint, verify the Play Mode screen
-shows the right best-break number per reds-count.
+- No open follow-up required for Phase 1 — fully shipped and device-verified.
+- If iOS device testing becomes available, the share-flow session's iOS gap (device never
+  tested) applies here too — this feature also hasn't been watched running on a real iPhone.
+- Phase 2 (see "What was NOT built" above) is unscoped/undated — revisit only when the user
+  asks, per the phasing agreed at the start of this feature.
