@@ -23,11 +23,12 @@ from rest_framework.response import Response # Use DRF Response
 from rest_framework_simplejwt.tokens import RefreshToken
 
 # Local Imports
-from .models import MatchesOfAnEvent, Player, Ranking, Event, RoundDetails, UpcomingMatch, PlayerMatchHistory, H2HCache, ScoreboardMatch
+from .models import MatchesOfAnEvent, Player, Ranking, Event, RoundDetails, UpcomingMatch, PlayerMatchHistory, H2HCache, ScoreboardMatch, PlayerBestBreak
 from .serializers import (
     EventSerializer, MatchesOfAnEventSerializer, PlayerSerializer,
     RankingSerializer, UserSerializer, PlayerMatchHistorySerializer,
     ScoreboardMatchSerializer,
+    PlayerBestBreakSerializer,
 )
 # Import specific fetch functions from the refactored scraper
 from .scraper import (
@@ -2514,6 +2515,53 @@ def scoreboard_match_delete_view(request, match_id):
         return Response({'error': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
     match.delete()
     return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+# ================== Personal Best Break ==================
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def best_break_view(request):
+    """
+    GET  — return all of the authenticated user's personal-best breaks, one row
+           per reds_count (a 6-red best and a 15-red best are never compared —
+           see PlayerBestBreak's docstring).
+    POST — submit a break for a completed break/frame. Only ever raises the
+           stored best; never lowers it. Body: { reds_count: int, break: int }.
+           Returns the current record for that reds_count either way, plus
+           is_new_record so the frontend knows whether to celebrate.
+    """
+    if request.method == 'GET':
+        breaks = PlayerBestBreak.objects.filter(user=request.user)
+        serializer = PlayerBestBreakSerializer(breaks, many=True)
+        return Response(serializer.data)
+
+    # POST — upsert-if-higher
+    reds_count = request.data.get('reds_count')
+    break_value = request.data.get('break')
+    if reds_count is None or break_value is None:
+        return Response({'error': 'reds_count and break are required'}, status=status.HTTP_400_BAD_REQUEST)
+    try:
+        reds_count = int(reds_count)
+        break_value = int(break_value)
+    except (TypeError, ValueError):
+        return Response({'error': 'reds_count and break must be integers'}, status=status.HTTP_400_BAD_REQUEST)
+    if break_value < 0:
+        return Response({'error': 'break must not be negative'}, status=status.HTTP_400_BAD_REQUEST)
+
+    record, created = PlayerBestBreak.objects.get_or_create(
+        user=request.user,
+        reds_count=reds_count,
+        defaults={'best_break': break_value},
+    )
+    is_new_record = created
+    if not created and break_value > record.best_break:
+        record.best_break = break_value
+        record.save()
+        is_new_record = True
+
+    serializer = PlayerBestBreakSerializer(record)
+    return Response({**serializer.data, 'is_new_record': is_new_record}, status=status.HTTP_200_OK)
 
 
 # ================== Account Deletion ==================

@@ -1245,3 +1245,26 @@ class ScoreboardMatch(models.Model):
     def __str__(self):
         return f"{self.user.username} / {self.match_id}"
 
+
+class PlayerBestBreak(models.Model):
+    """
+    Tracks each user's personal-best break, kept separate per reds_count since
+    breaks aren't comparable across formats (max possible break with 6 reds is
+    far lower than with 15 reds — see FrontMaxBreak's game_test.mjs formulas).
+    Only ever written by the upsert-if-higher endpoint (scoreboard/best-break/);
+    never decreases.
+    """
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='best_breaks')
+    reds_count = models.IntegerField()
+    best_break = models.IntegerField()
+    achieved_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('user', 'reds_count')
+        ordering = ['reds_count']
+        verbose_name = "Player Best Break"
+        verbose_name_plural = "Player Best Breaks"
+
+    def __str__(self):
+        return f"{self.user.username} / {self.reds_count} reds / best {self.best_break}"
+

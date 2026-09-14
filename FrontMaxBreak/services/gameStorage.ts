@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { GameState } from '../hooks/useSnookerGame';
+import { isLoggedIn } from './authService';
 
 export interface FrameResult {
   frameNumber: number;
@@ -83,7 +84,17 @@ async function getIndex(): Promise<string[]> {
   return raw ? JSON.parse(raw) : [];
 }
 
+// Guest sessions are never persisted — not even locally. Without this gate, a
+// guest's local match history would sit in AsyncStorage and get silently
+// swept up by scoreboardSyncService's post-login syncAllLocal() and attributed
+// to whichever account happens to log in on that device (the actual leak this
+// was fixed for — see docs/SESSION_2026-09-14_best_break_and_guest_session_fix.md).
+// Mid-session crash recovery (saveDraft/loadDraft/clearDraft, above) is
+// unaffected — a guest can still resume an interrupted game, they just never
+// get a permanent History record once it ends.
 export async function saveMatch(match: StoredMatch): Promise<void> {
+  const logged = await isLoggedIn();
+  if (!logged) return;
   await AsyncStorage.setItem(MATCH_PREFIX + match.id, JSON.stringify(match));
   const index = await getIndex();
   if (!index.includes(match.id)) {

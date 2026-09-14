@@ -70,6 +70,8 @@ from .views import (
     # Scoreboard Cloud Sync Views
     scoreboard_matches_view,
     scoreboard_match_delete_view,
+    # Personal Best Break
+    best_break_view,
     # Account Deletion
     delete_account_view,
     account_deletion_page_view,
@@ -195,6 +197,7 @@ urlpatterns = [
     # --- Scoreboard Cloud Sync ---
     path('scoreboard/matches/', scoreboard_matches_view, name='scoreboard-matches'),
     path('scoreboard/matches/<str:match_id>/', scoreboard_match_delete_view, name='scoreboard-match-delete'),
+    path('scoreboard/best-break/', best_break_view, name='scoreboard-best-break'),
 
     # --- Account Management ---
     path('auth/delete-account/', delete_account_view, name='delete-account'),

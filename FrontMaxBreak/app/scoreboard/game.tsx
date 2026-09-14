@@ -26,6 +26,8 @@ import { computeWinProbability } from '../../services/winProbability';
 import { computeMomentumSeries } from '../../services/momentum';
 import BannerAdSlot from '../../components/ads/BannerAdSlot';
 import { useScoreboardFrameCompleteInterstitial } from '../../services/adsService';
+import { buildBreakShareMessage, buildFrameShareMessage, shareResult } from '../../services/shareService';
+import { submitBreak } from '../../services/bestBreakService';
 
 function GameScreen({ initialState }: { initialState?: GameState }) {
   const c = scoreboardColors;
@@ -129,6 +131,17 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
         : (snap.respotForfeitWinner ?? (snap.scores[0] >= snap.scores[1] ? 0 : 1));
       setPendingWinner(winner);
       setShowFrameSummary(true);
+
+      // Personal-best tracking (login-gated no-op for guests, see bestBreakService).
+      // Train mode has one player/one break per session; Match/Unlimited checks
+      // BOTH players' break for this frame — a break counts toward your personal
+      // best even in a frame you go on to lose.
+      if (isTrainMode) {
+        submitBreak(config.numberOfReds, snap.scores[0]);
+      } else {
+        submitBreak(config.numberOfReds, frameHighestBreak[0]);
+        submitBreak(config.numberOfReds, frameHighestBreak[1]);
+      }
     }
   }, [snap.isFrameOver]);
 
@@ -597,6 +610,15 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
             onEndMatch={isOver ? handleMatchOver : handleEndMatch}
             trainMode={isTrainMode}
             sessionBest={sessionBest}
+            onShare={() => {
+              const message = isTrainMode
+                ? buildBreakShareMessage(snap.scores[0])
+                : buildFrameShareMessage(
+                    playerNames[isOver ? mWinner : pendingWinner],
+                    `${displayFW[0]}–${displayFW[1]}`
+                  );
+              shareResult(message);
+            }}
           />
         );
       })()}

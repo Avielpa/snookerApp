@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scoreboardColors } from '../../constants/scoreboardTheme';
 import { useAuth } from '../../contexts/AuthContext';
 import { generateMatchId, loadDraft, clearDraft, GameDraft } from '../../services/gameStorage';
+import { fetchBestBreaks, BestBreakRecord } from '../../services/bestBreakService';
 import AuthCard from '../components/AuthCard';
 import BannerAdSlot from '../../components/ads/BannerAdSlot';
 
@@ -28,14 +29,20 @@ export default function ScoreboardSetup() {
   const [draft, setDraft] = useState<GameDraft | null>(null);
   const [authVisible, setAuthVisible] = useState(false);
   const [bannerDismissed, setBannerDismissed] = useState(false);
+  const [bestBreaks, setBestBreaks] = useState<BestBreakRecord[]>([]);
 
   const isTrainMode = mode === 'train';
 
   useFocusEffect(
     useCallback(() => {
       loadDraft().then(d => setDraft(d)).catch(() => setDraft(null));
+      // No-ops to [] for guests (fetchBestBreaks is login-gated) — safe to call
+      // unconditionally rather than checking `loggedIn` here too.
+      fetchBestBreaks().then(setBestBreaks).catch(() => setBestBreaks([]));
     }, []),
   );
+
+  const bestBreakForSelectedReds = bestBreaks.find(r => r.reds_count === numberOfReds)?.best_break;
 
   function startMatch() {
     if (!player1.trim()) {
@@ -221,6 +228,11 @@ export default function ScoreboardSetup() {
         <Text style={[styles.meta, { color: c.textMuted }]}>
           Starting points on table: {startingPoints}  ·  Max break: {startingPoints}
         </Text>
+        {loggedIn && bestBreakForSelectedReds !== undefined && (
+          <Text style={[styles.meta, { color: c.primary, marginTop: 4 }]}>
+            🏆 Your best break: {bestBreakForSelectedReds} ({numberOfReds} reds)
+          </Text>
+        )}
       </View>
 
       {/* Match format */}
