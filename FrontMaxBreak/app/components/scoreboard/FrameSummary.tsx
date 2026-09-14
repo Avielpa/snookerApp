@@ -17,11 +17,15 @@ interface Props {
   onEndMatch: () => void;
   trainMode?: boolean;
   sessionBest?: number;
+  // Optional: when provided, a "Share" button appears alongside Next/End. Kept
+  // optional so any other caller of this component is unaffected.
+  onShare?: () => void;
 }
 
 export default function FrameSummary({
   visible, frameNumber, scores, highestBreak, playerNames, framesWon, winner,
   isMatchOver, matchWinner, bestOf, onNextFrame, onEndMatch, trainMode, sessionBest,
+  onShare,
 }: Props) {
   const c = scoreboardColors;
 
@@ -76,6 +80,11 @@ export default function FrameSummary({
                 <Text style={[styles.btnText, { color: c.textSecondary }]}>End Session</Text>
               </TouchableOpacity>
             </View>
+            {onShare && (
+              <TouchableOpacity style={styles.shareLink} onPress={onShare}>
+                <Text style={[styles.shareLinkText, { color: c.textMuted }]}>Challenge a friend 📤</Text>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
       </Modal>
@@ -148,6 +157,11 @@ export default function FrameSummary({
               </Text>
             </TouchableOpacity>
           </View>
+          {onShare && (
+            <TouchableOpacity style={styles.shareLink} onPress={onShare}>
+              <Text style={[styles.shareLinkText, { color: c.textMuted }]}>Challenge a friend 📤</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
     </Modal>
@@ -229,5 +243,14 @@ const styles = StyleSheet.create({
   btnText: {
     fontFamily: 'PoppinsBold',
     fontSize: 15,
+  },
+  shareLink: {
+    marginTop: 14,
+    paddingVertical: 4,
+  },
+  shareLinkText: {
+    fontFamily: 'PoppinsMedium',
+    fontSize: 13,
+    textAlign: 'center',
   },
 });
