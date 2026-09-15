@@ -171,6 +171,134 @@ attribution possible yet. This is the "before" point for every comparison going 
   actually being clicked at all (check group-post click patterns) before assuming the UTM
   pipeline itself is the bottleneck — it was confirmed technically working on 09-08.
 
+## 2026-09-11 — first read after Match Detail interstitial trigger (shipped 09-10)
+
+- Firebase actives (30d/7d/1d): 124 / 50 / 14 (vs 09-09's 130/52/12) — roughly flat, 1d ticked
+  up slightly. Project Overview "this week vs last week" widget: DAU 14 (-22.2%), Revenue
+  **$0.29 (+128.7%)** — a big jump, first week to meaningfully include the new trigger's
+  production traffic (shipped mid-day 09-10, so ~1 full day of live data in this "week").
+- AdMob (last 7 days vs previous 7 days): estimated earnings **₪0.92 (+₪0.54, +140.16%)** —
+  by far the strongest earnings week in the tracked period. Requests 1.06K (+68.46%),
+  impressions 798 (+111.11%), match rate 90.97% (+15.03% rel). **eCPM ₪1.15 (+₪0.14,
+  +13.76%) — the first positive eCPM week since tracking started** (was -44.95%/-54.39%/
+  -51.35% on 09-07/08/09). Consistent with the volume-mix fix (more interstitial
+  opportunities → higher blended eCPM) working as designed.
+- Format breakdown (Ads Activity report, last 7 days): Android interstitial ₪0.39 earnings /
+  ₪24.36 eCPM / 17 requests; Android banner ₪0.34 / ₪0.60 / 792 requests. iOS interstitial
+  ₪0.11 / ₪36.21 eCPM / 3 requests; iOS banner ₪0.08 / ₪0.36 / 251 requests. Interstitial
+  now earns **₪0.50 of ₪0.92 (54% of the week's revenue) from just 20 of 1,063 requests
+  (~2%)** — up from 37%/2% the week before the fix. Caveat: interstitial *request volume*
+  itself (20) barely moved vs the prior week's 19 — this week's data is still dominated by
+  the 6 days *before* the fix shipped. Isolated "Yesterday" (Sep 10 only, the ship day):
+  Android interstitial 3 requests / ₪0.05 / ₪17.11 eCPM out of 85 total impressions (~3.5%
+  share, up from the long-run ~2% baseline) — a promising but single-day, small-sample
+  signal, not yet proof of a durable share increase.
+- GA4 Pages/screens (28 days): revenue by screen shows **AdActivity (the Android ad-render
+  activity) at $0.39 of $0.96 total (40.6%)** and **RNSScreen (generic RN native-screen
+  container, iOS+Android) at $0.27 (28.1%)** — both ad-serving container screens, not
+  content screens, which is expected. **Gap found**: the app's screen_view events use
+  default React Navigation/native container names (MainActivity, RNSScreen,
+  UIViewController, GADFullScreenAdViewController, etc.), not per-route names — so GA4
+  cannot isolate "Match Detail" specifically from other RNSScreen-classed routes. Content
+  screens that *do* get real names (probably via explicit `logScreenView` calls) are the
+  top-level tab routes: `/` (Home, 998 views/28d, 9m20s avg engagement), `/scoreboard` (119
+  views, 39 users), `/CalendarEnhanced` (116), `/RankingEnhanced` (65), `/scoreboard/game`
+  (64, 16m12s avg — by far the longest session length of any screen), `/NewsScreen` (60),
+  `/StatsScreen` (43), `/tour/*` and `/player/*` detail routes (single digits to low tens).
+  **Suggestion for next session**: add an explicit `logScreenView({screen_name:
+  'MatchDetail', screen_class: 'MatchDetail'})` call (or equivalent) in `MatchEnhanced.tsx`
+  so future analytics can actually attribute engagement/revenue to Match Detail by name,
+  not lump it into the generic RNSScreen bucket.
+- Context: no growth-push posting today; this was a pure analytics status check to read the
+  effect of yesterday's `useMatchDetailInterstitial` production ship (commit `0ef29c00`).
+- **Read**: strong first signal — eCPM flipped positive for the first time in five tracked
+  weeks and total earnings roughly doubled week-over-week, both consistent with the
+  volume-mix fix. But the encouraging weekly numbers are still mostly pre-fix data (the fix
+  had ~1 day of live production traffic in this reading) and interstitial request-volume
+  share hasn't visibly grown yet — reconvene in 2-3 more days once a full multi-day window
+  post-fix has accumulated before calling this a confirmed win. Don't over-claim on one
+  day's data.
+
+## 2026-09-14 — status check (3 days after the 09-11 push, interstitial fix now 4 days live)
+
+- Firebase actives (30d/7d/1d): 122 / 39 / 18 (vs 09-11's 124/50/14) — 7d dropped noticeably
+  (-22%), 1d ticked up (+29%). Reads as normal noise at this volume, not a clear trend either
+  way.
+- AdMob (last 7 days vs previous 7 days): estimated earnings **₪0.94 (+₪0.38, +67.84%)**,
+  requests 1.06K (+22.91%), impressions 780 (+37.81%), match rate 88.65% (+3.02% rel),
+  **eCPM ₪1.20 (+₪0.22, +21.79%)** — second straight positive eCPM week (was ₪1.15/+13.76%
+  on 09-11), now with a full window of post-interstitial-fix traffic. Confirms the volume-mix
+  fix (shipped 09-10) is holding, not a one-day blip. This month so far ₪1.41 vs ₪3.05 last
+  month (partial month, not comparable yet).
+- Per-app split: Android ₪0.81 earnings (**+110.66%**) / 479 impressions (-3.04% — earnings up
+  sharply on roughly flat volume, i.e. real eCPM gain, not more traffic); iOS ₪0.12 (-28.00%) /
+  301 impressions (**+318.06%** — impression volume exploding but not converting to revenue,
+  worth a look if it continues).
+- **09-11 push engagement (checked via activity log + post permalink)**: the flagship Snooker
+  227.8K group post ("English Open QF" schedule+results graphic) sits at **1 like, 0 comments,
+  1 share** three days on — well below the 09-08 benchmark (8 likes/3 shares/3 comments on a
+  live-score post) and the 09-07 schedule-graphic benchmark (11 likes/2 comments). Did not
+  audit the other 8 destinations this session (time-boxed); worth a fuller pass next session.
+  Also found: a **stale pending post from May 6** (old app-launch announcement) still sitting
+  in the Snooker group's admin-approval queue, unrelated to the 09-11 push — harmless but
+  worth deleting via "ניהול פוסטים" next time to avoid confusion when checking approval status.
+- **MaxBreak147 Page: still 1 follower**, 10 days after launch (09-04) and 3 days after the
+  09-11 cross-post — the zero-follower bootstrap plan (skill §3) has not moved the needle yet.
+- Context: no new posting this session — pure status/analytics check requested by the user.
+- **Read**: the interstitial revenue fix is the clear win of the week — 2 consecutive positive
+  eCPM weeks, Android earnings +110% on flat volume. Social engagement on the heavy 09-11 push
+  is weak on the one post checked; Page growth is flat at 1 follower. Actives are flat/noisy.
+  Next session: audit the remaining 8 destinations from 09-11 for a fuller engagement read, and
+  keep watching whether the eCPM gain holds into a 3rd week now that the fix has a full month
+  to mature.
+
+### 2026-09-14 follow-up — installs/events/attribution deep-dive (same day, second check)
+
+- **Installs (28d, GA4 `first_open` event)**: 76 — matches the "New users" figure exactly, so
+  this is the reliable cross-check number for installs going forward (Play Console's own
+  Statistics install-count graph was not reachable this session — account picker + vitals nav
+  both proved flaky, consistent with the known 09-08 note; **Play Console dashboard did surface
+  a usable number instead**: 28d Installs 59 / Device first opens 14 (-33%) / Monthly active
+  devices 50 (+9%) / Install base 66.3% — a *narrower* Play-specific window than GA4's 76, both
+  numbers are legitimate but count slightly different things, don't mix them in one comparison).
+- **Play Console install base**: 92 total installed-audience devices account-wide; production
+  build 78 at 66.67% install-base share across 177 countries/regions (synced to open + internal
+  testing tracks too).
+- **GA4 User acquisition — first user channel group (28d)**: 76 new users total → Direct 51
+  (67%), Organic Search 24 (32%), **Organic Social 1 (1.3%)**. By source/medium: `(direct)/(none)`
+  67 total/51 new, `google-play/organic` 53 total/24 new, **`facebook/page_post` 1 total/1
+  new (0.83%)** — unchanged from every prior check back to 09-08. **Zero users have ever been
+  attributed to our own manual `comment`/`group_post` UTM tags**, despite dozens of tagged links
+  posted since 09-03 including the 09-11 heavy push across 9 destinations. This is now a
+  6-day-confirmed pattern, not noise — worth treating as a real open problem, not "too early to
+  tell" anymore.
+- **Top events (28d)**: screen_view 4,346 (117 users) · user_engagement 1,799 (106 users) ·
+  ad_impression 1,795 (81 users, $1.02 rev) · session_start 720 (118 users) ·
+  home_filter_select 567 (47 users) · notification_receive 480 (4 users) · tab_select 303
+  (51 users) · match_card_open 152 (43 users) · notification_dismiss 140 (4 users) · first_open
+  76 (76 users). Total event count 10,436 across 121 users.
+- **Facebook sessions/traffic**: could not get a direct "FB→app session" count — GA4 doesn't
+  surface it as its own metric, and the `facebook/page_post` row above (1 user, 53 events, 2m12s
+  avg engagement) is the only FB-sourced slice GA4 can currently isolate. The 8 manually-tagged
+  destinations from 09-11 remain invisible to GA4 entirely.
+- **Edge-to-edge / Android 16 targetSdk compliance**: not re-checked live this session (Play
+  Console's Android-vitals/technical-quality nav didn't resolve reliably, same flakiness noted
+  before). Status per memory/OPEN_MISSIONS is unchanged from last known: **flagged, not yet
+  actioned** — a real code change (`targetSdkVersion` bump + edge-to-edge layout adjustments)
+  still needs its own plan + approval before touching. Don't assume it's done.
+- **Suggestions surfaced by this pass**:
+  1. Stop treating the UTM attribution gap as "not enough time yet" — 0 users across 9+
+     manually-tagged posts over 6+ days is a real signal. Worth checking next session whether
+     Facebook's own link-shortening (onelink.to auto-replies, the known gotcha in the skill) is
+     silently stripping the referrer tag on some fraction of these before install, not just
+     assuming users aren't clicking.
+  2. The `page_post`-tagged click (1 user, 53 events) shows tagged traffic *can* convert and
+     engage heavily when it's captured — reinforces it's a tracking/link-mechanics problem, not
+     a "nobody clicks" problem.
+  3. Play Console's own install/vitals UI keeps being unreliable for live checks (recurring
+     across 09-09, 09-14) — GA4's `first_open` event count is the more dependable install proxy
+     going forward; use it first.
+
 ### 2026-09-09 addendum — eCPM root cause found (format mix, not market squeeze)
 
 Follow-up dig (AdMob eCPM Trends peer-benchmark report + Ads Activity report broken down by
@@ -201,3 +329,69 @@ Format, last 7 days) to answer "why won't eCPM/earnings improve":
   (standard 24-48h GA4 processing lag) — same 125 total/79 new/1 page_post numbers as
   yesterday's read, not evidence of stagnation, just not-yet-available data. No dramatic
   installs spike either way as of this check.
+
+## 2026-09-14 (session 3) — posting push resumed after the offline gap
+
+- Context: user asked for a "massive" push after being offline since Friday, flagging low
+  Page views but real traffic on posts (matches the 09-14 session-1/2 findings above: Page
+  stuck at 1 follower/0 engagement, groups are where the real reach is). Today's live tour
+  content was Qualifiers-only (no TV-stage names) — checked `calendar/?tab=recent` and found
+  the English Open had just finished, so led with that verified real result instead.
+- Posted (all with a real, ad-cropped device screenshot of live Northern Ireland Open
+  Qualifiers scores + the Ali Carter 9-6 Mark J Williams English Open final result, both
+  Play Store UTM link and iOS App Store link): Snooker (227.8K, went straight live, no
+  approval gate), Legend Ronnie O'Sullivan Snooker (60.2K), MaxBreak147 Page (Promote-post
+  toggle correctly turned off, "Talk to people directly" upsell declined). SNOOKER TODAY
+  (27.3K) hit a new "pending content limit" error for this account — not attempted further
+  this session.
+- No Firebase/AdMob re-check this session (too soon after this morning's session-1/2 checks
+  on the same day) — next session should look for any movement from today's posts once a
+  day or two has accumulated, same as every prior push.
+
+## 2026-09-15 — daily reply-check + light post (Northern Ireland Open Quali)
+
+- Reply-check pass (per §0a step 1) on all three 2026-09-14 posts before posting anything new:
+  Snooker 227.8K (3 likes, 0 comments), Legend Ronnie O'Sullivan Snooker (1 like, 0 comments),
+  SNOOKER TODAY (still pending admin approval, never cleared — the "pending content limit"
+  error from 09-14 evidently blocked it outright). Nothing to reply to. Page's own 09-14
+  cross-post: still 0 likes/0 comments visible on the management panel.
+- Today's tour content was thin — only Northern Ireland Open Qualifiers Round 1 live (lower-
+  profile names: Mertens, Hill/Muir, Robertson/Burden, Davies/Zhengyi), no TV-stage names,
+  English Open already covered yesterday. Per the cadence rule, capped this sitting at 1
+  destination: posted a real, freshly captured S24 screenshot (ad banner cropped) of the live
+  Round 1 scores to Snooker (227.8K) — both Play Store UTM link (`snooker_227k_daily_0915`
+  campaign) and iOS App Store link included, plus a line asking readers to follow the Page
+  (per the 09-14 bootstrap-gap finding). Went to admin approval, not instant this time.
+- Firebase Acquisition (GA4, last 28 days, Aug 18–Sep 14): 75 new users total — Direct 50,
+  Organic Search 24, **Organic Social 1**. The attribution gap flagged 09-14 is still
+  unresolved: despite the 09-11 and 09-14 pushes (9+ posts across groups/Page), only 1 new
+  user total shows as Organic Social in the last 28 days. Reinforces the 09-14 finding that
+  either Facebook's link-handling is stripping the UTM referrer, or clicks simply aren't
+  converting to installs — the self-hosted-redirect idea in the skill's Insights section is
+  still the real fix, not yet built.
+- AdMob not re-checked this session (light session, no reason to expect movement since the
+  09-10 interstitial-fix check).
+
+## 2026-09-15 (session 2) — AI-image brand-awareness push, video generation investigated
+
+- Context: user asked to explore turning the earlier "personal-best" video concept brainstorm
+  into real content ("create videos, create images whatever you want just promote it"). Spent
+  significant effort trying Gemini's Veo video generator first — **confirmed broken this
+  session**: 5/5 attempts failed identically (indefinite spin, no error, nothing ever saved
+  to Library), including from a completely fresh tab/chat, ruling out stale-session causes.
+  Pika (an alternative free video tool) requires creating a new third-party account — declined
+  per standing account-creation rule, not attempted even under broad "do whatever"
+  authorization.
+- Pivoted to Gemini's **image** generator instead (confirmed working, ~10s to generate) —
+  produced a real, high-quality illustration (2 men celebrating a break at a home snooker
+  table) matching the "personal best" moment concept. Per the skill's AI-image ground rule,
+  this is legitimate brand-awareness content (no live/specific data claimed in the image
+  itself) — the caption ties it to the Personal Best + Challenge a Friend features, both
+  genuinely shipped to production 2026-09-14, so no fabrication risk.
+- Posted (2 destinations, per the skill's session cadence cap): **Snooker (227.8K)** — went
+  live instantly; **Legend Ronnie O'Sullivan Snooker (60.2K)** — went to admin approval queue
+  (normal for this group). Both posts: Play Store link tagged `pb_feature_brand_0915`
+  campaign + iOS App Store link.
+- Not re-checked this session: Firebase/AdMob (too soon after this morning's session-1 check
+  same day) — next check should look for `pb_feature_brand_0915` as a new distinguishable UTM
+  campaign once a few days of data accumulate.

@@ -67,16 +67,51 @@ own explainer at that time.
 - Full suite re-run after all changes: **2,248 total assertions, all green** (328 + 51 + 470 +
   121 + 48 + 42 + 292 + 896). `npx tsc --noEmit` — clean, no errors.
 
-## Verified, not yet deployed
+## Verified and shipped, end-to-end, same day
 
-Code-complete and test-verified only. Not yet pushed to backend (no backend changes this
-session — everything here is frontend-only) or published via `eas update`. Needs device
-testing before shipping, same workflow as Phase 1: preview OTA → device test → production.
+Published to preview, device-tested on the real S24 (cleared app data to test the guest path
+cleanly, then a fresh Train session to test the logged-in path):
+
+- **Live celebration**: built a real break past the existing record of 16 (reds+black pots) —
+  the "🏆 NEW PERSONAL BEST / 24" overlay fired live, mid-break, the instant the score passed
+  16. Confirmed on-screen.
+- **PB share message**: tapped "Challenge a friend" right after — share sheet showed "New
+  personal best! I just made a break 🏆 of 24 on MaxBreak147!..." (the new copy, not the
+  generic one). Confirmed via the real Android share sheet preview text.
+- **History "Your Records"**: after ending the session, History → Training tab showed
+  "24 🏆 / 15 reds" in the new section, above the existing local "Overall Training Stats" card
+  (which shows a different, larger number — that's local on-device history across all past
+  sessions, a separate pre-existing metric, not a bug).
+- **Guest nudge**: cleared app data to reset to a logged-out state, played a fresh Train break
+  (score 8), confirmed "🔒 Sign in to save this break" appeared under "Challenge a friend" —
+  tapped it and confirmed it correctly opened the existing `AuthCard` sign-in modal, layered
+  over the break summary.
+- **Match-mode fix**: confirmed by design/code (no `submitBreak` call exists in the
+  Match/Unlimited path anymore) rather than a separate device click-through — the user asked
+  directly mid-session whether a Match-mode break (any reds count, even on a friend's account)
+  would now save, and the answer is no in all cases, since Match mode no longer calls the
+  endpoint at all.
+- User also asked directly whether a global/cross-user table was built — confirmed again, in
+  the same session, that it was not (see Phase 1 doc's non-decision, reconfirmed here).
+
+Published to **production** same day (`eas update --channel production`, update group
+`74aa66f5-74be-4dde-b7ad-f61d26431704`), after explicit user approval.
+
+## Gotchas hit during device testing (not code bugs — noted for the next agent)
+
+- Repeatedly mis-tapped small text links (share/sign-in nudge, account modal's "Log out" vs
+  "Change password") — ad banners above the composer reflow height per ad served, shifting
+  every element below by an unpredictable amount between screenshots. Re-zoom/re-measure
+  coordinates after every ad refresh rather than reusing coordinates from an earlier
+  screenshot in the same session.
+- To reliably test the guest path with an account that has real login state already saved on
+  the device, `adb shell pm clear <package>` is faster and cleaner than trying to tap through
+  the in-app "Log out" flow (which is easy to mis-tap into "Change password" instead, since
+  both sit close together in the Account modal). Clearing app data also resets the
+  notification-permission prompt — expected, just re-approve it.
 
 ## Next session
 
-- Publish to preview, device-test on the S24: confirm the live celebration fires at the right
-  moment (not early/late), confirm the PB share message swaps in correctly, confirm the guest
-  nudge appears only for guests, confirm "Your Records" renders correctly on History, confirm
-  Match mode no longer calls the best-break endpoint at all (check network/logs if possible).
-- Then production OTA, same as every prior release this project.
+No open follow-up for Phase 2 — fully shipped and device-verified on both the guest and
+logged-in paths. Same iOS caveat as every other feature so far: code path is standard
+cross-platform RN with no OS branching, but nobody has watched it run on an actual iPhone.

@@ -74,15 +74,19 @@ users to leave the app").
 - `git status` diff confirmed isolated to the 3 files above — nothing else
   in the working tree was touched by this change.
 
-## NOT yet done (needs explicit approval before either step)
+## Deployment (completed 2026-09-10)
 
-- **Not deployed.** No `eas update` run yet — per CLAUDE.md, preview channel
-  first, real-device test, then production only after user confirmation.
-- **Not verified on a real device.** The 5s-delay pattern is proven safe by
-  the two existing triggers already in production, but this is a new label/
-  code path and should get at least one real Match Detail open on the S24
-  test device before shipping, the same way the Aug 31 scoreboard-interstitial
-  fix was device-verified before going out.
+- Published to `preview` channel (`eas update --channel preview`), update
+  group `3623ccee-cf68-4973-b5fe-5c10dd65dae5`.
+- User tested on the real device (S24 preview APK) and confirmed it looked
+  right — approved promotion.
+- Published to `production` channel, update group
+  `78c4b03b-5f86-4c26-a9dd-c52bad6c879a`. Runtime version `2.0.0` on both —
+  delivered OTA to existing installs, no new native build needed.
+- Committed (`0ef29c00`, master) and pushed to `origin/master`. Note: any
+  push to master also triggers a Railway backend redeploy per the Procfile
+  even though nothing backend-side changed in this commit — expected no-op
+  deploy, not a separate action taken.
 
 ## Lesson for next agent
 
