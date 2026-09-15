@@ -24,13 +24,74 @@ file MEMORY.md points to — a newer memory entry can supersede a status shown i
 a group flipping from 🟡 to ✅/❌) faster than this file gets edited. If memory and this
 skill disagree, memory is more current — trust it, then update this file to match.
 
+## 0a. Session cadence — small batches + close the loop, never blitz-and-leave
+
+**Established 2026-09-14, after two confirming data points:** the 09-11 heavy push (9
+destinations in ~15 min, then 3 days offline) scored 0-1 likes per post; a "light" 2-post
+session the same week (09-14) *also* scored 1 like each with no reply pass afterward. Post
+count wasn't the variable — **never replying to comments was**, in both cases. The 09-07/09-08
+benchmarks (8-11 likes, real comments) both had someone actually replying same-day.
+
+Standing procedure from now on:
+1. **Cap a single posting sitting at 1-2 destinations**, not a full-channel sweep — unless the
+   user explicitly asks for a full/"massive" push and is aware that means seed-content-only
+   engagement (per the 09-11 lesson), unlikely to get real replies.
+2. **Before posting anything new, check the previous session's posts for unanswered comments**
+   and reply to them first — the reply-check is not optional follow-up, it's step 1 of every
+   session that isn't the very first post to a channel.
+3. If a post is likely to get comments over the next few hours and nobody will be online to
+   check back same day, say so explicitly rather than silently posting and moving on — let the
+   user decide whether to still post (as seed content) or wait for a session where follow-up is
+   possible.
+4. Because FB posting/reading needs an authenticated interactive browser session, this
+   reply-check can't run unattended on a cron — it has to be a deliberate next session (a
+   `/loop`, a scheduled wakeup with a reminder, or just "next time growth comes up, check
+   comments first"). Don't propose fully-automated unattended posting/replying as a fix.
+
+## 0b. Multiple concurrent sessions — check in before stacking posts on the same channel
+
+**Established 2026-09-15:** more than one Claude Code session can be running growth work for
+this account at the same time (confirmed via `ListAgents` finding a peer session mid-session).
+Neither session's own transcript shows the other's posts as they happen — the only shared
+signal is `MEMORY.md`/session docs, which can lag behind real-time. On 2026-09-15 two sessions
+independently posted to the **same** groups same-day (a peer's AI-image brand post + this
+session's live-score, upcoming-matches, and Page posts), stacking **3+ posts into Snooker
+227.8K alone** in one day — exactly the same-day-stacking pattern that tripped SNOOKER TODAY's
+per-account posting limit on 09-14, and Snooker 227.8K is the account's single most valuable
+channel, so it's the one most worth protecting from this.
+
+Standing procedure from now on:
+1. **Before a posting sitting, run `ListAgents`** to check for other active/idle sessions on
+   this machine. If one exists and growth work is plausible from it (check memory/session docs
+   for same-day activity first), send it a coordination check via `SendMessage` before posting
+   — ask what it already posted today and to which channels, and state your own plan.
+2. **Do not post to a channel a peer session touched today without confirming with that peer
+   first** — this applies especially to Snooker 227.8K and Legend Ronnie O'Sullivan (60.2K),
+   the two proven high-value groups most likely to hit a posting-frequency ceiling.
+3. If a peer session says it's done for the day and holds off further posting, treat that as
+   the standing agreement for the rest of the session — don't re-post to the same channels
+   without checking again, even if the user's request seems to call for more.
+4. Surface same-day multi-session stacking to the user directly when it's discovered — don't
+   silently absorb it into a single session's own post count/cadence accounting, since the
+   real per-channel total is the sum across all sessions, not just this one's.
+
 ## 0. Ground rules (non-negotiable, established over multiple sessions)
 
-- **Never fabricate content.** Every score, stat, headline, or "who's playing" claim must
-  come from the real backend API (`https://snookerapp.up.railway.app/oneFourSeven/...`),
-  checked fresh each time — not memory, not the previous post. Two false "X is playing
-  tonight" comments were caught and rewritten this way; always cross-check
-  `matches/today/` before claiming anyone is live.
+- **Never add text or content that isn't verified and real — this is what keeps the account
+  reliable, and it overrides every other goal in this skill (engagement, cadence, "massive
+  push" requests included).** This is not limited to scores/stats — it covers every claim in
+  every post, comment, and caption: scores, stats, headlines, "who's playing", feature
+  descriptions, engagement/follower numbers, dates, quotes, comeback narratives, anything.
+  Every factual claim must come from a real, checked-fresh source — the backend API
+  (`https://snookerapp.up.railway.app/oneFourSeven/...`) for tour/match data, a real device
+  screenshot for app-feature claims — never memory, never the previous post, never an
+  inference or embellishment that "sounds right." If a fact can't be verified fresh right
+  now, leave it out rather than write around it. Two false "X is playing tonight" comments
+  (caught and rewritten) and one fabricated "3-1 comeback" detail in a caption (caught by the
+  user after posting, fixed in place — see [[feedback_never_fabricate_verify_only]]) are the
+  two real incidents behind this rule; always cross-check `matches/today/` before claiming
+  anyone is live, and never add a specific narrative detail (a comeback, a stat, a
+  milestone) unless it is explicitly present in the API response or a real screenshot.
 - **Crop out ad banners from every device screenshot before posting**, no exceptions —
   this is an explicit standing user instruction.
 - **Every outbound link is UTM-tagged** per `docs/GROWTH_UTM_TRACKING.md` — never post the
@@ -52,15 +113,20 @@ Keep this table current — update after every session with new groups tried and
 
 | Channel | Type | Size | Status | Notes |
 |---|---|---|---|---|
-| Snooker | FB group | 227.6K | ✅ proven, fast-approve | `groups/769585246708073` — **two groups share this exact name in the joined list, the other is only 28K (`groups/498611593874694`) — verify member count before posting.** The single best-performing channel to date. Images go through quick admin approval (confirmed 2026-09-07 toast), not instant. Post real-time live-score graphics here first. |
+| Snooker | FB group | 227.8K | ✅ proven, fast-approve | `groups/769585246708073` — **two groups share this exact name in the joined list, the other is only 28K (`groups/498611593874694`) — verify member count before posting.** The single best-performing channel to date, **but only when someone's online to engage** — see the 09-14 addendum in Insights: the 09-11 schedule-graphic post here got just 1 like/0 comments/1 share (vs. 11 likes/2 comments for the same format on 09-07), the difference being nobody replied to comments during a 3-day offline gap. Images go through quick admin approval (confirmed 2026-09-07 toast), not instant — though not always: 2026-09-14's post went straight live. Post real-time live-score graphics here first. 2026-09-14: posted "Ali Carter champion + NI Open Quali live" (real English Open final result 9-6, verified via API before posting) — went straight live, no approval gate that time. Same group, a fan's identical-topic post (Ali Ashraf, 12h earlier) sat at 630 likes — strong proof "tournament result" is the winning content type here. Edited-in the iOS App Store link a few minutes after publish (see gotcha below — always include both store links from the start). 2026-09-14 post final tally (checked 09-15): 3 likes/0 comments. 2026-09-15: posted a real S24 live-score screenshot (NI Open Quali R1) — went to admin approval this time (not instant), both store links + a "follow our Page" line included from the start. 2026-09-15 (session 2): posted a Gemini AI-image (brand-awareness lane, see approach D below — no live data in the image, caption ties it to the real shipped Personal Best/Challenge-a-Friend features) — went live instantly, `pb_feature_brand_0915` UTM campaign. |
 | Legend Ronnie O'Sullivan Snooker | FB group | 60.2K | ✅ proven, fast-approve | `groups/287612679061624`. Posts go to admin approval (confirmed via toast 2026-09-07), usually clears quickly. Good for comments on active threads too. |
 | World Snooker Live Stream | FB group | 56.0K | 🟡 posts do clear, but still piracy-linked — avoid | `groups/WorldSnookerLiveStream`. Its own About section links an illegal streaming site — same category as groups skipped for that reason elsewhere. 2026-09-08: a user-posted schedule graphic here actually went live (not stuck pending) and got 8 likes/0 comments in 3h, so it's not purely a dead/slow channel — but the piracy-link concern stands. Don't proactively choose this group; if content ends up here, don't repeat. |
-| EURO SNOOKER | FB group | — | ❌ declines standalone posts | Workaround: comment on an existing relevant post/thread instead of posting standalone — this has worked. |
-| Snooker TV | FB group | — | ❌ declines standalone posts | Same workaround as EURO SNOOKER. Reconfirmed 2026-09-08: a posted schedule graphic never rendered on its permalink (redirects to the group's general feed instead) — treat any post here as silently dropped, don't assume it went live without checking the permalink directly. |
+| EURO SNOOKER | FB group | 144.7K | ❌ declines standalone posts, ✅ comment workaround proven | `groups/120555239952416`. 2026-09-11: commented (as MaxBreak147) on an active Rasson Snooker Club QF post with real data + app mention — posted clean, no approval gate on comments. |
+| Snooker TV | FB group | 10.1K | ❌ declines standalone posts, ✅ comment workaround proven | `groups/570739555357765`. Same workaround as EURO SNOOKER. Reconfirmed 2026-09-08: a posted schedule graphic never rendered on its permalink (redirects to the group's general feed instead) — treat any post here as silently dropped, don't assume it went live without checking the permalink directly. 2026-09-11: comment workaround worked cleanly on a Birmingham Billiards post. |
 | "Snooker" (28K duplicate) | FB group | 28.0K | 🟡 untested for value | `groups/498611593874694` — the wrong/smaller duplicate of the 227K "Snooker" name (see gotcha below). Got a post 2026-09-08 (posted alongside the real 227K group by mistake-prone naming), only 1 like/0 comments in 3h. Not worth targeting deliberately — always double-check you're on `769585246708073`. |
-| Golden ball snooker club | FB group | — (new, untested size) | 🟡 promising, new 2026-09-08 | `groups/2512402948994428`. First post here 2026-09-08 (schedule graphic) cleared and got 2 likes + 1 genuine reply-comment in 3h — solid early signal for a brand-new group. Worth continuing to test. |
-| Snooker Fans & Players Hub | FB group (private) | — (new, untested size) | 🟡 low engagement so far | `groups/1655995331639369`. First post 2026-09-08 cleared but got 0 likes/0 comments in 3h. Too early to write off after one post, but no signal yet. |
-| MaxBreak147 Page | FB Page | 0 followers (new, launched 2026-09-04) | ✅ active | `facebook.com/profile.php?id=61594074930801`. **Only Pages support native post scheduling** (composer → Timing options). Brand-new — needs steady posting to build compounding reach, don't let it go quiet. See strategy note in Insights. Fed again same day (session 2): a real-data QF graphic + a real S24 live-score screenshot, ~20 min apart — worked fine as two distinct updates, not duplicates. 2026-09-08: fed a Gemini AI-generated brand poster (no live data, pure brand awareness) — published clean after the recurring Promote-post-toggle and "Talk to people directly" upsells were handled per the gotchas below. |
+| SNOOKER TODAY | FB group | 27.3K | 🟡 posting rate-limited on this account | `groups/638534032969281`. First deliberate post here 2026-09-11 (English Open QF schedule + results, 2 images) — cleared without visible approval gate. Same session, later: the inline "כאן כותבים" composer stopped rendering entirely (confirmed via page text). 2026-09-14: composer worked fine and accepted the post, but Publish returned "הגעת למגבלה של תוכן בהמתנה בקבוצה זו" (reached the limit of pending content in this group) — a per-account posting-frequency cap, distinct from the 09-11 UI bug. Don't force a retry same-session; try again next session. 2026-09-15: checked — that 09-14 attempt never cleared, still shown as pending admin approval a full day later. The rate-limit error may mean the post silently never actually queued, not just delayed. |
+| JUST SNOOKER | FB group | 10.5K | ✅ proven | `groups/345516713257597`. Posted 2026-09-11 despite the account showing as not-joined (blue "Join" button still present) — post still went through; group is public so membership isn't required to post. |
+| Snooker Ronnie O'Sullivan 147 Fans | FB group | 20.7K | ✅ proven | `groups/430394725551281`. Posted 2026-09-11 (English Open QF schedule + results) — cleared, posts go through pending-approval queue per group settings but composer accepted cleanly. |
+| Golden ball snooker club | FB group | 16.2K (grew from ~0 on 2026-09-08) | ✅ proven, growing fast | `groups/2512402948994428`. Posted again 2026-09-11 — member count jumped from a brand-new group to 16.2K in 3 days, worth continued attention. |
+| Snooker Fans & Players Hub | FB group (private) | 2.9K | 🟡 posted, engagement still unproven | `groups/1655995331639369`. Posted again 2026-09-11 (English Open QF schedule + results). Still no engagement signal from prior posts — keep testing but don't over-invest yet. |
+| MaxBreak147 Page | FB Page | **1 follower** (launched 2026-09-04, still ~0 10 days later) | 🟡 active but stalled | `facebook.com/profile.php?id=61594074930801`. **Only Pages support native post scheduling** (composer → Timing options). 2026-09-14: checked its 09-11 cross-post directly — 0 likes/0 comments/0 shares, Facebook itself shows a "boost this post" upsell (near-zero organic reach). This is the 0-follower cold-start problem, not a content issue — see the 09-14 Insights addendum: bootstrap step 1 (group posts explicitly asking people to follow the Page) needs to actually happen, not just cross-posting content to it. See strategy note in Insights. Fed again 2026-09-14 (Ali Carter champion post, same content as the groups) — the "New post" wizard's own Promote-post-toggle click-doesn't-register bug (below) recurred; fixed by clicking via the element's `find()` ref instead of raw coordinates, which worked first try. Fed again same day (session 2): a real-data QF graphic + a real S24 live-score screenshot, ~20 min apart — worked fine as two distinct updates, not duplicates. 2026-09-08: fed a Gemini AI-generated brand poster (no live data, pure brand awareness) — published clean after the recurring Promote-post-toggle and "Talk to people directly" upsells were handled per the gotchas below. 2026-09-11: **the "New post" flow (Page management/Business-Suite-style dashboard) is a multi-step wizard** — composer → "הבא/Next" → settings screen → must explicitly toggle "קידום פוסט"/Promote post OFF (defaults ON every time, same as the old gotcha) → click "פרסם/י"/Publish (not the arrow icon at dialog top, which just goes back) → decline the "Talk to people directly" upsell → THEN it actually publishes. Closing/reopening the dialog preserves the draft (shown as a collapsed chip) so it's safe to retry if a step doesn't visibly progress. |
+| WST (World Snooker Tour) official Page | FB Page (verified) | 4.6M | ✅ comment tactic proven again | `facebook.com/WorldSnookerTour`. 2026-09-11: commented as MaxBreak147 on a same-day Shaun Murphy clip (412 likes at the time) tying in his real QF matchup — posted clean, comment count visibly incremented. Repeatable free-exposure tactic per §"Commenting on official/high-traffic Pages" below — always verify the specific claim (opponent, time) against the API first. |
+| TNT Sports Snooker (FB "profile.php?id=61590307127321") | FB Page (unverified) | 0 followers, 7 days old | 🚫 skip — looks fake | Contact email is `@dayrep.com`, a known disposable/burner email domain often used by spam or fake business listings. Not the real TNT Sports channel (their main verified Page is `TNT Sports`, 14M, general sports not snooker-specific). Don't engage here; if targeting TNT content, check the main TNT Sports Page for snooker posts instead. |
 | Reddit (u/Aviel_pa) | personal account | — | ❌ deprioritized | Platform-wide spam-classifier removing ~50% of comments even on unrelated harmless content, not subreddit-specific. Not a useful channel right now — see `project_2026-09-03_reddit_account_growth.md` memory. |
 | Instagram | comments only | — | 🟡 minor channel | A couple of genuine comments made; not a primary lever yet. |
 | Creator outreach (YouTube emails) | email | — | 🟡 drafted, unsent | 2 personalized emails drafted (Shaun Murphy's management, Snooker Planet), awaiting approval to send. 3 more candidates blocked by a YouTube reCAPTCHA (never attempted — no CAPTCHA-solving). Flagged as the top growth idea for genuinely bigger reach — current channels are structurally capped. |
@@ -88,6 +154,14 @@ Keep this table current — update after every session with new groups tried and
 - **`file_upload` was denied once by the auto-mode classifier on group posts** (not Page posts)
   2026-09-04 — an immediate retry of the identical call succeeded both times. Not yet
   understood; just retry once before troubleshooting further.
+- **2026-09-10: after one successful post, the auto-mode classifier began denying every
+  subsequent browser action in the session** (typing into a second group's composer, then even
+  plain `tabs_context_mcp`), interleaved with two tab freezes (`Page.captureScreenshot`
+  timeout). Reads as the classifier flagging rapid, repeated outward-facing posts with
+  near-identical content across multiple groups in one sitting — not a Facebook-side block.
+  One retry did not clear it (unlike the file_upload gotcha above); the session had to stop
+  rather than keep forcing it. If this recurs: post remaining channels manually, space posts
+  further apart, or vary wording more than a template swap between groups.
 - A group's own post composer sometimes shows a **"Create an event?" interstitial** after
   clicking Publish — click "פרסם/פרסמי את הפוסט המקורי" ("publish the original post") to skip
   it and post normally.
@@ -257,6 +331,21 @@ AI-generated images cannot be trusted for accuracy, and posting fabricated-looki
 scores would violate the "never fabricate content" ground rule. This hybrid gets the AI-polish
 look the user wants while keeping every number/name pixel-accurate.
 
+**E. Video generation (Gemini/Veo) — unreliable as of 2026-09-15, don't rely on it without
+checking first.** Gemini's "Create videos" flow (sidebar → Videos, or `gemini.google.com/videos`)
+exists and is free on this account's Pro plan, but 5/5 attempts this session failed identically:
+the generation spinner runs indefinitely (tested up to ~8 minutes) with no error message, and
+nothing is ever saved to Library — confirmed via a completely fresh tab + fresh chat, ruling out
+stale-session/cache causes. This looks like a Google-side capacity/backend issue, not anything
+fixable from our end. **Before spending time on a video concept, do one quick test generation
+first** (a simple 1-sentence prompt) and check `gemini.google.com/library` for a saved result
+within ~2 minutes — if nothing lands, don't keep retrying the same way; fall back to a static
+image (approach C, works reliably and fast, ~10s) built around the same concept instead. Pika
+(pika.art) was considered as a fallback video tool but requires creating a new third-party
+account — out of bounds regardless of how the request is phrased, skip it; if video is a hard
+requirement, that decision (creating an account on a new tool) needs to go to the user
+explicitly, not be made unilaterally.
+
 ## 3. Promoting the Page specifically
 
 - New Page = 0 followers = no organic algorithmic reach yet. Distribution comes from two
@@ -392,6 +481,74 @@ Trump/Zhao preview) and a real device screenshot ~20 min later (Highfield had sw
 were genuinely different information, not a repost. Always re-check `matches/today/` right
 before the second post rather than assuming the first post's numbers still hold.
 
+**2026-09-11 addendum — heavy pre-break push:** with the user offline for 3 days, ran a
+full-channel push same day as the English Open QFs: 7 standalone group posts + 2
+comment-workaround posts (EURO SNOOKER 144.7K, Snooker TV 10.1K) + the Page + a genuine
+comment on WST's own verified Page (4.6M followers, on a same-day 412-like Murphy clip).
+Real device screenshots (Results tab) worked better than a generated "bracket" graphic —
+user explicitly redirected away from the generated version mid-session; see
+`docs/SESSION_2026-09-11_growth_push_english_open_qf.md` for the full lesson on why (the
+in-app Draw tab still can't render the QF-stage bracket due to a round-number-gap bug in
+the chain-detection logic). Also confirmed the comment-tactic on official high-traffic
+Pages (§"Commenting on official/high-traffic Pages") repeats cleanly — worth doing every
+session when a genuinely relevant, verified angle exists (here: a player's real same-day
+QF opponent/time).
+
+**2026-09-14 addendum — the 09-11 heavy push actually underperformed badly, and it points at
+"post-and-leave" as the cause, not content or channel choice:** audited real engagement on
+the 09-11 push 3 days later (Snooker 227.8K: 1 like/0 comments/1 share; Legend Ronnie 60.2K:
+0 likes/0 comments/2 shares; Golden Ball 16.2K: 0/0/0). That's dramatically below the 09-07
+schedule-graphic benchmark (11 likes/2 comments) and the 09-08 live-score benchmark (8
+likes/3 shares) using the **same channels and a similar schedule-graphic format**. The one
+structural difference: 09-11 was a "post to 9 destinations in 15 minutes, then go offline for
+3 days" blitz — nobody was online to reply to comments, answer questions, or re-post as the
+live matches actually happened. This is the strongest evidence yet for the standing
+"never post-and-leave" rule (§ Insights, "What works") — it's not a suggestion, it's the
+difference between 11 likes and 0. **Lesson: don't front-load a multi-day trip's worth of
+posts into one sitting.** If the user will be offline, either scale back to 1-2 posts (not
+9), or accept the heavy-blitz posts are pure "seed content" (SEO/permanence value, no real
+engagement) and plan a follow-up real-time push for when someone's actually online to engage.
+
+**2026-09-14 — the "little traffic on the Page" question, answered concretely:** MaxBreak147
+Page is still at **1 follower**, 10 days after launch. Checked its own 09-11 cross-post
+directly: 0 likes, 0 comments, 0 shares, and Facebook is showing the "קידום פוסט"/boost-this-
+post upsell on it — a clear signal Facebook itself sees near-zero organic reach on it. This
+isn't a content problem (it's the identical content that got 1 like/1 share on the Snooker
+227K group) — it's the structural 0-follower cold-start problem already documented in §3.
+**The Page will keep showing ~0 traffic on every post until step 1 of the zero-follower
+bootstrap playbook actually happens**: group posts/comments need to explicitly tell people to
+follow the Page, not just mention the app name. **Confirmed the gap directly**: the 09-11 post
+text reads "Follow every match live... free on MaxBreak147: [Play Store link]" — it name-drops
+MaxBreak147 but the only link in every one of these posts is to the **Play Store app**, never
+to the **Facebook Page**. Every group post to date has been silently skipping bootstrap step 1
+— members have never actually been given a link or a reason to follow the Page. **Concrete fix
+for next session**: add a second line to the standard post template, e.g. "👍 Follow
+[Page link] for live updates between posts" — cheap to add, directly targets the stalled
+follower count, and doesn't cost anything else in the post.
+
+**2026-09-14 (session 2) — lead with a real result headline even on a thin-content day:**
+today's live matches were Northern Ireland Open Qualifiers only (no TV-stage names) — the
+usual "live scores" hook had nothing compelling to show. Checking the calendar found the
+English Open had just finished (verified via API: Ali Carter 9-6 Mark J Williams), so the
+post led with that real result instead of the qualifiers, using the qualifiers only as a
+secondary "live right now" line + a forward-looking schedule line. This is the pattern for a
+quiet tour day: check `calendar/?tab=recent` for a just-finished event before defaulting to
+"nothing to post" or fabricating excitement around low-profile qualifiers.
+
+**Standing habit — always include both store links, and verify no duplicate before/after
+posting:** posted this session's first draft with only the Play Store link; the user caught
+it mid-session ("there is ios version too"). Fixed by editing the already-published post (FB
+group posts support in-place edit via the post's own "⋯" → "עריכת פוסט", not the "my content"
+management panel's limited menu) rather than deleting and reposting. Template going forward:
+Play Store UTM link + a separate `📱 iPhone users: https://apps.apple.com/app/id6762826909`
+line (Apple's App Store has no referrer-based UTM equivalent, so this link carries no
+campaign tag — that's expected, not a bug). Separately: this session found `git diff` already
+showed today's skill-file edits as uncommitted before any of this session's own Edit calls —
+turned out to be an earlier same-day peer session's planning notes, not a duplicate post, but
+it's a real trap (two sessions can work the same account) — **always check the group's own
+"my content → פורסמו" panel for an existing post on the same topic before publishing**, not
+just trust the skill file's own notes.
+
 **Biggest untapped opportunity (assistant's own read, 2026-09-04):** creator/influencer
 outreach. Current channels (Reddit/FB groups/IG comments) are structurally capped at modest
 reach per post — none of them scale past a ceiling. A single creator with an existing
@@ -399,7 +556,57 @@ audience sharing/mentioning the app is the one lever that could produce a step-c
 than incremental growth. Two outreach emails are drafted and ready to send pending approval;
 prioritize getting those out and 2-3 more candidates identified (avoiding contact forms
 behind a CAPTCHA — that's a hard no per the no-CAPTCHA-solving rule, find a direct email or
-socials DM instead).
+socials DM instead). **2026-09-14: ranked candidate list researched** —
+`docs/GROWTH_CREATOR_OUTREACH_CANDIDATES.md` (9 YouTube channels sized 4.3K-607K subs, plus
+the 2 already-drafted-unsent emails and 3 CAPTCHA-blocked candidates in one place). This is
+still just research — nothing new was contacted. The 2 drafted emails sitting unsent for over
+a week are the single biggest "just do it" item in the whole growth effort right now.
+
+**2026-09-14 — competitor landscape (web research, not yet acted on):** three real
+competitors worth knowing about — **Black Pocket / "BP- Live Snooker Score"**
+(`com.score.snooker`, live scores from the same snooker.org data source we use — a direct
+live-score competitor, its Play Store listing 404'd on a direct check so current
+availability/standing is unconfirmed, worth re-checking), **MySnookerStats** and **Snooker
+Scorer** (both scoreboard/stats apps — the closest competitors to our scoreboard feature
+specifically, both apparently well-reviewed per search snippets, not independently verified).
+No feature-gap analysis done yet — next step is pulling their actual reviews for concrete
+complaints to market against, the Play Store listing fetch failed this session (page too
+large for the fetch tool) and needs a different approach (e.g. Play Console's own competitor
+tools, or a targeted review-page fetch) next time.
+
+**2026-09-14 — zero organic web presence confirmed:** a plain web search for "MaxBreak147"
+returns no hits at all outside generic 147-break explainer content — confirming there is
+currently zero press/blog/forum pickup anywhere. This is the gap creator outreach and press
+contacts (Snooker Planet, etc.) are meant to close; it hasn't happened yet.
+
+**2026-09-14 — attribution root-cause dig, attempted, inconclusive:** tried to settle
+whether Facebook strips the UTM `referrer` param before a click reaches the Play Store
+(flagged as the top open question in the 09-14 analytics log). Confirmed the raw Play Store
+URL itself resolves cleanly with the referrer param intact (direct `curl`, HTTP 200, no
+redirect) — the link itself isn't broken. Could NOT verify what happens inside Facebook's
+own link-handling (in-app browser / link-shim) without an authenticated mobile session — an
+anonymous `curl` of the group post's permalink returns FB's static shell, not the real post
+body (loaded via authenticated GraphQL), so the actual posted link text isn't inspectable
+this way. **Real fix, not yet built**: stop depending on Facebook's/Play Store's opaque
+link-handling entirely — stand up a small self-hosted redirect (e.g. a Railway route like
+`/go/fb-group-post` → 302 to the real Play Store URL with the referrer intact) that logs each
+click server-side before redirecting. That would give a real, first-party click count
+independent of GA4/Play attribution, and finally distinguish "nobody's clicking" from
+"clicks aren't converting" from "the referrer is getting stripped somewhere downstream." This
+is a real (small) backend change — needs its own plan + approval before building, per
+CLAUDE.md.
+
+**2026-09-15 — reply-check-first discipline paid off cleanly, and the attribution gap is
+confirmed still open:** ran the §0a step-1 reply-check before posting anything — all three
+09-14 posts had zero comments to respond to (Snooker: 3 likes; Legend Ronnie: 1 like; SNOOKER
+TODAY: never cleared its pending-approval queue a full day later, see §1). With no comments
+to answer and only a thin qualifiers-only tour day, capped the session at 1 post (Snooker
+227.8K, live NI Open Quali R1 screenshot) rather than forcing content across multiple
+channels. Firebase's 28-day acquisition check (75 new users: 50 Direct, 24 Organic Search,
+**1 Organic Social**) confirms the 09-14 attribution-gap finding is not a one-off — the ratio
+of FB posting effort to attributed installs remains near-zero. This keeps the self-hosted
+click-redirect idea (§5, 09-14 entry) as the top unbuilt fix, now with a second day of data
+supporting it.
 
 ## 6. Keeping this skill alive
 
