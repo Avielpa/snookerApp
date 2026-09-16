@@ -10,12 +10,13 @@ import {
 import { fetchBestBreaks, BestBreakRecord } from '../../services/bestBreakService';
 import { useAuth } from '../../contexts/AuthContext';
 import BannerAdSlot from '../../components/ads/BannerAdSlot';
+import LeaderboardTab from '../components/scoreboard/LeaderboardTab';
 
 export default function HistoryScreen() {
   const c = scoreboardColors;
   const insets = useSafeAreaInsets();
   const [matches, setMatches] = useState<StoredMatch[]>([]);
-  const [activeTab, setActiveTab] = useState<'matches' | 'training'>('matches');
+  const [activeTab, setActiveTab] = useState<'matches' | 'training' | 'leaderboard'>('matches');
   const { loggedIn } = useAuth();
   const [bestBreaks, setBestBreaks] = useState<BestBreakRecord[]>([]);
 
@@ -238,7 +239,7 @@ export default function HistoryScreen() {
       </View>
 
       <View style={[styles.tabRow, { borderBottomColor: c.cardBorder }]}>
-        {(['matches', 'training'] as const).map(tab => (
+        {(['matches', 'training', 'leaderboard'] as const).map(tab => (
           <TouchableOpacity
             key={tab}
             style={[styles.tab, activeTab === tab && { borderBottomColor: c.primary, borderBottomWidth: 2 }]}
@@ -247,7 +248,9 @@ export default function HistoryScreen() {
             <Text style={[styles.tabText, { color: activeTab === tab ? c.primary : c.textMuted }]}>
               {tab === 'matches'
                 ? `⚔️  Rivalries${rivalries.length > 0 ? ` (${rivalries.length})` : ''}`
-                : `🎯  Training${trainSessions.length > 0 ? ` (${trainSessions.length})` : ''}`}
+                : tab === 'training'
+                ? `🎯  Training${trainSessions.length > 0 ? ` (${trainSessions.length})` : ''}`
+                : '🏆  Leaderboard'}
             </Text>
           </TouchableOpacity>
         ))}
@@ -263,7 +266,7 @@ export default function HistoryScreen() {
           contentContainerStyle={styles.list}
           ListEmptyComponent={<Text style={[styles.empty, { color: c.textMuted }]}>{emptyText}</Text>}
         />
-      ) : (
+      ) : activeTab === 'training' ? (
         <FlatList
           data={trainSessions}
           keyExtractor={m => m.id}
@@ -272,6 +275,8 @@ export default function HistoryScreen() {
           ListHeaderComponent={<><YourRecords /><TrainingHeader /></>}
           ListEmptyComponent={<Text style={[styles.empty, { color: c.textMuted }]}>{emptyText}</Text>}
         />
+      ) : (
+        <LeaderboardTab />
       )}
     </View>
   );
