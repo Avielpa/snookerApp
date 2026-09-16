@@ -167,23 +167,27 @@ Key files: `app/scoreboard/`, `app/components/scoreboard/`, `hooks/useSnookerGam
 
 ## Test Suite
 
-Five test files at `FrontMaxBreak/` root — run with Node.js, no React needed:
+Ten test files at `FrontMaxBreak/` root — run with Node.js, no React needed:
 
 ```bash
-node game_test.mjs           # 328 assertions — full match mode + game logic (29 sections)
-node train_test.mjs          # 51 assertions  — train mode + computeTrainingStats
-node mega_test.mjs           # 470 assertions — edge cases train+match, all formulas
-node freeball_test.mjs       # 100 assertions — free ball in all situations
-node stats_test.mjs          # 48 assertions  — avgPointsPerFrame in groupByRivalry
-node offseason_tab_test.mjs  # 42 assertions  — off-season Results tab auto-switch logic
+node game_test.mjs               # 328 assertions — full match mode + game logic (29 sections)
+node train_test.mjs              # 51 assertions  — train mode + computeTrainingStats
+node mega_test.mjs               # 470 assertions — edge cases train+match, all formulas
+node freeball_test.mjs           # 121 assertions — free ball in all situations
+node stats_test.mjs              # 52 assertions  — avgPointsPerFrame in groupByRivalry
+node offseason_tab_test.mjs      # 42 assertions  — off-season Results tab auto-switch logic
+node best_break_test.mjs         # 899 assertions — personal-best-break tracking + anti-cheat
+node session_timer_test.mjs      # 9 assertions   — session timer hook
+node frame_timer_test.mjs        # 7 assertions   — frame timer hook
+node leaderboard_service_test.mjs # 3 assertions  — leaderboardService fetch/parse
 ```
 
 **Run all:**
 ```bash
-node game_test.mjs && node train_test.mjs && node mega_test.mjs && node freeball_test.mjs && node stats_test.mjs && node offseason_tab_test.mjs
+node game_test.mjs && node train_test.mjs && node mega_test.mjs && node freeball_test.mjs && node stats_test.mjs && node offseason_tab_test.mjs && node best_break_test.mjs && node session_timer_test.mjs && node frame_timer_test.mjs && node leaderboard_service_test.mjs
 ```
 
-Expected: `✅ All N assertions passed` for each file — **1039 total**. Fix any failures before deploying.
+Expected: `✅ All N assertions passed` for each file — **1,982 total**. Fix any failures before deploying.
 
 ## Claude Working Rules
 
