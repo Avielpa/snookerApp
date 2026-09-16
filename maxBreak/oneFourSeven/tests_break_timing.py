@@ -24,5 +24,5 @@ class IsRealisticFrameTimeTest(SimpleTestCase):
 
     def test_floor_scales_linearly_with_break_value(self):
         # A 30-break floor should be far lower than a 147-break floor.
-        self.assertTrue(is_realistic_frame_time(50, 30))
+        self.assertTrue(is_realistic_frame_time(70, 30))
         self.assertFalse(is_realistic_frame_time(5, 30))

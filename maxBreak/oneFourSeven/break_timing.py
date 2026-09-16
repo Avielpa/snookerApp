@@ -22,5 +22,5 @@ def is_realistic_frame_time(frame_time_seconds, break_value):
         return True
     if frame_time_seconds is None:
         return True
-    floor_seconds = break_value / REALISTIC_SECONDS_PER_POINT
+    floor_seconds = round(REALISTIC_SECONDS_PER_POINT * break_value)
     return frame_time_seconds >= floor_seconds
