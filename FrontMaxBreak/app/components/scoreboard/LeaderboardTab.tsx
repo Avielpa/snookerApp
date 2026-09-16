@@ -3,7 +3,7 @@
 // Global best-break leaderboard, split by reds_count (6-red / 15-red boards
 // are never comparable — see PlayerBestBreak's backend docstring).
 import { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator, FlatList, StyleSheet } from 'react-native';
 import { fetchLeaderboard, LeaderboardEntry } from '../../../services/leaderboardService';
 import { formatElapsed } from '../../../hooks/useSessionTimer';
 import { scoreboardColors as c } from '../../../constants/scoreboardTheme';
@@ -27,40 +27,54 @@ export default function LeaderboardTab() {
     return () => { cancelled = true; };
   }, [redsCount]);
 
-  return (
-    <View style={styles.container}>
-      <View style={styles.pillRow}>
-        {REDS_OPTIONS.map(n => (
-          <TouchableOpacity
-            key={n}
-            onPress={() => setRedsCount(n)}
-            style={[styles.pill, redsCount === n && styles.pillActive]}
-          >
-            <Text style={[styles.pillText, redsCount === n && styles.pillTextActive]}>
-              {n} reds
-            </Text>
-          </TouchableOpacity>
-        ))}
+  function renderEntry({ item: entry, index: i }: { item: LeaderboardEntry; index: number }) {
+    return (
+      <View style={styles.row}>
+        <Text style={styles.rank}>{i + 1}.</Text>
+        <Text style={styles.name}>{entry.username}</Text>
+        <Text style={styles.stat}>Break {entry.best_break}</Text>
+        <Text style={styles.stat}>
+          {entry.frame_time_seconds !== null ? formatElapsed(entry.frame_time_seconds) : '—'}
+        </Text>
+        {!entry.is_verified && <Text style={styles.flag}>⚠</Text>}
       </View>
+    );
+  }
 
-      {loading ? (
-        <ActivityIndicator color={c.primary} style={{ marginTop: 24 }} />
-      ) : entries.length === 0 ? (
-        <Text style={styles.empty}>No records yet for this format.</Text>
-      ) : (
-        entries.map((entry, i) => (
-          <View key={`${entry.username}-${i}`} style={styles.row}>
-            <Text style={styles.rank}>{i + 1}.</Text>
-            <Text style={styles.name}>{entry.username}</Text>
-            <Text style={styles.stat}>Break {entry.best_break}</Text>
-            <Text style={styles.stat}>
-              {entry.frame_time_seconds !== null ? formatElapsed(entry.frame_time_seconds) : '—'}
-            </Text>
-            {!entry.is_verified && <Text style={styles.flag}>⚠</Text>}
-          </View>
-        ))
-      )}
+  const pillRow = (
+    <View style={styles.pillRow}>
+      {REDS_OPTIONS.map(n => (
+        <TouchableOpacity
+          key={n}
+          onPress={() => setRedsCount(n)}
+          style={[styles.pill, redsCount === n && styles.pillActive]}
+        >
+          <Text style={[styles.pillText, redsCount === n && styles.pillTextActive]}>
+            {n} reds
+          </Text>
+        </TouchableOpacity>
+      ))}
     </View>
+  );
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        {pillRow}
+        <ActivityIndicator color={c.primary} style={{ marginTop: 24 }} />
+      </View>
+    );
+  }
+
+  return (
+    <FlatList
+      style={styles.container}
+      data={entries}
+      keyExtractor={(entry, i) => `${entry.username}-${i}`}
+      renderItem={renderEntry}
+      ListHeaderComponent={pillRow}
+      ListEmptyComponent={<Text style={styles.empty}>No records yet for this format.</Text>}
+    />
   );
 }
 
