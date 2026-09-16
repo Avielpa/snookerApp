@@ -1258,6 +1258,8 @@ class PlayerBestBreak(models.Model):
     reds_count = models.IntegerField()
     best_break = models.IntegerField()
     achieved_at = models.DateTimeField(auto_now=True)
+    frame_time_seconds = models.IntegerField(null=True, blank=True)
+    is_verified = models.BooleanField(default=True)
 
     class Meta:
         unique_together = ('user', 'reds_count')
