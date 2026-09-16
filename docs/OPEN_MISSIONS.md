@@ -127,6 +127,13 @@ Running list of known issues, deferred work, and follow-ups that are NOT current
 - **Symptom**: `PlayerMatchHistoryOrderingTest.test_null_date_appears_last` (`oneFourSeven/tests.py`) asserts `len(matches) == 3` but gets `1` — a NULL-`scheduled_date` ordering test for `PlayerMatchHistory`.
 - **Next step when picked up**: bug-fix-expert workflow starting from `oneFourSeven/tests.py::PlayerMatchHistoryOrderingTest` and whatever ordering/filter logic it exercises.
 
+### 20. `python manage.py test oneFourSeven` (bare app label, no dotted path) fails on Windows with `ModuleNotFoundError`
+- **Found**: 2026-09-16, during Task 4 of the session/frame timers + leaderboard feature (`docs/SESSION_2026-09-16_session_frame_timers_and_leaderboard.md`) — an implementer hit this while trying to run the full backend regression suite.
+- **Status**: Not fixed — worked around by using dotted test labels (`oneFourSeven.tests`, `oneFourSeven.tests_best_break`, etc., which all work correctly), out of scope for a feature task.
+- **Symptom**: `python manage.py test oneFourSeven` (bare app label, the documented CLAUDE.md-style invocation) fails with `ModuleNotFoundError: No module named 'maxBreak.oneFourSeven'`. Dotted labels for individual test modules work fine and give correct results.
+- **Root cause (reported, not independently verified)**: implementer attributed it to a committed, empty `maxBreak/__init__.py` at the project root confusing Django's test-label path-resolution walk-up on Windows specifically — reproduced identically on an unmodified main checkout, so it predates this feature and is not a regression from it.
+- **Next step when picked up**: bug-fix-expert workflow — confirm the `maxBreak/__init__.py` theory, decide whether to remove/adjust that file or document the dotted-label form as the required Windows invocation in CLAUDE.md.
+
 ## Resolved / closed
 (move items here with a one-line resolution note when closed, don't delete history)
 
