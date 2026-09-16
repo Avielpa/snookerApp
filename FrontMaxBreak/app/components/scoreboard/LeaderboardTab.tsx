@@ -3,12 +3,17 @@
 // Global best-break leaderboard, split by reds_count (6-red / 15-red boards
 // are never comparable — see PlayerBestBreak's backend docstring).
 import { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, ActivityIndicator, FlatList, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator, FlatList, StyleSheet, I18nManager } from 'react-native';
 import { fetchLeaderboard, LeaderboardEntry } from '../../../services/leaderboardService';
 import { formatElapsed } from '../../../hooks/useSessionTimer';
 import { scoreboardColors as c } from '../../../constants/scoreboardTheme';
 
 const REDS_OPTIONS = [15, 6] as const;
+
+// This leaderboard's rank/name/stat ordering is a fixed left-to-right data
+// layout, not text content — force it regardless of the device's RTL locale
+// setting (RN mirrors 'row' to visually reverse when I18nManager.isRTL).
+const LTR_ROW = I18nManager.isRTL ? 'row-reverse' : 'row';
 
 export default function LeaderboardTab() {
   const [redsCount, setRedsCount] = useState<number>(15);
@@ -80,13 +85,13 @@ export default function LeaderboardTab() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, paddingHorizontal: 16, paddingTop: 12 },
-  pillRow: { flexDirection: 'row', gap: 8, marginBottom: 12 },
+  pillRow: { flexDirection: LTR_ROW, gap: 8, marginBottom: 12 },
   pill: { paddingVertical: 6, paddingHorizontal: 14, borderRadius: 16, borderWidth: 1, borderColor: c.cardBorder },
   pillActive: { backgroundColor: c.primary, borderColor: c.primary },
   pillText: { color: c.textMuted, fontSize: 13 },
   pillTextActive: { color: c.background, fontWeight: '600' },
   empty: { color: c.textMuted, textAlign: 'center', marginTop: 24 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
+  row: { flexDirection: LTR_ROW, alignItems: 'center', gap: 10, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
   rank: { color: c.textMuted, width: 24 },
   name: { color: c.textPrimary, flex: 1, fontWeight: '600' },
   stat: { color: c.textSecondary, fontSize: 13, marginLeft: 8 },
