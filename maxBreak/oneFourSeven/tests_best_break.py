@@ -152,3 +152,43 @@ class BestBreakAuthTest(TestCase):
     def test_post_requires_auth(self):
         response = APIClient().post(URL, {'reds_count': 15, 'break': 40})
         self.assertEqual(response.status_code, 401)
+
+
+class BestBreakFrameTimeTest(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = _make_user('bb_time_user')
+        self.client.force_authenticate(user=self.user)
+
+    def test_submission_without_frame_time_is_verified(self):
+        """Old-style callers that don't send frame_time_seconds still get is_verified=True."""
+        response = self.client.post(URL, {'reds_count': 15, 'break': 40})
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.data['is_verified'])
+        self.assertIsNone(response.data['frame_time_seconds'])
+
+    def test_realistic_frame_time_is_verified(self):
+        response = self.client.post(URL, {'reds_count': 15, 'break': 40, 'frame_time_seconds': 300})
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.data['is_verified'])
+        self.assertEqual(response.data['frame_time_seconds'], 300)
+
+    def test_unrealistically_fast_frame_time_is_flagged_not_rejected(self):
+        """A suspiciously fast break is still saved and still updates the record — just flagged."""
+        response = self.client.post(URL, {'reds_count': 15, 'break': 147, 'frame_time_seconds': 10})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['best_break'], 147)
+        self.assertFalse(response.data['is_verified'])
+        self.assertEqual(PlayerBestBreak.objects.get(user=self.user, reds_count=15).best_break, 147)
+
+    def test_flag_updates_alongside_a_new_higher_break(self):
+        self.client.post(URL, {'reds_count': 15, 'break': 40, 'frame_time_seconds': 200})
+        response = self.client.post(URL, {'reds_count': 15, 'break': 147, 'frame_time_seconds': 5})
+        self.assertFalse(response.data['is_verified'])
+        self.assertEqual(response.data['frame_time_seconds'], 5)
+
+    def test_lower_break_does_not_overwrite_stored_timing(self):
+        self.client.post(URL, {'reds_count': 15, 'break': 100, 'frame_time_seconds': 250})
+        response = self.client.post(URL, {'reds_count': 15, 'break': 20, 'frame_time_seconds': 1})
+        self.assertTrue(response.data['is_verified'], 'a lower break must not touch the stored record at all')
+        self.assertEqual(response.data['frame_time_seconds'], 250)

@@ -241,7 +241,7 @@ class PlayerBestBreakSerializer(serializers.ModelSerializer):
     """Serializes a user's per-reds_count personal-best break."""
     class Meta:
         model = PlayerBestBreak
-        fields = ['reds_count', 'best_break', 'achieved_at']
+        fields = ['reds_count', 'best_break', 'achieved_at', 'frame_time_seconds', 'is_verified']
         read_only_fields = ['created_at', 'updated_at']
 
 

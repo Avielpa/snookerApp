@@ -30,6 +30,7 @@ from .serializers import (
     ScoreboardMatchSerializer,
     PlayerBestBreakSerializer,
 )
+from .break_timing import is_realistic_frame_time
 # Import specific fetch functions from the refactored scraper
 from .scraper import (
     fetch_event_details_data, # Renamed from get_tour_details
@@ -2539,24 +2540,30 @@ def best_break_view(request):
     # POST — upsert-if-higher
     reds_count = request.data.get('reds_count')
     break_value = request.data.get('break')
+    frame_time_seconds = request.data.get('frame_time_seconds')
     if reds_count is None or break_value is None:
         return Response({'error': 'reds_count and break are required'}, status=status.HTTP_400_BAD_REQUEST)
     try:
         reds_count = int(reds_count)
         break_value = int(break_value)
+        frame_time_seconds = int(frame_time_seconds) if frame_time_seconds is not None else None
     except (TypeError, ValueError):
-        return Response({'error': 'reds_count and break must be integers'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'error': 'reds_count, break, and frame_time_seconds must be integers'}, status=status.HTTP_400_BAD_REQUEST)
     if break_value < 0:
         return Response({'error': 'break must not be negative'}, status=status.HTTP_400_BAD_REQUEST)
+
+    is_verified = is_realistic_frame_time(frame_time_seconds, break_value)
 
     record, created = PlayerBestBreak.objects.get_or_create(
         user=request.user,
         reds_count=reds_count,
-        defaults={'best_break': break_value},
+        defaults={'best_break': break_value, 'frame_time_seconds': frame_time_seconds, 'is_verified': is_verified},
     )
     is_new_record = created
     if not created and break_value > record.best_break:
         record.best_break = break_value
+        record.frame_time_seconds = frame_time_seconds
+        record.is_verified = is_verified
         record.save()
         is_new_record = True
 
