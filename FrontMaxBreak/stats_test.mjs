@@ -34,6 +34,15 @@ function makeFrame(frameNumber, scores, winner = 0, highestBreak = [0, 0]) {
   return { frameNumber, scores, winner, highestBreak };
 }
 
+// Mirrors gameStorage.ts's sumDurationForToday exactly.
+function sumDurationForToday(matches, now = new Date()) {
+  const todayKey = now.toDateString();
+  return matches.reduce((total, m) => {
+    const startedOnSameDay = new Date(m.startedAt).toDateString() === todayKey;
+    return startedOnSameDay ? total + (m.durationSeconds ?? 0) : total;
+  }, 0);
+}
+
 function makeMatch(p1, p2, frameResults) {
   const framesWon = [0, 0];
   for (const fr of frameResults) framesWon[fr.winner]++;
@@ -537,6 +546,45 @@ console.log('\nSECTION 10 — Multi-session rounding accuracy');
   const result = computeAvgPointsPerFrame(sessions, 'Alice', 'Bob');
   // p1: 70/3=23.33→23, p2: 150/3=50
   assertEq(result, [23, 50], 'p1 scores 10,20,40 → avg=23 (floor of 23.33)');
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// SECTION 11 — sumDurationForToday
+// ════════════════════════════════════════════════════════════════════════════
+console.log('\nSECTION 11 — sumDurationForToday');
+
+{
+  const today = new Date('2026-09-16T12:00:00Z');
+  const todayMorning = '2026-09-16T05:00:00.000Z';
+  const yesterday = '2026-09-15T20:00:00.000Z';
+
+  {
+    const matches = [
+      { id: 'a', startedAt: todayMorning, durationSeconds: 300 },
+      { id: 'b', startedAt: yesterday, durationSeconds: 999 },
+      { id: 'c', startedAt: todayMorning, durationSeconds: 120 },
+    ];
+    assertEq(sumDurationForToday(matches, today), 420, 'sums only today\'s matches');
+  }
+
+  {
+    assertEq(sumDurationForToday([], today), 0, 'empty list returns 0');
+  }
+
+  {
+    const matches = [{ id: 'a', startedAt: todayMorning }];
+    assertEq(sumDurationForToday(matches, today), 0, 'missing durationSeconds counts as 0, does not throw');
+  }
+
+  {
+    // Boundary computed from `today`'s local calendar day (not a hardcoded UTC
+    // string) so this assertion holds regardless of the runner's timezone —
+    // sumDurationForToday buckets by local calendar day via toDateString().
+    const localMidnightToday = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0);
+    const justBeforeMidnight = new Date(localMidnightToday.getTime() - 1000).toISOString();
+    const matches = [{ id: 'a', startedAt: justBeforeMidnight, durationSeconds: 100 }];
+    assertEq(sumDurationForToday(matches, today), 0, 'exactly midnight boundary excludes yesterday');
+  }
 }
 
 // ── Final summary ────────────────────────────────────────────────────────────

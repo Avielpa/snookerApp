@@ -21,6 +21,7 @@ export interface StoredMatch {
   frameResults: FrameResult[];
   framesWon: [number, number];
   mode?: 'match' | 'train' | 'unlimited';
+  durationSeconds?: number;
 }
 
 export interface TrainingStats {
@@ -152,6 +153,15 @@ export function computeTrainingStats(matches: StoredMatch[], playerName: string)
     breaksOver50,
     sessions: sessions.length,
   };
+}
+
+/** Sums durationSeconds across matches whose startedAt falls on the same calendar day as `now`. */
+export function sumDurationForToday(matches: StoredMatch[], now: Date = new Date()): number {
+  const todayKey = now.toDateString();
+  return matches.reduce((total, m) => {
+    const startedOnSameDay = new Date(m.startedAt).toDateString() === todayKey;
+    return startedOnSameDay ? total + (m.durationSeconds ?? 0) : total;
+  }, 0);
 }
 
 // ── Rivalry grouping ────────────────────────────────────────────────────────
