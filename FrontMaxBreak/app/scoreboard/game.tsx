@@ -29,6 +29,8 @@ import BannerAdSlot from '../../components/ads/BannerAdSlot';
 import { useScoreboardFrameCompleteInterstitial } from '../../services/adsService';
 import { buildBreakShareMessage, buildFrameShareMessage, buildNewRecordShareMessage, shareResult } from '../../services/shareService';
 import { submitBreak, fetchBestBreakForRedsCount, isPotentialNewRecord } from '../../services/bestBreakService';
+import { useSessionTimer, formatElapsed } from '../../hooks/useSessionTimer';
+import { useFrameTimer } from '../../hooks/useFrameTimer';
 import { useAuth } from '../../contexts/AuthContext';
 import AuthCard from '../components/AuthCard';
 
@@ -56,6 +58,14 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
   useKeepAwake();
   const { state, potBall, addExtraRed, endVisit, applyFoul, convertLastPotToFoul, undo, concede, confirmFrameEnd, declareFreesBall, applyFreeBall, chooseRespotBreaker } = useSnookerGame(config, initialState);
   const { current: snap, framesWon, frameNumber, frameHighestBreak, isMatchOver, matchWinner } = state;
+
+  const { elapsedSeconds: sessionElapsedSeconds } = useSessionTimer();
+  const hasAnyPotThisFrame = snap.breakBalls.length > 0 || snap.currentBreak > 0 || snap.isFrameOver;
+  const { elapsedSeconds: frameElapsedSeconds } = useFrameTimer({
+    frameNumber,
+    isFrameOver: snap.isFrameOver,
+    hasAnyPotThisFrame,
+  });
 
   const { setGameActive } = useGameContext();
   const stateRef = useRef(state);
@@ -163,7 +173,7 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
       // would otherwise get misattributed as the account holder's personal best.
       if (isTrainMode) {
         setIsNewRecordThisBreak(false);
-        submitBreak(config.numberOfReds, snap.scores[0]).then(result => {
+        submitBreak(config.numberOfReds, snap.scores[0], frameElapsedSeconds).then(result => {
           if (!result) return;
           setKnownBestBreak(prev => Math.max(prev ?? 0, result.best_break));
           setIsNewRecordThisBreak(result.is_new_record);
@@ -201,6 +211,7 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
       frameResults: results,
       framesWon: fw,
       mode: isTrainMode ? 'train' : isUnlimitedMode ? 'unlimited' : 'match',
+      durationSeconds: sessionElapsedSeconds,
     };
     if (complete) stored.completedAt = new Date().toISOString();
     await saveMatch(stored);
@@ -426,6 +437,9 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
               <Text style={[styles.frameScore, { color: c.textSecondary }]}>
                 Break {frameNumber} · {config.numberOfReds} reds
               </Text>
+              <Text style={[styles.frameLabel, { color: c.textMuted, fontSize: 11, marginTop: 2 }]}>
+                {formatElapsed(sessionElapsedSeconds)}
+              </Text>
             </>
           ) : (
             <>
@@ -434,6 +448,9 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
               </Text>
               <Text style={[styles.frameScore, { color: c.textSecondary }]}>
                 {framesWon[0]} – {framesWon[1]}
+              </Text>
+              <Text style={[styles.frameLabel, { color: c.textMuted, fontSize: 11, marginTop: 2 }]}>
+                {formatElapsed(sessionElapsedSeconds)}
               </Text>
             </>
           )}
