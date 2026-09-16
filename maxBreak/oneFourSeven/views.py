@@ -2567,6 +2567,18 @@ def best_break_view(request):
         record.is_verified = is_verified
         record.save()
         is_new_record = True
+    elif (
+        not created and break_value == record.best_break
+        and frame_time_seconds is not None
+        and (record.frame_time_seconds is None or frame_time_seconds < record.frame_time_seconds)
+    ):
+        # Tied break value, but a strictly faster (or newly-timed) submission
+        # — update the timing fields so a faster repeat of your own PB can
+        # still climb the leaderboard's tiebreak order. Not a new record
+        # (that stays strictly-higher-break only).
+        record.frame_time_seconds = frame_time_seconds
+        record.is_verified = is_verified
+        record.save()
 
     serializer = PlayerBestBreakSerializer(record)
     return Response({**serializer.data, 'is_new_record': is_new_record}, status=status.HTTP_200_OK)

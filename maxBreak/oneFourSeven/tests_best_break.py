@@ -192,3 +192,29 @@ class BestBreakFrameTimeTest(TestCase):
         response = self.client.post(URL, {'reds_count': 15, 'break': 20, 'frame_time_seconds': 1})
         self.assertTrue(response.data['is_verified'], 'a lower break must not touch the stored record at all')
         self.assertEqual(response.data['frame_time_seconds'], 250)
+
+    def test_tied_break_with_faster_time_updates_timing_but_not_new_record(self):
+        """A repeat of the same PB value at a faster time should still improve
+        the stored timing (so it can win the leaderboard's tiebreak), but must
+        not count as is_new_record — that stays strictly-higher-break only."""
+        self.client.post(URL, {'reds_count': 15, 'break': 50, 'frame_time_seconds': 200})
+        response = self.client.post(URL, {'reds_count': 15, 'break': 50, 'frame_time_seconds': 120})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['best_break'], 50)
+        self.assertEqual(response.data['frame_time_seconds'], 120)
+        self.assertFalse(response.data['is_new_record'])
+        self.assertEqual(
+            PlayerBestBreak.objects.get(user=self.user, reds_count=15).frame_time_seconds, 120,
+        )
+
+    def test_tied_break_with_slower_time_does_not_update_timing(self):
+        """A repeat of the same PB value at a slower (or equal) time must not
+        overwrite the faster time already on record."""
+        self.client.post(URL, {'reds_count': 15, 'break': 50, 'frame_time_seconds': 120})
+        response = self.client.post(URL, {'reds_count': 15, 'break': 50, 'frame_time_seconds': 200})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['frame_time_seconds'], 120)
+        self.assertFalse(response.data['is_new_record'])
+        self.assertEqual(
+            PlayerBestBreak.objects.get(user=self.user, reds_count=15).frame_time_seconds, 120,
+        )
