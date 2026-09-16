@@ -1,14 +1,16 @@
 // FrontMaxBreak/app/components/scoreboard/LeaderboardTab.tsx
 //
-// Global best-break leaderboard, split by reds_count (6-red / 15-red boards
-// are never comparable — see PlayerBestBreak's backend docstring).
+// Global best-break leaderboard, split by reds_count (6/10/15-red boards
+// are never comparable — see PlayerBestBreak's backend docstring). The reds
+// options mirror the scoreboard setup screen's RED_OPTIONS (app/scoreboard/
+// index.tsx) so every playable format has a corresponding leaderboard.
 import { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, FlatList, StyleSheet, I18nManager } from 'react-native';
 import { fetchLeaderboard, LeaderboardEntry } from '../../../services/leaderboardService';
 import { formatElapsed } from '../../../hooks/useSessionTimer';
 import { scoreboardColors as c } from '../../../constants/scoreboardTheme';
 
-const REDS_OPTIONS = [15, 6] as const;
+const REDS_OPTIONS = [15, 10, 6] as const;
 
 // `writingDirection` in RN's Text style is iOS-only, so it has no effect on
 // Android's bidi algorithm reordering a numeral+punctuation string (e.g.
@@ -19,6 +21,13 @@ const LRO = '‭'; // Left-to-Right Override
 const PDF = '‬'; // Pop Directional Formatting
 function forceLtr(text: string): string {
   return `${LRO}${text}${PDF}`;
+}
+
+// A record can genuinely have no timing data (e.g. it predates the frame-timer
+// feature) — "no time" reads as a real, intentional state rather than a bare
+// em-dash, which on a real device looked like a rendering glitch to a user.
+function formatTimeStat(frameTimeSeconds: number | null): string {
+  return frameTimeSeconds !== null ? formatElapsed(frameTimeSeconds) : 'no time';
 }
 
 // This leaderboard's rank/name/stat ordering is a fixed left-to-right data
@@ -49,9 +58,7 @@ export default function LeaderboardTab() {
         <Text style={styles.rank}>{forceLtr(`${i + 1}.`)}</Text>
         <Text style={styles.name}>{entry.username}</Text>
         <Text style={styles.stat}>Break {entry.best_break}</Text>
-        <Text style={styles.stat}>
-          {entry.frame_time_seconds !== null ? formatElapsed(entry.frame_time_seconds) : '—'}
-        </Text>
+        <Text style={styles.stat}>{formatTimeStat(entry.frame_time_seconds)}</Text>
         {!entry.is_verified && <Text style={styles.flag}>⚠</Text>}
       </View>
     );

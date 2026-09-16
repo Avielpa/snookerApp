@@ -167,7 +167,7 @@ Key files: `app/scoreboard/`, `app/components/scoreboard/`, `hooks/useSnookerGam
 
 ## Test Suite
 
-Eleven test files at `FrontMaxBreak/` root — run with Node.js, no React needed:
+Twelve test files at `FrontMaxBreak/` root — run with Node.js, no React needed:
 
 ```bash
 node game_test.mjs               # 328 assertions — full match mode + game logic (29 sections)
@@ -180,15 +180,16 @@ node best_break_test.mjs         # 899 assertions — personal-best-break tracki
 node session_timer_test.mjs      # 9 assertions   — session timer hook
 node frame_timer_test.mjs        # 7 assertions   — frame timer hook
 node leaderboard_service_test.mjs # 3 assertions  — leaderboardService fetch/parse
-node leaderboard_tab_test.mjs    # 3 assertions   — LeaderboardTab forceLtr bidi helper
+node leaderboard_tab_test.mjs    # 8 assertions   — LeaderboardTab bidi/time-display/reds-options helpers
+node history_tab_param_test.mjs  # 8 assertions   — History screen's ?tab= deep-link resolver
 ```
 
 **Run all:**
 ```bash
-node game_test.mjs && node train_test.mjs && node mega_test.mjs && node freeball_test.mjs && node stats_test.mjs && node offseason_tab_test.mjs && node best_break_test.mjs && node session_timer_test.mjs && node frame_timer_test.mjs && node leaderboard_service_test.mjs && node leaderboard_tab_test.mjs
+node game_test.mjs && node train_test.mjs && node mega_test.mjs && node freeball_test.mjs && node stats_test.mjs && node offseason_tab_test.mjs && node best_break_test.mjs && node session_timer_test.mjs && node frame_timer_test.mjs && node leaderboard_service_test.mjs && node leaderboard_tab_test.mjs && node history_tab_param_test.mjs
 ```
 
-Expected: `✅ All N assertions passed` for each file — **1,985 total**. Fix any failures before deploying.
+Expected: `✅ All N assertions passed` for each file — **1,998 total**. Fix any failures before deploying.
 
 ## Claude Working Rules
 

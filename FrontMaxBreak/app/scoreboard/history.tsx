@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert } from 'react-native';
-import { router, useFocusEffect } from 'expo-router';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scoreboardColors } from '../../constants/scoreboardTheme';
 import {
@@ -12,11 +12,22 @@ import { useAuth } from '../../contexts/AuthContext';
 import BannerAdSlot from '../../components/ads/BannerAdSlot';
 import LeaderboardTab from '../components/scoreboard/LeaderboardTab';
 
+export type HistoryTab = 'matches' | 'training' | 'leaderboard';
+
+// Validates an incoming ?tab= deep-link param against the known tab set,
+// falling back to 'matches' for anything missing/unrecognized — pure so it's
+// testable without mounting the screen or expo-router's param plumbing.
+export function resolveInitialTab(param: string | string[] | undefined): HistoryTab {
+  const value = Array.isArray(param) ? param[0] : param;
+  return value === 'training' || value === 'leaderboard' ? value : 'matches';
+}
+
 export default function HistoryScreen() {
   const c = scoreboardColors;
   const insets = useSafeAreaInsets();
+  const { tab } = useLocalSearchParams<{ tab?: string }>();
   const [matches, setMatches] = useState<StoredMatch[]>([]);
-  const [activeTab, setActiveTab] = useState<'matches' | 'training' | 'leaderboard'>('matches');
+  const [activeTab, setActiveTab] = useState<HistoryTab>(() => resolveInitialTab(tab));
   const { loggedIn } = useAuth();
   const [bestBreaks, setBestBreaks] = useState<BestBreakRecord[]>([]);
 

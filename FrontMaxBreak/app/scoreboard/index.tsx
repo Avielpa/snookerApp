@@ -300,6 +300,15 @@ export default function ScoreboardSetup() {
         <Text style={[styles.historyBtnText, { color: c.primary }]}>📊  Match History & Rivalries</Text>
       </TouchableOpacity>
 
+      {/* Leaderboard — deep-links straight into History's Leaderboard tab */}
+      <TouchableOpacity
+        style={[styles.historyBtn, { borderColor: c.primary, marginTop: 10 }]}
+        onPress={() => router.push('/scoreboard/history?tab=leaderboard' as any)}
+        activeOpacity={0.8}
+      >
+        <Text style={[styles.historyBtnText, { color: c.primary }]}>🏆  Leaderboard</Text>
+      </TouchableOpacity>
+
       {/* Rules link */}
       <TouchableOpacity style={styles.linksRow} onPress={() => router.push('/scoreboard/rules' as any)}>
         <Text style={[styles.link, { color: c.textMuted }]}>📖 Rules Reference</Text>
