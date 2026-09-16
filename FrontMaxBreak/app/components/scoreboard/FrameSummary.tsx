@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, Modal, TouchableOpacity, StyleSheet } from 'react-native';
 import { scoreboardColors } from '../../../constants/scoreboardTheme';
+import { formatElapsed } from '../../../hooks/useSessionTimer';
 
 interface Props {
   visible: boolean;
@@ -25,12 +26,15 @@ interface Props {
   // generic pre-game banner. Independent of onShare — sharing works for guests
   // too, this is specifically about personal-best tracking requiring an account.
   onSignIn?: () => void;
+  // Optional: when provided, shows "Frame time: X:XX" formatted via formatElapsed.
+  // Purely additive — omit to leave existing callers unaffected.
+  frameDurationSeconds?: number;
 }
 
 export default function FrameSummary({
   visible, frameNumber, scores, highestBreak, playerNames, framesWon, winner,
   isMatchOver, matchWinner, bestOf, onNextFrame, onEndMatch, trainMode, sessionBest,
-  onShare, onSignIn,
+  onShare, onSignIn, frameDurationSeconds,
 }: Props) {
   const c = scoreboardColors;
 
@@ -58,6 +62,11 @@ export default function FrameSummary({
             {sessionBest !== undefined && sessionBest > 0 && (
               <Text style={[styles.subtext, { color: c.primary }]}>
                 Session best: {sessionBest}
+              </Text>
+            )}
+            {frameDurationSeconds !== undefined && (
+              <Text style={[styles.subtext, { color: c.textMuted }]}>
+                Frame time: {formatElapsed(frameDurationSeconds)}
               </Text>
             )}
 

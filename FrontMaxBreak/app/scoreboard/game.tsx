@@ -661,6 +661,7 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
             onEndMatch={isOver ? handleMatchOver : handleEndMatch}
             trainMode={isTrainMode}
             sessionBest={sessionBest}
+            frameDurationSeconds={frameElapsedSeconds}
             onShare={() => {
               const message = isTrainMode
                 ? isNewRecordThisBreak
