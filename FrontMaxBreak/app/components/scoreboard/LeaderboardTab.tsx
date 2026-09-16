@@ -10,6 +10,17 @@ import { scoreboardColors as c } from '../../../constants/scoreboardTheme';
 
 const REDS_OPTIONS = [15, 6] as const;
 
+// `writingDirection` in RN's Text style is iOS-only, so it has no effect on
+// Android's bidi algorithm reordering a numeral+punctuation string (e.g.
+// "1." rendering as ".1") on an RTL-locale device. Unicode's own strong
+// LTR-override marks work on both platforms because they operate on the
+// bidi algorithm directly, not through a style property.
+const LRO = '‭'; // Left-to-Right Override
+const PDF = '‬'; // Pop Directional Formatting
+function forceLtr(text: string): string {
+  return `${LRO}${text}${PDF}`;
+}
+
 // This leaderboard's rank/name/stat ordering is a fixed left-to-right data
 // layout, not text content — force it regardless of the device's RTL locale
 // setting (RN mirrors 'row' to visually reverse when I18nManager.isRTL).
@@ -35,7 +46,7 @@ export default function LeaderboardTab() {
   function renderEntry({ item: entry, index: i }: { item: LeaderboardEntry; index: number }) {
     return (
       <View style={styles.row}>
-        <Text style={styles.rank}>{i + 1}.</Text>
+        <Text style={styles.rank}>{forceLtr(`${i + 1}.`)}</Text>
         <Text style={styles.name}>{entry.username}</Text>
         <Text style={styles.stat}>Break {entry.best_break}</Text>
         <Text style={styles.stat}>
@@ -92,7 +103,7 @@ const styles = StyleSheet.create({
   pillTextActive: { color: c.background, fontWeight: '600' },
   empty: { color: c.textMuted, textAlign: 'center', marginTop: 24 },
   row: { flexDirection: LTR_ROW, alignItems: 'center', gap: 10, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
-  rank: { color: c.textMuted, width: 24, writingDirection: 'ltr' },
+  rank: { color: c.textMuted, width: 24 },
   name: { color: c.textPrimary, flex: 1, fontWeight: '600' },
   stat: { color: c.textSecondary, fontSize: 13, marginLeft: 8 },
   flag: { marginLeft: 6 },
