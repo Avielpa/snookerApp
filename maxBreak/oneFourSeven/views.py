@@ -29,6 +29,7 @@ from .serializers import (
     RankingSerializer, UserSerializer, PlayerMatchHistorySerializer,
     ScoreboardMatchSerializer,
     PlayerBestBreakSerializer,
+    LeaderboardEntrySerializer,
 )
 from .break_timing import is_realistic_frame_time
 # Import specific fetch functions from the refactored scraper
@@ -2569,6 +2570,37 @@ def best_break_view(request):
 
     serializer = PlayerBestBreakSerializer(record)
     return Response({**serializer.data, 'is_new_record': is_new_record}, status=status.HTTP_200_OK)
+
+
+# ================== Global Leaderboard ==================
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def leaderboard_view(request):
+    """
+    GET /scoreboard/leaderboard/?reds_count=<n> — top 50 personal-best
+    breaks across all users for one reds_count, ordered by best_break desc
+    with frame_time_seconds asc as a tiebreak (a faster verified time ranks
+    higher among equal breaks; missing timing data sorts last). Public —
+    no auth required, same as other read-only ranking data in this app.
+    """
+    reds_count = request.query_params.get('reds_count')
+    if reds_count is None:
+        return Response({'error': 'reds_count is required'}, status=status.HTTP_400_BAD_REQUEST)
+    try:
+        reds_count = int(reds_count)
+    except (TypeError, ValueError):
+        return Response({'error': 'reds_count must be an integer'}, status=status.HTTP_400_BAD_REQUEST)
+
+    entries = (
+        PlayerBestBreak.objects
+        .filter(reds_count=reds_count)
+        .select_related('user')
+        .order_by('-best_break', F('frame_time_seconds').asc(nulls_last=True))
+        [:50]
+    )
+    serializer = LeaderboardEntrySerializer(entries, many=True)
+    return Response(serializer.data)
 
 
 # ================== Account Deletion ==================

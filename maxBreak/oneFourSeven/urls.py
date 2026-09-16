@@ -72,6 +72,7 @@ from .views import (
     scoreboard_match_delete_view,
     # Personal Best Break
     best_break_view,
+    leaderboard_view,
     # Account Deletion
     delete_account_view,
     account_deletion_page_view,
@@ -198,6 +199,7 @@ urlpatterns = [
     path('scoreboard/matches/', scoreboard_matches_view, name='scoreboard-matches'),
     path('scoreboard/matches/<str:match_id>/', scoreboard_match_delete_view, name='scoreboard-match-delete'),
     path('scoreboard/best-break/', best_break_view, name='scoreboard-best-break'),
+    path('scoreboard/leaderboard/', leaderboard_view, name='scoreboard-leaderboard'),
 
     # --- Account Management ---
     path('auth/delete-account/', delete_account_view, name='delete-account'),

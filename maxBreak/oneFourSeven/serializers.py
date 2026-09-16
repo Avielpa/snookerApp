@@ -245,4 +245,16 @@ class PlayerBestBreakSerializer(serializers.ModelSerializer):
         read_only_fields = ['created_at', 'updated_at']
 
 
+class LeaderboardEntrySerializer(serializers.ModelSerializer):
+    """
+    Serializes one row of the global best-break leaderboard. Includes
+    username (unlike PlayerBestBreakSerializer, which is scoped to 'my own
+    records' via request.user and has no need to expose whose row it is).
+    """
+    username = serializers.CharField(source='user.username', read_only=True)
+
+    class Meta:
+        model = PlayerBestBreak
+        fields = ['username', 'reds_count', 'best_break', 'frame_time_seconds', 'is_verified', 'achieved_at']
+
 
