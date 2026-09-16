@@ -67,6 +67,46 @@ for (let known = 1; known <= 147; known += 13) {
   assert(isPotentialNewRecord(known + 1, known) === true, `${known + 1} must beat a known best of ${known}`);
 }
 
+// ── Section 4: submitBreak — request shaping incl. frame_time_seconds (Task 8) ──────
+// No axios-mocking pattern existed anywhere in this test suite before this task (see
+// docs/OPEN_MISSIONS.md #13 for the suite-wide "inline mirror" convention this follows).
+// submitBreak's request-shaping logic is inline-mirrored below with a swappable
+// mockAxiosPost function standing in for axios.post. isLoggedIn/getAuthHeader are not
+// exercised — the mirror assumes the caller is already past that guard, matching the
+// real function's behavior once logged in.
+
+let mockAxiosPost = async () => { throw new Error('mockAxiosPost not set for this test'); };
+
+// Mirrors services/bestBreakService.ts's submitBreak (post-Task-8: accepts optional
+// frameTimeSeconds, only includes it in the request body when provided).
+async function submitBreak(redsCount, breakValue, frameTimeSeconds) {
+  if (breakValue <= 0) return null; // nothing to record
+  const body = { reds_count: redsCount, break: breakValue };
+  if (frameTimeSeconds !== undefined) body.frame_time_seconds = frameTimeSeconds;
+  const res = await mockAxiosPost('scoreboard/best-break/', body);
+  return res.data;
+}
+
+{
+  let sentBody = null;
+  mockAxiosPost = async (url, body) => { sentBody = body; return { data: { reds_count: 15, best_break: 40, achieved_at: 'x', frame_time_seconds: 200, is_verified: true, is_new_record: true } }; };
+  await submitBreak(15, 40, 200);
+  assertEqual(sentBody.frame_time_seconds, 200, 'sends frame_time_seconds when provided');
+}
+
+{
+  let sentBody = null;
+  mockAxiosPost = async (url, body) => { sentBody = body; return { data: { reds_count: 15, best_break: 40, achieved_at: 'x', frame_time_seconds: null, is_verified: true, is_new_record: true } }; };
+  await submitBreak(15, 40);
+  assert(sentBody !== null && !('frame_time_seconds' in sentBody), 'omits frame_time_seconds key entirely when not provided (backwards compatible) — key must be absent, not just undefined');
+}
+
+{
+  mockAxiosPost = async () => ({ data: { reds_count: 15, best_break: 147, achieved_at: 'x', frame_time_seconds: 10, is_verified: false, is_new_record: true } });
+  const result = await submitBreak(15, 147, 10);
+  assertEqual(result.is_verified, false, 'result includes is_verified from the response');
+}
+
 // ── Report ────────────────────────────────────────────────────────────────────────────
 
 console.log(`\n${failed === 0 ? '✅' : '❌'} ${passed}/${passed + failed} assertions passed`);

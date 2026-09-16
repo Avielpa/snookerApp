@@ -15,6 +15,8 @@ export interface BestBreakRecord {
   reds_count: number;
   best_break: number;
   achieved_at: string;
+  frame_time_seconds: number | null;
+  is_verified: boolean;
 }
 
 export interface SubmitBreakResult extends BestBreakRecord {
@@ -31,7 +33,7 @@ export function isPotentialNewRecord(breakValue: number, knownBest: number | nul
 }
 
 /** Submit a completed break. No-op (returns null) for guests — never throws. */
-export async function submitBreak(redsCount: number, breakValue: number): Promise<SubmitBreakResult | null> {
+export async function submitBreak(redsCount: number, breakValue: number, frameTimeSeconds?: number): Promise<SubmitBreakResult | null> {
   if (breakValue <= 0) return null; // nothing to record
   const logged = await isLoggedIn();
   if (!logged) return null;
@@ -39,9 +41,11 @@ export async function submitBreak(redsCount: number, breakValue: number): Promis
   try {
     const header = await getAuthHeader();
     if (!header) return null;
+    const body: Record<string, number> = { reds_count: redsCount, break: breakValue };
+    if (frameTimeSeconds !== undefined) body.frame_time_seconds = frameTimeSeconds;
     const res = await axios.post(
       `${API_BASE}scoreboard/best-break/`,
-      { reds_count: redsCount, break: breakValue },
+      body,
       { headers: { Authorization: header } }
     );
     return res.data as SubmitBreakResult;
