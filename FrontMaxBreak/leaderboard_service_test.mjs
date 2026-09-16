@@ -28,7 +28,7 @@ async function fetchLeaderboard(redsCount) {
 // ── Test harness ─────────────────────────────────────────────────────────────────
 
 let passed = 0;
-function test(name, fn) { fn(); passed++; console.log(`  ok - ${name}`); }
+async function test(name, fn) { await fn(); passed++; console.log(`  ok - ${name}`); }
 
 console.log('fetchLeaderboard');
 {
