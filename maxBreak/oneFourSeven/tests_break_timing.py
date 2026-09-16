@@ -26,3 +26,9 @@ class IsRealisticFrameTimeTest(SimpleTestCase):
         # A 30-break floor should be far lower than a 147-break floor.
         self.assertTrue(is_realistic_frame_time(70, 30))
         self.assertFalse(is_realistic_frame_time(5, 30))
+
+    def test_break_below_30_is_never_flagged(self):
+        # The frame timer only measures n-1 inter-pot intervals, which
+        # dominates at low break values (a single-red break of 1 always
+        # measures 0s). Breaks under 30 are exempted entirely.
+        self.assertTrue(is_realistic_frame_time(0, 10))

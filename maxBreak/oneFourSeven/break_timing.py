@@ -22,5 +22,14 @@ def is_realistic_frame_time(frame_time_seconds, break_value):
         return True
     if frame_time_seconds is None:
         return True
+    if break_value < 30:
+        # The frame timer starts ON the first pot, so it only ever measures
+        # n-1 inter-pot intervals for an n-ball break. That undercounts
+        # negligibly at 36 pots (a 147) but dominates at low break values
+        # (e.g. a single-red break of 1 always measures 0 real intervals),
+        # producing systematic false flags. The anti-cheat check only has
+        # real value on leaderboard-worthy (larger) breaks anyway, so small
+        # breaks are exempted entirely rather than adjusting the formula.
+        return True
     floor_seconds = round(REALISTIC_SECONDS_PER_POINT * break_value)
     return frame_time_seconds >= floor_seconds
