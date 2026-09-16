@@ -268,6 +268,7 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
                 frameResults: state.frameResults,
                 framesWon: framesWon,
                 mode: 'train',
+                durationSeconds: sessionElapsedSeconds,
               };
               await saveMatch(stored);
             }
@@ -305,6 +306,7 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
                 frameResults: state.frameResults,
                 framesWon: framesWon,
                 mode: 'unlimited',
+                durationSeconds: sessionElapsedSeconds,
               };
               await saveMatch(stored);
             }
@@ -342,6 +344,7 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
                 frameResults: state.frameResults,
                 framesWon: framesWon,
                 mode: 'match',
+                durationSeconds: sessionElapsedSeconds,
               };
               await saveMatch(stored);
             }
