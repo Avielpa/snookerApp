@@ -92,7 +92,7 @@ const styles = StyleSheet.create({
   pillTextActive: { color: c.background, fontWeight: '600' },
   empty: { color: c.textMuted, textAlign: 'center', marginTop: 24 },
   row: { flexDirection: LTR_ROW, alignItems: 'center', gap: 10, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
-  rank: { color: c.textMuted, width: 24 },
+  rank: { color: c.textMuted, width: 24, writingDirection: 'ltr' },
   name: { color: c.textPrimary, flex: 1, fontWeight: '600' },
   stat: { color: c.textSecondary, fontSize: 13, marginLeft: 8 },
   flag: { marginLeft: 6 },
