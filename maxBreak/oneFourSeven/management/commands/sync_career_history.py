@@ -19,24 +19,40 @@ Duplicate safety:
   - update_or_create on api_match_id prevents any duplicate rows
   - New-player detection: after first full backfill the player has history → second run
     falls into current-season-only path automatically
+
+Rolling-sweep mode (opt-in, for scheduled/unattended runs):
+  --batch-size N      Only current-season-update N *existing* players per run (a rolling
+                       sweep across the --top roster), instead of all of them. New-player
+                       full backfill is never batched — that set is small and each new
+                       player only needs the backfill once. Progress is tracked in a cursor
+                       file (default: career_sync_cursor.json at the repo root — separate
+                       from nightly_stats_check's own cursor file, never shared).
+  --cursor-file PATH  Override the cursor file location (only used with --batch-size).
+
+  Omitting --batch-size preserves the original, unbounded "run it for everyone right now"
+  behavior manual invocations rely on — batching is strictly additive.
 """
 
 import logging
 import time
 from collections import defaultdict
 from datetime import datetime
+from pathlib import Path
 
 import requests
 from django.core.management import call_command
 from django.core.management.base import BaseCommand
 from django.db import close_old_connections
 
+from oneFourSeven import career_sync_batching
 from oneFourSeven.constants import API_BASE_URL, HEADERS
 from oneFourSeven.models import Event, Player, PlayerMatchHistory, Ranking
 
 logger = logging.getLogger(__name__)
 
 API_CALL_DELAY = 30  # seconds — 2 calls/min (snooker.org rate limit)
+
+DEFAULT_CURSOR_FILE = Path(__file__).resolve().parent.parent.parent.parent / 'career_sync_cursor.json'
 
 ROUND_NAME_FROM_TOP = [
     'Final', 'Semi-Final', 'Quarter-Final',
@@ -61,6 +77,15 @@ class Command(BaseCommand):
         parser.add_argument(
             '--new-players-only', action='store_true',
             help='Only backfill players with no existing career data (pre-tournament use)',
+        )
+        parser.add_argument(
+            '--batch-size', type=int, default=None,
+            help='Opt-in rolling sweep: only current-season-update this many existing '
+                 'players per run (cursor-tracked). Omit for the original full-roster run.',
+        )
+        parser.add_argument(
+            '--cursor-file', default=str(DEFAULT_CURSOR_FILE),
+            help='Path to the rolling-sweep cursor file (only used with --batch-size)',
         )
 
     def handle(self, *args, **options):
@@ -117,6 +142,21 @@ class Command(BaseCommand):
             self.stdout.write('[sync_career_history] --new-players-only: skipping current-season update')
             return
 
+        # ── Optional rolling-sweep batching (opt-in, existing players only) ───
+        batch_size = options.get('batch_size')
+        cursor_file = options['cursor_file']
+        next_cursor = None
+        if batch_size is not None:
+            existing_ids = [p.ID for p in existing_players]
+            cursor = career_sync_batching.load_cursor(cursor_file)
+            batch_ids, next_cursor = career_sync_batching.select_batch(existing_ids, cursor, batch_size)
+            batch_id_set = set(batch_ids)
+            existing_players = [p for p in existing_players if p.ID in batch_id_set]
+            self.stdout.write(
+                f'[sync_career_history] rolling batch: {len(existing_players)}/{len(existing_ids)} '
+                f'existing players this run (cursor {cursor} -> {next_cursor})'
+            )
+
         # ── Current season update for existing players ────────────────────────
         self.stdout.write(f'[sync_career_history] Updating current season ({current_season}) for {len(existing_players)} players')
         updated = 0
@@ -138,6 +178,9 @@ class Command(BaseCommand):
         self.stdout.write(
             f'[sync_career_history] Done — updated={updated} errors={errors}'
         )
+
+        if batch_size is not None:
+            career_sync_batching.save_cursor(cursor_file, next_cursor)
 
     # ── Fetch + save a single player+season ──────────────────────────────────
 
