@@ -54,6 +54,10 @@ export interface GameDraft {
     player2: string;
     numberOfReds: string;
     bestOf: string;
+    // Optional: legacy drafts saved before the break-timer-capture feature shipped
+    // have no mePlayerIndex at all. Do not widen this back to a required string —
+    // that would lie about what's actually in AsyncStorage for those drafts.
+    mePlayerIndex?: string;
   };
   state: GameState;
   savedAt: string;

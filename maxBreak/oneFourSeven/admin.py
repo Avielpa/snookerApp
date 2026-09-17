@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import User
-from .models import MatchesOfAnEvent, Player, Event, Ranking, DeviceToken, OtherTourEvent, OtherTourMatch, OtherTourPlayer, MatchComment, ScoreboardMatch
+from .models import MatchesOfAnEvent, Player, Event, Ranking, DeviceToken, OtherTourEvent, OtherTourMatch, OtherTourPlayer, MatchComment, ScoreboardMatch, PlayerBestBreak, BreakTimingRecord
 
 @admin.register(Player)
 class PlayerAdmin(admin.ModelAdmin):
@@ -119,6 +119,46 @@ class ScoreboardMatchAdmin(admin.ModelAdmin):
     def match_id_short(self, obj):
         return obj.match_id[:8] + '...'
     match_id_short.short_description = 'Match ID'
+
+
+@admin.register(PlayerBestBreak)
+class PlayerBestBreakAdmin(admin.ModelAdmin):
+    """
+    Global personal-best-break leaderboard, editable here for manual
+    corrections/resets (e.g. clearing test data out of the public
+    leaderboard) without needing shell access.
+    """
+    list_display = ('username', 'reds_count', 'best_break', 'frame_time_seconds', 'is_verified', 'achieved_at')
+    list_filter = ('reds_count', 'is_verified')
+    search_fields = ('user__username',)
+    ordering = ('reds_count', '-best_break')
+    list_editable = ('best_break', 'is_verified')
+    actions = ['reset_selected_best_breaks']
+
+    def username(self, obj):
+        return obj.user.username
+    username.short_description = 'User'
+    username.admin_order_field = 'user__username'
+
+    @admin.action(description='Delete selected best-break records (resets those leaderboard entries)')
+    def reset_selected_best_breaks(self, request, queryset):
+        count = queryset.count()
+        queryset.delete()
+        self.message_user(request, f'Deleted {count} best-break record(s).')
+
+
+@admin.register(BreakTimingRecord)
+class BreakTimingRecordAdmin(admin.ModelAdmin):
+    """Personal per-break timing history (Match/Unlimited mode), read-mostly analytics data."""
+    list_display = ('username', 'break_value', 'duration_seconds', 'mode', 'created_at')
+    list_filter = ('mode', 'created_at')
+    search_fields = ('user__username',)
+    ordering = ('-created_at',)
+
+    def username(self, obj):
+        return obj.user.username
+    username.short_description = 'User'
+    username.admin_order_field = 'user__username'
 
 
 class SnookerUserAdmin(UserAdmin):

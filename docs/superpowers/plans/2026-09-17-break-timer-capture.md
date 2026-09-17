@@ -571,7 +571,6 @@ test('frame ends via normal pot-out, same player, currentBreak intact: emits fin
 });
 
 test('already frozen: does not re-finalize or duplicate the event', () => {
-  const already = { player: 0, byebye: true }; // sentinel to prove early-return identity
   const prev = {
     player: 0, startedAt: 1000, frozenElapsedMs: 5000, lastKnownBreakValue: 147,
     completedBreak: { player: 0, breakValue: 147, durationSeconds: 5, completedAt: 6000 },
@@ -1019,7 +1018,7 @@ npx eas update --channel preview --message "feat: break-timer capture + leaderbo
 On a real device with the preview build, verify all of the following (logged-in account):
 1. Start a Match with "Who are you?" set to Player 1 — the break badge shows `Break N · M:SS` ticking live, only while Player 1 is on strike.
 2. Switch to Player 2's turn (tap to end visit) — Player 1's badge disappears, Player 2's break timer does NOT show any elapsed value tied to the "me" flow (since Player 2 isn't "me" — confirm no `submitBreak`/`submitBreakTiming` fires for Player 2 by checking backend state before/after, e.g. via `GET /scoreboard/best-break/`).
-3. Complete a break as Player 1 (the "me" player) worth more than any existing best-break for that reds count — confirm the existing "New PB!" celebration still fires correctly (proves the leaderboard extension didn't break the existing Train-mode-tested flow).
+3. Complete a break as Player 1 (the "me" player) worth more than any existing best-break for that reds count — confirm the leaderboard row for that reds-count actually updates (check via `GET /scoreboard/best-break/`). Note: the in-app "New PB!" celebration and the live `knownBestBreak` refresh are Train-mode-only by design (never speced for Match/Unlimited) — do NOT expect the celebration animation to fire here; this step only verifies the backend record updates correctly.
 4. Repeat the whole flow with "Who are you?" set to Player 2 instead — confirm Player 2's breaks now submit and Player 1's don't.
 5. Play Unlimited mode once, confirm the same behavior.
 6. Force-close the app mid-break, reopen, resume from the draft card — confirm `mePlayerIndex` survived the resume (test both slots).

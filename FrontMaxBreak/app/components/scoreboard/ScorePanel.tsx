@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { scoreboardColors } from '../../../constants/scoreboardTheme';
+import { formatElapsed } from '../../../hooks/useSessionTimer';
 
 interface ScorePanelProps {
   playerNames: [string, string];
@@ -16,6 +17,10 @@ interface ScorePanelProps {
   /** Match-mode lead status, e.g. "Aviel ahead · Sam 24 behind" or "Level". Caller decides
    * whether to pass it (game.tsx only computes/passes it outside train mode). */
   leadText?: string;
+  /** Optional: live elapsed seconds for the CURRENT break in progress, shown only for the
+   * active player. Omit for Train mode or any caller that hasn't adopted break timing —
+   * purely additive, existing callers are unaffected. */
+  activeBreakElapsedSeconds?: number;
 }
 
 // Unified score panel — the redesign's signature element. Squared corners (deliberately
@@ -25,7 +30,7 @@ interface ScorePanelProps {
 // conditions, just visually merged. See docs/superpowers/specs/2026-07-17-scoreboard-game-screen-redesign-design.md.
 export default function ScorePanel({
   playerNames, scores, framesWon, currentBreak, highestBreak, currentPlayer,
-  pointsOnTable, isTrainMode, onEndVisit, leadText,
+  pointsOnTable, isTrainMode, onEndVisit, leadText, activeBreakElapsedSeconds,
 }: ScorePanelProps) {
   const c = scoreboardColors;
 
@@ -47,7 +52,10 @@ export default function ScorePanel({
         )}
         {isActive && currentBreak > 0 && (
           <View style={[styles.breakBadge, { backgroundColor: c.pinGold }]}>
-            <Text style={styles.breakBadgeText}>Break {currentBreak}</Text>
+            <Text style={styles.breakBadgeText}>
+              Break {currentBreak}
+              {activeBreakElapsedSeconds !== undefined ? ` · ${formatElapsed(activeBreakElapsedSeconds)}` : ''}
+            </Text>
           </View>
         )}
       </>

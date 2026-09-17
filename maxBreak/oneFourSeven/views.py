@@ -23,13 +23,14 @@ from rest_framework.response import Response # Use DRF Response
 from rest_framework_simplejwt.tokens import RefreshToken
 
 # Local Imports
-from .models import MatchesOfAnEvent, Player, Ranking, Event, RoundDetails, UpcomingMatch, PlayerMatchHistory, H2HCache, ScoreboardMatch, PlayerBestBreak
+from .models import MatchesOfAnEvent, Player, Ranking, Event, RoundDetails, UpcomingMatch, PlayerMatchHistory, H2HCache, ScoreboardMatch, PlayerBestBreak, BreakTimingRecord
 from .serializers import (
     EventSerializer, MatchesOfAnEventSerializer, PlayerSerializer,
     RankingSerializer, UserSerializer, PlayerMatchHistorySerializer,
     ScoreboardMatchSerializer,
     PlayerBestBreakSerializer,
     LeaderboardEntrySerializer,
+    BreakTimingRecordSerializer,
 )
 from .break_timing import is_realistic_frame_time
 # Import specific fetch functions from the refactored scraper
@@ -2587,6 +2588,47 @@ def best_break_view(request):
 
     serializer = PlayerBestBreakSerializer(record)
     return Response({**serializer.data, 'is_new_record': is_new_record}, status=status.HTTP_200_OK)
+
+
+# ================== Break Timing (personal analytics) ==================
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def break_timing_view(request):
+    """
+    POST — record one completed break's duration for the authenticated user.
+    Body: { break_value: int, duration_seconds: int, mode: 'match' | 'unlimited' }.
+    Every call creates a new row (no upsert — unlike PlayerBestBreak, every
+    individual break is its own event, feeding future personal-analytics
+    aggregation rather than a single "best" record). No anti-cheat check:
+    see BreakTimingRecord's docstring.
+    """
+    break_value = request.data.get('break_value')
+    duration_seconds = request.data.get('duration_seconds')
+    mode = request.data.get('mode')
+
+    if break_value is None or duration_seconds is None or mode is None:
+        return Response({'error': 'break_value, duration_seconds, and mode are required'}, status=status.HTTP_400_BAD_REQUEST)
+    if mode not in ('match', 'unlimited'):
+        return Response({'error': "mode must be 'match' or 'unlimited'"}, status=status.HTTP_400_BAD_REQUEST)
+    try:
+        break_value = int(break_value)
+        duration_seconds = int(duration_seconds)
+    except (TypeError, ValueError):
+        return Response({'error': 'break_value and duration_seconds must be integers'}, status=status.HTTP_400_BAD_REQUEST)
+    if break_value <= 0:
+        return Response({'error': 'break_value must be positive'}, status=status.HTTP_400_BAD_REQUEST)
+    if duration_seconds < 0:
+        return Response({'error': 'duration_seconds must not be negative'}, status=status.HTTP_400_BAD_REQUEST)
+
+    record = BreakTimingRecord.objects.create(
+        user=request.user,
+        break_value=break_value,
+        duration_seconds=duration_seconds,
+        mode=mode,
+    )
+    serializer = BreakTimingRecordSerializer(record)
+    return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 # ================== Global Leaderboard ==================
