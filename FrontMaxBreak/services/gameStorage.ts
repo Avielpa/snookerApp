@@ -130,6 +130,18 @@ export async function clearAllMatches(): Promise<void> {
   await AsyncStorage.removeItem(MATCH_INDEX_KEY);
 }
 
+/**
+ * Wipes all local scoreboard state (completed matches + in-progress draft) on logout,
+ * so the next account to log in on this device never inherits the previous account's
+ * local history via the automatic post-login sync. Call only on logout/account-deletion
+ * — never on login, which would destroy the newly-logged-in account's own just-downloaded
+ * matches instead. See docs/SESSION_2026-09-17_cross_device_match_leak_fix.md.
+ */
+export async function clearAllMatchesAndDraft(): Promise<void> {
+  await clearAllMatches();
+  await clearDraft();
+}
+
 export function computeTrainingStats(matches: StoredMatch[], playerName: string): TrainingStats {
   const sessions = matches.filter(
     m => m.mode === 'train' && m.isComplete && m.player1Name === playerName,

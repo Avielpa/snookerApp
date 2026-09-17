@@ -4,7 +4,8 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { login, logout, register, getUser, isLoggedIn, linkDevice, AuthUser } from '../services/authService';
-import { syncOnLogin } from '../services/scoreboardSyncService';
+import { syncOnLogin, syncAllLocal } from '../services/scoreboardSyncService';
+import { clearAllMatchesAndDraft } from '../services/gameStorage';
 import { loadFavorites, clearFavoritesCache } from '../services/favoritesService';
 import { getOrCreateDeviceId } from '../utils/deviceIdentity';
 
@@ -70,7 +71,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [_postLoginSync]);
 
   const doLogout = useCallback(async () => {
+    // Best-effort final upload of any not-yet-synced local matches, while we still
+    // have this account's auth header — must run BEFORE logout() clears the tokens.
+    await syncAllLocal().catch(() => {});
     await logout();
+    // Wipe local scoreboard state so the next account to log in on this device
+    // never inherits this account's match history via the automatic post-login sync.
+    await clearAllMatchesAndDraft().catch(() => {});
     setUser(null);
     clearFavoritesCache().catch(() => {});
   }, []);
