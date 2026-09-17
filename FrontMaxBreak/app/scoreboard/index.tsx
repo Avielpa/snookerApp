@@ -55,7 +55,7 @@ export default function ScoreboardSetup() {
       return;
     }
     if (!isTrainMode && mePlayerIndex === null) {
-      Alert.alert('Who are you?', 'Please tell us which player is you before starting.');
+      Alert.alert('Who are you?', 'So we save your breaks to the right account — pick who you are below.');
       return;
     }
     clearDraft().catch(() => {});
@@ -193,6 +193,9 @@ export default function ScoreboardSetup() {
       {!isTrainMode && (
         <View style={{ marginTop: 12 }}>
           <Text style={[styles.label, { color: c.textMuted }]}>WHO ARE YOU?</Text>
+          <Text style={[styles.meta, { color: c.textMuted, marginTop: 2 }]}>
+            So your breaks count toward your stats and the leaderboard
+          </Text>
           <View style={{ flexDirection: 'row', gap: 10, marginTop: 6 }}>
             {([0, 1] as const).map(idx => (
               <TouchableOpacity
