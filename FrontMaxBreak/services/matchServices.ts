@@ -19,7 +19,7 @@ export interface Player {
     NumMaximums?: number | null;
     Photo?: string | null;
     current_ranking_position?: number | null;
-    prize_money_this_year?: number | null;
+    career_ranking_money?: number | null;
     career_wins?: number | null;
     career_losses?: number | null;
     recent_form?: string[] | null;
@@ -186,7 +186,7 @@ export const getPlayerDetails = async (playerId: number | string | undefined | n
                     NumRankingTitles: null,
                     NumMaximums: null,
                     current_ranking_position: null,
-                    prize_money_this_year: null,
+                    career_ranking_money: null,
                     recent_form: [],
                     win_streak: 0,
                     ranking_trend: { current: null, previous: null, delta: null },

@@ -134,6 +134,26 @@ Running list of known issues, deferred work, and follow-ups that are NOT current
 - **Root cause (reported, not independently verified)**: implementer attributed it to a committed, empty `maxBreak/__init__.py` at the project root confusing Django's test-label path-resolution walk-up on Windows specifically — reproduced identically on an unmodified main checkout, so it predates this feature and is not a regression from it.
 - **Next step when picked up**: bug-fix-expert workflow — confirm the `maxBreak/__init__.py` theory, decide whether to remove/adjust that file or document the dotted-label form as the required Windows invocation in CLAUDE.md.
 
+### 21. A few old backfilled `PlayerMatchHistory` rows have `Score1==Score2` with `WinnerID=0`
+- **Found**: 2026-09-17, while verifying H2H data for the duplicate-row bug fix (`docs/SESSION_2026-09-17_H2H_DUPLICATE_ROW_FIX.md`).
+- **Status**: Not fixed — a couple of rows, unrelated to the duplication bug itself (present independently either way), out of scope for that fix.
+- **Symptom**: e.g. Shaun Murphy vs Ali Carter H2H includes matches `8323068` (2007 season) and `8322904` (2008 season), both `EventName: null`, `Score1: 2, Score2: 2, WinnerID: 0` — a tied score with no recorded winner. Snooker has no drawn matches, so this is a data-entry artifact from old backfilled data, not a real result.
+- **Impact**: minor — these matches are excluded from both players' win counts (since `WinnerID` matches neither player), silently undercounting wins-by-1 for whichever player actually won. Likely affects a small number of similarly old, `EventName: null` rows across the DB, not just this pair.
+- **Next step when picked up**: query `PlayerMatchHistory` for `status=3 AND score1=score2 AND winner_id=0` (or null) to find the full extent, then decide whether the real result is recoverable from snooker.org for those specific old matches.
+
+### 22. `sync_career_history` (CueTracker refresh) has no scheduled automation
+- **Found**: 2026-09-17, while investigating stale `PlayerCareerStats` (`ct_*` fields — titles, centuries, prize money, frames) shown on the Compare screen for Trump/Selby (`docs/SESSION_2026-09-17_H2H_DUPLICATE_ROW_FIX.md`).
+- **Status**: Not fixed — confirmed via `Procfile` and `.github/workflows/` that no daemon or cron job calls `sync_career_history`; it's a manual-only command. This is distinct from `nightly_stats_check`, which only covers `PlayerMatchHistory`/`Player.NumRankingTitles` (see open mission #15) and never touches `PlayerCareerStats`.
+- **Impact**: `ct_total_centuries`, `ct_career_prize_total`, `ct_total_50plus`, frame counts, etc. silently drift stale (observed ~7-9 days behind CueTracker for two frequently-viewed top players) until someone runs the command by hand.
+- **Next step when picked up**: decide on a schedule (e.g. a new weekly GitHub Actions workflow mirroring `nightly_stats_check.yml`'s pattern) and scope for a rolling sweep — likely as a new, separate task rather than folded into `nightly_stats_check`, since it's a different model and a different (slower, CueTracker-scraping) command.
+
+### 23. GitHub Actions secret `ADMIN_EXPO_PUSH_TOKEN` was never configured — nightly anomaly notifications have been silent since the workflow existed
+- **Found**: 2026-09-17, while investigating why `nightly_stats_check`'s GitHub Actions run has shown "failure" every night for 8+ consecutive days (`docs/SESSION_2026-09-17_H2H_DUPLICATE_ROW_FIX.md`). The "failure" status itself was a separate, now-fixed bug (see the exit-code fix in that session doc) — but investigating it surfaced this real, still-open gap.
+- **Status**: Not fixed — needs the user to add the secret (`gh secret set ADMIN_EXPO_PUSH_TOKEN`), no code change required. The notify code path itself is already correct.
+- **Symptom**: `gh secret list` on this repo does not include `ADMIN_EXPO_PUSH_TOKEN`. Every nightly run's log shows `Notification skipped: something was flagged but no --notify-token (ADMIN_EXPO_PUSH_TOKEN) was configured.`
+- **Impact**: any real, non-auto-fixable flag (e.g. `BAD_WIN_RATE`, `FINALS_LT_TITLES`) on an active player would be silently swallowed — logged in the Actions run only, never pushed to the admin device — for as long as this repo has had the workflow.
+- **Next step when picked up**: user sets the secret to their admin device's Expo push token; verify by checking the next nightly run's log no longer shows "Notification skipped."
+
 ## Resolved / closed
 (move items here with a one-line resolution note when closed, don't delete history)
 

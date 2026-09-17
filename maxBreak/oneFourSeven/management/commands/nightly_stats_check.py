@@ -178,5 +178,8 @@ class Command(BaseCommand):
                         '(ADMIN_EXPO_PUSH_TOKEN) was configured.'
                     ))
 
-        if not dry_run and (still_flagged or errors):
+        # still_flagged is expected most nights (many retired/amateur players
+        # have permanently unfixable flags) — it isn't a run failure. Only a
+        # real ERRORS count should fail the workflow.
+        if not dry_run and errors:
             raise SystemExit(1)

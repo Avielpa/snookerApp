@@ -342,7 +342,7 @@ const ComparisonView = ({ data, onChangeP1, onChangeP2, colors }: {
                     colors={colors}
                 />
                 <Div colors={colors} />
-                <StatRow label="Prize (Season)" p1Val={fmtMoney(p1.prize_money_this_year)} p2Val={fmtMoney(p2.prize_money_this_year)} winner={higherWins(p1.prize_money_this_year, p2.prize_money_this_year)} colors={colors} />
+                <StatRow label="Ranking Money" p1Val={fmtMoney(p1.career_ranking_money)} p2Val={fmtMoney(p2.career_ranking_money)} winner={higherWins(p1.career_ranking_money, p2.career_ranking_money)} colors={colors} />
                 <Div colors={colors} />
                 {/* Career Prize Total — from CueTracker */}
                 <StatRow

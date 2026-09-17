@@ -40,7 +40,7 @@ interface PlayerData {
     NumRankingTitles?: number | null;
     NumMaximums?: number | null;
     current_ranking_position?: number | null;
-    prize_money_this_year?: number | null;
+    career_ranking_money?: number | null;
     career_stats?: {
         ct_frames_played: number | null;
         ct_frames_won: number | null;
@@ -462,9 +462,9 @@ export default function PlayerDetailsScreen(): React.ReactElement {
                 />
                 <StatCard
                     icon="cash-outline"
-                    title="Prize Money"
-                    value={player?.prize_money_this_year ? `£${(player.prize_money_this_year / 1000).toFixed(0)}k` : 'N/A'}
-                    subtitle="This season"
+                    title="Ranking Money"
+                    value={player?.career_ranking_money ? `£${(player.career_ranking_money / 1000).toFixed(0)}k` : 'N/A'}
+                    subtitle="Ranking-list total"
                 />
             </View>
 

@@ -779,15 +779,15 @@ def player_by_id_view(request, player_id):
 
         if current_ranking:
             player_data['current_ranking_position'] = current_ranking.Position
-            player_data['prize_money_this_year'] = current_ranking.Sum
+            player_data['career_ranking_money'] = current_ranking.Sum
         else:
             player_data['current_ranking_position'] = None
-            player_data['prize_money_this_year'] = None
+            player_data['career_ranking_money'] = None
 
     except Exception as e:
         logger.error(f"Error fetching ranking data for player {player_id}: {e}")
         player_data['current_ranking_position'] = None
-        player_data['prize_money_this_year'] = None
+        player_data['career_ranking_money'] = None
 
     # Recent form, win streak, ranking trend — safe: never breaks player loading
     try:
@@ -990,10 +990,15 @@ def h2h_view(request, player1_id, player2_id):
 
     from django.db.models import Q
 
-    # All finished matches between these two players
+    # All finished matches between these two players.
+    # player_id=p1_int is required: PlayerMatchHistory stores one row per
+    # player per match (each player has their own history row for the same
+    # real match), so without this constraint the Q(...) below matches both
+    # players' rows for every match and doubles the result.
     matches = list(
         PlayerMatchHistory.objects.filter(
-            status=3
+            status=3,
+            player_id=p1_int,
         ).filter(
             Q(player1_id=p1_int, player2_id=p2_int) |
             Q(player1_id=p2_int, player2_id=p1_int)
