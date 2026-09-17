@@ -126,16 +126,19 @@ single-season figure. Verified: Trump's 2026-27 season prize money on CueTracker
 - Grep confirms zero remaining references to the old `prize_money_this_year` name anywhere
   in the repo.
 
-**NOT yet done — needs explicit approval before proceeding**:
-- Backend changes (H2H fix + exit-code fix + prize-money rename) are **not pushed to
-  `master`** yet — Railway auto-deploys on push, so this needs the user's go-ahead first.
-- Post-deploy curl verification against production (`/h2h/12/17/` should show
-  `TotalMeetings: 43`, `23-20` for Trump/Selby) has not been done yet — production still has
-  the buggy code.
-- Frontend changes (prize-money rename + label) have not been through `eas update --channel
-  preview` or a real-device check yet, per CLAUDE.md's preview-before-production rule.
+**Shipped, 2026-09-17**:
+- Committed (`0a19acae`) and pushed to `master` — all 3 Railway services rebuilt and
+  deployed successfully. Curl-verified against production: `/h2h/12/17/` → `TotalMeetings: 43`,
+  `23-20`; `/h2h/5/237/` (O'Sullivan/Higgins) → `50`, matching snooker.org exactly.
+  `/players/detail/12/` → `career_ranking_money` present, old `prize_money_this_year` key gone.
+- Frontend published to `eas update --channel preview`, user tested and confirmed correct on
+  device, then promoted to `--channel production` (update group `257e520b`).
+
+**Still open — not done this session**:
 - `ADMIN_EXPO_PUSH_TOKEN` secret still needs the user to set it (open mission #23) — not
   something this session could do.
+- Open missions #21 (old `WinnerID=0` rows) and #22 (no automation for `sync_career_history`)
+  remain unaddressed, logged for a future session.
 
 ## Lessons for a future agent touching this area
 
