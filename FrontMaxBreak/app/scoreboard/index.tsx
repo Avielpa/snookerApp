@@ -26,7 +26,7 @@ export default function ScoreboardSetup() {
   const [numberOfReds, setNumberOfReds] = useState<number>(15);
   const [bestOf, setBestOf] = useState<number | null>(null);
   const [isUnlimited, setIsUnlimited] = useState(false);
-  const [mePlayerIndex, setMePlayerIndex] = useState<0 | 1>(0);
+  const [mePlayerIndex, setMePlayerIndex] = useState<0 | 1 | null>(null);
   const [draft, setDraft] = useState<GameDraft | null>(null);
   const [authVisible, setAuthVisible] = useState(false);
   const [bannerDismissed, setBannerDismissed] = useState(false);
@@ -54,6 +54,10 @@ export default function ScoreboardSetup() {
       Alert.alert('Missing name', 'Please enter both player names.');
       return;
     }
+    if (!isTrainMode && mePlayerIndex === null) {
+      Alert.alert('Who are you?', 'Please tell us which player is you before starting.');
+      return;
+    }
     clearDraft().catch(() => {});
     setDraft(null);
     const id = generateMatchId();
@@ -66,7 +70,10 @@ export default function ScoreboardSetup() {
         numberOfReds: String(numberOfReds),
         bestOf: isTrainMode ? 'train' : isUnlimited ? 'unlimited' : (bestOf === null ? 'single' : String(bestOf)),
         mode,
-        mePlayerIndex: String(mePlayerIndex),
+        // Only send a real choice (0 or 1) — Train mode never sends this at all
+        // (mePlayerIndex stays null, no picker shown), and Match/Unlimited only
+        // reach here once mePlayerIndex is non-null (validated above).
+        ...(mePlayerIndex !== null ? { mePlayerIndex: String(mePlayerIndex) } : {}),
       },
     });
   }
@@ -307,13 +314,20 @@ export default function ScoreboardSetup() {
         ) : null}
       </View>
 
-      {/* Start button */}
+      {/* Start button — disabled until "WHO ARE YOU?" is answered in Match/Unlimited mode */}
       <TouchableOpacity
-        style={[styles.startBtn, { backgroundColor: c.primary }]}
+        style={[
+          styles.startBtn,
+          { backgroundColor: c.primary },
+          !isTrainMode && mePlayerIndex === null && styles.startBtnDisabled,
+        ]}
         onPress={startMatch}
         activeOpacity={0.85}
+        disabled={!isTrainMode && mePlayerIndex === null}
       >
-        <Text style={styles.startBtnText}>Start Match</Text>
+        <Text style={styles.startBtnText}>
+          {!isTrainMode && mePlayerIndex === null ? 'Select who you are ↑' : 'Start Match'}
+        </Text>
       </TouchableOpacity>
 
       {/* Match History — prominent secondary button */}
@@ -420,6 +434,9 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontFamily: 'PoppinsBold',
     color: '#121212',
+  },
+  startBtnDisabled: {
+    opacity: 0.5,
   },
   historyBtn: {
     borderWidth: 1.5,

@@ -13,6 +13,7 @@ export interface BreakTimerInput {
   currentBreak: number;
   breakBallsLength: number;
   isFrameOver: boolean;
+  frameNumber: number;
 }
 
 export interface CompletedBreak {
@@ -28,6 +29,7 @@ export interface BreakTimerState {
   frozenElapsedMs: number | null;
   lastKnownBreakValue: number;
   completedBreak: CompletedBreak | null;
+  frameNumber: number;
 }
 
 const INITIAL_STATE: BreakTimerState = {
@@ -36,6 +38,7 @@ const INITIAL_STATE: BreakTimerState = {
   frozenElapsedMs: null,
   lastKnownBreakValue: 0,
   completedBreak: null,
+  frameNumber: 1,
 };
 
 /**
@@ -63,6 +66,27 @@ export function computeBreakTimerState(
   prev: BreakTimerState,
   now: number,
 ): BreakTimerState {
+  // Frame-boundary reset — mirrors computeFrameTimerState in useFrameTimer.ts.
+  // Must run BEFORE the player-switch/frame-over/same-player branches below,
+  // otherwise the "same player breaks first in the new frame" case would fall
+  // into the same-player-continuing branch and carry over stale startedAt/
+  // frozenElapsedMs from the frame that just ended. By the time frameNumber
+  // changes, the previous frame's break has already been finalized via the
+  // isFrameOver-freeze branch (confirmFrameEnd in useSnookerGame.ts only
+  // increments frameNumber in the same transition that resets isFrameOver to
+  // false for the new frame — the freeze branch already ran on the render
+  // where isFrameOver first became true), so no completed-break event is
+  // lost or needs finalizing here.
+  if (input.frameNumber !== prev.frameNumber) {
+    return {
+      player: input.currentPlayer,
+      startedAt: input.breakBallsLength > 0 ? now : null,
+      frozenElapsedMs: null,
+      lastKnownBreakValue: input.currentBreak,
+      completedBreak: prev.completedBreak,
+      frameNumber: input.frameNumber,
+    };
+  }
   if (input.currentPlayer !== prev.player) {
     const completed = finalizeBreak(prev, input, now);
     return {
@@ -71,6 +95,7 @@ export function computeBreakTimerState(
       frozenElapsedMs: null,
       lastKnownBreakValue: input.currentBreak,
       completedBreak: completed ?? prev.completedBreak,
+      frameNumber: input.frameNumber,
     };
   }
   if (input.isFrameOver) {
@@ -99,10 +124,11 @@ export function computeBreakTimerState(
  */
 export function shouldSubmitCompletedBreak(
   completedBreak: CompletedBreak | null,
-  mePlayerIndex: 0 | 1,
+  mePlayerIndex: 0 | 1 | null,
   isTrainMode: boolean,
 ): boolean {
   if (isTrainMode) return false; // Train mode has its own, separate best-break path
+  if (mePlayerIndex === null) return false; // "me" was never confirmed — never attribute a break to anyone
   if (!completedBreak) return false;
   if (completedBreak.breakValue <= 0) return false;
   return completedBreak.player === mePlayerIndex;
@@ -114,7 +140,7 @@ export function useBreakTimer(input: BreakTimerInput): { elapsedSeconds: number;
 
   useEffect(() => {
     setState(prev => computeBreakTimerState(input, prev, Date.now()));
-  }, [input.currentPlayer, input.currentBreak, input.breakBallsLength, input.isFrameOver]);
+  }, [input.currentPlayer, input.currentBreak, input.breakBallsLength, input.isFrameOver, input.frameNumber]);
 
   useEffect(() => {
     const id = setInterval(() => forceTick(t => t + 1), 1000);

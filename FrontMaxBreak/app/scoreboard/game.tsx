@@ -42,12 +42,17 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
   const { width, height } = useWindowDimensions();
   const isLandscape = width > height;
   const params = useLocalSearchParams<{
-    id: string; player1: string; player2: string; numberOfReds: string; bestOf: string; mode: string; mePlayerIndex: string;
+    id: string; player1: string; player2: string; numberOfReds: string; bestOf: string; mode: string; mePlayerIndex?: string;
   }>();
 
   const isTrainMode = params.bestOf === 'train';
   const isUnlimitedMode = params.bestOf === 'unlimited';
-  const mePlayerIndex: 0 | 1 = params.mePlayerIndex === '1' ? 1 : 0;
+  // undefined/missing/garbage (e.g. a legacy pre-feature draft with no
+  // mePlayerIndex field at all) means "never confirmed" — must stay null, not
+  // silently collapse to player 0. shouldSubmitCompletedBreak is the safety
+  // gate that turns this into "never submit".
+  const mePlayerIndex: 0 | 1 | null =
+    params.mePlayerIndex === '0' ? 0 : params.mePlayerIndex === '1' ? 1 : null;
 
   const config = {
     id: params.id,
@@ -75,6 +80,7 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
     currentBreak: snap.currentBreak,
     breakBallsLength: snap.breakBalls.length,
     isFrameOver: snap.isFrameOver,
+    frameNumber,
   });
 
   const { setGameActive } = useGameContext();
