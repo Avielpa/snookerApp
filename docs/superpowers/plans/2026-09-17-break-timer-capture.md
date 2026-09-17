@@ -571,7 +571,6 @@ test('frame ends via normal pot-out, same player, currentBreak intact: emits fin
 });
 
 test('already frozen: does not re-finalize or duplicate the event', () => {
-  const already = { player: 0, byebye: true }; // sentinel to prove early-return identity
   const prev = {
     player: 0, startedAt: 1000, frozenElapsedMs: 5000, lastKnownBreakValue: 147,
     completedBreak: { player: 0, breakValue: 147, durationSeconds: 5, completedAt: 6000 },
