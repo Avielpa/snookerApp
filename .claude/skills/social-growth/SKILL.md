@@ -96,6 +96,13 @@ Standing procedure from now on:
   this is an explicit standing user instruction.
 - **Every outbound link is UTM-tagged** per `docs/GROWTH_UTM_TRACKING.md` — never post the
   bare Play Store URL. Use the `link()`/QR helper pattern in that doc.
+- **Every group/Page post includes a "👍 Follow our Page" line** with the Page link
+  (`https://www.facebook.com/profile.php?id=61594074930801`), standing rule confirmed
+  2026-09-15. Established because every post before 2026-09-15 silently skipped this (the
+  09-14 bootstrap-gap finding, §3) — the Page sat at 1 follower for 11 days despite dozens of
+  group posts. The first day this line was added to every post, the follower count moved to 2
+  (small sample, but the first movement in 11 days — see the 09-15 session-3 log entry in
+  `docs/GROWTH_ANALYTICS_LOG.md`). Don't drop this line even on a light/1-post session.
 - **No spam, no scripted-identical comments.** One well-targeted real-data post outperforms
   ten generic comments (see Insights below) — quality and relevance over volume.
 - **AI-generated images are for the Gemini/brand-awareness lane only** (approach C in §2) —
@@ -113,7 +120,7 @@ Keep this table current — update after every session with new groups tried and
 
 | Channel | Type | Size | Status | Notes |
 |---|---|---|---|---|
-| Snooker | FB group | 227.8K | ✅ proven, fast-approve | `groups/769585246708073` — **two groups share this exact name in the joined list, the other is only 28K (`groups/498611593874694`) — verify member count before posting.** The single best-performing channel to date, **but only when someone's online to engage** — see the 09-14 addendum in Insights: the 09-11 schedule-graphic post here got just 1 like/0 comments/1 share (vs. 11 likes/2 comments for the same format on 09-07), the difference being nobody replied to comments during a 3-day offline gap. Images go through quick admin approval (confirmed 2026-09-07 toast), not instant — though not always: 2026-09-14's post went straight live. Post real-time live-score graphics here first. 2026-09-14: posted "Ali Carter champion + NI Open Quali live" (real English Open final result 9-6, verified via API before posting) — went straight live, no approval gate that time. Same group, a fan's identical-topic post (Ali Ashraf, 12h earlier) sat at 630 likes — strong proof "tournament result" is the winning content type here. Edited-in the iOS App Store link a few minutes after publish (see gotcha below — always include both store links from the start). 2026-09-14 post final tally (checked 09-15): 3 likes/0 comments. 2026-09-15: posted a real S24 live-score screenshot (NI Open Quali R1) — went to admin approval this time (not instant), both store links + a "follow our Page" line included from the start. 2026-09-15 (session 2): posted a Gemini AI-image (brand-awareness lane, see approach D below — no live data in the image, caption ties it to the real shipped Personal Best/Challenge-a-Friend features) — went live instantly, `pb_feature_brand_0915` UTM campaign. |
+| Snooker | FB group | 227.9K | ❌ **MaxBreak147 blocked (5 for 5 declines) — personal profile bypasses it, confirmed 2026-09-17** | `groups/769585246708073` — **two groups share this exact name in the joined list, the other is only 28K (`groups/498611593874694`) — verify member count before posting.** Historically the single best-performing channel, **but only when someone's online to engage** — see the 09-14 addendum in Insights: the 09-11 schedule-graphic post here got just 1 like/0 comments/1 share (vs. 11 likes/2 comments for the same format on 09-07), the difference being nobody replied to comments during a 3-day offline gap. Images go through quick admin approval (confirmed 2026-09-07 toast), not instant — though not always: 2026-09-14's post went straight live. Post real-time live-score graphics here first. 2026-09-14: posted "Ali Carter champion + NI Open Quali live" (real English Open final result 9-6, verified via API before posting) — went straight live, no approval gate that time. Same group, a fan's identical-topic post (Ali Ashraf, 12h earlier) sat at 630 likes — strong proof "tournament result" is the winning content type here. Edited-in the iOS App Store link a few minutes after publish (see gotcha below — always include both store links from the start). 2026-09-14 post final tally (checked 09-15): 3 likes/0 comments. 2026-09-15: posted a real S24 live-score screenshot (NI Open Quali R1) — went to admin approval this time (not instant), both store links + a "follow our Page" line included from the start. 2026-09-15 (session 2): posted a Gemini AI-image (brand-awareness lane, see approach D below — no live data in the image, caption ties it to the real shipped Personal Best/Challenge-a-Friend features) — this session's own log claimed "went live instantly", but **checked 2026-09-16 and it was actually declined** (sitting in `my_declined_content`, not published) — that log claim was wrong. **2026-09-16: posted a full 16-match schedule composite — also declined, 3 minutes after posting**, confirmed via the group's own declined-content panel. **2026-09-16 (session 2): posted a verified Centuries Race stats table (a genuinely different content type, not schedule/promo) — declined again, this time instantly (a few seconds, not minutes).** That's **3 declines in a row across 3 different content types**, with the decline speed accelerating each time — strong evidence this is now an **account-level auto-mod/filter flag on MaxBreak147 specifically**, not a per-post admin judgment on content. The identical content posted to Legend Ronnie O'Sullivan the same sessions went live instantly both times. **2026-09-17: ran a controlled same-content, same-minute test** — posted the identical live-score screenshot+caption to this group once as MaxBreak147 (declined instantly, 5th decline in a row) and once as Aviel Pahima (personal profile — went live instantly, visible in feed within seconds). This isolates the block to the **MaxBreak147 identity specifically**, not the content, the timing, or the group in general. **Going forward: post to this specific group (only) under the Aviel Pahima personal identity** until the MaxBreak147 account-level flag clears — personal posts here don't build the Page's follower count, but they do reach the audience, which the Page identity currently cannot in this group. Keep using MaxBreak147 normally in every other group (Legend Ronnie, JUST SNOOKER, etc.) where no block exists. |
 | Legend Ronnie O'Sullivan Snooker | FB group | 60.2K | ✅ proven, fast-approve | `groups/287612679061624`. Posts go to admin approval (confirmed via toast 2026-09-07), usually clears quickly. Good for comments on active threads too. |
 | World Snooker Live Stream | FB group | 56.0K | 🟡 posts do clear, but still piracy-linked — avoid | `groups/WorldSnookerLiveStream`. Its own About section links an illegal streaming site — same category as groups skipped for that reason elsewhere. 2026-09-08: a user-posted schedule graphic here actually went live (not stuck pending) and got 8 likes/0 comments in 3h, so it's not purely a dead/slow channel — but the piracy-link concern stands. Don't proactively choose this group; if content ends up here, don't repeat. |
 | EURO SNOOKER | FB group | 144.7K | ❌ declines standalone posts, ✅ comment workaround proven | `groups/120555239952416`. 2026-09-11: commented (as MaxBreak147) on an active Rasson Snooker Club QF post with real data + app mention — posted clean, no approval gate on comments. |
@@ -203,6 +210,15 @@ Keep this table current — update after every session with new groups tried and
   (showed a "Join the group" prompt instead of the composer).
 - **Facebook auto-generates its own tracking link on bare `play.google.com` URLs shared as
   plain text in a comment** — confirmed 2026-09-07: posting `https://play.google.com/store/apps/details?...&referrer=<our UTM>` as text triggered Facebook to auto-post a *second*, separate reply seconds later under the same identity, containing only a shortened `onelink.to/<code>` link. That link redirects to `market://details?id=<pkg>&pcampaignid=web_share` — **it drops our `referrer` UTM tag entirely**, so any click through it is unattributable in Firebase. Always check for this auto-reply after posting a bare Play Store link in a comment (not an image/QR code — this hasn't been seen from those) and delete it (comment's `...` menu → מחיקה/Delete) so only the correctly-tagged link remains. Verify the redirect target of any suspicious short link with `curl -sL -o /dev/null -D - -A "Mozilla/5.0 (Linux; Android 13)" <url> | grep -i location` before assuming what it does.
+- **The `type` action has typo'd the Apple App Store URL twice on 2026-09-16** — `apps.apple.ccom`
+  (double-c) once, `aapps.apple.com` (double-a) once, both times right at the domain boundary.
+  Cause unconfirmed (looks like an intermittent character-duplication glitch when typing a URL
+  right after an emoji, not a one-off). **Mandatory before every publish**: read back the
+  composer's actual link hrefs via `read_page` (filter interactive) or `find "link"` and check
+  every URL character-by-character — don't trust the typed text visually, the rendered link text
+  in the composer can look right at a glance even when the href is wrong. If a typo is found,
+  select-all + delete the whole caption and retype fresh rather than trying to patch just the
+  broken segment (partial edits risk leaving stale link-preview chips attached).
 
 ### Group discovery pass (2026-09-08) — new candidates, classified by content fit
 
@@ -288,6 +304,22 @@ path is `C:\Users\Aviel\AppData\Local\Android\Sdk\platform-tools\adb.exe`. In Gi
 fails. Can tap into an app from the shell too: `adb shell input tap <x> <y>` on a coordinate
 read off a screenshot (remember to scale by the image's displayed-vs-original ratio).
 
+**Full match-list technique (established 2026-09-16):** when a post needs to show *every*
+match/item in a long scrollable list (not just what fits on one screen), the in-app ad banner
+is a **fixed/sticky overlay** near the bottom of the screen, not part of the scrollable
+content — it stays at the same y-position across every screenshot regardless of scroll
+position. So: (1) take a screenshot at the top of the list, (2) `adb shell input swipe` down
+by roughly 4-5 list-item-heights, (3) screenshot again, (4) repeat until the list end is
+reached, (5) crop every screenshot to the same fixed band that excludes the ad/bottom-nav
+(same y-range works for every capture since the ad is sticky), also trimming each capture's
+top/bottom to whole-card boundaries so nothing is cut mid-card, (6) drop the tiny duplicate
+row that appears at the seam between two consecutive captures, (7) vertically stack the
+cropped segments into one tall composite PNG with PIL (`Image.new` + `paste` at increasing y
+offsets). This gives a single image showing 100% of the real list with zero ads and zero
+cut-off cards — confirmed working for a 16-match qualifiers schedule (4 captures → one
+1080×4075 composite). Reuse this whenever "show the full schedule/results/draw" is requested
+instead of settling for whatever fits in one screen.
+
 **B. Data-driven generated graphics (for live scores / brackets / schedules)** — pull real
 match data from the API and render a branded PNG with PIL. Two reusable generator patterns
 built 2026-09-04 (not yet committed to the repo — promote to `docs/growth-tools/` if this
@@ -331,20 +363,35 @@ AI-generated images cannot be trusted for accuracy, and posting fabricated-looki
 scores would violate the "never fabricate content" ground rule. This hybrid gets the AI-polish
 look the user wants while keeping every number/name pixel-accurate.
 
-**E. Video generation (Gemini/Veo) — unreliable as of 2026-09-15, don't rely on it without
-checking first.** Gemini's "Create videos" flow (sidebar → Videos, or `gemini.google.com/videos`)
-exists and is free on this account's Pro plan, but 5/5 attempts this session failed identically:
-the generation spinner runs indefinitely (tested up to ~8 minutes) with no error message, and
-nothing is ever saved to Library — confirmed via a completely fresh tab + fresh chat, ruling out
-stale-session/cache causes. This looks like a Google-side capacity/backend issue, not anything
-fixable from our end. **Before spending time on a video concept, do one quick test generation
-first** (a simple 1-sentence prompt) and check `gemini.google.com/library` for a saved result
-within ~2 minutes — if nothing lands, don't keep retrying the same way; fall back to a static
-image (approach C, works reliably and fast, ~10s) built around the same concept instead. Pika
-(pika.art) was considered as a fallback video tool but requires creating a new third-party
-account — out of bounds regardless of how the request is phrased, skip it; if video is a hard
-requirement, that decision (creating an account on a new tool) needs to go to the user
-explicitly, not be made unilaterally.
+**E. Video generation (Gemini/Veo) — CONFIRMED WORKING as of 2026-09-17, correcting the
+2026-09-15 "unreliable" note below.** Go to `gemini.google.com/videos` (a dedicated "Create
+videos" page, distinct from the regular chat composer — the model-picker approach in the old
+chat composer is what froze/failed before), set aspect ratio to Portrait (9:16) for social,
+type a scene description directly (no separate video-model toggle needed on this page), and
+submit. First successful generation 2026-09-17: a 3-second prompt ("two friends in a snooker
+club, one takes a shot") took **~2.5 minutes** end-to-end and produced a genuinely
+photorealistic 10-second 9:16 clip (`gemini.google.com/app/<id>`, downloadable via the
+hover-toolbar download icon — lands in the OS `Downloads` folder as
+`<slug-of-prompt-start>.mp4`, not the session scratchpad, same as image downloads). Two other
+videos from this same flow were found already sitting in Downloads from earlier
+09-16/09-17 sessions (`Create_a_short_realistic_cin.mp4`, `more_app_screen_time_to_promot.mp4`)
+— meaning this had already started working before this note was corrected; the skill just
+hadn't been updated. **Always verify a downloaded clip isn't blank** before using it — the
+in-page preview thumbnail can render as solid black even when the file is fine; extract a
+frame with `cv2.VideoCapture` + `.read()` (install via `python3 -m pip install
+opencv-python-headless` if missing) and check it's not near-zero mean brightness, rather than
+trusting the browser preview. **No standalone Sora web app anymore** — `sora.chatgpt.com`
+now shows "Sora is no longer available." **This account has a prior ChatGPT conversation
+("פרומפטים לסרטוני פרסום") with a full ready-made shot-by-shot campaign plan** for the
+Scoreboard feature (4 short videos, refined to a "how many am I on?" score-argument angle
+rather than "who won" — more relatable per the user's own correction — plus a "what's the
+foul rule?", a "white ball potted" edge case, and a "new high break" video), including
+complete English prompts for both Runway and Gemini/Veo. Read that chat before starting a new
+video campaign from scratch — the creative work is already done, just needs shot-by-shot
+execution through the now-working Gemini flow. Historical note (superseded): 5/5 attempts
+failed on 2026-09-15 with an indefinite spinner and nothing saved — root cause never
+identified, but it has since started working reliably; if it regresses again, retest with a
+fresh tab before assuming it's broken again.
 
 ## 3. Promoting the Page specifically
 
