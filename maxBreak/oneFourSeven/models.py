@@ -1270,3 +1270,25 @@ class PlayerBestBreak(models.Model):
     def __str__(self):
         return f"{self.user.username} / {self.reds_count} reds / best {self.best_break}"
 
+
+class BreakTimingRecord(models.Model):
+    """
+    One completed break's duration, from Match/Unlimited mode, for the player slot tagged
+    "me" at match setup. Personal analytics only — never a competitive/global leaderboard,
+    so (unlike PlayerBestBreak) there is no anti-cheat validation: this is the user's own
+    account, no one else's data is at stake, and no reward is gated on accuracy.
+    """
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='break_timings')
+    break_value = models.IntegerField()
+    duration_seconds = models.IntegerField()
+    mode = models.CharField(max_length=16, choices=[('match', 'Match'), ('unlimited', 'Unlimited')])
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "Break Timing Record"
+        verbose_name_plural = "Break Timing Records"
+
+    def __str__(self):
+        return f"{self.user.username} / {self.mode} / break {self.break_value} in {self.duration_seconds}s"
+

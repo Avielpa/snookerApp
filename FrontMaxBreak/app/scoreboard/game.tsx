@@ -31,6 +31,8 @@ import { buildBreakShareMessage, buildFrameShareMessage, buildNewRecordShareMess
 import { submitBreak, fetchBestBreakForRedsCount, isPotentialNewRecord } from '../../services/bestBreakService';
 import { useSessionTimer, formatElapsed } from '../../hooks/useSessionTimer';
 import { useFrameTimer } from '../../hooks/useFrameTimer';
+import { useBreakTimer, shouldSubmitCompletedBreak } from '../../hooks/useBreakTimer';
+import { submitBreakTiming } from '../../services/breakTimingService';
 import { useAuth } from '../../contexts/AuthContext';
 import AuthCard from '../components/AuthCard';
 
@@ -40,11 +42,17 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
   const { width, height } = useWindowDimensions();
   const isLandscape = width > height;
   const params = useLocalSearchParams<{
-    id: string; player1: string; player2: string; numberOfReds: string; bestOf: string; mode: string;
+    id: string; player1: string; player2: string; numberOfReds: string; bestOf: string; mode: string; mePlayerIndex?: string;
   }>();
 
   const isTrainMode = params.bestOf === 'train';
   const isUnlimitedMode = params.bestOf === 'unlimited';
+  // undefined/missing/garbage (e.g. a legacy pre-feature draft with no
+  // mePlayerIndex field at all) means "never confirmed" — must stay null, not
+  // silently collapse to player 0. shouldSubmitCompletedBreak is the safety
+  // gate that turns this into "never submit".
+  const mePlayerIndex: 0 | 1 | null =
+    params.mePlayerIndex === '0' ? 0 : params.mePlayerIndex === '1' ? 1 : null;
 
   const config = {
     id: params.id,
@@ -65,6 +73,14 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
     frameNumber,
     isFrameOver: snap.isFrameOver,
     hasAnyPotThisFrame,
+  });
+
+  const { elapsedSeconds: activeBreakElapsedSeconds, completedBreak } = useBreakTimer({
+    currentPlayer: snap.currentPlayer,
+    currentBreak: snap.currentBreak,
+    breakBallsLength: snap.breakBalls.length,
+    isFrameOver: snap.isFrameOver,
+    frameNumber,
   });
 
   const { setGameActive } = useGameContext();
@@ -92,6 +108,7 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
           player2: params.player2,
           numberOfReds: params.numberOfReds,
           bestOf: params.bestOf,
+          mePlayerIndex: params.mePlayerIndex,
         },
         state: s,
         savedAt: new Date().toISOString(),
@@ -181,6 +198,22 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
       }
     }
   }, [snap.isFrameOver]);
+
+  // Per-break timing submission (Match/Unlimited only — see shouldSubmitCompletedBreak
+  // for the safety gate: never attribute the other local player's break, and Train
+  // mode has its own separate best-break path above). Ref dedupes by completedAt so
+  // repeated re-renders of the same completed-break event don't resubmit it.
+  const lastHandledBreakAt = useRef<number | null>(null);
+  useEffect(() => {
+    if (!completedBreak) return;
+    if (completedBreak.completedAt === lastHandledBreakAt.current) return;
+    lastHandledBreakAt.current = completedBreak.completedAt;
+    if (!shouldSubmitCompletedBreak(completedBreak, mePlayerIndex, isTrainMode)) return;
+
+    const mode = isUnlimitedMode ? 'unlimited' : 'match';
+    submitBreakTiming(completedBreak.breakValue, completedBreak.durationSeconds, mode);
+    submitBreak(config.numberOfReds, completedBreak.breakValue, completedBreak.durationSeconds);
+  }, [completedBreak, mePlayerIndex, isTrainMode, isUnlimitedMode]);
 
   // First interstitial opportunity in the scoreboard flow — gated on the first
   // completed frame so it never interrupts before the user has used the feature.
@@ -503,6 +536,7 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
             isTrainMode={isTrainMode}
             onEndVisit={(forPlayer) => endVisit()}
             leadText={!isTrainMode ? leadText : undefined}
+            activeBreakElapsedSeconds={isTrainMode ? undefined : activeBreakElapsedSeconds}
           />
         );
 

@@ -5,7 +5,7 @@ from django.contrib.auth.password_validation import validate_password as django_
 from django.core.exceptions import ValidationError as DjangoValidationError
 
 # Import your application's models
-from .models import Event, Player, Ranking, MatchesOfAnEvent, PlayerMatchHistory, MatchComment, ScoreboardMatch, PlayerBestBreak
+from .models import Event, Player, Ranking, MatchesOfAnEvent, PlayerMatchHistory, MatchComment, ScoreboardMatch, PlayerBestBreak, BreakTimingRecord
 
 class PlayerSerializer(serializers.ModelSerializer):
     """
@@ -243,6 +243,14 @@ class PlayerBestBreakSerializer(serializers.ModelSerializer):
         model = PlayerBestBreak
         fields = ['reds_count', 'best_break', 'achieved_at', 'frame_time_seconds', 'is_verified']
         read_only_fields = ['created_at', 'updated_at']
+
+
+class BreakTimingRecordSerializer(serializers.ModelSerializer):
+    """Serializes one completed break-duration event for the authenticated user."""
+    class Meta:
+        model = BreakTimingRecord
+        fields = ['break_value', 'duration_seconds', 'mode', 'created_at']
+        read_only_fields = ['created_at']
 
 
 class LeaderboardEntrySerializer(serializers.ModelSerializer):
