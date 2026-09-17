@@ -162,6 +162,23 @@ Running list of known issues, deferred work, and follow-ups that are NOT current
 - **Impact**: currently none for real users — confirmed by reading `services/shareService.ts` (the "Challenge a friend" share flow only sends Play Store/App Store URLs, no `maxbreak://` deep link) and grepping for notification-tap-to-navigate handling (none exists in the app at all). No shipped feature constructs a deep link into this app today. This is a latent risk for whenever deep linking is added to any future feature (e.g. push-notification tap-to-navigate, or a richer share flow), not an active bug.
 - **Next step when picked up**: `git log -S WeakRef` / grep the bundled dependency tree for what actually references `WeakRef` (likely a library added since the Aug 28 build 78, e.g. as part of the session/frame-timers or leaderboard work that shipped 2026-09-16/17), confirm whether a new native build (fixing Open Mission #16's stale-build-78 issue at the same time) resolves it, and only then consider building any deep-link entry points.
 
+### 26. Break-timer capture's Task 9 device checklist only partially completed
+- **Found**: 2026-09-17, during the break-timer-capture feature session (`docs/SESSION_2026-09-17_break_timer_and_cross_device_fix.md`).
+- **Status**: Match mode was thoroughly device-tested (live timer, attribution gate for both the "me" and non-"me" player, real leaderboard update confirmed via production API + logcat). Guest/logged-out path, Unlimited mode specifically, resume-from-legacy-draft, and full Train-mode regression were never device-tested.
+- **Next step when picked up**: run through the remaining items in the plan's Task 9 checklist (`docs/superpowers/plans/2026-09-17-break-timer-capture.md`).
+
+### 27. Break-duration submitted into `PlayerBestBreak.frame_time_seconds` mixes Train-mode (whole-frame) and Match-mode (single-break) timing semantics
+- **Found**: 2026-09-17, by the break-timer-capture feature's final whole-branch review (finding I2).
+- **Status**: Deliberately shipped as-is — user explicitly decided to ship and revisit only if it's observed to actually matter, rather than block the release on a design decision.
+- **Impact**: could bias leaderboard tiebreak ordering (faster time wins ties) toward Match-mode breaks, and could make `is_realistic_frame_time`'s anti-cheat check more likely to false-flag a legitimate fast Match-mode break than an equivalent Train-mode one. Could also retroactively overwrite an existing account's `frame_time_seconds`/`is_verified` on a tied break value submitted from a different mode.
+- **Next step when picked up**: only if a real complaint/observation surfaces (e.g. a user's Train-mode PB gets a `⚠` flag it didn't have before, or tiebreak ordering looks wrong) — decide whether to segregate the field by mode or recalibrate the anti-cheat threshold per mode.
+
+### 28. Cross-device match-leak fix's re-login/download-restore path not device-verified
+- **Found**: 2026-09-17, during the cross-device match-leak fix (`docs/SESSION_2026-09-17_break_timer_and_cross_device_fix.md`).
+- **Status**: The fix itself (clearing local match data on logout) was device-verified. The complementary case — a real account logging back in and correctly downloading/restoring its own history from the cloud — was not, since verifying it requires typing a real password, which the agent doesn't do regardless of whether it knows the credentials.
+- **Impact**: low risk — this fix only touched `doLogout`, never `syncOnLogin`'s download/merge logic, so the restore path is unmodified from its already-shipped 2026-09-14 state. Still worth one real manual check.
+- **Next step when picked up**: log out, then log back into the same account on the same device, confirm match history reappears correctly.
+
 ## Resolved / closed
 (move items here with a one-line resolution note when closed, don't delete history)
 
