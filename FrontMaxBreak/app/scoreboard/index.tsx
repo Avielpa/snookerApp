@@ -26,6 +26,7 @@ export default function ScoreboardSetup() {
   const [numberOfReds, setNumberOfReds] = useState<number>(15);
   const [bestOf, setBestOf] = useState<number | null>(null);
   const [isUnlimited, setIsUnlimited] = useState(false);
+  const [mePlayerIndex, setMePlayerIndex] = useState<0 | 1>(0);
   const [draft, setDraft] = useState<GameDraft | null>(null);
   const [authVisible, setAuthVisible] = useState(false);
   const [bannerDismissed, setBannerDismissed] = useState(false);
@@ -65,6 +66,7 @@ export default function ScoreboardSetup() {
         numberOfReds: String(numberOfReds),
         bestOf: isTrainMode ? 'train' : isUnlimited ? 'unlimited' : (bestOf === null ? 'single' : String(bestOf)),
         mode,
+        mePlayerIndex: String(mePlayerIndex),
       },
     });
   }
@@ -180,6 +182,29 @@ export default function ScoreboardSetup() {
           </>
         )}
       </View>
+
+      {!isTrainMode && (
+        <View style={{ marginTop: 12 }}>
+          <Text style={[styles.label, { color: c.textMuted }]}>WHO ARE YOU?</Text>
+          <View style={{ flexDirection: 'row', gap: 10, marginTop: 6 }}>
+            {([0, 1] as const).map(idx => (
+              <TouchableOpacity
+                key={idx}
+                style={[
+                  styles.optionBtn,
+                  { borderColor: mePlayerIndex === idx ? c.primary : c.cardBorder },
+                  mePlayerIndex === idx && { backgroundColor: 'rgba(255,183,77,0.12)' },
+                ]}
+                onPress={() => setMePlayerIndex(idx)}
+              >
+                <Text style={[styles.optionBtnText, { color: mePlayerIndex === idx ? c.primary : c.textSecondary }]}>
+                  {idx === 0 ? (player1.trim() || 'Player 1') : (player2.trim() || 'Player 2')}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      )}
 
       {/* Number of reds */}
       <View style={[styles.card, { backgroundColor: c.cardBackground, borderColor: c.cardBorder }]}>

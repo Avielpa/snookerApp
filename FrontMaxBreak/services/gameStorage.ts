@@ -54,6 +54,7 @@ export interface GameDraft {
     player2: string;
     numberOfReds: string;
     bestOf: string;
+    mePlayerIndex: string;
   };
   state: GameState;
   savedAt: string;
