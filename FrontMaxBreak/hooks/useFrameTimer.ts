@@ -4,7 +4,7 @@
 // potted (any colour), freezes at frame end, resets on the next frame.
 // Pure observer of GameState fields passed in by the caller (game.tsx) —
 // never touches useSnookerGame's reducer.
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export interface FrameTimerInput {
   frameNumber: number;
@@ -44,11 +44,11 @@ export function computeFrameTimerState(
 }
 
 export function useFrameTimer(input: FrameTimerInput): { elapsedSeconds: number } {
-  const stateRef = useRef<FrameTimerState>(INITIAL_STATE);
+  const [state, setState] = useState<FrameTimerState>(INITIAL_STATE);
   const [, forceTick] = useState(0);
 
   useEffect(() => {
-    stateRef.current = computeFrameTimerState(input, stateRef.current, Date.now());
+    setState(prev => computeFrameTimerState(input, prev, Date.now()));
   }, [input.frameNumber, input.isFrameOver, input.hasAnyPotThisFrame]);
 
   useEffect(() => {
@@ -56,11 +56,10 @@ export function useFrameTimer(input: FrameTimerInput): { elapsedSeconds: number 
     return () => clearInterval(id);
   }, []);
 
-  const s = stateRef.current;
-  const elapsedMs = s.frozenElapsedMs !== null
-    ? s.frozenElapsedMs
-    : s.startedAt !== null
-      ? Date.now() - s.startedAt
+  const elapsedMs = state.frozenElapsedMs !== null
+    ? state.frozenElapsedMs
+    : state.startedAt !== null
+      ? Date.now() - state.startedAt
       : 0;
   return { elapsedSeconds: Math.floor(elapsedMs / 1000) };
 }

@@ -136,6 +136,12 @@ export default function FrameSummary({
             </>
           )}
 
+          {frameDurationSeconds !== undefined && (
+            <Text style={[styles.subtext, { color: c.textMuted }]}>
+              Frame time: {formatElapsed(frameDurationSeconds)}
+            </Text>
+          )}
+
           {/* Scores */}
           <View style={[styles.scoreRow, { borderColor: c.cardBorder }]}>
             {([0, 1] as const).map(p => (

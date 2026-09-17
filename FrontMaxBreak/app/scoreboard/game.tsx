@@ -441,7 +441,7 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
                 Break {frameNumber} · {config.numberOfReds} reds
               </Text>
               <Text style={[styles.frameLabel, { color: c.textMuted, fontSize: 11, marginTop: 2 }]}>
-                {formatElapsed(sessionElapsedSeconds)}
+                Session {formatElapsed(sessionElapsedSeconds)} · Break {formatElapsed(frameElapsedSeconds)}
               </Text>
             </>
           ) : (
@@ -453,7 +453,7 @@ function GameScreen({ initialState }: { initialState?: GameState }) {
                 {framesWon[0]} – {framesWon[1]}
               </Text>
               <Text style={[styles.frameLabel, { color: c.textMuted, fontSize: 11, marginTop: 2 }]}>
-                {formatElapsed(sessionElapsedSeconds)}
+                Session {formatElapsed(sessionElapsedSeconds)} · Frame {formatElapsed(frameElapsedSeconds)}
               </Text>
             </>
           )}
