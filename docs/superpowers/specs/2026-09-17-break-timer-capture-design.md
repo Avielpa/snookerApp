@@ -25,6 +25,19 @@ In scope:
 4. Saving each completed break for the tagged "me" player to the backend as an individual event, when
    logged in. Guests: no backend save (matches existing Train-mode guest behavior — no error, no local
    queue-for-later).
+5. **Extend the existing personal-best-break leaderboard (`PlayerBestBreak`) to Match/Unlimited mode for
+   the "me" player.** This reuses `services/bestBreakService.ts::submitBreak(redsCount, breakValue,
+   durationSeconds)` completely as-is — that function and its backend endpoint
+   (`scoreboard/best-break/`) are already mode-agnostic (just `reds_count` + `break` + optional
+   `frame_time_seconds`, no mode field at all). The only new code is one additional call site: when a
+   completed-break event fires (item 2) for `completedBreak.player === config.mePlayerIndex`, call
+   `submitBreak` with that break's own value and duration — the same event already driving item 4's new
+   `BreakTimingRecord` save, just also feeding the pre-existing leaderboard. Train mode's own existing
+   call (`game.tsx:174-181`, on frame-over) is untouched. This directly fixes the reported "Yuval's higher
+   breaks don't show on the global table" gap — that gap was the deliberate Train-mode-only restriction
+   from the 2026-09-14 fix, not a bug, and is now closed for the "me" player specifically (never for a
+   local pass-and-play opponent, which is exactly what caused the original attribution bug this
+   restriction was created to prevent).
 
 Out of scope (deferred to sub-project 2, a separate brainstorm/spec):
 - The Profile tab UI itself (shot avg time, frame avg, session total time, break time, highest break).
@@ -134,6 +147,11 @@ that's already fully serialized/restored).
   2) will be the first consumer of `GET`-side data, which this spec does not need to build yet since
   nothing reads it back this round. A read endpoint isn't part of this spec's scope — added when sub-
   project 2 needs it, per YAGNI.
+- On the same completed-break event (for `completedBreak.player === config.mePlayerIndex` only):
+  `game.tsx` also calls the **existing** `services/bestBreakService.ts::submitBreak` → **existing**
+  `maxBreak/oneFourSeven/views.py::best_break_view` → **existing** `models.py::PlayerBestBreak` →
+  **existing** `leaderboard_view` / `LeaderboardTab.tsx`. No new backend code on this path at all — purely
+  a new frontend call site into infrastructure that already works and is already tested.
 - `app/scoreboard/index.tsx` → new `mePlayerIndex` field on `MatchConfig`, flows into `game.tsx` via
   existing config-passing, persisted via existing `sb_draft` serialization (no new AsyncStorage key).
 
@@ -169,6 +187,16 @@ that's already fully serialized/restored).
     logged in. No backfill needed.
 12. **Single Frame mode** (`bestOf === null`): uses the same `ScorePanel`/reducer path as Best-of-N — must
     get the same timer behavior, no special-casing.
+13. **Leaderboard extension — opponent's break must never submit**: the existing attribution bug
+    (Phase 2, 2026-09-14) happened because Match mode submitted *both* players' breaks under one login.
+    The new call site must gate strictly on `completedBreak.player === config.mePlayerIndex` — a
+    completed break for the *other* slot must never reach `submitBreak`, even accidentally (e.g. if a
+    default/fallback value for `mePlayerIndex` were ever wrong). Test this explicitly: a completed break
+    for the non-"me" player must produce zero `submitBreak` calls.
+14. **Leaderboard extension — reds_count consistency**: `PlayerBestBreak` is keyed per `(user,
+    reds_count)`. Match/Unlimited mode already lets the user pick `numberOfReds` at setup same as Train
+    mode, so no new reds-count handling is needed — but verify a Match played with a non-standard reds
+    count (e.g. 6 reds) correctly lands in the same per-reds-count bucket a 6-red Train session would.
 
 ### Resolved: zero-value breaks
 
