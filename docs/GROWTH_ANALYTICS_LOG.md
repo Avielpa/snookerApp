@@ -584,3 +584,16 @@ Format, last 7 days) to answer "why won't eCPM/earnings improve":
   discussion-trigger question ("does Wilson come back from 3-5?"), both store links, and the
   Follow-Page line. UTM campaigns: `legend_ronnie_live_0917_page`, `legend_ronnie_live_0917_personal`,
   `snooker227k_live_0917_page` (declined, never delivered), `snooker227k_live_0917_personal` (live).
+- **Same-day follow-up:** re-checked `matches/today/` ~2h later — Kyren Wilson fought back to 5-5
+  (a decider!) against Leone Crowley, and Jimmy White (legend) went live 0-1 down to Matthew
+  Stevens. Replied to our own Legend Ronnie O'Sullivan post with a genuine text update on both
+  (no fresh screenshot — the S24 dropped into `unauthorized` adb state after a server restart
+  and needs a physical re-tap on the device, not fixable remotely). Comment count went 0 to 1
+  minutes after posting. Snooker 227.9K's MaxBreak147 decline count is now **9** (up from 5
+  earlier today) — the account-level block there is not improving on its own.
+- **AI promo video: could not be published to the Page after two real attempts** (one automated,
+  one by the user's own manual click on a fully-prepared dialog) — Facebook's Reels composer
+  hung indefinitely both times, confirmed via the Page's own Reels tab still showing zero Reels
+  after 10+ minutes. This rules out an automation-detection cause. Emailed the finished video
+  (`scoreboard_ai_promo_v1_0917.mp4`) plus the 3 raw Gemini clips and 2 screenshots to the user's
+  own Gmail as a backup, for a manual upload attempt from the phone's Facebook app instead.
