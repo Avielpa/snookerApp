@@ -140,6 +140,21 @@ Keep this table current — update after every session with new groups tried and
 
 ### Posting mechanics (browser automation gotchas)
 
+- **Uploading a vertical (9:16) video to a Page timeline routes into the Reels composer, not a
+  plain video post** — confirmed 2026-09-17. That flow has an "Add AI label" toggle (required
+  by Meta policy when content looks real but is AI-generated — turn it ON for any post mixing
+  real footage with Gemini/Sora-style clips) and a "Talk to people directly" upsell to decline,
+  same as the Page-post gotchas below. **The final publish step hung indefinitely (4+ minutes,
+  spinner never resolved) and the video never actually posted** — confirmed via the Page's own
+  Reels tab still showing "you haven't created any Reels yet" after the wait. Root cause
+  unconfirmed (tried once with a raw moviepy-exported mp4, no retry attempted after the hang).
+  If this recurs: try a shorter/smaller file, try `ffmpeg -movflags +faststart` before upload
+  (didn't fix it here but wasn't isolated from other variables), or fall back to uploading via
+  the "תמונה או סרטון"/photo-video option on a plain group post instead of a Page timeline post
+  (groups don't seem to force the Reels flow the same way — unconfirmed, not tested this
+  session). Don't assume a stuck spinner is just UI lag — verify against the Reels tab (or the
+  group's own post feed) before reporting a video as posted.
+
 - **Switching identity** (personal "Aviel Pahima" vs. Page "MaxBreak147"): click the
   top-left avatar dropdown. Must be redone **per tab** — a new tab does not inherit another
   tab's identity. Screenshot after switching to confirm the composer shows the right avatar
@@ -392,6 +407,21 @@ execution through the now-working Gemini flow. Historical note (superseded): 5/5
 failed on 2026-09-15 with an indefinite spinner and nothing saved — root cause never
 identified, but it has since started working reliably; if it regresses again, retest with a
 fresh tab before assuming it's broken again.
+
+**F. Compositing multiple clips into one video — now possible, wasn't before.** This
+environment had no `ffmpeg`/video-editing tool as of 2026-09-16; as of 2026-09-17,
+`python3 -m pip install opencv-python-headless imageio-ffmpeg moviepy` installs a working,
+bundled ffmpeg binary (no system install/winget needed, that's blocked in this sandbox anyway).
+This unlocks real editing: `cv2.VideoCapture` to pull a frame and sanity-check a clip isn't
+blank (check `.mean()` isn't near-zero — a Gemini download's in-browser preview thumbnail can
+render solid black even when the file is fine, don't trust it), `moviepy`'s
+`VideoFileClip`/`subclipped`/`concatenate_videoclips`/`clips_array` to trim, stack (e.g. to crop
+an ad banner out of a screen recording by cropping above+below it and stacking the two halves
+back together, cheaper than frame-by-frame masking), and stitch Gemini clips + real device
+footage into one sequence. Built a real 14s composite this way (2 Gemini shots + a real
+Personal-Best screen recording with the ad cropped out + a Gemini closer) — the editing pipeline
+works; it was the Facebook upload step that failed (see the Reels-hang gotcha above), not the
+video itself.
 
 ## 3. Promoting the Page specifically
 
