@@ -591,6 +591,15 @@ Format, last 7 days) to answer "why won't eCPM/earnings improve":
   and needs a physical re-tap on the device, not fixable remotely). Comment count went 0 to 1
   minutes after posting. Snooker 227.9K's MaxBreak147 decline count is now **9** (up from 5
   earlier today) — the account-level block there is not improving on its own.
+- **Real engagement result confirmed 2026-09-18 morning:** the Aviel-personal live-score post
+  to Snooker (227.9K) is the clear winner of the day — **17 likes, 3 comments** (vs 1 like/1
+  comment on the identical MaxBreak147 post to Legend Ronnie). Two real fan comments had
+  conflicting claims about the outcome (one congratulating Crowley for "narrowly missing out",
+  one saying "Kyren won 6-5") — verified the real result via the backend's full event-match
+  endpoint (`/oneFourSeven/events/2771/matches/` — the `matches/today/` endpoint had already
+  rolled the finished match out of "today" by the next morning) and replied with the confirmed
+  correct score (Kyren Wilson 6-5). This is exactly the "verify a fan comment, don't guess"
+  pattern from the 2026-09-08 insight — worth repeating whenever comments disagree on a result.
 - **AI promo video: could not be published to the Page after two real attempts** (one automated,
   one by the user's own manual click on a fully-prepared dialog) — Facebook's Reels composer
   hung indefinitely both times, confirmed via the Page's own Reels tab still showing zero Reels
