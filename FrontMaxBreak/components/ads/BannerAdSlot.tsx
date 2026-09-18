@@ -4,16 +4,24 @@ import { View, StyleSheet } from 'react-native';
 import { BannerAd, BannerAdSize } from 'react-native-google-mobile-ads';
 import { useColors } from '../../contexts/ThemeContext';
 import { ADS_ENABLED, BANNER_AD_UNIT_ID, initAds } from '../../services/adsService';
+import { initAdsConfig, isAdsConfigEnabled } from '../../services/adsConfigService';
 
 export default function BannerAdSlot() {
   const colors = useColors();
   const [failed, setFailed] = useState(false);
+  // Unused value, only its setter matters — forces a re-render once the
+  // remote config fetch resolves, so a device-disabled banner that already
+  // rendered on the safe-default first pass gets hidden without a remount.
+  const [, forceConfigRecheck] = useState(0);
 
   useEffect(() => {
-    if (ADS_ENABLED) initAds();
+    if (ADS_ENABLED) {
+      initAds();
+      initAdsConfig().then(() => forceConfigRecheck((n) => n + 1));
+    }
   }, []);
 
-  if (!ADS_ENABLED || failed || !BANNER_AD_UNIT_ID) {
+  if (!ADS_ENABLED || failed || !BANNER_AD_UNIT_ID || !isAdsConfigEnabled('banner')) {
     return null;
   }
 
