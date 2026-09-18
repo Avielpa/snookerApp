@@ -2,7 +2,7 @@
   "expo": {
     "name": "Snooker MaxBreak",
     "slug": "MaxBreak",
-    "version": "1.1.2",
+    "version": "1.2.2",
     "orientation": "default",
     "icon": "./assets/images/icon_maxbreak_master.png",
     "scheme": "maxbreak",
