@@ -15,6 +15,7 @@ import {
   ADMOB_IOS_BANNER_ID,
   ADMOB_IOS_INTERSTITIAL_ID,
 } from '../config/ads';
+import { initAdsConfig, isAdsConfigEnabled } from './adsConfigService';
 
 const REAL_BANNER_AD_UNIT_ID = Platform.OS === 'ios' ? ADMOB_IOS_BANNER_ID : ADMOB_ANDROID_BANNER_ID;
 const REAL_INTERSTITIAL_AD_UNIT_ID = Platform.OS === 'ios' ? ADMOB_IOS_INTERSTITIAL_ID : ADMOB_ANDROID_INTERSTITIAL_ID;
@@ -84,8 +85,8 @@ function createOnceInterstitialHook(label: string) {
 
       const delayTimer = setTimeout(() => {
         if (shownThisSessionByLabel[label]) return;
-        initAds().then(() => {
-          if (!isMounted || shownThisSessionByLabel[label]) return;
+        Promise.all([initAds(), initAdsConfig()]).then(() => {
+          if (!isMounted || shownThisSessionByLabel[label] || !isAdsConfigEnabled('interstitial')) return;
 
           const interstitial = InterstitialAd.createForAdRequest(INTERSTITIAL_AD_UNIT_ID as string);
 
@@ -167,8 +168,8 @@ export function useMediaTabInterstitial(): void {
 
         delayTimer = setTimeout(() => {
           if (shownThisSessionByLabel[MEDIA_TAB_LABEL]) return;
-          initAds().then(() => {
-            if (!isMounted || shownThisSessionByLabel[MEDIA_TAB_LABEL]) return;
+          Promise.all([initAds(), initAdsConfig()]).then(() => {
+            if (!isMounted || shownThisSessionByLabel[MEDIA_TAB_LABEL] || !isAdsConfigEnabled('interstitial')) return;
 
             const interstitial = InterstitialAd.createForAdRequest(INTERSTITIAL_AD_UNIT_ID as string);
 
